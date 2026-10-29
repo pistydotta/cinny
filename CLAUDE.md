@@ -17,8 +17,8 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 - It needs the `BLAZEROOM_TOKEN` Actions secret on this fork: a fine-grained token with
   access to `pistydotta/blazeroom` only, with Contents and Pull requests set to read and
   write. Without it the tag is still made and the job warns; open the PR by hand.
-- The fork's default branch is `dev` (from upstream), so new PRs may target the wrong
-  base. Check it says `blazeroom`.
+- The fork's default branch is `blazeroom`. `dev` is upstream's branch, kept untouched as
+  a reference; don't open PRs to it.
 
 ## Our code
 
