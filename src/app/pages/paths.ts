@@ -53,9 +53,6 @@ export type DirectCreateSearchParams = {
   userId?: string;
 };
 export const DIRECT_CREATE_PATH = `/direct/${_CREATE_PATH}`;
-// blazeroom: friends live with the DMs, like Discord
-export const _FRIENDS_PATH = 'friends/';
-export const FRIENDS_PATH = `/direct/${_FRIENDS_PATH}`;
 export const DIRECT_ROOM_PATH = `/direct/${_ROOM_PATH}`;
 
 export const SPACE_PATH = '/:spaceIdOrAlias/';
@@ -82,7 +79,7 @@ export const CREATE_PATH = '/create';
 export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';
 export const INBOX_PATH = '/inbox/';
-export const OLD_FRIENDS_PATH = '/friends/';
+export const FRIENDS_PATH = '/friends/';
 export type InboxNotificationsPathSearchParams = {
   only?: string;
 };
