@@ -8,6 +8,7 @@ import {
   SidebarStack,
 } from '../../components/sidebar';
 import {
+  DirectTab,
   FriendsTab,
   HomeTab,
   SpaceTabs,
@@ -29,7 +30,7 @@ export function SidebarNav() {
           <Scroll ref={scrollRef} variant="Background" size="0">
             <SidebarStack>
               <HomeTab />
-              {/* blazeroom: one tab for friends and DMs */}
+              <DirectTab />
               <FriendsTab />
             </SidebarStack>
             <SpaceTabs scrollRef={scrollRef} />
