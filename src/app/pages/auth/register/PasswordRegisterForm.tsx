@@ -340,6 +340,8 @@ export function PasswordRegisterForm({
             <Input
               variant="Background"
               defaultValue={defaultRegisterToken}
+              // blazeroom: a token from an invite link stays as is
+              readOnly={!!defaultRegisterToken}
               name="tokenInput"
               size="500"
               required={requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)}

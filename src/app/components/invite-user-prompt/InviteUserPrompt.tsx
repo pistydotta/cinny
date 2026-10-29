@@ -48,6 +48,8 @@ import { useFriends } from '../../features/friends/useFriends';
 import { FriendAvatar } from '../../features/friends/FriendAvatar';
 import { friendDisplayName } from '../../features/friends/userDisplay';
 import { inviteSearchTerm, resolveInviteUserId } from './inviteUserId';
+import { useParentSpaceMembers } from '../../features/space-rooms/useSpaceMembers';
+import { canInviteToRoom } from '../../features/space-rooms/spaceRoomAccess';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,
@@ -79,13 +81,16 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
     refreshFriends();
   }, [refreshFriends]);
 
+  // Rooms inside a space only take the space's members (features/space-rooms).
+  const spaceMembers = useParentSpaceMembers(room);
+
   const canInvite = useCallback(
     (userId: string) => {
-      if (invitedIds.has(userId)) return false;
+      if (invitedIds.has(userId) || !canInviteToRoom(userId, spaceMembers)) return false;
       const membership = room.getMember(userId)?.membership;
       return membership !== Membership.Join && membership !== Membership.Invite;
     },
-    [room, invitedIds]
+    [room, invitedIds, spaceMembers]
   );
 
   const friendIds = useMemo(
@@ -101,8 +106,11 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
   );
 
   const filteredUsers = useMemo(
-    () => Array.from(new Set([...friendIds, ...directUsers])).filter(canInvite),
-    [friendIds, directUsers, canInvite]
+    () =>
+      Array.from(new Set([...friendIds, ...directUsers, ...(spaceMembers ?? [])])).filter(
+        canInvite
+      ),
+    [friendIds, directUsers, spaceMembers, canInvite]
   );
   const [result, search, resetSearch] = useAsyncSearch(
     filteredUsers,
@@ -158,6 +166,10 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
     const reason = reasonInput?.value.trim();
 
     const userId = validUserId;
+    if (!canInviteToRoom(userId, spaceMembers)) {
+      toast(`${userId} isn't in this space. Invite them to the space first.`, 'Critical');
+      return;
+    }
     // A failure is shown below the form from inviteState.
     invite(userId, reason || undefined)
       .then(() => {
