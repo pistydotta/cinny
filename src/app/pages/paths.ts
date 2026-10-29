@@ -76,6 +76,10 @@ export const EXPLORE_SERVER_PATH = `/explore/${_SERVER_PATH}`;
 
 export const CREATE_PATH = '/create';
 
+export const _POKER_PATH = 'poker/';
+export const GAMES_PATH = '/games/';
+export const GAMES_POKER_PATH = `/games/${_POKER_PATH}`;
+
 export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';
 export const INBOX_PATH = '/inbox/';
