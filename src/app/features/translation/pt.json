@@ -247,5 +247,13 @@
     "language": "Idioma",
     "language_title": "Idioma do app",
     "language_description": "Algumas telas menos usadas estão só em inglês."
+  },
+  "whats_new": {
+    "title": "Novidades",
+    "got_it": "Entendi",
+    "portuguese_title": "blazeroom em português",
+    "portuguese_body": "O app agora está em português. Para usar em inglês, abra Configurações (seu avatar, no canto inferior esquerdo) > General > Idioma.",
+    "fixes_title": "Correções gerais",
+    "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor."
   }
 }
