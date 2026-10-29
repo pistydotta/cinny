@@ -242,5 +242,10 @@
     "connecting": "Conectando...",
     "reconnecting": "Conexão perdida! Reconectando...",
     "lost": "Conexão perdida!"
+  },
+  "settings": {
+    "language": "Idioma",
+    "language_title": "Idioma do app",
+    "language_description": "Algumas telas menos usadas estão só em inglês."
   }
 }

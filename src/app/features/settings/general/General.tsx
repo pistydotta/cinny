@@ -50,6 +50,7 @@ import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
+import { LanguageSetting } from '../../translation/LanguageSetting';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;
@@ -1021,6 +1022,7 @@ export function General({ requestClose }: GeneralProps) {
         <Scroll hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="700">
+              <LanguageSetting />
               <Appearance />
               <DateAndTime />
               <Editor />
