@@ -1,6 +1,6 @@
 export type Language = 'pt' | 'en';
 
-const LANGUAGE_KEY = 'blazeroom_language';
+const LANGUAGE_KEY = 'blazeroom.language';
 
 // The app's language, chosen in Settings > General and saved per browser. Portuguese unless
 // someone picked English.
