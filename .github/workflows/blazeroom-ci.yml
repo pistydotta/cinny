@@ -1,12 +1,20 @@
 name: blazeroom-ci
 
+# The checks run on PRs only. The rule on blazeroom (require these checks to pass) keeps a
+# red PR from merging, so the merge itself only runs release.
 on:
   push:
     branches: [blazeroom]
   pull_request:
 
+# A new push to a PR cancels its run still in progress.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
-  check:
+  test:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,9 +24,31 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run build
       - run: npx eslint src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx src/element-call src/app/components/toast src/app/components/invite-user-prompt/inviteUserId.ts src/app/components/invite-user-prompt/inviteUserId.test.ts src/app/features/admin src/app/features/settings/admin src/app/features/invites src/app/utils/blazeroomApi.ts src/app/features/word-swap src/app/features/space-autojoin src/app/features/room-nav/CallMemberAvatars.tsx src/app/features/room-nav/callMembers.ts src/app/features/room-nav/callMembers.test.ts src/app/features/call-rejoin
       - run: npx prettier --check src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx src/element-call src/app/components/toast src/app/components/invite-user-prompt/inviteUserId.ts src/app/components/invite-user-prompt/inviteUserId.test.ts src/app/features/admin src/app/features/settings/admin src/app/features/invites src/app/utils/blazeroomApi.ts src/app/features/word-swap src/app/features/space-autojoin src/app/features/room-nav/CallMemberAvatars.tsx src/app/features/room-nav/callMembers.ts src/app/features/room-nav/callMembers.test.ts src/app/features/call-rejoin
+
+  build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  typecheck:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - name: Typecheck (our files only)
         run: |
           npx tsc --noEmit > tsc.log || true
@@ -29,7 +59,6 @@ jobs:
   # stays a person's call. Needs the BLAZEROOM_TOKEN secret (see CLAUDE.md); without it the
   # tag is still made and the PR is left to open by hand.
   release:
-    needs: check
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
