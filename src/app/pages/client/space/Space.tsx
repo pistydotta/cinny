@@ -55,6 +55,11 @@ import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMappe
 import { useRoomName } from '../../../hooks/useRoomMeta';
 import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
 import { useAutoJoinSpaceRooms } from '../../../features/space-autojoin/useAutoJoinSpaceRooms';
+import {
+  canReorderSpace,
+  useRoomNavReorder,
+} from '../../../features/room-nav-reorder/useRoomNavReorder';
+import { ReorderableNavRoom } from '../../../features/room-nav-reorder/ReorderableNavRoom';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 import { usePowerLevels } from '../../../hooks/usePowerLevels';
@@ -381,6 +386,7 @@ export function Space() {
   const space = useSpace();
   useNavToActivePathMapper(space.roomId);
   useAutoJoinSpaceRooms(space);
+  useRoomNavReorder();
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
@@ -425,6 +431,17 @@ export function Space() {
       (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
       [closedCategories, space.roomId]
     )
+  );
+
+  // blazeroom: rooms can be dragged into order here too, not only in the lobby.
+  const reorderableSpaces = useMemo(
+    () =>
+      new Set(
+        hierarchy
+          .filter((item) => 'space' in item && canReorderSpace(mx, item.roomId))
+          .map((item) => item.roomId)
+      ),
+    [mx, hierarchy]
   );
 
   const virtualizer = useVirtualizer({
@@ -493,7 +510,7 @@ export function Space() {
             }}
           >
             {virtualizer.getVirtualItems().map((vItem) => {
-              const { roomId } = hierarchy[vItem.index] ?? {};
+              const { roomId, parentId } = hierarchy[vItem.index] ?? {};
               const room = mx.getRoom(roomId);
               if (!room) return null;
 
@@ -523,14 +540,27 @@ export function Space() {
 
               return (
                 <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
-                  <RoomNavItem
-                    room={room}
-                    selected={selectedRoomId === roomId}
-                    showAvatar={mDirects.has(roomId)}
-                    direct={mDirects.has(roomId)}
-                    linkPath={getToLink(roomId)}
-                    notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
-                  />
+                  <ReorderableNavRoom
+                    roomId={roomId}
+                    parentId={parentId ?? space.roomId}
+                    enabled={
+                      !!parentId &&
+                      reorderableSpaces.has(parentId) &&
+                      !closedCategories.has(makeNavCategoryId(space.roomId, parentId))
+                    }
+                  >
+                    <RoomNavItem
+                      room={room}
+                      selected={selectedRoomId === roomId}
+                      showAvatar={mDirects.has(roomId)}
+                      direct={mDirects.has(roomId)}
+                      linkPath={getToLink(roomId)}
+                      notificationMode={getRoomNotificationMode(
+                        notificationPreferences,
+                        room.roomId
+                      )}
+                    />
+                  </ReorderableNavRoom>
                 </VirtualTile>
               );
             })}
