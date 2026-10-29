@@ -9,6 +9,7 @@ import { DirectCreateSearchParams } from '../../pages/paths';
 import { isOnline } from './presence';
 import { friendDisplayName } from './userDisplay';
 import { FriendAvatar } from './FriendAvatar';
+import { tr } from '../translation/tr';
 
 type FriendRowProps = {
   userId: string;
@@ -31,7 +32,7 @@ export function FriendRow({ userId }: FriendRowProps) {
       variant="Background"
       radii="400"
       onClick={handleMessage}
-      aria-label={`Message ${name}`}
+      aria-label={tr('friends.message_name', 'Message {{name}}', { name })}
       before={
         <AvatarPresence
           variant="Background"

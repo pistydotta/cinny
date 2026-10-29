@@ -119,6 +119,7 @@ import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 import { SWAPPED_KEY, swapHtml, swapText } from '../word-swap/wordSwap';
 import { useWordSwapBurst, useWordSwaps } from '../word-swap/useWordSwaps';
+import { tr } from '../translation/tr';
 
 interface RoomInputProps {
   editor: Editor;
@@ -518,9 +519,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               >
                 <Icon size="600" src={Icons.File} />
                 <Text size="H4" align="Center">
-                  {`Drop Files in "${room?.name || 'Room'}"`}
+                  {tr('composer.drop_files', 'Drop Files in "{{room}}"', {
+                    room: room?.name || tr('composer.room', 'Room'),
+                  })}
                 </Text>
-                <Text align="Center">Drag and drop files here or click for selection dialog</Text>
+                <Text align="Center">
+                  {tr(
+                    'composer.drop_hint',
+                    'Drag and drop files here or click for selection dialog'
+                  )}
+                </Text>
               </Box>
             </Dialog>
           </OverlayCenter>
@@ -560,7 +568,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         <CustomEditor
           editableName="RoomInput"
           editor={editor}
-          placeholder="Send a message..."
+          placeholder={tr('composer.placeholder', 'Send a message...')}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}

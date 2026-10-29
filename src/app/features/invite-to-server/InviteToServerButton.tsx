@@ -28,6 +28,7 @@ import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
 import { Membership, StateEvent } from '../../../types/matrix/room';
 import { useToast } from '../../components/toast';
 import { ServerChoice, ServerChoiceList, serverChoiceList } from './serverChoices';
+import { tr } from '../translation/tr';
 
 // Servers (spaces) you've joined, may invite to, and `userId` isn't already in.
 const invitableServers = (
@@ -104,7 +105,7 @@ const ServerMenu = forwardRef<HTMLDivElement, ServerMenuProps>(
             size="300"
             radii="300"
             variant="Background"
-            placeholder="Search servers"
+            placeholder={tr('invite_server.search', 'Search servers')}
             autoFocus
             before={<Icon size="50" src={Icons.Search} />}
             onChange={(evt) => onSearch(evt.currentTarget.value)}
@@ -113,19 +114,19 @@ const ServerMenu = forwardRef<HTMLDivElement, ServerMenuProps>(
             <Box direction="Column" gap="100">
               {list.recent.length > 0 && (
                 <Text size="L400" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
-                  Most used
+                  {tr('invite_server.most_used', 'Most used')}
                 </Text>
               )}
               {list.recent.map(renderChoice)}
               {list.recent.length > 0 && list.others.length > 0 && (
                 <Text size="L400" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
-                  All servers
+                  {tr('invite_server.all', 'All servers')}
                 </Text>
               )}
               {list.others.map(renderChoice)}
               {empty && (
                 <Text size="T300" priority="300" style={{ padding: config.space.S200 }}>
-                  No server found.
+                  {tr('invite_server.none', 'No server found.')}
                 </Text>
               )}
             </Box>
@@ -168,12 +169,19 @@ export function InviteToServerButton({ userId }: { userId: string }) {
     setInviting(choice.roomId);
     mx.invite(choice.roomId, userId)
       .then(() => {
-        toast(`Invited to ${choice.name}`);
+        toast(tr('invite_server.invited', 'Invited to {{name}}', { name: choice.name }));
         close();
       })
       .catch((e: unknown) => {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        toast(`Couldn't invite to ${choice.name}: ${message}`, 'Critical');
+        const message =
+          e instanceof Error ? e.message : tr('common.unknown_error', 'Unknown error');
+        toast(
+          tr('invite_server.failed', "Couldn't invite to {{name}}: {{message}}", {
+            name: choice.name,
+            message,
+          }),
+          'Critical'
+        );
       })
       .finally(() => setInviting(undefined));
   };
@@ -208,7 +216,7 @@ export function InviteToServerButton({ userId }: { userId: string }) {
         onClick={open}
         aria-pressed={!!cords}
       >
-        <Text size="B300">Invite to server</Text>
+        <Text size="B300">{tr('invite_server.button', 'Invite to server')}</Text>
       </Button>
     </PopOut>
   );

@@ -11,6 +11,7 @@ import { UnreadBadge } from '../../../components/unread-badge';
 import { getFriendsPath } from '../../pathUtils';
 import { useFriends, useFriendsPoller } from '../../../features/friends/useFriends';
 import { useAutoAcceptFriendDMs } from '../../../features/friends/useAutoAcceptFriendDMs';
+import { tr } from '../../../features/translation/tr';
 
 // Upstream's SidebarItemTooltip returns ReactNode, which this repo's React types reject as a JSX
 // component (TS2786, reported for every upstream tab). Narrow the return type so our file typechecks.
@@ -30,7 +31,7 @@ export function FriendsTab() {
 
   return (
     <SidebarItem active={friendsSelected}>
-      <FriendsTooltip tooltip="Friends">
+      <FriendsTooltip tooltip={tr('friends.title', 'Friends')}>
         {(triggerRef) => (
           <SidebarAvatar
             as="button"

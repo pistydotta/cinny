@@ -45,6 +45,7 @@ import { useTimeoutToggle } from '../../hooks/useTimeoutToggle';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
+import { tr } from '../../features/translation/tr';
 
 export function ServerChip({ server }: { server: string }) {
   const mx = useMatrixClient();
@@ -221,7 +222,7 @@ export function ShareChip({ userId }: { userId: string }) {
         aria-pressed={!!cords}
       >
         <Text size="B300" truncate>
-          Share
+          {tr('profile.share', 'Share')}
         </Text>
       </Chip>
     </PopOut>
@@ -417,8 +418,9 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
       >
         <Text size="B300">
           {mutualRoomsState.status === AsyncStatus.Success &&
-            `${mutualRoomsState.data.length} Mutual Rooms`}
-          {mutualRoomsState.status === AsyncStatus.Loading && 'Mutual Rooms'}
+            tr('profile.n_mutual_rooms', '{{n}} Mutual Rooms', { n: mutualRoomsState.data.length })}
+          {mutualRoomsState.status === AsyncStatus.Loading &&
+            tr('profile.mutual_rooms', 'Mutual Rooms')}
         </Text>
       </Chip>
     </PopOut>

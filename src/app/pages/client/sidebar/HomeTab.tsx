@@ -28,6 +28,7 @@ import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { tr } from '../../../features/translation/tr';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -55,7 +56,7 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
           aria-disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
+            {tr('menu.mark_as_read', 'Mark as Read')}
           </Text>
         </MenuItem>
       </Box>
@@ -101,7 +102,7 @@ export function HomeTab() {
 
   return (
     <SidebarItem active={homeSelected}>
-      <SidebarItemTooltip tooltip="Home">
+      <SidebarItemTooltip tooltip={tr('nav.home', 'Home')}>
         {(triggerRef) => (
           <SidebarAvatar
             as="button"

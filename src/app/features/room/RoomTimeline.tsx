@@ -126,6 +126,7 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { tr } from '../translation/tr';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1421,7 +1422,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <Box grow="Yes" direction="Column">
                   <Text size="T300" priority="300">
                     <b>{senderName}</b>
-                    {' changed room topic'}
+                    {tr('timeline.changed_topic', ' changed room topic')}
                   </Text>
                 </Box>
               }
@@ -1464,7 +1465,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <Box grow="Yes" direction="Column">
                   <Text size="T300" priority="300">
                     <b>{senderName}</b>
-                    {' changed room avatar'}
+                    {tr('timeline.changed_avatar', ' changed room avatar')}
                   </Text>
                 </Box>
               }
@@ -1515,7 +1516,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <Box grow="Yes" direction="Column">
                   <Text size="T300" priority="300">
                     <b>{senderName}</b>
-                    {callJoined ? ' joined the call' : ' ended the call'}
+                    {callJoined
+                      ? tr('timeline.call_joined', ' joined the call')
+                      : tr('timeline.call_ended', ' ended the call')}
                   </Text>
                 </Box>
               }
@@ -1678,7 +1681,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <MessageBase space={messageSpacing}>
           <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
             <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-              <Text size="L400">New Messages</Text>
+              <Text size="L400">{tr('timeline.new_messages', 'New Messages')}</Text>
             </Badge>
           </TimelineDivider>
         </MessageBase>
@@ -1691,8 +1694,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
               <Text size="L400">
                 {(() => {
-                  if (today(mEvent.getTs())) return 'Today';
-                  if (yesterday(mEvent.getTs())) return 'Yesterday';
+                  if (today(mEvent.getTs())) return tr('timeline.today', 'Today');
+                  if (yesterday(mEvent.getTs())) return tr('timeline.yesterday', 'Yesterday');
                   return timeDayMonthYear(mEvent.getTs());
                 })()}
               </Text>
@@ -1728,7 +1731,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             before={<Icon size="50" src={Icons.MessageUnread} />}
             onClick={handleJumpToUnread}
           >
-            <Text size="L400">Jump to Unread</Text>
+            <Text size="L400">{tr('timeline.jump_to_unread', 'Jump to Unread')}</Text>
           </Chip>
 
           <Chip
@@ -1738,7 +1741,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             before={<Icon size="50" src={Icons.CheckTwice} />}
             onClick={handleMarkAsRead}
           >
-            <Text size="L400">Mark as Read</Text>
+            <Text size="L400">{tr('menu.mark_as_read', 'Mark as Read')}</Text>
           </Chip>
         </TimelineFloat>
       )}
@@ -1838,7 +1841,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             before={<Icon size="50" src={Icons.ArrowBottom} />}
             onClick={handleJumpToLatest}
           >
-            <Text size="L400">Jump to Latest</Text>
+            <Text size="L400">{tr('timeline.jump_to_latest', 'Jump to Latest')}</Text>
           </Chip>
         </TimelineFloat>
       )}

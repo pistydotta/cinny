@@ -63,6 +63,7 @@ import { livekitSupport } from '../../hooks/useLivekitSupport';
 import { CallMemberAvatars } from './CallMemberAvatars';
 import { StateEvent } from '../../../types/matrix/room';
 import { webRTCSupported } from '../../utils/rtc';
+import { tr } from '../translation/tr';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -125,7 +126,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             disabled={!unread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
+              {tr('menu.mark_as_read', 'Mark as Read')}
             </Text>
           </MenuItem>
           <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
@@ -144,7 +145,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
                 onClick={handleOpen}
               >
                 <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                  Notifications
+                  {tr('menu.notifications', 'Notifications')}
                 </Text>
               </MenuItem>
             )}
@@ -163,7 +164,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
+              {tr('menu.invite', 'Invite')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -173,7 +174,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Copy Link
+              {tr('menu.copy_link', 'Copy Link')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -183,7 +184,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Room Settings
+              {tr('menu.room_settings', 'Room Settings')}
             </Text>
           </MenuItem>
         </Box>
@@ -202,7 +203,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
                   aria-pressed={promptLeave}
                 >
                   <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                    Leave Room
+                    {tr('menu.leave_room', 'Leave Room')}
                   </Text>
                 </MenuItem>
                 {promptLeave && (
@@ -385,7 +386,7 @@ export function RoomNavItem({
               {callMembers.length > 0 && (
                 <Badge variant="Critical" fill="Solid" size="400">
                   <Text as="span" size="L400" truncate>
-                    Live
+                    {tr('nav.live', 'Live')}
                   </Text>
                 </Badge>
               )}
