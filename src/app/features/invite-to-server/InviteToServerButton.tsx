@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useMemo, useState } from 'react';
+import React, { forwardRef, MouseEventHandler, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { MatrixClient } from 'matrix-js-sdk';
@@ -70,67 +70,71 @@ type ServerMenuProps = {
   onSearch: (query: string) => void;
   onPick: (choice: ServerChoice) => void;
 };
-function ServerMenu({ list, inviting, onSearch, onPick }: ServerMenuProps) {
-  const renderChoice = (choice: ServerChoice) => (
-    <MenuItem
-      key={choice.roomId}
-      size="300"
-      radii="300"
-      variant="Surface"
-      disabled={!!inviting}
-      onClick={() => onPick(choice)}
-      before={
-        inviting === choice.roomId ? (
-          <Spinner size="50" variant="Secondary" />
-        ) : (
-          <Icon size="50" src={Icons.Space} />
-        )
-      }
-    >
-      <Text size="T300" truncate>
-        {choice.name}
-      </Text>
-    </MenuItem>
-  );
+// FocusTrap needs the menu's element through a ref: without it the trap never activates,
+// and the profile card's own trap closes the card on a click inside this menu.
+const ServerMenu = forwardRef<HTMLDivElement, ServerMenuProps>(
+  ({ list, inviting, onSearch, onPick }, ref) => {
+    const renderChoice = (choice: ServerChoice) => (
+      <MenuItem
+        key={choice.roomId}
+        size="300"
+        radii="300"
+        variant="Surface"
+        disabled={!!inviting}
+        onClick={() => onPick(choice)}
+        before={
+          inviting === choice.roomId ? (
+            <Spinner size="50" variant="Secondary" />
+          ) : (
+            <Icon size="50" src={Icons.Space} />
+          )
+        }
+      >
+        <Text size="T300" truncate>
+          {choice.name}
+        </Text>
+      </MenuItem>
+    );
 
-  const empty = list.recent.length === 0 && list.others.length === 0;
-  return (
-    <Menu style={{ width: toRem(240) }}>
-      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-        <Input
-          size="300"
-          radii="300"
-          variant="Background"
-          placeholder="Search servers"
-          autoFocus
-          before={<Icon size="50" src={Icons.Search} />}
-          onChange={(evt) => onSearch(evt.currentTarget.value)}
-        />
-        <Scroll size="300" hideTrack style={{ maxHeight: toRem(260) }}>
-          <Box direction="Column" gap="100">
-            {list.recent.length > 0 && (
-              <Text size="L400" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
-                Most used
-              </Text>
-            )}
-            {list.recent.map(renderChoice)}
-            {list.recent.length > 0 && list.others.length > 0 && (
-              <Text size="L400" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
-                All servers
-              </Text>
-            )}
-            {list.others.map(renderChoice)}
-            {empty && (
-              <Text size="T300" priority="300" style={{ padding: config.space.S200 }}>
-                No server found.
-              </Text>
-            )}
-          </Box>
-        </Scroll>
-      </Box>
-    </Menu>
-  );
-}
+    const empty = list.recent.length === 0 && list.others.length === 0;
+    return (
+      <Menu ref={ref} style={{ width: toRem(240) }}>
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <Input
+            size="300"
+            radii="300"
+            variant="Background"
+            placeholder="Search servers"
+            autoFocus
+            before={<Icon size="50" src={Icons.Search} />}
+            onChange={(evt) => onSearch(evt.currentTarget.value)}
+          />
+          <Scroll size="300" hideTrack style={{ maxHeight: toRem(260) }}>
+            <Box direction="Column" gap="100">
+              {list.recent.length > 0 && (
+                <Text size="L400" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
+                  Most used
+                </Text>
+              )}
+              {list.recent.map(renderChoice)}
+              {list.recent.length > 0 && list.others.length > 0 && (
+                <Text size="L400" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
+                  All servers
+                </Text>
+              )}
+              {list.others.map(renderChoice)}
+              {empty && (
+                <Text size="T300" priority="300" style={{ padding: config.space.S200 }}>
+                  No server found.
+                </Text>
+              )}
+            </Box>
+          </Scroll>
+        </Box>
+      </Menu>
+    );
+  }
+);
 
 // On a user's profile card: invite them to one of your servers. Hidden when there's no
 // server you may invite them to.
