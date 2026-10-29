@@ -5,6 +5,7 @@ import { getMxIdServer } from '../../utils/matrix';
 import { expandUserId } from './friendsApi';
 import { useFriends, useFriendsApi } from './useFriends';
 import { sendErrorMessage, sendSuccessMessage } from './addFriendMessages';
+import { tr } from '../translation/tr';
 
 type Feedback = { ok: boolean; text: string };
 
@@ -36,13 +37,13 @@ export function AddFriend() {
 
   return (
     <Box as="form" direction="Column" gap="200" onSubmit={handleSubmit}>
-      <Text size="L400">Add a friend by their username</Text>
+      <Text size="L400">{tr('friends.add_by_username', 'Add a friend by their username')}</Text>
       <Box gap="200" wrap="Wrap">
         <Box grow="Yes" style={{ minWidth: 0 }}>
           <Input
             style={{ width: '100%' }}
             name="friendUsername"
-            placeholder="username"
+            placeholder={tr('friends.username', 'username')}
             value={value}
             onChange={(evt) => setValue(evt.currentTarget.value)}
             before={<Icon size="100" src={Icons.User} />}
@@ -64,7 +65,7 @@ export function AddFriend() {
           disabled={sending || !value.trim()}
           before={sending && <Spinner size="100" variant="Primary" fill="Solid" />}
         >
-          <Text size="B400">Send request</Text>
+          <Text size="B400">{tr('friends.send_request', 'Send request')}</Text>
         </Button>
       </Box>
       {feedback && (

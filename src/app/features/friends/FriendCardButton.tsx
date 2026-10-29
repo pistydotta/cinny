@@ -5,6 +5,7 @@ import { getMxIdServer } from '../../utils/matrix';
 import { useFriends, useFriendsApi } from './useFriends';
 import { getFriendStatus } from './friendStatus';
 import { sendErrorMessage } from './addFriendMessages';
+import { tr } from '../translation/tr';
 
 // The add / accept friend button on a user's profile card. Hidden for friends, yourself and
 // users of other servers, who can't be added.
@@ -60,8 +61,12 @@ export function FriendCardButton({ userId }: { userId: string }) {
     >
       <Text size="B300">
         {error
-          ? 'Try again'
-          : { incoming: 'Accept friend', outgoing: 'Requested', none: 'Add friend' }[status]}
+          ? tr('common.try_again', 'Try again')
+          : {
+              incoming: tr('friends.accept_friend', 'Accept friend'),
+              outgoing: tr('friends.requested', 'Requested'),
+              none: tr('friends.add_friend', 'Add friend'),
+            }[status]}
       </Text>
     </Button>
   );

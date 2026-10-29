@@ -9,6 +9,7 @@ import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { Settings } from '../../../features/settings';
 import { useUserProfile } from '../../../hooks/useUserProfile';
 import { Modal500 } from '../../../components/Modal500';
+import { tr } from '../../../features/translation/tr';
 
 export function SettingsTab() {
   const mx = useMatrixClient();
@@ -28,7 +29,7 @@ export function SettingsTab() {
 
   return (
     <SidebarItem active={settings}>
-      <SidebarItemTooltip tooltip="User Settings">
+      <SidebarItemTooltip tooltip={tr('nav.user_settings', 'User Settings')}>
         {(triggerRef) => (
           <SidebarAvatar as="button" ref={triggerRef} onClick={openSettings}>
             <UserAvatar

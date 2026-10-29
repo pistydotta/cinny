@@ -15,6 +15,7 @@ import {
   usageLabel,
   usesLabel,
 } from './invitesApi';
+import { tr } from '../translation/tr';
 
 type OptionRowProps<T> = {
   label: string;
@@ -81,10 +82,10 @@ function InviteRow({
           radii="Pill"
           onClick={() => {
             copyToClipboard(invite.link);
-            toast('Invite link copied');
+            toast(tr('invites.copied', 'Invite link copied'));
           }}
         >
-          <Text size="T200">Copy link</Text>
+          <Text size="T200">{tr('invites.copy_link', 'Copy link')}</Text>
         </Chip>
         {canShare && (
           <Chip
@@ -96,7 +97,7 @@ function InviteRow({
                 .catch(() => undefined)
             }
           >
-            <Text size="T200">Share…</Text>
+            <Text size="T200">{tr('invites.share', 'Share…')}</Text>
           </Chip>
         )}
         <Chip
@@ -109,7 +110,7 @@ function InviteRow({
             setRevoking(false);
           }}
         >
-          <Text size="T200">Revoke</Text>
+          <Text size="T200">{tr('invites.revoke', 'Revoke')}</Text>
         </Chip>
       </Box>
     </Box>
@@ -152,7 +153,7 @@ export function InviteLink() {
     try {
       const created = await api.create(choice);
       copyToClipboard(created.link);
-      toast('Invite link created and copied');
+      toast(tr('invites.created', 'Invite link created and copied'));
       await load();
     } catch (e) {
       setError(inviteErrorMessage(e));
@@ -164,7 +165,7 @@ export function InviteLink() {
   const handleRevoke = async (invite: Invite) => {
     try {
       await api.revoke(invite.token);
-      toast('Invite link revoked');
+      toast(tr('invites.revoked', 'Invite link revoked'));
     } catch (e) {
       toast(inviteErrorMessage(e), 'Critical');
     }
@@ -174,18 +175,26 @@ export function InviteLink() {
   return (
     <Box direction="Column" gap="300">
       <Box direction="Column" gap="100">
-        <Text size="L400">Not on blazeroom yet?</Text>
+        <Text size="L400">{tr('invites.title', 'Not on blazeroom yet?')}</Text>
         <Text size="T300" priority="300">
-          Create a sign-up link and send it to friends. The link opens sign-up with the code filled
-          in.
+          {tr(
+            'invites.description',
+            'Create a sign-up link and send it to friends. The link opens sign-up with the code filled in.'
+          )}
           {remaining !== null &&
-            ` You can let in ${remaining} more ${remaining === 1 ? 'person' : 'people'} today.`}
+            ` ${
+              remaining === 1
+                ? tr('invites.remaining_one', 'You can let in 1 more person today.')
+                : tr('invites.remaining_n', 'You can let in {{n}} more people today.', {
+                    n: remaining,
+                  })
+            }`}
         </Text>
       </Box>
       {info && choice && (
         <>
           <OptionRow
-            label="Who can use it"
+            label={tr('invites.who', 'Who can use it')}
             values={info.options.uses}
             selected={choice.uses}
             name={usesLabel}
@@ -193,7 +202,7 @@ export function InviteLink() {
             onSelect={(uses) => setChoice({ ...choice, uses })}
           />
           <OptionRow
-            label="Expires after"
+            label={tr('invites.expires_after', 'Expires after')}
             values={info.options.minutes}
             selected={choice.minutes}
             name={minutesLabel}
@@ -211,7 +220,7 @@ export function InviteLink() {
               onClick={handleCreate}
               before={creating ? <Spinner size="200" variant="Primary" fill="Soft" /> : undefined}
             >
-              <Text size="B400">Create invite link</Text>
+              <Text size="B400">{tr('invites.create', 'Create invite link')}</Text>
             </Button>
           </Box>
         </>
@@ -224,7 +233,9 @@ export function InviteLink() {
       )}
       {info && info.invites.length > 0 && (
         <Box direction="Column" gap="200">
-          <Text size="L400">Your active links ({info.invites.length})</Text>
+          <Text size="L400">
+            {tr('invites.active_links', 'Your active links ({{n}})', { n: info.invites.length })}
+          </Text>
           {info.invites.map((invite) => (
             <InviteRow key={invite.token} invite={invite} onRevoke={handleRevoke} />
           ))}

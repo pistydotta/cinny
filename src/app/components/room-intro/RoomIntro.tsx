@@ -17,6 +17,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { InviteUserPrompt } from '../invite-user-prompt';
+import { tr } from '../../features/translation/tr';
 
 export type RoomIntroProps = {
   room: Room;
@@ -66,19 +67,24 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             {name}
           </Text>
           <Text size="T400" priority="400">
-            {typeof topic === 'string' ? topic : 'This is the beginning of conversation.'}
+            {typeof topic === 'string'
+              ? topic
+              : tr('room_intro.beginning', 'This is the beginning of conversation.')}
           </Text>
           {creatorName && ts && (
             <Text size="T200" priority="300">
-              {'Created by '}
+              {tr('room_intro.created_by', 'Created by ')}
               <b>@{creatorName}</b>
-              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts, hour24Clock)}`}
+              {tr('room_intro.created_on', ' on {{date}} {{time}}', {
+                date: timeDayMonthYear(ts),
+                time: timeHourMinute(ts, hour24Clock),
+              })}
             </Text>
           )}
         </Box>
         <Box gap="200" wrap="Wrap">
           <Button onClick={() => setInvitePrompt(true)} variant="Secondary" size="300" radii="300">
-            <Text size="B300">Invite Member</Text>
+            <Text size="B300">{tr('room_intro.invite_member', 'Invite Member')}</Text>
           </Button>
 
           {invitePrompt && (

@@ -24,6 +24,7 @@ import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
 import { FriendCardButton } from '../../features/friends/FriendCardButton';
 import { InviteToServerButton } from '../../features/invite-to-server/InviteToServerButton';
+import { tr } from '../../features/translation/tr';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -90,7 +91,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                   before={<Icon size="50" src={Icons.Message} filled />}
                   onClick={handleMessage}
                 >
-                  <Text size="B300">Message</Text>
+                  <Text size="B300">{tr('profile.message', 'Message')}</Text>
                 </Button>
                 <FriendCardButton userId={userId} />
                 <InviteToServerButton userId={userId} />

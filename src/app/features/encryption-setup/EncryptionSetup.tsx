@@ -38,6 +38,7 @@ import {
   postponePrompt,
   PROMPT_LATER_KEY,
 } from './encryptionStep';
+import { tr } from '../translation/tr';
 
 const readLater = (): string | null => {
   try {
@@ -144,21 +145,25 @@ function CreateKeyPrompt({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <PromptDialog title="Protect your messages" onClose={onClose}>
+    <PromptDialog title={tr('encryption.protect_title', 'Protect your messages')} onClose={onClose}>
       <Text size="T300">
-        Your messages are encrypted. Create a recovery key so you can read them on your other
-        devices, like your phone or a new computer.
+        {tr(
+          'encryption.protect_body',
+          'Your messages are encrypted. Create a recovery key so you can read them on your other devices, like your phone or a new computer.'
+        )}
       </Text>
       <Text size="T300">
-        You can pick a passphrase you&apos;ll remember. Save it in a password manager: if you lose
-        it and all your devices, your old messages can&apos;t be recovered.
+        {tr(
+          'encryption.passphrase_hint',
+          "You can pick a passphrase you'll remember. Save it in a password manager: if you lose it and all your devices, your old messages can't be recovered."
+        )}
       </Text>
       <Box direction="Column" gap="200">
         <Button variant="Primary" onClick={() => setCreating(true)}>
-          <Text size="B400">Create recovery key</Text>
+          <Text size="B400">{tr('encryption.create_key', 'Create recovery key')}</Text>
         </Button>
         <Button variant="Secondary" fill="Soft" onClick={onClose}>
-          <Text size="B400">Later</Text>
+          <Text size="B400">{tr('common.later', 'Later')}</Text>
         </Button>
       </Box>
     </PromptDialog>
@@ -175,7 +180,10 @@ function UnlockPrompt({ onClose }: { onClose: () => void }) {
   const [requestState, requestVerification] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
       const crypto = mx.getCrypto();
-      if (!crypto) throw new Error('Encryption is not available on this device.');
+      if (!crypto)
+        throw new Error(
+          tr('encryption.unavailable', 'Encryption is not available on this device.')
+        );
       setRequest(await crypto.requestOwnUserVerification());
     }, [mx])
   );
@@ -186,10 +194,12 @@ function UnlockPrompt({ onClose }: { onClose: () => void }) {
 
   const requesting = requestState.status === AsyncStatus.Loading;
   return (
-    <PromptDialog title="Verify this device" onClose={onClose}>
+    <PromptDialog title={tr('encryption.verify_title', 'Verify this device')} onClose={onClose}>
       <Text size="T300">
-        To read your encrypted messages here, confirm it&apos;s you: approve this device from one
-        you&apos;re already logged in on, or enter your recovery key or passphrase.
+        {tr(
+          'encryption.verify_body',
+          "To read your encrypted messages here, confirm it's you: approve this device from one you're already logged in on, or enter your recovery key or passphrase."
+        )}
       </Text>
       {useKey && keyId && keyContent ? (
         <ManualVerificationTile secretStorageKeyId={keyId} secretStorageKeyContent={keyContent} />
@@ -201,10 +211,10 @@ function UnlockPrompt({ onClose }: { onClose: () => void }) {
             disabled={requesting}
             before={requesting && <Spinner size="100" variant="Primary" fill="Solid" />}
           >
-            <Text size="B400">Use another device</Text>
+            <Text size="B400">{tr('encryption.use_device', 'Use another device')}</Text>
           </Button>
           <Button variant="Secondary" fill="Soft" onClick={() => setUseKey(true)}>
-            <Text size="B400">Enter recovery key</Text>
+            <Text size="B400">{tr('encryption.enter_key', 'Enter recovery key')}</Text>
           </Button>
         </Box>
       )}
@@ -212,7 +222,7 @@ function UnlockPrompt({ onClose }: { onClose: () => void }) {
         <Text size="T200">{requestState.error.message}</Text>
       )}
       <Button variant="Secondary" fill="None" onClick={onClose}>
-        <Text size="B400">Later</Text>
+        <Text size="B400">{tr('common.later', 'Later')}</Text>
       </Button>
     </PromptDialog>
   );
@@ -255,11 +265,18 @@ export function EncryptionSetup() {
         <Icon size="100" src={Icons.Shield} />
         <Text size="T300">
           {step === 'create'
-            ? 'Create a recovery key to read your messages on other devices.'
-            : "This device can't read your encrypted messages yet."}
+            ? tr(
+                'encryption.banner_create',
+                'Create a recovery key to read your messages on other devices.'
+              )
+            : tr('encryption.banner_unlock', "This device can't read your encrypted messages yet.")}
         </Text>
         <Button size="300" radii="300" variant="Warning" onClick={() => setOpen(true)}>
-          <Text size="B300">{step === 'create' ? 'Set up' : 'Verify'}</Text>
+          <Text size="B300">
+            {step === 'create'
+              ? tr('encryption.set_up', 'Set up')
+              : tr('encryption.verify', 'Verify')}
+          </Text>
         </Button>
       </Box>
       {open && step === 'create' && <CreateKeyPrompt onClose={handleClose} />}

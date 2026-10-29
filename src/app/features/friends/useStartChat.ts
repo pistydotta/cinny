@@ -7,6 +7,7 @@ import { createRoomEncryptionState } from '../../components/create-room';
 import { addRoomIdToMDirect, getDMRoomFor } from '../../utils/matrix';
 import { useDirectRooms } from '../../pages/client/direct/useDirectRooms';
 import { pickChatTarget } from './newChat';
+import { tr } from '../translation/tr';
 
 // Your DM with someone, if you have one.
 export const useFindDM = () => {
@@ -32,7 +33,7 @@ export const useStartChat = () => {
     useCallback(
       async (userIds, name) => {
         const target = pickChatTarget(userIds, findDM);
-        if (!target) throw new Error('Pick at least one friend.');
+        if (!target) throw new Error(tr('new_chat.pick_one', 'Pick at least one friend.'));
         if (target.kind === 'open') return target.roomId;
 
         const groupName = target.invite.length > 1 ? name?.trim() : undefined;

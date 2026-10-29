@@ -25,6 +25,7 @@ import { useCategoryHandler } from '../../hooks/useCategoryHandler';
 import { useDirectRooms } from '../../pages/client/direct/useDirectRooms';
 import { useClosedNavCategoriesAtom } from '../../state/hooks/closedNavCategories';
 import { useDirectCreateSelected } from '../../hooks/router/useDirectSelected';
+import { tr } from '../translation/tr';
 
 // Same id as the Direct page's category, so collapsing it carries over.
 const CATEGORY_ID = makeNavCategoryId('direct', 'direct');
@@ -60,7 +61,7 @@ export function HomeDirects() {
           data-category-id={CATEGORY_ID}
           onClick={handleCategoryClick}
         >
-          Direct Messages
+          {tr('nav.direct_messages', 'Direct Messages')}
         </RoomNavCategoryButton>
       </NavCategoryHeader>
       {!closed && (
@@ -73,7 +74,7 @@ export function HomeDirects() {
                 </Avatar>
                 <Box as="span" grow="Yes">
                   <Text as="span" size="Inherit" truncate>
-                    New Chat
+                    {tr('new_chat.title', 'New Chat')}
                   </Text>
                 </Box>
               </Box>

@@ -5,12 +5,13 @@ import { FriendsApiError } from './friendsApi';
 import { useFriends, useFriendsApi } from './useFriends';
 import { friendDisplayName } from './userDisplay';
 import { FriendAvatar } from './FriendAvatar';
+import { tr } from '../translation/tr';
 
 const pendingErrorMessage = (error: unknown): string => {
   if (error instanceof FriendsApiError && error.code === 'no_request') {
-    return 'This request no longer exists';
+    return tr('friends.error.no_request', 'This request no longer exists');
   }
-  return "Couldn't update the request, try again";
+  return tr('friends.error.update_failed', "Couldn't update the request, try again");
 };
 
 type Action = 'accept' | 'remove';
@@ -57,7 +58,10 @@ export function PendingRow({ userId, direction }: PendingRowProps) {
             {name}
           </Text>
           <Text size="T200" priority="300" truncate>
-            {direction === 'incoming' ? 'Incoming request' : 'Outgoing request'} · {userId}
+            {direction === 'incoming'
+              ? tr('friends.incoming_request', 'Incoming request')
+              : tr('friends.outgoing_request', 'Outgoing request')}{' '}
+            · {userId}
           </Text>
         </Box>
         <Box shrink="No" gap="200">
@@ -72,7 +76,7 @@ export function PendingRow({ userId, direction }: PendingRowProps) {
                 before={inFlight === 'accept' && spinner}
                 onClick={() => run('accept')}
               >
-                <Text size="B300">Accept</Text>
+                <Text size="B300">{tr('friends.accept', 'Accept')}</Text>
               </Button>
               <Button
                 size="300"
@@ -83,7 +87,7 @@ export function PendingRow({ userId, direction }: PendingRowProps) {
                 before={inFlight === 'remove' && spinner}
                 onClick={() => run('remove')}
               >
-                <Text size="B300">Decline</Text>
+                <Text size="B300">{tr('friends.decline', 'Decline')}</Text>
               </Button>
             </>
           ) : (
@@ -96,7 +100,7 @@ export function PendingRow({ userId, direction }: PendingRowProps) {
               before={inFlight === 'remove' && spinner}
               onClick={() => run('remove')}
             >
-              <Text size="B300">Cancel</Text>
+              <Text size="B300">{tr('common.cancel', 'Cancel')}</Text>
             </Button>
           )}
         </Box>

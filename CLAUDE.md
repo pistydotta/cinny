@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`,
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`,
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
@@ -48,5 +48,9 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   only line endings changed.
 - `WORD_SWAPS` word pairs are inside jokes about real people: never in code, tests or
   commits here (the repo is public). Use neutral examples like `hello=tchau`.
+- The app is in Portuguese for everyone (`src/app/i18n.ts`). Text you add goes through
+  `tr('key', 'English text')` from `features/translation/tr.ts`, with the Portuguese in
+  `features/translation/pt.json`. Upstream screens are only partly translated: the sidebar,
+  room view, timeline lines and profile card. The rest of upstream is still English.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

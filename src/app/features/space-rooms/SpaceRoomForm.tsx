@@ -27,6 +27,7 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { SequenceCard } from '../../components/sequence-card';
 import { FriendAvatar } from '../friends/FriendAvatar';
 import { pickableMembers } from './spaceRoomAccess';
+import { tr } from '../translation/tr';
 
 const typeIcon = (type: CreateRoomType) =>
   type === CreateRoomType.VoiceRoom ? Icons.VolumeHigh : Icons.Hash;
@@ -153,7 +154,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
   return (
     <Box as="form" onSubmit={handleSubmit} grow="Yes" direction="Column" gap="500">
       <Box direction="Column" gap="100">
-        <Text size="L400">Type</Text>
+        <Text size="L400">{tr('create_room.type', 'Type')}</Text>
         <CreateRoomTypeSelector
           value={type}
           onSelect={setType}
@@ -162,7 +163,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
         />
       </Box>
       <Box direction="Column" gap="100">
-        <Text size="L400">Name</Text>
+        <Text size="L400">{tr('create_room.name', 'Name')}</Text>
         <Input
           required
           before={<Icon size="100" src={typeIcon(type)} />}
@@ -176,7 +177,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
         />
       </Box>
       <Box direction="Column" gap="100">
-        <Text size="L400">Topic (Optional)</Text>
+        <Text size="L400">{tr('create_room.topic', 'Topic (Optional)')}</Text>
         <TextArea
           name="topicTextArea"
           size="500"
@@ -186,30 +187,40 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
         />
       </Box>
       <Box direction="Column" gap="100">
-        <Text size="L400">Who can see it</Text>
+        <Text size="L400">{tr('create_room.who_can_see', 'Who can see it')}</Text>
         <AccessOption
           selected={!onlyPicked}
           icon={Icons.Category}
-          title={`Everyone in ${space.name}`}
-          description="Anyone in the space can find and join it."
+          title={tr('create_room.everyone_in', 'Everyone in {{space}}', { space: space.name })}
+          description={tr('create_room.everyone_desc', 'Anyone in the space can find and join it.')}
           onClick={() => setOnlyPicked(false)}
           disabled={loading}
         />
         <AccessOption
           selected={onlyPicked}
           icon={Icons.Lock}
-          title="Only people I pick"
-          description="Hidden from everyone else in the space."
+          title={tr('create_room.only_picked', 'Only people I pick')}
+          description={tr(
+            'create_room.only_picked_desc',
+            'Hidden from everyone else in the space.'
+          )}
           onClick={() => setOnlyPicked(true)}
           disabled={loading}
         />
       </Box>
       {onlyPicked && (
         <Box direction="Column" gap="100">
-          <Text size="L400">Members{picked.size > 0 && ` (${picked.size} picked)`}</Text>
+          <Text size="L400">
+            {tr('create_room.members', 'Members')}
+            {picked.size > 0 &&
+              ` ${tr('create_room.n_picked', '({{n}} picked)', { n: picked.size })}`}
+          </Text>
           {members.length === 0 ? (
             <Text size="T300" priority="300">
-              Nobody else is in the space yet. You can invite space members later.
+              {tr(
+                'create_room.nobody_else',
+                'Nobody else is in the space yet. You can invite space members later.'
+              )}
             </Text>
           ) : (
             <Scroll size="300" hideTrack style={{ maxHeight: toRem(240) }}>
@@ -255,7 +266,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
         disabled={loading}
         before={loading && <Spinner variant="Primary" fill="Solid" size="200" />}
       >
-        <Text size="B500">Create</Text>
+        <Text size="B500">{tr('create_room.create', 'Create')}</Text>
       </Button>
     </Box>
   );

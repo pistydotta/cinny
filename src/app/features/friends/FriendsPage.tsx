@@ -15,6 +15,7 @@ import { EmptyState } from './EmptyState';
 import { TabChip } from './TabChip';
 import { FriendsPoller } from './FriendsPoller';
 import { InviteLink } from '../invites/InviteLink';
+import { tr } from '../translation/tr';
 
 type Tab = 'online' | 'all' | 'pending' | 'add';
 
@@ -57,13 +58,15 @@ export function FriendsPage() {
   const renderPending = () => {
     if (!lists) return null;
     if (lists.incoming.length === 0 && lists.outgoing.length === 0) {
-      return <EmptyState>No pending requests</EmptyState>;
+      return <EmptyState>{tr('friends.no_pending', 'No pending requests')}</EmptyState>;
     }
     return (
       <Box direction="Column" gap="400">
         {lists.incoming.length > 0 && (
           <Box direction="Column" gap="100">
-            <Text size="L400">Incoming ({lists.incoming.length})</Text>
+            <Text size="L400">
+              {tr('friends.incoming_n', 'Incoming ({{n}})', { n: lists.incoming.length })}
+            </Text>
             {lists.incoming.map((r) => (
               <PendingRow key={r.userId} userId={r.userId} direction="incoming" />
             ))}
@@ -71,7 +74,9 @@ export function FriendsPage() {
         )}
         {lists.outgoing.length > 0 && (
           <Box direction="Column" gap="100">
-            <Text size="L400">Outgoing ({lists.outgoing.length})</Text>
+            <Text size="L400">
+              {tr('friends.outgoing_n', 'Outgoing ({{n}})', { n: lists.outgoing.length })}
+            </Text>
             {lists.outgoing.map((r) => (
               <PendingRow key={r.userId} userId={r.userId} direction="outgoing" />
             ))}
@@ -97,8 +102,10 @@ export function FriendsPage() {
         </Box>
       );
     }
-    if (activeTab === 'online') return renderFriends(onlineFriends, 'No friends online');
-    if (activeTab === 'all') return renderFriends(sortedFriends, 'No friends yet');
+    if (activeTab === 'online')
+      return renderFriends(onlineFriends, tr('friends.none_online', 'No friends online'));
+    if (activeTab === 'all')
+      return renderFriends(sortedFriends, tr('friends.none_yet', 'No friends yet'));
     return renderPending();
   };
 
@@ -110,7 +117,10 @@ export function FriendsPage() {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" basis="No">
             {screenSize === ScreenSize.Mobile && (
-              <IconButton aria-label="Back" onClick={() => navigate(getHomePath())}>
+              <IconButton
+                aria-label={tr('common.back', 'Back')}
+                onClick={() => navigate(getHomePath())}
+              >
                 <Icon src={Icons.ArrowLeft} />
               </IconButton>
             )}
@@ -118,7 +128,7 @@ export function FriendsPage() {
           <Box alignItems="Center" gap="200">
             {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.User} />}
             <Text size="H3" truncate>
-              Friends
+              {tr('friends.title', 'Friends')}
             </Text>
           </Box>
           <Box grow="Yes" basis="No" />
@@ -131,20 +141,20 @@ export function FriendsPage() {
               <Box direction="Column" gap="500">
                 <Box gap="200" wrap="Wrap">
                   <TabChip selected={activeTab === 'online'} onClick={() => setTab('online')}>
-                    Online
+                    {tr('friends.tab.online', 'Online')}
                   </TabChip>
                   <TabChip selected={activeTab === 'all'} onClick={() => setTab('all')}>
-                    All
+                    {tr('friends.tab.all', 'All')}
                   </TabChip>
                   <TabChip
                     selected={activeTab === 'pending'}
                     onClick={() => setTab('pending')}
                     count={incomingCount}
                   >
-                    Pending
+                    {tr('friends.tab.pending', 'Pending')}
                   </TabChip>
                   <TabChip selected={activeTab === 'add'} onClick={() => setTab('add')}>
-                    Add Friend
+                    {tr('friends.tab.add', 'Add Friend')}
                   </TabChip>
                 </Box>
                 {error && (
@@ -160,7 +170,9 @@ export function FriendsPage() {
                     }}
                   >
                     <Icon size="100" src={Icons.Warning} />
-                    <Text size="T300">Couldn&apos;t reach the friends service. Retrying…</Text>
+                    <Text size="T300">
+                      {tr('friends.service_down', "Couldn't reach the friends service. Retrying…")}
+                    </Text>
                   </Box>
                 )}
                 {renderTab()}

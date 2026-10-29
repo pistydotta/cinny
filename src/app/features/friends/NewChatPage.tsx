@@ -36,11 +36,12 @@ import { useFindDM, useStartChat } from './useStartChat';
 import { filterFriends } from './newChat';
 import { friendDisplayName } from './userDisplay';
 import { FriendAvatar } from './FriendAvatar';
+import { tr } from '../translation/tr';
 
 function ErrorLine({ error }: { error: Error | MatrixError }) {
   const message =
     error instanceof MatrixError && error.name === ErrorCode.M_LIMIT_EXCEEDED
-      ? 'The server is busy. Try again in a moment.'
+      ? tr('common.server_busy', 'The server is busy. Try again in a moment.')
       : error.message;
   return (
     <Box style={{ color: color.Critical.Main }} alignItems="Center" gap="200">
@@ -79,7 +80,7 @@ function FriendPicker({ friendIds, busy, onStart }: FriendPickerProps) {
     return (
       <Box direction="Column" alignItems="Center" gap="300">
         <Text size="T300" align="Center">
-          You can chat with your friends here. Add some first.
+          {tr('new_chat.no_friends', 'You can chat with your friends here. Add some first.')}
         </Text>
         <Button
           size="400"
@@ -87,7 +88,7 @@ function FriendPicker({ friendIds, busy, onStart }: FriendPickerProps) {
           radii="400"
           onClick={() => navigate(getFriendsPath())}
         >
-          <Text size="B400">Go to Friends</Text>
+          <Text size="B400">{tr('new_chat.go_to_friends', 'Go to Friends')}</Text>
         </Button>
       </Box>
     );
@@ -98,7 +99,7 @@ function FriendPicker({ friendIds, busy, onStart }: FriendPickerProps) {
       <Input
         value={query}
         onChange={(e) => setQuery(e.currentTarget.value)}
-        placeholder="Search friends"
+        placeholder={tr('new_chat.search_friends', 'Search friends')}
         variant="SurfaceVariant"
         size="500"
         radii="400"
@@ -109,7 +110,7 @@ function FriendPicker({ friendIds, busy, onStart }: FriendPickerProps) {
       <Box direction="Column" gap="100" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
         {shown.length === 0 && (
           <Text size="T300" priority="300" align="Center">
-            No friend matches “{query.trim()}”.
+            {tr('new_chat.no_match', 'No friend matches “{{query}}”.', { query: query.trim() })}
           </Text>
         )}
         {shown.map((id) => {
@@ -140,7 +141,7 @@ function FriendPicker({ friendIds, busy, onStart }: FriendPickerProps) {
       </Box>
       {group && (
         <Box direction="Column" gap="100">
-          <Text size="L400">Group name (optional)</Text>
+          <Text size="L400">{tr('new_chat.group_name', 'Group name (optional)')}</Text>
           <Input
             value={name}
             onChange={(e) => setName(e.currentTarget.value)}
@@ -163,7 +164,9 @@ function FriendPicker({ friendIds, busy, onStart }: FriendPickerProps) {
         before={busy && <Spinner variant="Primary" fill="Solid" size="200" />}
       >
         <Text size="B500">
-          {group ? `Create group with ${picked.length} friends` : 'Start chat'}
+          {group
+            ? tr('new_chat.create_group', 'Create group with {{n}} friends', { n: picked.length })
+            : tr('new_chat.start_chat', 'Start chat')}
         </Text>
       </Button>
     </Box>
@@ -242,7 +245,7 @@ export function NewChatPage() {
           onClick={() => start([target])}
           before={busy && <Spinner variant="Primary" fill="Solid" size="200" />}
         >
-          <Text size="B500">Start chat</Text>
+          <Text size="B500">{tr('new_chat.start_chat', 'Start chat')}</Text>
         </Button>
       </Box>
     );
@@ -253,7 +256,10 @@ export function NewChatPage() {
       {screenSize === ScreenSize.Mobile && (
         <PageHeader balance outlined={false}>
           <Box grow="Yes" alignItems="Center" gap="200">
-            <IconButton aria-label="Back" onClick={() => navigate(getDirectPath())}>
+            <IconButton
+              aria-label={tr('common.back', 'Back')}
+              onClick={() => navigate(getDirectPath())}
+            >
               <Icon src={Icons.ArrowLeft} />
             </IconButton>
           </Box>
@@ -267,8 +273,11 @@ export function NewChatPage() {
                 <Box direction="Column" gap="700">
                   <PageHero
                     icon={<Icon size="600" src={Icons.Message} />}
-                    title="New Chat"
-                    subTitle="Pick a friend for a DM, or several for a group chat."
+                    title={tr('new_chat.title', 'New Chat')}
+                    subTitle={tr(
+                      'new_chat.subtitle',
+                      'Pick a friend for a DM, or several for a group chat.'
+                    )}
                   />
                   {userId ? (
                     renderLinkTarget(userId)
