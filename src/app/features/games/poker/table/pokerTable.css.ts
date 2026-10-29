@@ -244,9 +244,23 @@ export const EmptySeat = style({
   justifyContent: 'center',
   fontSize: '1.6cqmin',
   color: 'rgba(255,255,255,0.35)',
+  font: 'inherit',
+  padding: 0,
   selectors: {
     '[data-layout="portrait"] &': { width: '13cqmin', height: '13cqmin', fontSize: '2.4cqmin' },
+    '&[data-open="true"]': {
+      cursor: 'pointer',
+      color: GOLD,
+      fontWeight: 800,
+      border: `0.3cqmin dashed rgba(245,200,75,0.6)`,
+      background: 'rgba(245,200,75,0.10)',
+    },
+    '&[data-open="true"]:hover': { background: 'rgba(245,200,75,0.22)' },
   },
+});
+
+export const HostMark = style({
+  color: GOLD,
 });
 
 export const SeatCards = style({

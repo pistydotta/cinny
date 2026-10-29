@@ -58,6 +58,8 @@ export type PokerPlayer = {
   /** The table's bet level right after this player's last action on this street. */
   lastActionBetLevel: number;
   lastAction?: LastAction;
+  /** Skips the next hands until cleared (e.g. after timing out at a shared table). */
+  sittingOut?: boolean;
 };
 
 export type Street = 'preflop' | 'flop' | 'turn' | 'river';
@@ -268,10 +270,23 @@ export const addChips = (state: PokerState, playerId: string, amount: number): P
     pushLog(d, `${p.name} recomprou ${formatChips(amount)} fichas`);
   });
 
-export const canStartHand = (state: PokerState): boolean =>
-  !isHandInProgress(state) && state.players.filter((p) => p.stack > 0).length >= 2;
+const isDealtIn = (p: PokerPlayer) => p.stack > 0 && !p.sittingOut;
 
-export const startHand = (state: PokerState, random: RandomFn): PokerState =>
+export const canStartHand = (state: PokerState): boolean =>
+  !isHandInProgress(state) && state.players.filter(isDealtIn).length >= 2;
+
+export type StartHandOptions = {
+  /** A deck shuffled elsewhere (by whoever deals at a shared table). */
+  deck?: Card[];
+  /** Button for the first hand; later hands move it clockwise. */
+  buttonSeat?: number;
+};
+
+export const startHand = (
+  state: PokerState,
+  random: RandomFn,
+  options: StartHandOptions = {}
+): PokerState =>
   produce(state, (d) => {
     if (!canStartHand(d)) throw new Error('Cannot start a hand');
     const { smallBlind, bigBlind } = d.config;
@@ -283,7 +298,7 @@ export const startHand = (state: PokerState, random: RandomFn): PokerState =>
       p.hasActed = false;
       p.lastActionBetLevel = 0;
       p.lastAction = undefined;
-      p.status = p.stack > 0 ? 'active' : 'sitting-out';
+      p.status = isDealtIn(p) ? 'active' : 'sitting-out';
     });
     const dealt = d.players.filter((p) => p.status === 'active');
 
@@ -294,10 +309,9 @@ export const startHand = (state: PokerState, random: RandomFn): PokerState =>
     d.street = 'preflop';
     d.lastAggressorSeat = null;
 
-    const button =
-      d.buttonSeat === null
-        ? dealt[randomInt(dealt.length, random)]
-        : clockwiseAfter(dealt, d.buttonSeat)[0];
+    const firstButton =
+      dealt.find((p) => p.seat === options.buttonSeat) ?? dealt[randomInt(dealt.length, random)];
+    const button = d.buttonSeat === null ? firstButton : clockwiseAfter(dealt, d.buttonSeat)[0];
     d.buttonSeat = button.seat;
 
     const [afterButton1, afterButton2] = clockwiseAfter(dealt, button.seat);
@@ -321,7 +335,8 @@ export const startHand = (state: PokerState, random: RandomFn): PokerState =>
     d.minRaise = bigBlind;
 
     // Deal one card at a time, starting left of the button.
-    d.deck = shuffle(createDeck(), random);
+    if (options.deck && options.deck.length !== 52) throw new Error('A full deck is required');
+    d.deck = options.deck ? options.deck.slice() : shuffle(createDeck(), random);
     const dealOrder = clockwiseAfter(dealt, button.seat);
     for (let round = 0; round < 2; round += 1) {
       dealOrder.forEach((p) => {

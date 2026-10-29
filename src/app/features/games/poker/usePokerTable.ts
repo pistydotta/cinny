@@ -23,7 +23,8 @@ import {
   shuffle,
   startHand,
 } from './engine';
-import { GameWallet } from '../wallet/gameWallet';
+import { GameWallet, PRACTICE_TABLE } from '../wallet/gameWallet';
+import type { TurnTimer } from './table/PokerTable';
 
 export const POKER_CONFIG: PokerConfig = { smallBlind: 10, bigBlind: 20, maxSeats: 6 };
 export const MIN_BUY_IN = 20 * POKER_CONFIG.bigBlind;
@@ -59,11 +60,7 @@ export type TableSetup = {
   bots: number;
 };
 
-export type BotTurn = {
-  seat: number;
-  ms: number;
-  key: string;
-};
+export type BotTurn = TurnTimer;
 
 export type PokerTableController = {
   state: PokerState;
@@ -138,7 +135,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
     async (table: PokerState) => {
       const stack = getPlayer(table, heroId)?.stack ?? 0;
       resetTable();
-      await walletRef.current.cashOut(stack);
+      await walletRef.current.cashOut(stack, PRACTICE_TABLE);
     },
     [heroId, resetTable]
   );
@@ -211,7 +208,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
   useEffect(() => {
     if (!seated || state.phase !== 'complete' || !state.result) return undefined;
     const me = getPlayer(state, heroId);
-    walletRef.current.syncTable(me?.stack ?? 0).catch(() => undefined);
+    walletRef.current.syncTable(me?.stack ?? 0, PRACTICE_TABLE).catch(() => undefined);
     const timer = setTimeout(
       () => {
         if (stateRef.current === state) nextHand();
@@ -226,7 +223,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
     () => () => {
       if (!seatedRef.current) return;
       const stack = getPlayer(stateRef.current, heroId)?.stack ?? 0;
-      walletRef.current.cashOut(stack).catch(() => undefined);
+      walletRef.current.cashOut(stack, PRACTICE_TABLE).catch(() => undefined);
     },
     [heroId]
   );
@@ -235,7 +232,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
     async (setup: TableSetup) => {
       setError(undefined);
       try {
-        await walletRef.current.buyIn(setup.buyIn);
+        await walletRef.current.buyIn(setup.buyIn, PRACTICE_TABLE);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Não foi possível comprar fichas.');
         return;
@@ -288,7 +285,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
     async (amount: number) => {
       setError(undefined);
       try {
-        await walletRef.current.buyIn(amount);
+        await walletRef.current.buyIn(amount, PRACTICE_TABLE);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Não foi possível comprar fichas.');
         return;

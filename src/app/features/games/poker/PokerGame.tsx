@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Icon, Icons } from 'folds';
-import { formatChips, LogEntry } from './engine';
+import { formatChips } from './engine';
+import { BuyInField, HistoryDrawer } from './TableParts';
 import {
   MAX_BUY_IN,
   MIN_BUY_IN,
@@ -9,42 +10,11 @@ import {
   TableSetup,
   usePokerTable,
 } from './usePokerTable';
-import { GameWallet } from '../wallet/gameWallet';
+import { GameWallet, PRACTICE_TABLE } from '../wallet/gameWallet';
 import { PokerTable } from './table/PokerTable';
 import { TableLayout } from './table/layout';
 import { ActionBar } from './ActionBar';
 import * as css from './pokerPage.css';
-
-type BuyInFieldProps = {
-  value: number;
-  max: number;
-  onChange: (value: number) => void;
-};
-
-function BuyInField({ value, max, onChange }: BuyInFieldProps) {
-  return (
-    <div className={css.Field}>
-      <div className={css.FieldHeader}>
-        <span>Fichas para levar à mesa</span>
-        <span className={css.FieldValue}>{formatChips(value)}</span>
-      </div>
-      <input
-        className={css.Range}
-        type="range"
-        min={MIN_BUY_IN}
-        max={max}
-        step={POKER_CONFIG.bigBlind * 5}
-        value={value}
-        onChange={(evt) => onChange(Number(evt.target.value))}
-        aria-label="Fichas para levar à mesa"
-      />
-      <div className={css.RangeLimits}>
-        <span>{formatChips(MIN_BUY_IN)}</span>
-        <span>{formatChips(max)}</span>
-      </div>
-    </div>
-  );
-}
 
 type JoinDialogProps = {
   balance: number;
@@ -81,7 +51,13 @@ function JoinDialog({ balance, ready, error, onSit }: JoinDialogProps) {
       </div>
 
       {canAfford ? (
-        <BuyInField value={buyIn} max={maxBuyIn} onChange={setBuyIn} />
+        <BuyInField
+          value={buyIn}
+          min={MIN_BUY_IN}
+          max={maxBuyIn}
+          step={POKER_CONFIG.bigBlind * 5}
+          onChange={setBuyIn}
+        />
       ) : (
         <p className={css.ErrorText}>
           Você precisa de pelo menos {formatChips(MIN_BUY_IN)} moedas para sentar.
@@ -157,7 +133,13 @@ function RebuyDialog({ balance, error, onRebuy, onLeave }: RebuyDialogProps) {
         </p>
       </div>
       {canAfford ? (
-        <BuyInField value={amount} max={maxBuyIn} onChange={setAmount} />
+        <BuyInField
+          value={amount}
+          min={MIN_BUY_IN}
+          max={maxBuyIn}
+          step={POKER_CONFIG.bigBlind * 5}
+          onChange={setAmount}
+        />
       ) : (
         <p className={css.ErrorText}>Sua carteira não tem moedas suficientes para recomprar.</p>
       )}
@@ -207,19 +189,8 @@ export function PokerGame({ hero: heroInfo, wallet, onBack }: PokerGameProps) {
   useEffect(() => {
     if (!ready || recoveredRef.current) return;
     recoveredRef.current = true;
-    recoverTableChips().catch(() => undefined);
+    recoverTableChips(PRACTICE_TABLE).catch(() => undefined);
   }, [ready, recoverTableChips]);
-
-  // Newest hand first, each hand read top to bottom.
-  const history = useMemo(() => {
-    const hands: LogEntry[][] = [];
-    state.log.forEach((entry) => {
-      const last = hands[hands.length - 1];
-      if (last && last[0].hand === entry.hand) last.push(entry);
-      else hands.push([entry]);
-    });
-    return hands.reverse().flat();
-  }, [state.log]);
 
   return (
     <div className={css.Page}>
@@ -270,25 +241,15 @@ export function PokerGame({ hero: heroInfo, wallet, onBack }: PokerGameProps) {
 
       <div className={css.TableArea} ref={areaRef}>
         <div className={css.StageWrap} data-layout={layout}>
-          <PokerTable state={state} heroId={heroInfo.id} botTurn={table.botTurn} layout={layout} />
+          <PokerTable
+            state={state}
+            heroId={heroInfo.id}
+            turnTimer={table.botTurn}
+            layout={layout}
+          />
         </div>
 
-        {showHistory && seated && (
-          <div className={css.Drawer}>
-            <div className={css.DrawerHeader}>Histórico da mesa</div>
-            <div className={css.DrawerList}>
-              {history.map((entry) =>
-                entry.text.startsWith('—') ? (
-                  <div key={entry.id} className={css.DrawerHand}>
-                    {entry.text}
-                  </div>
-                ) : (
-                  <div key={entry.id}>{entry.text}</div>
-                )
-              )}
-            </div>
-          </div>
-        )}
+        {showHistory && seated && <HistoryDrawer log={state.log} />}
 
         {!seated && (
           <div className={css.Overlay}>

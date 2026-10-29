@@ -10,7 +10,9 @@ import {
   GameWalletContent,
   parseGameWallet,
   recoverUpdate,
+  refundUpdate,
   syncTableUpdate,
+  totalAtTables,
   WalletUpdate,
 } from './gameWallet';
 
@@ -63,20 +65,24 @@ export const useMatrixGameWallet = (): GameWallet => {
     () => ({
       ready: !!current,
       balance: current?.balance ?? 0,
-      atTable: current?.atTable ?? 0,
-      buyIn: async (amount) => {
-        await update(buyInUpdate(amount));
+      atTable: current ? totalAtTables(current) : 0,
+      chipsAt: (table) => current?.tables[table] ?? 0,
+      buyIn: async (amount, table) => {
+        await update(buyInUpdate(amount, table));
       },
-      syncTable: async (stack) => {
-        await update(syncTableUpdate(stack));
+      syncTable: async (stack, table) => {
+        await update(syncTableUpdate(stack, table));
       },
-      cashOut: async (stack) => {
-        await update(cashOutUpdate(stack));
+      cashOut: async (stack, table) => {
+        await update(cashOutUpdate(stack, table));
       },
-      recoverTableChips: async () => {
-        const amount = latestRef.current?.atTable ?? 0;
-        if (amount > 0) await update(recoverUpdate);
+      recoverTableChips: async (table) => {
+        const amount = latestRef.current?.tables[table] ?? 0;
+        if (amount > 0) await update(recoverUpdate(table));
         return amount;
+      },
+      refund: async (amount, table) => {
+        await update(refundUpdate(amount, table));
       },
     }),
     [current, update]

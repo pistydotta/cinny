@@ -1,4 +1,4 @@
-import { keyframes, style } from '@vanilla-extract/css';
+import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 
 const GOLD = '#f5c84b';
 
@@ -500,3 +500,208 @@ export const DrawerHand = style({
   fontWeight: 800,
   color: GOLD,
 });
+
+/* ---------- Lobby ---------- */
+
+export const LobbyScroll = style({
+  flexGrow: 1,
+  minHeight: 0,
+  overflowY: 'auto',
+});
+
+export const LobbyInner = style({
+  maxWidth: 880,
+  margin: '0 auto',
+  padding: '24px 16px 48px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 20,
+});
+
+export const SectionHeader = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+});
+
+export const SectionTitle = style({
+  margin: 0,
+  fontSize: 18,
+  fontWeight: 800,
+});
+
+export const SmallButton = style({
+  height: 38,
+  padding: '0 16px',
+  borderRadius: 10,
+  border: 'none',
+  background: `linear-gradient(180deg, #ffd96a 0%, ${GOLD} 50%, #d9a520 100%)`,
+  color: '#2a1d00',
+  fontSize: 14,
+  fontWeight: 800,
+  cursor: 'pointer',
+  textAlign: 'center',
+  whiteSpace: 'nowrap',
+  selectors: {
+    '&:disabled': { opacity: 0.5, cursor: 'default' },
+  },
+});
+
+export const TableList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+});
+
+export const TableRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 14,
+  padding: '14px 16px',
+  borderRadius: 14,
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
+});
+
+export const TableIcon = style({
+  width: 44,
+  height: 44,
+  borderRadius: 12,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 22,
+  background: 'radial-gradient(ellipse at 50% 40%, #33a865, #135c33)',
+  boxShadow: 'inset 0 0 0 2px rgba(200,162,74,0.5)',
+});
+
+export const TableInfo = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  minWidth: 0,
+  flexGrow: 1,
+});
+
+export const TableName = style({
+  fontSize: 15,
+  fontWeight: 700,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
+
+export const TableMeta = style({
+  fontSize: 12.5,
+  color: 'rgba(255,255,255,0.55)',
+});
+
+export const EmptyState = style({
+  padding: '22px 18px',
+  borderRadius: 14,
+  border: '1px dashed rgba(255,255,255,0.12)',
+  fontSize: 14,
+  lineHeight: 1.5,
+  color: 'rgba(255,255,255,0.6)',
+  textAlign: 'center',
+});
+
+export const PracticeCard = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 14,
+  padding: '16px 18px',
+  borderRadius: 14,
+  background: 'linear-gradient(135deg, rgba(44,142,240,0.16), rgba(255,255,255,0.03))',
+  border: '1px solid rgba(44,142,240,0.3)',
+});
+
+export const TextInput = style({
+  height: 42,
+  borderRadius: 10,
+  border: '1px solid rgba(255,255,255,0.14)',
+  background: 'rgba(0,0,0,0.3)',
+  color: '#fff',
+  fontSize: 14,
+  padding: '0 12px',
+  outline: 'none',
+  selectors: {
+    '&:focus': { borderColor: GOLD },
+  },
+});
+
+export const CheckRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 10px',
+  borderRadius: 10,
+  cursor: 'pointer',
+  fontSize: 14,
+  selectors: {
+    '&:hover': { background: 'rgba(255,255,255,0.05)' },
+  },
+});
+
+export const ContactList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  maxHeight: 180,
+  overflowY: 'auto',
+  borderRadius: 10,
+  background: 'rgba(255,255,255,0.03)',
+});
+
+export const Muted = style({
+  color: 'rgba(255,255,255,0.5)',
+  fontSize: 12,
+});
+
+/* The app resets the native look of inputs; draw checkboxes and sliders ourselves. */
+
+export const CheckInput = style({
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  width: 18,
+  height: 18,
+  flexShrink: 0,
+  margin: 0,
+  borderRadius: 5,
+  border: '2px solid rgba(255,255,255,0.35)',
+  background: 'transparent',
+  cursor: 'pointer',
+  selectors: {
+    '&:checked': {
+      borderColor: GOLD,
+      background: `${GOLD} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%232a1d00' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat`,
+    },
+  },
+});
+
+const sliderBase = {
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  height: 6,
+  borderRadius: 9999,
+  background: 'rgba(255,255,255,0.14)',
+  outline: 'none',
+} as const;
+
+globalStyle(`${Range}, ${RaiseSlider}`, sliderBase);
+
+const thumb = {
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  width: 20,
+  height: 20,
+  borderRadius: '50%',
+  border: '3px solid #2a1d00',
+  background: GOLD,
+  boxShadow: '0 0 0 2px rgba(245,200,75,0.35), 0 2px 6px rgba(0,0,0,0.5)',
+  cursor: 'pointer',
+} as const;
+
+globalStyle(`${Range}::-webkit-slider-thumb, ${RaiseSlider}::-webkit-slider-thumb`, thumb);
+globalStyle(`${Range}::-moz-range-thumb, ${RaiseSlider}::-moz-range-thumb`, thumb);

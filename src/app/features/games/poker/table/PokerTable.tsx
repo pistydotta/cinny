@@ -9,7 +9,7 @@ import {
   PokerPlayer,
   PokerState,
 } from '../engine';
-import { BotTurn } from '../usePokerTable';
+
 import { PlayingCard } from './PlayingCard';
 import { ChipStack } from './Chips';
 import { LAYOUTS, offset, pct, TableLayout } from './layout';
@@ -56,10 +56,13 @@ const initials = (name: string): string =>
 
 type PlayerAvatarProps = {
   player: PokerPlayer;
+  resolveAvatar?: (url: string) => string | undefined;
 };
 
-function PlayerAvatar({ player }: PlayerAvatarProps) {
+function PlayerAvatar({ player, resolveAvatar }: PlayerAvatarProps) {
   const hue = nameHue(player.name);
+  const src =
+    player.avatarUrl && (resolveAvatar ? resolveAvatar(player.avatarUrl) : player.avatarUrl);
   return (
     <div
       className={css.Avatar}
@@ -69,8 +72,8 @@ function PlayerAvatar({ player }: PlayerAvatarProps) {
         } 65% 36%))`,
       }}
     >
-      {player.avatarUrl ? (
-        <img className={css.AvatarImage} src={player.avatarUrl} alt="" draggable={false} />
+      {src ? (
+        <img className={css.AvatarImage} src={src} alt="" draggable={false} />
       ) : (
         initials(player.name)
       )}
@@ -78,17 +81,50 @@ function PlayerAvatar({ player }: PlayerAvatarProps) {
   );
 }
 
+export type TurnTimer = {
+  seat: number;
+  ms: number;
+  /** Time already used, when the turn started before this render. */
+  elapsedMs?: number;
+  key: string;
+};
+
 type PokerTableProps = {
   state: PokerState;
   heroId?: string;
-  botTurn?: BotTurn;
+  turnTimer?: TurnTimer;
+  /** Seat shown at the bottom (the local player's seat at a shared table). */
+  seatOffset?: number;
+  /** Makes empty seats clickable. */
+  onSeatClick?: (seat: number) => void;
+  /** Player who organizes a shared table. */
+  hostId?: string | null;
+  /** Turns stored avatar urls (e.g. mxc://) into urls the browser can load. */
+  resolveAvatar?: (url: string) => string | undefined;
   layout: TableLayout;
   /** Shown in the felt when nobody is seated yet. */
   emptyLabel?: string;
 };
 
-export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: PokerTableProps) {
-  const spec = LAYOUTS[layout];
+export function PokerTable({
+  state,
+  heroId,
+  turnTimer,
+  layout,
+  emptyLabel,
+  seatOffset = 0,
+  onSeatClick,
+  hostId,
+  resolveAvatar,
+}: PokerTableProps) {
+  const layoutSpec = LAYOUTS[layout];
+  // Rotate the table so `seatOffset` sits at the bottom.
+  const spec = {
+    ...layoutSpec,
+    seats: SEATS.map((seat) => layoutSpec.seats[(seat - seatOffset + 12) % 6]),
+    bets: SEATS.map((seat) => layoutSpec.bets[(seat - seatOffset + 12) % 6]),
+    dealer: SEATS.map((seat) => layoutSpec.dealer[(seat - seatOffset + 12) % 6]),
+  };
   const { result, phase } = state;
 
   const contesting = state.players.filter((p) => p.status === 'active' || p.status === 'allin');
@@ -197,9 +233,17 @@ export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: Poker
       {/* Empty seats */}
       {SEATS.map((seat) =>
         getPlayerAtSeat(state, seat) ? null : (
-          <div key={`empty-${seat}`} className={css.EmptySeat} style={pct(spec.seats[seat])}>
-            vazio
-          </div>
+          <button
+            key={`empty-${seat}`}
+            type="button"
+            className={css.EmptySeat}
+            style={pct(spec.seats[seat])}
+            disabled={!onSeatClick}
+            data-open={!!onSeatClick}
+            onClick={() => onSeatClick?.(seat)}
+          >
+            {onSeatClick ? 'Sentar' : 'vazio'}
+          </button>
         )
       )}
 
@@ -261,7 +305,7 @@ export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: Poker
         const reveal = revealCards && (p.status === 'active' || p.status === 'allin');
         const faceUp = isHero || reveal;
         const myTurn = phase === 'betting' && state.actingSeat === p.seat;
-        const timer = myTurn && botTurn?.seat === p.seat ? botTurn : undefined;
+        const timer = myTurn && turnTimer?.seat === p.seat ? turnTimer : undefined;
         const won = showResult ? result?.payouts[p.id] : undefined;
         const shown = showdown ? result?.hands[p.id] : undefined;
         const showCards = inHand && p.holeCards.length > 0 && (!folded || isHero);
@@ -270,6 +314,7 @@ export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: Poker
         let badge: LastAction | undefined = p.lastAction;
         if (p.status === 'allin') badge = { type: 'allin' };
         if (showResult) badge = undefined;
+        const away = p.sittingOut && p.status === 'sitting-out';
 
         return (
           <div
@@ -303,7 +348,7 @@ export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: Poker
               </div>
             )}
             <div className={css.AvatarWrap} data-turn={myTurn && !timer} data-winner={!!won}>
-              <PlayerAvatar player={p} />
+              <PlayerAvatar player={p} resolveAvatar={resolveAvatar} />
               {timer && (
                 <svg className={css.TimerRing} viewBox="0 0 100 100" aria-hidden>
                   <circle className={css.TimerTrack} cx="50" cy="50" r={RING_RADIUS} />
@@ -317,6 +362,7 @@ export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: Poker
                       {
                         '--ring-length': RING_LENGTH,
                         animationDuration: `${timer.ms}ms`,
+                        animationDelay: `-${timer.elapsedMs ?? 0}ms`,
                       } as CSSProperties
                     }
                   />
@@ -324,12 +370,24 @@ export function PokerTable({ state, heroId, botTurn, layout, emptyLabel }: Poker
               )}
             </div>
             <div className={css.Plate}>
-              {badge && (
+              {badge && !away && (
                 <div className={css.ActionBadge} data-kind={badge.type}>
                   {actionLabel(badge)}
                 </div>
               )}
-              <div className={css.PlateName}>{isHero ? `${p.name} (você)` : p.name}</div>
+              {away && (
+                <div className={css.ActionBadge} data-kind="fold">
+                  Ausente
+                </div>
+              )}
+              <div className={css.PlateName}>
+                {hostId === p.id && (
+                  <span className={css.HostMark} title="Organiza a mesa e embaralha as cartas">
+                    ★{' '}
+                  </span>
+                )}
+                {isHero ? `${p.name} (você)` : p.name}
+              </div>
               <div className={css.PlateStack}>{formatChips(p.stack)}</div>
               {shown && (
                 <div className={css.HandName} data-winner={!!won}>

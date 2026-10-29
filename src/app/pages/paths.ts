@@ -79,6 +79,8 @@ export const CREATE_PATH = '/create';
 export const _POKER_PATH = 'poker/';
 export const GAMES_PATH = '/games/';
 export const GAMES_POKER_PATH = `/games/${_POKER_PATH}`;
+export const GAMES_POKER_PRACTICE_PATH = `/games/${_POKER_PATH}practice/`;
+export const GAMES_POKER_TABLE_PATH = `/games/${_POKER_PATH}table/:roomId/`;
 
 export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';

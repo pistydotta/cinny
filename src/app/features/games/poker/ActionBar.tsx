@@ -18,6 +18,8 @@ type ActionBarProps = {
   leaveAfterHand: boolean;
   onAction: (action: PokerAction) => void;
   onCancelLeave: () => void;
+  /** Status while no hand is being played. */
+  waitingText?: string;
 };
 
 const PRESETS: { label: string; fraction?: number }[] = [
@@ -34,6 +36,7 @@ export function ActionBar({
   leaveAfterHand,
   onAction,
   onCancelLeave,
+  waitingText = 'Embaralhando…',
 }: ActionBarProps) {
   const [raiseTo, setRaiseTo] = useState(0);
 
@@ -86,7 +89,7 @@ export function ActionBar({
   } else if (state.phase === 'betting' && acting) {
     status = `${acting.name} está pensando…`;
   } else if (state.phase === 'waiting') {
-    status = 'Embaralhando…';
+    status = waitingText;
   }
 
   const isAllIn = legal ? raiseTo >= legal.maxRaiseTo : false;
