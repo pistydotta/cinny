@@ -23,3 +23,80 @@ jobs:
         run: |
           npx tsc --noEmit > tsc.log || true
           if grep -E "src/app/features/friends/|src/app/pages/client/sidebar/FriendsTab.tsx|src/element-call/|src/app/components/toast/|invite-user-prompt/inviteUserId|src/app/features/admin/|src/app/features/settings/admin/|src/app/features/invites/|src/app/utils/blazeroomApi|src/app/features/word-swap/(wordSwap|WordSwapEffect)|space-autojoin/spaceAutoJoin|room-nav/callMembers|call-rejoin/savedCall" tsc.log; then exit 1; fi
+
+  # After a merge into blazeroom: tag the next blazeroom-vN, then open the PR in
+  # pistydotta/blazeroom that bumps docker-compose.yml to it. Merging that PR deploys, and
+  # stays a person's call. Needs the BLAZEROOM_TOKEN secret (see CLAUDE.md); without it the
+  # tag is still made and the PR is left to open by hand.
+  release:
+    needs: check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag the next version
+        id: tag
+        run: |
+          prev=$(git tag -l 'blazeroom-v*' | sort -V | tail -1)
+          if [ "$(git rev-list -n1 "$prev")" = "$(git rev-parse HEAD)" ]; then
+            echo "This commit is already $prev."
+            exit 0
+          fi
+          # Only CI or docs changed: the site would be the same, so no new version.
+          if git diff --quiet "$prev" HEAD -- . ':!.github' ':!*.md'; then
+            echo "Nothing that changes the site since $prev."
+            exit 0
+          fi
+          tag="blazeroom-v$(( ${prev#blazeroom-v} + 1 ))"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$tag" -m "$tag"
+          git push origin "$tag"
+          {
+            echo "tag=$tag"
+            echo 'changes<<CHANGES_EOF'
+            git log --no-merges --format='- %s' "$prev..HEAD"
+            echo 'CHANGES_EOF'
+          } >> "$GITHUB_OUTPUT"
+      - name: Open the deploy PR in blazeroom
+        if: steps.tag.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.BLAZEROOM_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          CHANGES: ${{ steps.tag.outputs.changes }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::BLAZEROOM_TOKEN isn't set. Tagged $TAG; open the deploy PR by hand."
+            exit 0
+          fi
+          gh repo clone pistydotta/blazeroom blazeroom -- --depth 1
+          cd blazeroom
+          gh auth setup-git
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch="deploy/cinny-${TAG#blazeroom-}"
+          git switch -c "$branch"
+          sed -i -E "s|(cinny\.git#)blazeroom-v[0-9]+|\1$TAG|" docker-compose.yml
+          if git diff --quiet; then
+            echo "::error::No cinny.git#blazeroom-vN in docker-compose.yml to bump."
+            exit 1
+          fi
+          printf 'Deploy Cinny %s\n\n%s\n' "$TAG" "$CHANGES" > msg.txt
+          git commit -a -F msg.txt
+          git push origin "$branch"
+          # A newer version includes the older ones, so older deploy PRs still open are closed.
+          old=$(gh pr list --state open --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("deploy/cinny-v")) | .number')
+          printf 'Bumps the Cinny fork to `%s`. **Merging deploys it to the site.**\n\nChanges since the last version:\n%s\n' \
+            "$TAG" "$CHANGES" > body.md
+          gh pr create --base main --head "$branch" --title "Deploy Cinny $TAG" --body-file body.md
+          for n in $old; do
+            gh pr close "$n" --delete-branch --comment "Replaced by the $TAG deploy PR, which includes it."
+          done

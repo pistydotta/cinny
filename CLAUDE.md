@@ -9,9 +9,16 @@ a person merges.
 ## Shipping a change
 
 The site builds Cinny from a tag, not from the branch. After a PR is merged into
-`blazeroom`, tag it `blazeroom-vN` (the next number after the latest `blazeroom-v*` tag)
-and push the tag. Then bump `#blazeroom-vN` in blazeroom's `docker-compose.yml` in a PR
-there; merging that PR deploys.
+`blazeroom`, the `release` job in [blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml)
+tags it `blazeroom-vN` (the next number) and opens the PR in blazeroom that bumps
+`#blazeroom-vN` in `docker-compose.yml`, closing older deploy PRs still open. Merging that
+PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
+
+- It needs the `BLAZEROOM_TOKEN` Actions secret on this fork: a fine-grained token with
+  access to `pistydotta/blazeroom` only, with Contents and Pull requests set to read and
+  write. Without it the tag is still made and the job warns; open the PR by hand.
+- The fork's default branch is `dev` (from upstream), so new PRs may target the wrong
+  base. Check it says `blazeroom`.
 
 ## Our code
 
