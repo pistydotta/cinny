@@ -48,8 +48,9 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   only line endings changed.
 - `WORD_SWAPS` word pairs are inside jokes about real people: never in code, tests or
   commits here (the repo is public). Use neutral examples like `hello=tchau`.
-- The app is in Portuguese for everyone (`src/app/i18n.ts`). Text you add goes through
-  `tr('key', 'English text')` from `features/translation/tr.ts`, with the Portuguese in
+- The app is in Portuguese unless someone picks English in Settings > General (saved per
+  browser, `features/translation/language.ts`, read once in `src/app/i18n.ts`). Text you add
+  goes through `tr('key', 'English text')` from `features/translation/tr.ts`, with the Portuguese in
   `features/translation/pt.json`. Upstream screens are only partly translated: the sidebar,
   room view, timeline lines and profile card. The rest of upstream is still English.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
