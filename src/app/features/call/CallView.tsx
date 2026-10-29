@@ -66,14 +66,6 @@ function NoPermissionMessage() {
   );
 }
 
-function AlreadyInCallMessage() {
-  return (
-    <Text style={{ margin: 'auto', color: color.Warning.Main }} size="L400" align="Center">
-      Already in another call — End the current call to join!
-    </Text>
-  );
-}
-
 function CallPrescreen() {
   const mx = useMatrixClient();
   const room = useRoom();
@@ -92,9 +84,6 @@ function CallPrescreen() {
   const callSession = useCallSession(room);
   const callMembers = useCallMembers(callSession);
   const hasParticipant = callMembers.length > 0;
-
-  const callEmbed = useCallEmbed();
-  const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
 
   const canJoin = hasPermission && livekitSupported && rtcSupported;
 
@@ -117,17 +106,15 @@ function CallPrescreen() {
           <CallMemberRenderer members={callMembers} />
           <PrescreenControls canJoin={canJoin} />
           <Box className={css.PrescreenMessage} alignItems="Center">
-            {!inOtherCall &&
-              (hasPermission ? (
-                <JoinMessage
-                  hasParticipant={hasParticipant}
-                  livekitSupported={livekitSupported}
-                  rtcSupported={rtcSupported}
-                />
-              ) : (
-                <NoPermissionMessage />
-              ))}
-            {inOtherCall && <AlreadyInCallMessage />}
+            {hasPermission ? (
+              <JoinMessage
+                hasParticipant={hasParticipant}
+                livekitSupported={livekitSupported}
+                rtcSupported={rtcSupported}
+              />
+            ) : (
+              <NoPermissionMessage />
+            )}
           </Box>
         </Box>
       </Box>

@@ -29,7 +29,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
   `encryption-setup`,
-  `space-autojoin`, `call-rejoin`, `room-nav/CallMemberAvatars.tsx` and
+  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
 - Put logic you want to test in a plain `.ts` file next to the component and test it

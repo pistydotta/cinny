@@ -69,7 +69,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
-import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { useCallEmbed } from '../../hooks/useCallEmbed';
+import { useSwitchCall } from '../call-switch/useSwitchCall';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
 
@@ -310,9 +311,8 @@ function CallButton() {
   const direct = useIsDirectRoom();
 
   const callEmbed = useCallEmbed();
-  const startCall = useCallStart(direct);
+  const startCall = useSwitchCall(direct);
   const callStarted = callEmbed && callEmbed.roomId === room.roomId;
-  const inAnotherCall = callEmbed && !callStarted;
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -326,11 +326,7 @@ function CallButton() {
         offset={4}
         tooltip={
           <Tooltip>
-            {inAnotherCall ? (
-              <Text size="L400">Already in another call — End the current call to join!</Text>
-            ) : (
-              <Text>Call</Text>
-            )}
+            <Text>Call</Text>
           </Tooltip>
         }
       >
@@ -348,7 +344,7 @@ function CallButton() {
                 sound: true,
               });
             }}
-            disabled={inAnotherCall || callStarted}
+            disabled={callStarted}
             aria-pressed={!!menuAnchor}
           >
             <Icon size="400" src={Icons.VideoCamera} filled={!!menuAnchor} />

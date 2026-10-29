@@ -21,6 +21,7 @@ import { CallChatView } from './CallChatView';
 import { useCallEmbed } from '../../hooks/useCallEmbed';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { useWordSwapArrive } from '../word-swap/useWordSwaps';
+import { useCallCoveredRoom } from '../call-notify/useCallCoveredRoom';
 
 export function Room() {
   const { eventId } = useParams();
@@ -52,6 +53,7 @@ export function Room() {
   );
 
   const callView = callEmbed?.roomId === room.roomId || room.isCallRoom() || callMembers.length > 0;
+  useCallCoveredRoom(room.roomId, callView && !chat);
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>

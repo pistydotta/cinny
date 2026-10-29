@@ -1,11 +1,13 @@
 import React, { useCallback } from 'react';
 import { Box, Button, Icon, Icons, Spinner, Text } from 'folds';
+import { useAtomValue } from 'jotai';
 import { SequenceCard } from '../../components/sequence-card';
 import * as css from './styles.css';
 import { ChatButton, ControlDivider, MicrophoneButton, SoundButton, VideoButton } from './Controls';
 import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
-import { useCallEmbed, useCallJoined, useCallStart } from '../../hooks/useCallEmbed';
+import { useCallEmbed, useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallPreferences } from '../../state/hooks/callPreferences';
+import { switchingToCallAtom, useSwitchCall } from '../call-switch/useSwitchCall';
 
 type PrescreenControlsProps = {
   canJoin?: boolean;
@@ -16,16 +18,14 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
   const callJoined = useCallJoined(callEmbed);
   const direct = useIsDirectRoom();
 
-  const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+  const startCall = useSwitchCall(direct);
+  const switchingTo = useAtomValue(switchingToCallAtom);
+  const joining = (callEmbed?.roomId === room.roomId && !callJoined) || switchingTo === room.roomId;
 
-  const startCall = useCallStart(direct);
-  const joining = callEmbed?.roomId === room.roomId && !callJoined;
-
-  const disabled = inOtherCall || !canJoin;
+  const disabled = !canJoin;
 
   const { microphone, video, sound, toggleMicrophone, toggleVideo, toggleSound } =
     useCallPreferences();
-
 
   const handleMicrophoneToggle = useCallback(async () => toggleMicrophone(), [toggleMicrophone]);
   const handleVideoToggle = useCallback(async () => toggleVideo(), [toggleVideo]);
