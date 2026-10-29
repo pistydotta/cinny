@@ -33,7 +33,7 @@ import {
 } from './paths';
 import {
   getAppPathFromHref,
-  getExploreFeaturedPath,
+  getExploreServerPath,
   getHomePath,
   getInboxNotificationsPath,
   getLoginPath,
@@ -44,7 +44,7 @@ import { ClientBindAtoms, ClientLayout, ClientRoot } from './client';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
 import { Direct, DirectRouteRoomProvider } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
-import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
+import { Explore, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
@@ -71,8 +71,16 @@ import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
+import { getMxIdServer } from '../utils/matrix';
 import { CallStatusRenderer } from './CallStatusRenderer';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
+
+// blazeroom: Explore opens our server's open spaces and rooms; there's no Featured page.
+const redirectToOwnServerExplore = () => {
+  const userId = getFallbackSession()?.userId;
+  const server = userId ? getMxIdServer(userId) : undefined;
+  return redirect(server ? getExploreServerPath(server) : getHomePath());
+};
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -265,13 +273,9 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           }
         >
           {mobile ? null : (
-            <Route
-              index
-              loader={() => redirect(getExploreFeaturedPath())}
-              element={<WelcomePage />}
-            />
+            <Route index loader={redirectToOwnServerExplore} element={<WelcomePage />} />
           )}
-          <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
+          <Route path={_FEATURED_PATH} loader={redirectToOwnServerExplore} />
           <Route path={_SERVER_PATH} element={<PublicRooms />} />
         </Route>
         <Route path={CREATE_PATH} element={<Create />} />
