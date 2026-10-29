@@ -23,6 +23,7 @@ import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
 import { FriendCardButton } from '../../features/friends/FriendCardButton';
+import { InviteToServerButton } from '../../features/invite-to-server/InviteToServerButton';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -92,6 +93,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                   <Text size="B300">Message</Text>
                 </Button>
                 <FriendCardButton userId={userId} />
+                <InviteToServerButton userId={userId} />
               </Box>
             )}
           </Box>
