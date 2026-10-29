@@ -58,6 +58,8 @@ import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCatego
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { HomeDirects } from '../../../features/home-direct/HomeDirects';
+import { useDirectRooms } from '../direct/useDirectRooms';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -206,7 +208,8 @@ export function Home() {
   const selectedRoomId = useSelectedRoom();
   const createRoomSelected = useHomeCreateSelected();
   const searchSelected = useHomeSearchSelected();
-  const noRoomToDisplay = rooms.length === 0;
+  const directs = useDirectRooms();
+  const noRoomToDisplay = rooms.length === 0 && directs.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedRooms = useMemo(() => {
@@ -312,6 +315,7 @@ export function Home() {
                 </NavLink>
               </NavItem>
             </NavCategory>
+            <HomeDirects />
             <NavCategory>
               <NavCategoryHeader>
                 <RoomNavCategoryButton

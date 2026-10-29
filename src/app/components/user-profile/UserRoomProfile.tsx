@@ -22,6 +22,7 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
+import { FriendCardButton } from '../../features/friends/FriendCardButton';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -79,7 +80,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
           <Box gap="400" alignItems="Start">
             <UserHeroName displayName={displayName} userId={userId} />
             {userId !== myUserId && (
-              <Box shrink="No">
+              <Box shrink="No" direction="Column" gap="200">
                 <Button
                   size="300"
                   variant="Primary"
@@ -90,6 +91,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                 >
                   <Text size="B300">Message</Text>
                 </Button>
+                <FriendCardButton userId={userId} />
               </Box>
             )}
           </Box>
