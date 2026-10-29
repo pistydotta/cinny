@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import React, { MouseEventHandler, forwardRef, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
@@ -18,6 +18,8 @@ import {
   SidebarItemTooltip,
 } from '../../../components/sidebar';
 import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
+import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
+import { useDirectRooms } from '../direct/useDirectRooms';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
@@ -70,8 +72,12 @@ export function HomeTab() {
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
   const orphanRooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
-  const homeUnread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
-  const homeSelected = useHomeSelected();
+  // Direct messages live on the Home page too (features/home-direct).
+  const directs = useDirectRooms();
+  const homeRooms = useMemo(() => [...orphanRooms, ...directs], [orphanRooms, directs]);
+  const homeUnread = useRoomsUnread(homeRooms, roomToUnreadAtom);
+  const directSelected = useDirectSelected();
+  const homeSelected = useHomeSelected() || directSelected;
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleHomeClick = () => {

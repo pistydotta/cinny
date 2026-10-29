@@ -27,7 +27,8 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 ## Our code
 
 - Keep our features in their own folders so upstream merges stay easy:
-  `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`,
+  `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
+  `encryption-setup`,
   `space-autojoin`, `call-rejoin`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
@@ -47,3 +48,5 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   only line endings changed.
 - `WORD_SWAPS` word pairs are inside jokes about real people: never in code, tests or
   commits here (the repo is public). Use neutral examples like `hello=tchau`.
+- Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
+  DMs (`features/home-direct`), and the `/direct` routes show the Home nav.
