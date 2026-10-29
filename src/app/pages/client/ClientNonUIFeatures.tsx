@@ -27,6 +27,7 @@ import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { callCoveredRoomAtom, messageInView } from '../../features/call-notify/coveredRoom';
+import { SilentCallRules } from '../../features/call-notify/useSilentCallRules';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -276,6 +277,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />
+      <SilentCallRules />
       {children}
     </>
   );
