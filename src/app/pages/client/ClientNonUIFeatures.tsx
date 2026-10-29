@@ -26,6 +26,7 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { callCoveredRoomAtom, messageInView } from '../../features/call-notify/coveredRoom';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -140,6 +141,7 @@ function MessageNotifications() {
   const navigate = useNavigate();
   const notificationSelected = useInboxNotificationsSelected();
   const selectedRoomId = useSelectedRoom();
+  const coveredRoomId = useAtomValue(callCoveredRoomAtom);
 
   const notify = useCallback(
     ({
@@ -186,7 +188,15 @@ function MessageNotifications() {
       data
     ) => {
       if (mx.getSyncState() !== 'SYNCING') return;
-      if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
+      if (
+        messageInView(room?.roomId, {
+          focused: document.hasFocus(),
+          selectedRoomId,
+          inboxSelected: notificationSelected,
+          coveredRoomId,
+        })
+      )
+        return;
       if (
         !room ||
         !data.liveEvent ||
@@ -242,6 +252,7 @@ function MessageNotifications() {
     playSound,
     notify,
     selectedRoomId,
+    coveredRoomId,
     useAuthentication,
   ]);
 

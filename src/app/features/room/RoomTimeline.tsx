@@ -624,7 +624,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           }
 
           scrollToBottomRef.current.count += 1;
-          scrollToBottomRef.current.smooth = true;
+          // blazeroom: instant, so it keeps up. When the browser throttles the window (behind
+          // a game during a call) a smooth scroll restarted by each message never moves, and
+          // after a second the timeline thinks you scrolled up and stops following.
+          scrollToBottomRef.current.smooth = false;
 
           setTimeline((ct) => ({
             ...ct,

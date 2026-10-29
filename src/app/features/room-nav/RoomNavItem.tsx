@@ -54,7 +54,8 @@ import { getRoomPermissionsAPI, useRoomPermissions } from '../../hooks/useRoomPe
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { useRoomName } from '../../hooks/useRoomMeta';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
-import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { useCallEmbed } from '../../hooks/useCallEmbed';
+import { useSwitchCall } from '../call-switch/useSwitchCall';
 import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
@@ -284,7 +285,7 @@ export function RoomNavItem({
   const optionsVisible = hover || !!menuAnchor;
   const callSession = useCallSession(room);
   const callMembers = useCallMembers(callSession);
-  const startCall = useCallStart(direct);
+  const startCall = useSwitchCall(direct);
   const callEmbed = useCallEmbed();
   const callPref = useAtomValue(useCallPreferencesAtom());
   const autoDiscoveryInfo = useAutoDiscoveryInfo();
@@ -305,8 +306,8 @@ export function RoomNavItem({
       return;
     }
 
-    // Do not join if already in call
-    if (callEmbed) {
+    // Do not join if already in this call
+    if (callEmbed?.roomId === room.roomId) {
       return;
     }
     // Start call in second click
