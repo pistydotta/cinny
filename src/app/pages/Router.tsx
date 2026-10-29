@@ -44,7 +44,7 @@ import {
 } from './pathUtils';
 import { ClientBindAtoms, ClientLayout, ClientRoot } from './client';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
-import { Direct, DirectCreate, DirectRouteRoomProvider } from './client/direct';
+import { Direct, DirectRouteRoomProvider } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
 import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
@@ -52,6 +52,7 @@ import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
 import { FriendsPage } from '../features/friends';
+import { NewChatPage } from '../features/friends/NewChatPage';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
 import { PageRoot } from '../components/page';
@@ -201,7 +202,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         >
           {mobile ? null : <Route index loader={() => redirect(getFriendsPath())} />}
           <Route path={_FRIENDS_PATH} element={<FriendsPage />} />
-          <Route path={_CREATE_PATH} element={<DirectCreate />} />
+          <Route path={_CREATE_PATH} element={<NewChatPage />} />
           <Route
             path={_ROOM_PATH}
             element={
