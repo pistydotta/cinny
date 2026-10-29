@@ -68,6 +68,7 @@ import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
 import { tr } from '../../../features/translation/tr';
+import { HomeOverviewNavItem } from '../../../features/home-overview/HomeOverviewNavItem';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -245,6 +246,7 @@ export function Home() {
         <PageNavContent scrollRef={scrollRef}>
           <Box direction="Column" gap="300">
             <NavCategory>
+              <HomeOverviewNavItem />
               <NavItem variant="Background" radii="400" aria-selected={createRoomSelected}>
                 <NavButton onClick={() => navigate(getHomeCreatePath())}>
                   <NavItemContent>

@@ -173,7 +173,8 @@
   "home": {
     "no_rooms": "Nenhuma sala",
     "no_rooms_desc": "Você ainda não está em nenhuma sala.",
-    "explore_rooms": "Explorar salas da comunidade"
+    "explore_rooms": "Explorar salas da comunidade",
+    "overview": "Visão geral"
   },
   "room": {
     "is_typing": " está digitando...",
