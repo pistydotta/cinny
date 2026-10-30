@@ -49,13 +49,17 @@ export function PendingRow({ userId, direction }: PendingRowProps) {
     <Box
       direction="Column"
       gap="100"
-      style={{ padding: `${config.space.S100} ${config.space.S200}` }}
+      style={{
+        padding: `${config.space.S200} ${config.space.S300}`,
+        borderRadius: config.radii.R400,
+        background: color.SurfaceVariant.Container,
+      }}
     >
       <Box alignItems="Center" gap="300">
         <FriendAvatar userId={userId} />
         <Box grow="Yes" direction="Column" style={{ minWidth: 0 }}>
           <Text size="T400" truncate>
-            {name}
+            <b>{name}</b>
           </Text>
           <Text size="T200" priority="300" truncate>
             {direction === 'incoming'
