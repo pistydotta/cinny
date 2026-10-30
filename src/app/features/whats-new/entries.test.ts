@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { hasUnseen, WHATS_NEW, WhatsNewEntry } from './entries';
+import { hasUnseen, shownItems, WHATS_NEW, WhatsNewEntry } from './entries';
 
-const entry = (id: string): WhatsNewEntry => ({ id, items: () => [] });
+const entry = (id: string, hideInDesktopApp = false): WhatsNewEntry => ({
+  id,
+  items: () => [{ title: id, body: '', hideInDesktopApp }],
+});
 
 describe('hasUnseen', () => {
   const entries = [entry('c'), entry('b'), entry('a')];
@@ -20,6 +23,20 @@ describe('hasUnseen', () => {
 
   it('is false with no entries', () => {
     expect(hasUnseen([], null)).toBe(false);
+  });
+
+  it('ignores news hidden in the Windows app when inside it', () => {
+    const withApp = [entry('app', true), entry('b')];
+    expect(hasUnseen(withApp, 'b', true)).toBe(false);
+    expect(hasUnseen(withApp, 'b', false)).toBe(true);
+  });
+});
+
+describe('shownItems', () => {
+  it('drops news hidden in the Windows app only inside it', () => {
+    const withApp = [entry('app', true), entry('b')];
+    expect(shownItems(withApp, true).map((i) => i.title)).toEqual(['b']);
+    expect(shownItems(withApp, false).map((i) => i.title)).toEqual(['app', 'b']);
   });
 });
 

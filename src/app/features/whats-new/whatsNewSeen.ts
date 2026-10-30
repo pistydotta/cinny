@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { atom, useAtom } from 'jotai';
+import { isDesktopApp } from '../desktop-download/desktopDownload';
 import { hasUnseen, SEEN_KEY, WHATS_NEW } from './entries';
 
 const readSeen = (): string | null => {
@@ -31,5 +32,5 @@ export const useWhatsNewSeen = () => {
     setSeen(newest);
   }, [setSeen]);
 
-  return { unseen: hasUnseen(WHATS_NEW, seen), markSeen };
+  return { unseen: hasUnseen(WHATS_NEW, seen, isDesktopApp(navigator.userAgent)), markSeen };
 };

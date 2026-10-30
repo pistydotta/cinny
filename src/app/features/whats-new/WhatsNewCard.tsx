@@ -4,7 +4,8 @@ import { SequenceCard } from '../../components/sequence-card';
 import { SettingTile } from '../../components/setting-tile';
 import { SequenceCardStyle } from '../settings/styles.css';
 import { tr } from '../translation/tr';
-import { MAX_SHOWN, WHATS_NEW } from './entries';
+import { isDesktopApp } from '../desktop-download/desktopDownload';
+import { shownItems, WHATS_NEW } from './entries';
 import { useWhatsNewSeen } from './whatsNewSeen';
 
 // The latest entries, on Visão geral. Showing them counts as seen, which clears the Home
@@ -16,7 +17,7 @@ export function WhatsNewCard() {
     markSeen();
   }, [markSeen]);
 
-  const items = WHATS_NEW.slice(0, MAX_SHOWN).flatMap((entry) => entry.items());
+  const items = shownItems(WHATS_NEW, isDesktopApp(navigator.userAgent));
   if (items.length === 0) return null;
 
   return (
