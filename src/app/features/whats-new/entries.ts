@@ -17,6 +17,19 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-10-push',
+    items: () => [
+      {
+        title: tr('whats_new.push_title', 'Notifications with the app closed'),
+        body: tr(
+          'whats_new.push_body',
+          'You can now get notified of messages even when blazeroom is closed. Each device turns it on by itself in Settings > Notifications.'
+        ),
+        hideInDesktopApp: true,
+      },
+    ],
+  },
+  {
     id: '2026-10-feedback',
     items: () => [
       {

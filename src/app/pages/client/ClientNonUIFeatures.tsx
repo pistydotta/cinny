@@ -27,6 +27,7 @@ import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { callCoveredRoomAtom, messageInView } from '../../features/call-notify/coveredRoom';
+import { PushRoomOpener } from '../../features/push/PushNotifications';
 import { SilentCallRules } from '../../features/call-notify/useSilentCallRules';
 
 function SystemEmojiFeature() {
@@ -78,6 +79,18 @@ function FaviconUpdater() {
   return null;
 }
 
+// Android browsers refuse this constructor; there the push is what notifies.
+const showWindowNotification = (
+  title: string,
+  options: NotificationOptions
+): Notification | undefined => {
+  try {
+    return new window.Notification(title, options);
+  } catch {
+    return undefined;
+  }
+};
+
 function InviteNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const invites = useAtomValue(allInvitesAtom);
@@ -90,12 +103,13 @@ function InviteNotifications() {
 
   const notify = useCallback(
     (count: number) => {
-      const noti = new window.Notification('Invitation', {
+      const noti = showWindowNotification('Invitation', {
         icon: LogoSVG,
         badge: LogoSVG,
         body: `You have ${count} new invitation request.`,
         silent: true,
       });
+      if (!noti) return;
 
       noti.onclick = () => {
         if (!window.closed) navigate(getInboxInvitesPath());
@@ -149,6 +163,7 @@ function MessageNotifications() {
       roomName,
       roomAvatar,
       username,
+      eventId,
     }: {
       roomName: string;
       roomAvatar?: string;
@@ -156,12 +171,15 @@ function MessageNotifications() {
       roomId: string;
       eventId: string;
     }) => {
-      const noti = new window.Notification(roomName, {
+      // Same tag as the push for this message, so a hidden tab doesn't show it twice.
+      const noti = showWindowNotification(roomName, {
         icon: roomAvatar,
         badge: roomAvatar,
         body: `New inbox notification from ${username}`,
         silent: true,
+        tag: eventId,
       });
+      if (!noti) return;
 
       noti.onclick = () => {
         if (!window.closed) navigate(getInboxNotificationsPath());
@@ -277,6 +295,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />
+      <PushRoomOpener />
       <SilentCallRules />
       {children}
     </>

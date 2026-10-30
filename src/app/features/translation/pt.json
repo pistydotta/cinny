@@ -265,7 +265,9 @@
     "fixes_title": "Correções gerais",
     "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor.",
     "feedback_title": "Ajuda e feedback",
-    "feedback_body": "Agora dá para mandar bugs e ideias pelo app, com captura de tela se quiser. Fica em Configurações > Ajuda e feedback."
+    "feedback_body": "Agora dá para mandar bugs e ideias pelo app, com captura de tela se quiser. Fica em Configurações > Ajuda e feedback.",
+    "push_title": "Notificações com o app fechado",
+    "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications."
   },
   "admin": {
     "deactivate": {
@@ -316,5 +318,12 @@
     "download": "Baixar",
     "current": "Você já está nele",
     "soon": "Em desenvolvimento"
+  },
+  "push": {
+    "title": "Notificações com o app fechado",
+    "body": "Receba avisos neste aparelho mesmo com o blazeroom fechado. Mensagens criptografadas mostram quem escreveu, não o texto.",
+    "install_first": "No iPhone, primeiro adicione o blazeroom à tela de início: Compartilhar > Adicionar à Tela de Início. Depois abra por lá e ligue isto.",
+    "blocked": "As notificações estão bloqueadas nas configurações do navegador.",
+    "failed": "Não foi possível mudar isso. Tente de novo."
   }
 }
