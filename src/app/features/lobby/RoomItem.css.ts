@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { config, toRem } from 'folds';
+import { color, config, toRem } from 'folds';
 
 export const RoomItemCard = style({
   padding: config.space.S400,
@@ -11,6 +11,9 @@ export const RoomItemCard = style({
     },
     '&[data-openable=true]': {
       cursor: 'pointer',
+    },
+    '&[data-openable=true]:hover': {
+      backgroundColor: color.SurfaceVariant.ContainerHover,
     },
   },
 });
