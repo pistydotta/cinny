@@ -4,6 +4,7 @@ import {
   Button,
   Dialog,
   Header,
+  Modal,
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
@@ -14,8 +15,11 @@ import {
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { ImageViewer } from '../../../components/image-viewer';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
+import { ModalWide } from '../../../styles/Modal.css';
+import { stopPropagation } from '../../../utils/keyboard';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { mxcUrlToHttp } from '../../../utils/matrix';
@@ -97,6 +101,7 @@ function FeedbackRow({ item, act }: FeedbackRowProps) {
   const useAuthentication = useMediaAuthentication();
   const api = useFeedbackApi();
   const [deleting, setDeleting] = useState(false);
+  const [viewing, setViewing] = useState(false);
   const imageUrl = item.screenshotUrl
     ? mxcUrlToHttp(mx, item.screenshotUrl, useAuthentication) ?? undefined
     : undefined;
@@ -118,7 +123,12 @@ function FeedbackRow({ item, act }: FeedbackRowProps) {
         {item.body}
       </Text>
       {imageUrl && (
-        <a href={imageUrl} target="_blank" rel="noreferrer noopener">
+        // Not a link: a new tab has no session for the service worker to authenticate media with.
+        <button
+          type="button"
+          onClick={() => setViewing(true)}
+          style={{ all: 'unset', cursor: 'zoom-in', maxWidth: '100%' }}
+        >
           <img
             src={imageUrl}
             alt={tr('feedback.screenshot_alt', 'Screenshot')}
@@ -129,7 +139,29 @@ function FeedbackRow({ item, act }: FeedbackRowProps) {
               borderRadius: config.radii.R300,
             }}
           />
-        </a>
+        </button>
+      )}
+      {imageUrl && viewing && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: () => setViewing(false),
+                clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Modal className={ModalWide} size="500">
+                <ImageViewer
+                  src={imageUrl}
+                  alt={tr('feedback.screenshot_alt', 'Screenshot')}
+                  requestClose={() => setViewing(false)}
+                />
+              </Modal>
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
       )}
       <Box gap="200" wrap="Wrap">
         <Button
