@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Text } from 'folds';
-import { SequenceCard } from '../../components/sequence-card';
 import { SettingTile } from '../../components/setting-tile';
-import { SequenceCardStyle } from '../settings/styles.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { getMxIdLocalPart } from '../../utils/matrix';
@@ -10,6 +8,7 @@ import { EncryptionFlow, useEncryptionStep } from '../encryption-setup/Encryptio
 import { DESKTOP_DOWNLOAD_URL, showDesktopDownload } from '../desktop-download/desktopDownload';
 import { tr } from '../translation/tr';
 import { WelcomeItem, welcomeItems } from './welcomeItems';
+import { CardList, ItemTitle } from './CardList';
 
 function WelcomeRow({ item, onEncryption }: { item: WelcomeItem; onEncryption: () => void }) {
   if (item === 'protect' || item === 'verify') {
@@ -17,9 +16,11 @@ function WelcomeRow({ item, onEncryption }: { item: WelcomeItem; onEncryption: (
     return (
       <SettingTile
         title={
-          protect
-            ? tr('encryption.protect_title', 'Protect your messages')
-            : tr('encryption.verify_title', 'Verify this device')
+          <ItemTitle>
+            {protect
+              ? tr('encryption.protect_title', 'Protect your messages')
+              : tr('encryption.verify_title', 'Verify this device')}
+          </ItemTitle>
         }
         description={
           protect
@@ -43,7 +44,7 @@ function WelcomeRow({ item, onEncryption }: { item: WelcomeItem; onEncryption: (
   if (item === 'windows') {
     return (
       <SettingTile
-        title={tr('welcome.windows_title', 'Windows app')}
+        title={<ItemTitle>{tr('welcome.windows_title', 'Windows app')}</ItemTitle>}
         description={tr('welcome.windows_body', 'Use blazeroom without opening the browser.')}
         after={
           <Button
@@ -64,7 +65,7 @@ function WelcomeRow({ item, onEncryption }: { item: WelcomeItem; onEncryption: (
 
   return (
     <SettingTile
-      title={tr('settings.language', 'Language')}
+      title={<ItemTitle>{tr('settings.language', 'Language')}</ItemTitle>}
       description={tr(
         'welcome.language_body',
         'To change it, open Settings (your avatar, bottom left) > General > Language.'
@@ -96,16 +97,11 @@ export function WelcomeCard() {
           {tr('welcome.subtitle', 'Welcome to blazeroom.')}
         </Text>
       </Box>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
+      <CardList>
         {items.map((item) => (
           <WelcomeRow key={item} item={item} onEncryption={() => setEncryptionOpen(true)} />
         ))}
-      </SequenceCard>
+      </CardList>
       {encryptionOpen && (
         <EncryptionFlow step={encryptionStep} onClose={() => setEncryptionOpen(false)} />
       )}
