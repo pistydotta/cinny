@@ -190,7 +190,8 @@ function UserRow({ user, act }: { user: ManagedUser; act: Action }) {
       style={{
         padding: config.space.S300,
         borderRadius: config.radii.R400,
-        background: color.SurfaceVariant.Container,
+        // The list sits in a SurfaceVariant card; a different shade keeps each user separate.
+        background: color.Background.Container,
         opacity: user.deactivated ? 0.6 : undefined,
       }}
     >

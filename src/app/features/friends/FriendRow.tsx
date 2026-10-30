@@ -28,14 +28,14 @@ export function FriendRow({ userId }: FriendRowProps) {
 
   return (
     <MenuItem
-      style={{ padding: `${config.space.S100} ${config.space.S200}`, height: 'auto' }}
-      variant="Background"
+      style={{ padding: `${config.space.S200} ${config.space.S300}`, height: 'auto' }}
+      variant="SurfaceVariant"
       radii="400"
       onClick={handleMessage}
       aria-label={tr('friends.message_name', 'Message {{name}}', { name })}
       before={
         <AvatarPresence
-          variant="Background"
+          variant="SurfaceVariant"
           badge={
             <PresenceBadge
               presence={online && presence ? presence.presence : Presence.Offline}
@@ -51,7 +51,7 @@ export function FriendRow({ userId }: FriendRowProps) {
     >
       <Box grow="Yes" direction="Column">
         <Text size="T400" truncate>
-          {name}
+          <b>{name}</b>
         </Text>
         <Text size="T200" priority="300" truncate>
           {userId}
