@@ -54,7 +54,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   `features/translation/pt.json`. Upstream screens are only partly translated: the sidebar,
   room view, timeline lines and profile card. The rest of upstream is still English.
 - When you ship something people should notice, add an entry at the top of `WHATS_NEW` in
-  `features/whats-new/entries.ts` (a new `id`, never reuse or change an old one). Everyone who
-  hasn't seen it gets the "What's new" dialog once.
+  `features/whats-new/entries.ts` (a new `id`, never reuse or change an old one). It shows in
+  the Novidades card on Visão geral, and the Visão geral nav item gets a dot until it's seen.
+- Nothing opens by itself when someone logs in. Visão geral (`features/home-overview`) greets
+  them with what's left to set up (recovery key, Windows app, language); the encryption
+  banner stays at the top until the key is done. Keep new onboarding there, not in a dialog.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

@@ -26,17 +26,3 @@ export const getEncryptionStep = ({
   // Verifying with the recovery key needs its description in account data; wait for it to sync.
   return hasSecretStorageKey ? 'unlock' : 'loading';
 };
-
-// The full-screen prompt shows once per device; after "Later" only the banner stays.
-export const PROMPT_LATER_KEY = 'blazeroom.encryptionPromptLater';
-
-export const promptLaterId = (userId: string, deviceId: string): string => `${userId}|${deviceId}`;
-
-export const isPromptPostponed = (raw: string | null, userId: string, deviceId: string): boolean =>
-  !!raw && raw.split('\n').includes(promptLaterId(userId, deviceId));
-
-export const postponePrompt = (raw: string | null, userId: string, deviceId: string): string => {
-  const ids = raw ? raw.split('\n').filter(Boolean) : [];
-  const id = promptLaterId(userId, deviceId);
-  return ids.includes(id) ? ids.join('\n') : [...ids, id].join('\n');
-};

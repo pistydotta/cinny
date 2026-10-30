@@ -4,14 +4,18 @@ import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { NavButton, NavItem, NavItemContent } from '../../components/nav';
 import { getHomePath } from '../../pages/pathUtils';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { tr } from '../translation/tr';
+import { useWhatsNewSeen } from '../whats-new/whatsNewSeen';
 
 // Opens the home page (WelcomePage) from the Home nav. Without it, the Home tab returns to the
-// last open room and the home page can't be reached once a room was opened.
+// last open room and the home page can't be reached once a room was opened. A dot shows while
+// there's news the user hasn't seen there.
 export function HomeOverviewNavItem() {
   const navigate = useNavigate();
   const selected = !!useMatch({ path: getHomePath(), caseSensitive: true, end: true });
   const screenSize = useScreenSizeContext();
+  const { unseen } = useWhatsNewSeen();
 
   // On mobile the home path shows this nav itself, not the home page.
   if (screenSize === ScreenSize.Mobile) return null;
@@ -29,6 +33,11 @@ export function HomeOverviewNavItem() {
                 {tr('home.overview', 'Overview')}
               </Text>
             </Box>
+            {unseen && (
+              <UnreadBadgeCenter>
+                <UnreadBadge count={0} />
+              </UnreadBadgeCenter>
+            )}
           </Box>
         </NavItemContent>
       </NavButton>
