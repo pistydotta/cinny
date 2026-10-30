@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, Icon, Icons, Text, config, toRem } from 'folds';
 import { Page, PageHero, PageHeroSection } from '../../components/page';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import { DesktopDownloadButton } from '../../features/desktop-download/DesktopDownloadButton';
 
 export function WelcomePage() {
   return (
@@ -31,6 +32,7 @@ export function WelcomePage() {
           >
             <Box justifyContent="Center">
               <Box grow="Yes" style={{ maxWidth: toRem(300) }} direction="Column" gap="300">
+                <DesktopDownloadButton />
                 <Button
                   as="a"
                   href="https://github.com/pistydotta/cinny"

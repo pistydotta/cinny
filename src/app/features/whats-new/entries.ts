@@ -15,6 +15,18 @@ export type WhatsNewEntry = {
 // hasn't seen it gets the dialog once on their next visit.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-10-windows-app',
+    items: () => [
+      {
+        title: tr('whats_new.windows_title', 'blazeroom for Windows'),
+        body: tr(
+          'whats_new.windows_body',
+          'blazeroom now has a Windows app, so you can use it without the browser. Download it from Home > Overview.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-10-portuguese',
     items: () => [
       {

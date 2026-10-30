@@ -249,9 +249,14 @@
     "language_title": "Idioma do app",
     "language_description": "Algumas telas menos usadas estão só em inglês."
   },
+  "desktop_download": {
+    "button": "Baixar para Windows"
+  },
   "whats_new": {
     "title": "Novidades",
     "got_it": "Entendi",
+    "windows_title": "blazeroom para Windows",
+    "windows_body": "O blazeroom agora tem um app para Windows, para usar sem o navegador. Baixe em Início > Visão geral.",
     "portuguese_title": "blazeroom em português",
     "portuguese_body": "O app agora está em português. Para usar em inglês, abra Configurações (seu avatar, no canto inferior esquerdo) > General > Idioma.",
     "fixes_title": "Correções gerais",
