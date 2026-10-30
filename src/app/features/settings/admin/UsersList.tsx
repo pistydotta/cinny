@@ -16,6 +16,8 @@ import {
   loginDetails,
   matchesUserFilter,
 } from '../../admin/adminApi';
+import { tr } from '../../translation/tr';
+import { DeactivateDialog } from './DeactivateDialog';
 
 const ROLE_BADGE: Record<Role, 'Secondary' | 'Primary' | 'Critical' | 'Warning'> = {
   user: 'Secondary',
@@ -112,6 +114,7 @@ function ResetPassword({ user, act }: { user: ManagedUser; act: Action }) {
 function UserActions({ user, act }: { user: ManagedUser; act: Action }) {
   const api = useAdminApi();
   const [resetting, setResetting] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
 
   return (
     <Box
@@ -153,8 +156,25 @@ function UserActions({ user, act }: { user: ManagedUser; act: Action }) {
             <Text size="T200">{user.role === 'admin' ? 'Remove admin' : 'Make admin'}</Text>
           </Chip>
         )}
+        {user.canDeactivate && (
+          <Chip variant="Critical" radii="Pill" onClick={() => setDeactivating(true)}>
+            <Text size="T200">{tr('admin.deactivate.action', 'Deactivate account')}</Text>
+          </Chip>
+        )}
       </Box>
       {resetting && <ResetPassword user={user} act={act} />}
+      {deactivating && (
+        <DeactivateDialog
+          user={user}
+          onConfirm={() =>
+            act(
+              tr('admin.deactivate.done', 'Deactivated {{userId}}', { userId: user.userId }),
+              () => api.deactivate(user.userId)
+            )
+          }
+          onClose={() => setDeactivating(false)}
+        />
+      )}
     </Box>
   );
 }

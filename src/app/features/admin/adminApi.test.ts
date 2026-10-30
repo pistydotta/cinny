@@ -62,11 +62,13 @@ describe('user management', () => {
     await api.resetPassword('@ana:x', 'newpassword');
     await api.setLocked('@ana:x', true);
     await api.setAdmin('@ana:x', false);
+    await api.deactivate('@ana:x');
     const sent = edit.mock.calls.map(([path, init]) => [path, JSON.parse(init.body)]);
     expect(sent).toEqual([
       ['/api/admin/users/%40ana%3Ax/password', { password: 'newpassword' }],
       ['/api/admin/users/%40ana%3Ax/lock', { locked: true }],
       ['/api/admin/users/%40ana%3Ax/role', { admin: false }],
+      ['/api/admin/users/%40ana%3Ax/deactivate', {}],
     ]);
   });
 });
@@ -81,6 +83,7 @@ describe('matchesUserFilter', () => {
     createdAt: null,
     canEdit: false,
     canChangeRole: false,
+    canDeactivate: false,
   };
 
   it('matches the ID, display name or role, ignoring case', () => {
