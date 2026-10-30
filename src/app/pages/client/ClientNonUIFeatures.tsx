@@ -29,6 +29,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { callCoveredRoomAtom, messageInView } from '../../features/call-notify/coveredRoom';
 import { PushRoomOpener } from '../../features/push/PushNotifications';
 import { SilentCallRules } from '../../features/call-notify/useSilentCallRules';
+import { AndroidPushRegistrar } from '../../features/android-app/AndroidPush';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -297,6 +298,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <PushRoomOpener />
       <SilentCallRules />
+      <AndroidPushRegistrar />
       {children}
     </>
   );

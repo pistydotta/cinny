@@ -319,6 +319,10 @@
     "current": "Você já está nele",
     "soon": "Em desenvolvimento"
   },
+  "android_app": {
+    "push_body": "Receba avisos neste celular mesmo com o app fechado. Mensagens criptografadas mostram quem escreveu, não o texto.",
+    "push_denied": "As notificações estão bloqueadas. Ative nas configurações do Android para o Blazeroom."
+  },
   "push": {
     "title": "Notificações com o app fechado",
     "body": "Receba avisos neste aparelho mesmo com o blazeroom fechado. Mensagens criptografadas mostram quem escreveu, não o texto.",

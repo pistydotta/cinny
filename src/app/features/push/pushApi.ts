@@ -1,3 +1,4 @@
+import { isAndroidApp } from '../android-app/androidApp';
 import { isDesktopApp } from '../desktop-download/desktopDownload';
 
 // Matches `apps:` in templates/sygnal.yaml (blazeroom repo).
@@ -58,7 +59,10 @@ export const pushSupport = ({
   userAgent: string;
   configured: boolean;
 }): PushSupport => {
-  if (!configured || !serviceWorker || isDesktopApp(userAgent)) return 'unavailable';
+  // The Android app has its own switch: a WebView has no Web Push.
+  if (!configured || !serviceWorker || isDesktopApp(userAgent) || isAndroidApp(userAgent)) {
+    return 'unavailable';
+  }
   if (pushManager && notification) return 'available';
   return /iPhone|iPad/.test(userAgent) && !standalone ? 'install_first' : 'unavailable';
 };
