@@ -20,6 +20,7 @@ export type ManagedUser = {
   createdAt: string | null;
   canEdit: boolean;
   canChangeRole: boolean;
+  canDeactivate: boolean;
 };
 
 // Talks to /api/admin (blazeroom api/), which forwards to Synapse's admin API with our token.
@@ -49,6 +50,10 @@ export const createAdminApi = (
     },
     async setAdmin(userId: string, admin: boolean): Promise<void> {
       await request(userPath(userId, 'role'), 'POST', { admin });
+    },
+    // Can't be undone: Synapse erases the account and the username stays taken.
+    async deactivate(userId: string): Promise<void> {
+      await request(userPath(userId, 'deactivate'), 'POST', {});
     },
     async createAccount(account: NewAccount): Promise<string> {
       const res = await request('/api/admin/users', 'POST', account);

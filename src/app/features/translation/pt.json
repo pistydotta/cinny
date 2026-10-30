@@ -256,5 +256,15 @@
     "portuguese_body": "O app agora está em português. Para usar em inglês, abra Configurações (seu avatar, no canto inferior esquerdo) > General > Idioma.",
     "fixes_title": "Correções gerais",
     "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor."
+  },
+  "admin": {
+    "deactivate": {
+      "action": "Desativar conta",
+      "title": "Desativar {{userId}}?",
+      "body": "Isso não pode ser desfeito. A conta sai de todos os dispositivos e não consegue mais entrar, e as amizades e os links de convite dela são apagados.",
+      "username_taken": "O nome {{userId}} continua reservado: não dá para usar em outra conta.",
+      "confirm": "Desativar",
+      "done": "Conta {{userId}} desativada"
+    }
   }
 }
