@@ -3,6 +3,8 @@ import { tr } from '../translation/tr';
 export type WhatsNewItem = {
   title: string;
   body: string;
+  // News about the Windows app means nothing to someone already using it.
+  hideInDesktopApp?: boolean;
 };
 
 export type WhatsNewEntry = {
@@ -23,6 +25,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
           'whats_new.windows_body',
           'blazeroom now has a Windows app, so you can use it without the browser. On a Windows computer, download it from this page.'
         ),
+        hideInDesktopApp: true,
       },
     ],
   },
@@ -53,5 +56,23 @@ export const MAX_SHOWN = 3;
 // The id of the newest entry this browser has seen.
 export const SEEN_KEY = 'blazeroom.whatsNewSeen';
 
-export const hasUnseen = (entries: WhatsNewEntry[], lastSeenId: string | null): boolean =>
-  entries.length > 0 && entries[0].id !== lastSeenId;
+const visible = (item: WhatsNewItem, inDesktopApp: boolean): boolean =>
+  !(inDesktopApp && item.hideInDesktopApp);
+
+// The items the Novidades card shows, from the newest MAX_SHOWN entries.
+export const shownItems = (entries: WhatsNewEntry[], inDesktopApp: boolean): WhatsNewItem[] =>
+  entries
+    .slice(0, MAX_SHOWN)
+    .flatMap((entry) => entry.items())
+    .filter((item) => visible(item, inDesktopApp));
+
+// Whether an entry newer than the last seen one has something to show here.
+export const hasUnseen = (
+  entries: WhatsNewEntry[],
+  lastSeenId: string | null,
+  inDesktopApp = false
+): boolean => {
+  const seenIndex = lastSeenId ? entries.findIndex((entry) => entry.id === lastSeenId) : -1;
+  const newer = seenIndex === -1 ? entries : entries.slice(0, seenIndex);
+  return newer.some((entry) => entry.items().some((item) => visible(item, inDesktopApp)));
+};

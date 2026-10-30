@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { showDesktopDownload } from './desktopDownload';
+import { isDesktopApp, showDesktopDownload } from './desktopDownload';
 
 const CHROME_WINDOWS =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
@@ -22,5 +22,12 @@ describe('showDesktopDownload', () => {
   it('hides on other systems', () => {
     expect(showDesktopDownload(CHROME_MAC)).toBe(false);
     expect(showDesktopDownload(ANDROID)).toBe(false);
+  });
+});
+
+describe('isDesktopApp', () => {
+  it('is true only inside the Windows app', () => {
+    expect(isDesktopApp(DESKTOP_APP)).toBe(true);
+    expect(isDesktopApp(CHROME_WINDOWS)).toBe(false);
   });
 });
