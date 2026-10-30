@@ -266,7 +266,9 @@
     "portuguese_title": "blazeroom em português",
     "portuguese_body": "O app agora está em português. Para usar em inglês, abra Configurações (seu avatar, no canto inferior esquerdo) > General > Idioma.",
     "fixes_title": "Correções gerais",
-    "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor."
+    "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor.",
+    "feedback_title": "Ajuda e feedback",
+    "feedback_body": "Agora dá para mandar bugs e ideias pelo app, com captura de tela se quiser. Fica em Configurações > Ajuda e feedback."
   },
   "admin": {
     "deactivate": {
@@ -306,6 +308,10 @@
     "delete_title": "Excluir este feedback?",
     "delete_body": "Isso não pode ser desfeito. A mensagem e a captura de tela são excluídas do servidor.",
     "none_open": "Nada em aberto.",
-    "done_count": "Feitos ({{count}})"
+    "done_count": "Feitos ({{count}})",
+    "joke_start": "Se você achou algum bug ou tem sugestões de melhoria, você pode",
+    "joke_struck": "ir tomar no seu cu",
+    "joke_link": "mandar aqui",
+    "joke_end": "."
   }
 }

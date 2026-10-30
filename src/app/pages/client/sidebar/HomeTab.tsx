@@ -18,6 +18,7 @@ import {
   SidebarItemTooltip,
 } from '../../../components/sidebar';
 import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
+import { HomeMessageIcon } from '../../../features/home-direct/HomeMessageIcon';
 import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
 import { useDirectRooms } from '../direct/useDirectRooms';
 import { UnreadBadge } from '../../../components/unread-badge';
@@ -111,7 +112,7 @@ export function HomeTab() {
             onClick={handleHomeClick}
             onContextMenu={handleContextMenu}
           >
-            <Icon src={Icons.Home} filled={homeSelected} />
+            <Icon src={HomeMessageIcon} filled={homeSelected} />
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
