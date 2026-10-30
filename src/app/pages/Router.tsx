@@ -21,6 +21,7 @@ import {
   RESET_PASSWORD_PATH,
   SPACE_PATH,
   _CREATE_PATH,
+  _FEEDBACK_PATH,
   _FEATURED_PATH,
   _INVITES_PATH,
   _JOIN_PATH,
@@ -50,6 +51,7 @@ import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
 import { FriendsPage } from '../features/friends';
+import { FeedbackPage } from '../features/feedback';
 import { NewChatPage } from '../features/friends/NewChatPage';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
@@ -183,6 +185,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
           <Route path={_JOIN_PATH} element={<p>join</p>} />
           <Route path={_SEARCH_PATH} element={<HomeSearch />} />
+          <Route path={_FEEDBACK_PATH} element={<FeedbackPage />} />
           <Route
             path={_ROOM_PATH}
             element={

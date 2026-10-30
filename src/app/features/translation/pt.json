@@ -277,5 +277,27 @@
       "confirm": "Desativar",
       "done": "Conta {{userId}} desativada"
     }
+  },
+  "feedback": {
+    "title": "Ajuda e feedback",
+    "intro": "Avise de um bug, sugira uma melhoria ou diga qualquer outra coisa.",
+    "type": "Tipo",
+    "type_bug": "Bug",
+    "type_improvement": "Melhoria",
+    "type_other": "Outro",
+    "message": "Mensagem",
+    "screenshot": "Captura de tela (opcional)",
+    "image_choose": "Escolher imagem",
+    "image_paste": "ou cole na mensagem.",
+    "image_remove": "Remover imagem",
+    "image_too_big": "A imagem pode ter até 10 MB.",
+    "image_not_image": "Esse arquivo não é uma imagem.",
+    "send": "Enviar",
+    "sent": "Enviado. Obrigado.",
+    "error_generic": "Algo deu errado.",
+    "error_too_many": "Você já enviou bastante hoje. Tente de novo amanhã.",
+    "error_not_found": "Esse item não existe mais.",
+    "error_network": "Não foi possível falar com o servidor.",
+    "error_code": "Algo deu errado ({{code}})."
   }
 }

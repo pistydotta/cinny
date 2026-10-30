@@ -47,6 +47,8 @@ export const HOME_CREATE_PATH = `/home/${_CREATE_PATH}`;
 export const HOME_JOIN_PATH = `/home/${_JOIN_PATH}`;
 export const HOME_SEARCH_PATH = `/home/${_SEARCH_PATH}`;
 export const HOME_ROOM_PATH = `/home/${_ROOM_PATH}`;
+export const _FEEDBACK_PATH = 'feedback/';
+export const HOME_FEEDBACK_PATH = `/home/${_FEEDBACK_PATH}`;
 
 export const DIRECT_PATH = '/direct/';
 export type DirectCreateSearchParams = {
