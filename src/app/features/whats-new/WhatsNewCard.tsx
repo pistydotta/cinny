@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { Box, Text } from 'folds';
-import { SequenceCard } from '../../components/sequence-card';
 import { SettingTile } from '../../components/setting-tile';
-import { SequenceCardStyle } from '../settings/styles.css';
+import { CardList, ItemTitle } from '../home-overview/CardList';
 import { tr } from '../translation/tr';
 import { isDesktopApp } from '../desktop-download/desktopDownload';
 import { shownItems, WHATS_NEW } from './entries';
@@ -23,16 +22,15 @@ export function WhatsNewCard() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">{tr('whats_new.title', "What's new")}</Text>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
+      <CardList>
         {items.map((item) => (
-          <SettingTile key={item.title} title={item.title} description={item.body} />
+          <SettingTile
+            key={item.title}
+            title={<ItemTitle>{item.title}</ItemTitle>}
+            description={item.body}
+          />
         ))}
-      </SequenceCard>
+      </CardList>
     </Box>
   );
 }
