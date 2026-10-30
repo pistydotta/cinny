@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
+import React, { CSSProperties, useCallback, useState } from 'react';
 import {
   Box,
   Button,
@@ -31,30 +31,8 @@ import { DeviceVerification } from '../../components/DeviceVerification';
 import { ManualVerificationTile } from '../../components/ManualVerification';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import {
-  EncryptionStep,
-  getEncryptionStep,
-  isPromptPostponed,
-  postponePrompt,
-  PROMPT_LATER_KEY,
-} from './encryptionStep';
+import { EncryptionStep, getEncryptionStep } from './encryptionStep';
 import { tr } from '../translation/tr';
-
-const readLater = (): string | null => {
-  try {
-    return localStorage.getItem(PROMPT_LATER_KEY);
-  } catch {
-    return null;
-  }
-};
-
-const writeLater = (value: string) => {
-  try {
-    localStorage.setItem(PROMPT_LATER_KEY, value);
-  } catch {
-    // Without storage the prompt just shows again next time.
-  }
-};
 
 const toVerified = (status: VerificationStatus): boolean | null | undefined => {
   if (status === VerificationStatus.Verified) return true;
@@ -63,7 +41,7 @@ const toVerified = (status: VerificationStatus): boolean | null | undefined => {
   return undefined;
 };
 
-const useEncryptionStep = (): EncryptionStep => {
+export const useEncryptionStep = (): EncryptionStep => {
   const mx = useMatrixClient();
   const crypto = mx.getCrypto();
   const crossSigningActive = useCrossSigningActive();
@@ -228,28 +206,23 @@ function UnlockPrompt({ onClose }: { onClose: () => void }) {
   );
 }
 
-// Asks the user once per device to create or unlock their recovery key, then keeps a banner
-// at the top of the app until it's done. Encrypted history can't follow a user to a new
-// device without it.
+// The dialogs that create the recovery key or verify this device, opened from the banner or
+// from the welcome card on Visão geral.
+export function EncryptionFlow({ step, onClose }: { step: EncryptionStep; onClose: () => void }) {
+  if (step === 'create') return <CreateKeyPrompt onClose={onClose} />;
+  if (step === 'unlock') return <UnlockPrompt onClose={onClose} />;
+  return null;
+}
+
+// A banner at the top of the app until the recovery key is set up on this device. Encrypted
+// history can't follow a user to a new device without it. Nothing opens by itself: the
+// banner and the welcome card on Visão geral are the way in.
 export function EncryptionSetup() {
-  const mx = useMatrixClient();
   const step = useEncryptionStep();
-  const userId = mx.getSafeUserId();
-  const deviceId = mx.getDeviceId() ?? '';
   const [open, setOpen] = useState(false);
+  const handleClose = useCallback(() => setOpen(false), []);
 
-  const pending = step === 'create' || step === 'unlock';
-
-  useEffect(() => {
-    if (pending && !isPromptPostponed(readLater(), userId, deviceId)) setOpen(true);
-  }, [pending, userId, deviceId]);
-
-  const handleClose = useCallback(() => {
-    writeLater(postponePrompt(readLater(), userId, deviceId));
-    setOpen(false);
-  }, [userId, deviceId]);
-
-  if (!pending) return null;
+  if (step !== 'create' && step !== 'unlock') return null;
 
   return (
     <>
@@ -279,8 +252,7 @@ export function EncryptionSetup() {
           </Text>
         </Button>
       </Box>
-      {open && step === 'create' && <CreateKeyPrompt onClose={handleClose} />}
-      {open && step === 'unlock' && <UnlockPrompt onClose={handleClose} />}
+      {open && <EncryptionFlow step={step} onClose={handleClose} />}
     </>
   );
 }

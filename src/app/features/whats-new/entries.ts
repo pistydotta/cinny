@@ -11,8 +11,8 @@ export type WhatsNewEntry = {
   items: () => WhatsNewItem[];
 };
 
-// Newest first. Add an entry when you ship something people should know about; everyone who
-// hasn't seen it gets the dialog once on their next visit.
+// Newest first. Add an entry when you ship something people should know about: it shows in
+// the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
     id: '2026-10-windows-app',
@@ -21,7 +21,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
         title: tr('whats_new.windows_title', 'blazeroom for Windows'),
         body: tr(
           'whats_new.windows_body',
-          'blazeroom now has a Windows app, so you can use it without the browser. Download it from Home > Overview.'
+          'blazeroom now has a Windows app, so you can use it without the browser. On a Windows computer, download it from this page.'
         ),
       },
     ],
@@ -47,17 +47,11 @@ export const WHATS_NEW: WhatsNewEntry[] = [
   },
 ];
 
-// Entries show at most this many at once, so a long-gone visitor isn't buried.
+// The card shows this many entries, so it stays short.
 export const MAX_SHOWN = 3;
 
+// The id of the newest entry this browser has seen.
 export const SEEN_KEY = 'blazeroom.whatsNewSeen';
 
-// The entries newer than the one last seen, newest first.
-export const unseenEntries = (
-  entries: WhatsNewEntry[],
-  lastSeenId: string | null
-): WhatsNewEntry[] => {
-  const seenIndex = lastSeenId ? entries.findIndex((entry) => entry.id === lastSeenId) : -1;
-  const unseen = seenIndex === -1 ? entries : entries.slice(0, seenIndex);
-  return unseen.slice(0, MAX_SHOWN);
-};
+export const hasUnseen = (entries: WhatsNewEntry[], lastSeenId: string | null): boolean =>
+  entries.length > 0 && entries[0].id !== lastSeenId;
