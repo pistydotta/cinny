@@ -49,6 +49,11 @@ export const createFeedbackApi = (
   };
 };
 
+export const splitFeedback = (items: FeedbackItem[]) => ({
+  open: items.filter((item) => !item.doneAt),
+  done: items.filter((item) => item.doneAt),
+});
+
 export type ScreenshotProblem = 'not_image' | 'too_big';
 
 export const checkScreenshot = (file: { type: string; size: number }): ScreenshotProblem | null => {

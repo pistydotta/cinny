@@ -298,6 +298,14 @@
     "error_too_many": "Você já enviou bastante hoje. Tente de novo amanhã.",
     "error_not_found": "Esse item não existe mais.",
     "error_network": "Não foi possível falar com o servidor.",
-    "error_code": "Algo deu errado ({{code}})."
+    "error_code": "Algo deu errado ({{code}}).",
+    "screenshot_alt": "Captura de tela",
+    "mark_done": "Marcar como feito",
+    "reopen": "Reabrir",
+    "delete": "Excluir",
+    "delete_title": "Excluir este feedback?",
+    "delete_body": "Isso não pode ser desfeito. A mensagem e a captura de tela são excluídas do servidor.",
+    "none_open": "Nada em aberto.",
+    "done_count": "Feitos ({{count}})"
   }
 }

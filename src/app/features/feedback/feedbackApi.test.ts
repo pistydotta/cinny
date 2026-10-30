@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  FeedbackItem,
   MAX_SCREENSHOT_BYTES,
   checkScreenshot,
   createFeedbackApi,
   feedbackErrorMessage,
   firstImage,
+  splitFeedback,
 } from './feedbackApi';
 import { ApiError } from '../../utils/blazeroomApi';
 
@@ -93,5 +95,20 @@ describe('feedbackErrorMessage', () => {
       new Error('boom'),
     ].map(feedbackErrorMessage);
     expect(new Set(messages).size).toBe(4);
+  });
+});
+
+describe('splitFeedback', () => {
+  const item = (id: string, doneAt: string | null) => ({ id, doneAt } as FeedbackItem);
+
+  it('separates open from done and keeps the order', () => {
+    const { open, done } = splitFeedback([
+      item('4', null),
+      item('3', '2026-10-30'),
+      item('2', null),
+      item('1', '2026-10-29'),
+    ]);
+    expect(open.map((f) => f.id)).toEqual(['4', '2']);
+    expect(done.map((f) => f.id)).toEqual(['3', '1']);
   });
 });
