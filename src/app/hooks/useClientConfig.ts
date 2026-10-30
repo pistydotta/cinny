@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { PushConfig } from '../features/push/pushApi';
 
 export type HashRouterConfig = {
   enabled?: boolean;
@@ -18,6 +19,8 @@ export type ClientConfig = {
   };
 
   hashRouter?: HashRouterConfig;
+
+  push?: PushConfig;
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

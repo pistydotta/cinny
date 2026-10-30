@@ -1,6 +1,7 @@
 /// <reference lib="WebWorker" />
 
-export type {};
+import { pushNotification } from './app/features/push/pushPayload';
+
 declare const self: ServiceWorkerGlobalScope;
 
 type SessionInfo = {
@@ -104,6 +105,8 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   }
 });
 
+const PUSH_ICON = '/public/android/android-chrome-192x192.png';
+
 const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
 
 function mediaPath(url: string): boolean {
@@ -154,5 +157,47 @@ self.addEventListener('fetch', (event: FetchEvent) => {
       }
       return fetch(event.request);
     })
+  );
+});
+
+// A push from Sygnal. The open app notifies by itself while someone is looking at it.
+self.addEventListener('push', (event: PushEvent) => {
+  event.waitUntil(
+    (async () => {
+      let payload: unknown = null;
+      try {
+        payload = event.data?.json();
+      } catch {
+        return;
+      }
+      const shown = pushNotification(payload);
+      if (!shown) return;
+
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      if (windows.some((client) => client.visibilityState === 'visible')) return;
+
+      const { title, ...options } = shown;
+      await self.registration.showNotification(title, { ...options, icon: PUSH_ICON });
+    })()
+  );
+});
+
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close();
+  const { roomId, eventId } = event.notification.data ?? {};
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const open = windows[0] as WindowClient | undefined;
+      if (open) {
+        await open.focus();
+        if (roomId) open.postMessage({ type: 'openRoom', roomId, eventId });
+        return;
+      }
+      const query = roomId
+        ? `?push_room=${encodeURIComponent(roomId)}&push_event=${encodeURIComponent(eventId ?? '')}`
+        : '';
+      await self.clients.openWindow(`/home/${query}`);
+    })()
   );
 });
