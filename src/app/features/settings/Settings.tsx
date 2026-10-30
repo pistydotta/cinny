@@ -31,6 +31,8 @@ import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
 import { Admin } from './admin';
+import { FeedbackSettings } from '../feedback';
+import { tr } from '../translation/tr';
 import { useAdminRole } from '../admin/useAdminApi';
 import { AdminRole } from '../admin/adminApi';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -46,6 +48,7 @@ export enum SettingsPages {
   DeveloperToolsPage,
   AboutPage,
   AdminPage,
+  FeedbackPage,
 }
 
 type SettingsMenuItem = {
@@ -91,6 +94,11 @@ const useSettingsMenuItems = (adminRole: AdminRole): SettingsMenuItem[] => {
       ...(isServerAdmin
         ? [{ page: SettingsPages.AdminPage, name: 'Admin', icon: Icons.ShieldUser }]
         : []),
+      {
+        page: SettingsPages.FeedbackPage,
+        name: tr('feedback.title', 'Help & feedback'),
+        icon: Icons.Bulb,
+      },
       {
         page: SettingsPages.AboutPage,
         name: 'About',
@@ -237,6 +245,9 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
       )}
       {activePage === SettingsPages.DeveloperToolsPage && (
         <DeveloperTools requestClose={handlePageRequestClose} />
+      )}
+      {activePage === SettingsPages.FeedbackPage && (
+        <FeedbackSettings requestClose={handlePageRequestClose} />
       )}
       {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
       {activePage === SettingsPages.AdminPage && (

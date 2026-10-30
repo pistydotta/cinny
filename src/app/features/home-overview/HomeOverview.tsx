@@ -4,6 +4,8 @@ import { Page, PageContent } from '../../components/page';
 import { WhatsNewCard } from '../whats-new/WhatsNewCard';
 import { tr } from '../translation/tr';
 import { WelcomeCard } from './WelcomeCard';
+import { AppsCard } from './AppsCard';
+import { JokeLine } from './JokeLine';
 
 // Visão geral: the greeting with what's left to set up, then the latest news. Nothing here
 // opens by itself.
@@ -23,7 +25,9 @@ export function HomeOverview() {
             }}
           >
             <WelcomeCard />
+            <AppsCard />
             <WhatsNewCard />
+            <JokeLine />
             <Text size="T200" priority="300">
               {tr('welcome.built_on', 'Built on')}{' '}
               <a

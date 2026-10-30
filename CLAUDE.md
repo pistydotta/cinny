@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `desktop-download`,
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `desktop-download`,
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
@@ -42,6 +42,9 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 - `npx tsc --noEmit` prints many TS2614 errors from upstream (`matrix-js-sdk` imports).
   They're upstream noise; CI only fails on errors in our own SDK-free files. Check that
   your change adds no other errors.
+- Authenticated media (avatars, chat images, feedback screenshots) needs the service worker. It
+  doesn't register under `npx vite` here or anywhere in the desktop app's browser pane, so those
+  images show broken in local tests. Fetch the URL with the token to check it instead.
 - Windows file names ignore case: `CallRejoin.tsx` next to `callRejoin.ts` breaks imports
   there. Give the component and its helper file different names.
 - Prettier rewrites line endings in upstream files on Windows. Don't commit files where

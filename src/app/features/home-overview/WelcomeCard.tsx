@@ -5,7 +5,6 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { EncryptionFlow, useEncryptionStep } from '../encryption-setup/EncryptionSetup';
-import { DESKTOP_DOWNLOAD_URL, showDesktopDownload } from '../desktop-download/desktopDownload';
 import { tr } from '../translation/tr';
 import { WelcomeItem, welcomeItems } from './welcomeItems';
 import { CardList, ItemTitle } from './CardList';
@@ -41,28 +40,6 @@ function WelcomeRow({ item, onEncryption }: { item: WelcomeItem; onEncryption: (
     );
   }
 
-  if (item === 'windows') {
-    return (
-      <SettingTile
-        title={<ItemTitle>{tr('welcome.windows_title', 'Windows app')}</ItemTitle>}
-        description={tr('welcome.windows_body', 'Use blazeroom without opening the browser.')}
-        after={
-          <Button
-            as="a"
-            href={DESKTOP_DOWNLOAD_URL}
-            download
-            size="300"
-            radii="300"
-            variant="Secondary"
-            fill="Soft"
-          >
-            <Text size="B300">{tr('welcome.download', 'Download')}</Text>
-          </Button>
-        }
-      />
-    );
-  }
-
   return (
     <SettingTile
       title={<ItemTitle>{tr('settings.language', 'Language')}</ItemTitle>}
@@ -84,10 +61,7 @@ export function WelcomeCard() {
   const encryptionStep = useEncryptionStep();
   const [encryptionOpen, setEncryptionOpen] = useState(false);
 
-  const items = welcomeItems({
-    encryptionStep,
-    canDownloadDesktop: showDesktopDownload(navigator.userAgent),
-  });
+  const items = welcomeItems({ encryptionStep });
 
   return (
     <Box direction="Column" gap="400">

@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-10-feedback',
+    items: () => [
+      {
+        title: tr('whats_new.feedback_title', 'Help & feedback'),
+        body: tr(
+          'whats_new.feedback_body',
+          'You can now send bug reports and ideas from the app, with a screenshot if you want. Find it in Settings > Help & feedback.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-10-windows-app',
     items: () => [
       {

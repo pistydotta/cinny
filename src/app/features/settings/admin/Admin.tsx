@@ -26,6 +26,7 @@ import { copyToClipboard } from '../../../utils/dom';
 import { useToast } from '../../../components/toast';
 import { useAdminApi } from '../../admin/useAdminApi';
 import { UsersList } from './UsersList';
+import { FeedbackList } from './FeedbackList';
 import {
   AdminRole,
   MIN_PASSWORD_LENGTH,
@@ -271,6 +272,9 @@ export function Admin({ requestClose, role }: AdminProps) {
               >
                 <UsersList reloadKey={reloadKey} />
               </SequenceCard>
+              <Box style={{ paddingTop: config.space.S700 }} direction="Column">
+                <FeedbackList />
+              </Box>
             </Box>
           </PageContent>
         </Scroll>
