@@ -9,6 +9,9 @@ export const RoomItemCard = style({
     '&[data-dragging=true]': {
       opacity: config.opacity.Disabled,
     },
+    '&[data-openable=true]': {
+      cursor: 'pointer',
+    },
   },
 });
 export const RoomProfileTopic = style({

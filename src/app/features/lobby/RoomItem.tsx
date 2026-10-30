@@ -284,7 +284,7 @@ type RoomItemCardProps = {
   dm?: boolean;
   firstChild?: boolean;
   lastChild?: boolean;
-  onOpen: MouseEventHandler<HTMLButtonElement>;
+  onOpen: MouseEventHandler<HTMLElement>;
   options?: ReactNode;
   before?: ReactNode;
   after?: ReactNode;
@@ -321,12 +321,24 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
 
     const joined = room?.getMyMembership() === Membership.Join;
 
+    // blazeroom: a click anywhere on a joined room's card opens it, not only the arrow. Clicks on
+    // the card's own controls, and in its portaled dialogs (the topic), keep doing their thing.
+    const handleCardClick: MouseEventHandler<HTMLDivElement> = (evt) => {
+      const target = evt.target as HTMLElement;
+      if (!evt.currentTarget.contains(target)) return;
+      if (target.closest('button, a, input, [tabindex]')) return;
+      onOpen(evt);
+    };
+
     return (
       <SequenceCard
         className={css.RoomItemCard}
         variant="SurfaceVariant"
         gap="300"
         alignItems="Center"
+        data-room-id={joined ? roomId : undefined}
+        data-openable={joined}
+        onClick={joined ? handleCardClick : undefined}
         {...props}
         ref={ref}
       >
