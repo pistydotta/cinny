@@ -31,12 +31,9 @@ export function SyncStatus({ mx }: SyncStatusProps) {
     }, [])
   );
 
-  if (
-    (stateData.current === SyncState.Prepared ||
-      stateData.current === SyncState.Syncing ||
-      stateData.current === SyncState.Catchup) &&
-    stateData.previous !== SyncState.Syncing
-  ) {
+  // Only while catching up after the connection dropped. Once the client is Prepared it already
+  // works; waiting for the next sync kept this up for as long as a quiet long-poll (~30-60s).
+  if (stateData.current === SyncState.Catchup) {
     return (
       <Box direction="Column" shrink="No">
         <Box
