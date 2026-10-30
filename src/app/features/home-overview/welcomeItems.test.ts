@@ -3,33 +3,15 @@ import { welcomeItems } from './welcomeItems';
 
 describe('welcomeItems', () => {
   it('asks a new account to protect its messages first', () => {
-    expect(welcomeItems({ encryptionStep: 'create', canDownloadDesktop: true })).toEqual([
-      'protect',
-      'windows',
-      'language',
-    ]);
+    expect(welcomeItems({ encryptionStep: 'create' })).toEqual(['protect', 'language']);
   });
 
   it('asks to verify a new device of an account that has a key', () => {
-    expect(welcomeItems({ encryptionStep: 'unlock', canDownloadDesktop: false })).toEqual([
-      'verify',
-      'language',
-    ]);
+    expect(welcomeItems({ encryptionStep: 'unlock' })).toEqual(['verify', 'language']);
   });
 
   it('drops the encryption line when done or still loading', () => {
-    expect(welcomeItems({ encryptionStep: 'done', canDownloadDesktop: false })).toEqual([
-      'language',
-    ]);
-    expect(welcomeItems({ encryptionStep: 'loading', canDownloadDesktop: false })).toEqual([
-      'language',
-    ]);
-  });
-
-  it('offers the Windows app only when it can be downloaded', () => {
-    expect(welcomeItems({ encryptionStep: 'done', canDownloadDesktop: true })).toEqual([
-      'windows',
-      'language',
-    ]);
+    expect(welcomeItems({ encryptionStep: 'done' })).toEqual(['language']);
+    expect(welcomeItems({ encryptionStep: 'loading' })).toEqual(['language']);
   });
 });

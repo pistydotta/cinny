@@ -252,9 +252,6 @@
   "welcome": {
     "greeting": "Olá, {{name}}!",
     "subtitle": "Boas-vindas ao blazeroom.",
-    "windows_title": "App para Windows",
-    "windows_body": "Use o blazeroom sem abrir o navegador.",
-    "download": "Baixar",
     "language_body": "Para mudar, abra Configurações (seu avatar, no canto inferior esquerdo) > General > Idioma.",
     "built_on": "Feito com",
     "source_code": "Código-fonte"
@@ -313,5 +310,11 @@
     "joke_struck": "ir tomar no seu cu",
     "joke_link": "mandar aqui",
     "joke_end": "."
+  },
+  "apps": {
+    "title": "Aplicativos disponíveis",
+    "download": "Baixar",
+    "current": "Você já está nele",
+    "soon": "Em desenvolvimento"
   }
 }
