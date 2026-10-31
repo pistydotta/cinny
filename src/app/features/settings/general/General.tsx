@@ -51,6 +51,8 @@ import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
 import { LanguageSetting } from '../../translation/LanguageSetting';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;
@@ -506,7 +508,8 @@ function DateHint({ hasChanges, handleReset }: DateHintProps) {
           <Icon src={Icons.Cross} size="100" />
         </IconButton>
       ) : (
-        <IconButton
+        <TipIconButton
+          label={tr('tips.more', 'More options')}
           tabIndex={-1}
           onClick={handleOpenMenu}
           type="button"
@@ -516,7 +519,7 @@ function DateHint({ hasChanges, handleReset }: DateHintProps) {
           aria-pressed={!!anchor}
         >
           <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.Info} />
-        </IconButton>
+        </TipIconButton>
       )}
     </PopOut>
   );

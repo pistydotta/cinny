@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-profile-call',
+    items: () => [
+      {
+        title: tr('whats_new.profile_call_title', 'Profile description and visible calls'),
+        body: tr(
+          'whats_new.profile_call_body',
+          'Write a description in Settings > Account: it shows on your profile card. And a sound icon on a server or on Home tells you when a call is going on.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-android',
     items: () => [
       {

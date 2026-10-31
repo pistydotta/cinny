@@ -1,10 +1,12 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import React, { ComponentProps, HTMLAttributes, Suspense, forwardRef, lazy } from 'react';
 import classNames from 'classnames';
-import { Box, Chip, Header, Icon, IconButton, Icons, Scroll, Text, as } from 'folds';
+import { Box, Chip, Header, Icon, Icons, Scroll, Text, as } from 'folds';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from './TextViewer.css';
 import { copyToClipboard } from '../../utils/dom';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 const ReactPrism = lazy(() => import('../../plugins/react-prism/ReactPrism'));
 
@@ -53,9 +55,14 @@ export const TextViewer = as<'div', TextViewerProps>(
       >
         <Header className={css.TextViewerHeader} size="400">
           <Box grow="Yes" alignItems="Center" gap="200">
-            <IconButton size="300" radii="300" onClick={requestClose}>
+            <TipIconButton
+              label={tr('tips.back', 'Back')}
+              size="300"
+              radii="300"
+              onClick={requestClose}
+            >
               <Icon size="50" src={Icons.ArrowLeft} />
-            </IconButton>
+            </TipIconButton>
             <Text size="T300" truncate>
               {name}
             </Text>

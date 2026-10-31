@@ -1,6 +1,8 @@
 import React, { ComponentProps, forwardRef } from 'react';
-import { Icon, IconButton, Input, config, Icons } from 'folds';
+import { Icon, Input, config, Icons } from 'folds';
 import { UseStateProvider } from '../UseStateProvider';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 type PasswordInputProps = Omit<ComponentProps<typeof Input>, 'type' | 'size'> & {
   size: '400' | '500';
@@ -22,7 +24,12 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             after={
               <>
                 {after}
-                <IconButton
+                <TipIconButton
+                  label={
+                    visible
+                      ? tr('tips.hide_password', 'Hide password')
+                      : tr('tips.show_password', 'Show password')
+                  }
                   onClick={() => setVisible(!visible)}
                   type="button"
                   variant={visible ? 'Warning' : variant}
@@ -34,7 +41,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
                     size="100"
                     src={visible ? Icons.Eye : Icons.EyeBlind}
                   />
-                </IconButton>
+                </TipIconButton>
               </>
             }
           />

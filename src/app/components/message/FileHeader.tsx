@@ -1,4 +1,4 @@
-import { Badge, Box, Icon, IconButton, Icons, Spinner, Text, as, toRem } from 'folds';
+import { Badge, Box, Icon, Icons, Spinner, Text, as, toRem } from 'folds';
 import React, { ReactNode, useCallback } from 'react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FileSaver from 'file-saver';
@@ -12,6 +12,8 @@ import {
   downloadMedia,
   mxcUrlToHttp,
 } from '../../utils/matrix';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 const badgeStyles = { maxWidth: toRem(100) };
 
@@ -42,7 +44,8 @@ export function FileDownloadButton({ filename, url, mimeType, encInfo }: FileDow
   const downloading = downloadState.status === AsyncStatus.Loading;
   const hasError = downloadState.status === AsyncStatus.Error;
   return (
-    <IconButton
+    <TipIconButton
+      label={tr('tips.download', 'Download')}
       disabled={downloading}
       onClick={download}
       variant={hasError ? 'Critical' : 'SurfaceVariant'}
@@ -54,7 +57,7 @@ export function FileDownloadButton({ filename, url, mimeType, encInfo }: FileDow
       ) : (
         <Icon size="100" src={Icons.Download} />
       )}
-    </IconButton>
+    </TipIconButton>
   );
 }
 

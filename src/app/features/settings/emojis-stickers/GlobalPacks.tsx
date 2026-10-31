@@ -43,6 +43,8 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../../utils/keyboard';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 function GlobalPackSelector({
   packs,
@@ -367,7 +369,8 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
           before={
             <Box alignItems="Center" gap="300">
               {removed ? (
-                <IconButton
+                <TipIconButton
+                  label={tr('tips.undo_remove', 'Undo removal')}
                   size="300"
                   radii="Pill"
                   variant="Critical"
@@ -375,7 +378,7 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
                   disabled={applyingChanges}
                 >
                   <Icon src={Icons.Plus} size="100" />
-                </IconButton>
+                </TipIconButton>
               ) : (
                 <IconButton
                   size="300"

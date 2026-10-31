@@ -4,7 +4,6 @@ import {
   Button,
   Header,
   Icon,
-  IconButton,
   Icons,
   Input,
   Menu,
@@ -37,6 +36,8 @@ import { PasswordInput } from '../../../components/password-input';
 import { FieldError } from '../FiledError';
 import { getResetPasswordPath } from '../../pathUtils';
 import { stopPropagation } from '../../../utils/keyboard';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
+import { tr } from '../../../features/translation/tr';
 
 function UsernameHint({ server }: { server: string }) {
   const [anchor, setAnchor] = useState<RectCords>();
@@ -91,7 +92,8 @@ function UsernameHint({ server }: { server: string }) {
         </FocusTrap>
       }
     >
-      <IconButton
+      <TipIconButton
+        label={tr('tips.more', 'More options')}
         tabIndex={-1}
         onClick={handleOpenMenu}
         type="button"
@@ -101,7 +103,7 @@ function UsernameHint({ server }: { server: string }) {
         aria-pressed={!!anchor}
       >
         <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.Info} />
-      </IconButton>
+      </TipIconButton>
     </PopOut>
   );
 }

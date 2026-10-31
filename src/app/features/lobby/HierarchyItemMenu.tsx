@@ -2,7 +2,6 @@ import React, { MouseEventHandler, useCallback, useEffect, useState } from 'reac
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
-  IconButton,
   Icon,
   Icons,
   PopOut,
@@ -30,6 +29,8 @@ import { IPowerLevels } from '../../hooks/usePowerLevels';
 import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { TipIconButton } from '../tooltips/TipIconButton';
+import { tr } from '../translation/tr';
 
 type HierarchyItemWithParent = HierarchyItem & {
   parentId: string;
@@ -234,7 +235,8 @@ export function HierarchyItemMenu({
 
   return (
     <Box gap="200" alignItems="Center" shrink="No">
-      <IconButton
+      <TipIconButton
+        label={tr('tips.more', 'More options')}
         onClick={handleOpenMenu}
         size="300"
         variant="SurfaceVariant"
@@ -243,7 +245,7 @@ export function HierarchyItemMenu({
         aria-pressed={!!menuAnchor}
       >
         <Icon size="50" src={Icons.VerticalDots} />
-      </IconButton>
+      </TipIconButton>
       {menuAnchor && (
         <PopOut
           anchor={menuAnchor}

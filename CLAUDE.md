@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `games`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `games`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -70,5 +70,12 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   The one exception the owners asked for is `features/app-prompt`: a small card, not a dialog,
   offering the app to people in a browser on Android or Windows. It shows at most once a week and
   three times per user and browser, and never again after a download.
+- Icon buttons with no text use `TipIconButton` (`features/tooltips`), so they say what they do on
+  hover. Obvious close and back buttons in settings dialogs are left as they are.
+- The profile description is a custom field on the Matrix profile (`features/profile-description`).
+  Read it with `getExtendedProfile`: the SDK's `getExtendedProfileProperty` answers from a cache.
+- A MatrixRTC session's `memberships` starts empty and fills in a moment later, with only the
+  session's own `MembershipsChanged` to say so: after a reload the manager's `SessionStarted` doesn't
+  fire. Use `useCallMembers`, or `roomsInCallAtom` for all rooms.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

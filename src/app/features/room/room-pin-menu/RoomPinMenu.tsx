@@ -10,7 +10,6 @@ import {
   config,
   Header,
   Icon,
-  IconButton,
   Icons,
   Menu,
   Scroll,
@@ -86,6 +85,8 @@ import {
   useGetMemberPowerTag,
 } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 type PinnedMessageProps = {
   room: Room;
@@ -145,7 +146,8 @@ function PinnedMessage({
         <Text size="T200">Open</Text>
       </Chip>
       {canPinEvent && (
-        <IconButton
+        <TipIconButton
+          label={tr('tips.unpin', 'Unpin')}
           data-event-id={eventId}
           variant="Secondary"
           size="300"
@@ -158,7 +160,7 @@ function PinnedMessage({
           ) : (
             <Icon src={Icons.Cross} size="100" />
           )}
-        </IconButton>
+        </TipIconButton>
       )}
     </Box>
   );
@@ -457,9 +459,14 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
               <Text size="H5">Pinned Messages</Text>
             </Box>
             <Box shrink="No">
-              <IconButton size="300" onClick={requestClose} radii="300">
+              <TipIconButton
+                label={tr('tips.close', 'Close')}
+                size="300"
+                onClick={requestClose}
+                radii="300"
+              >
                 <Icon src={Icons.Cross} size="400" />
-              </IconButton>
+              </TipIconButton>
             </Box>
           </Header>
           <Box grow="Yes">

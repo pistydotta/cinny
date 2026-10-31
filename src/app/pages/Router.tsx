@@ -22,6 +22,7 @@ import {
   SPACE_PATH,
   _CREATE_PATH,
   _FEEDBACK_PATH,
+  _COFFEE_PATH,
   _OVERVIEW_PATH,
   _FEATURED_PATH,
   _INVITES_PATH,
@@ -58,6 +59,7 @@ import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
 import { FriendsPage } from '../features/friends';
 import { FeedbackPage } from '../features/feedback';
+import { CoffeePage } from '../features/coffee/CoffeePage';
 import { NewChatPage } from '../features/friends/NewChatPage';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
@@ -203,6 +205,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_JOIN_PATH} element={<p>join</p>} />
           <Route path={_SEARCH_PATH} element={<HomeSearch />} />
           <Route path={_FEEDBACK_PATH} element={<FeedbackPage />} />
+          <Route path={_COFFEE_PATH} element={<CoffeePage />} />
           <Route path={_OVERVIEW_PATH} element={<WelcomePage />} />
           <Route
             path={_ROOM_PATH}

@@ -32,6 +32,7 @@ import { SilentCallRules } from '../../features/call-notify/useSilentCallRules';
 import { AndroidPushRegistrar } from '../../features/android-app/AndroidPush';
 import { CallUnreadCleaner } from '../../features/call-notify/callUnread';
 import { AppPrompt } from '../../features/app-prompt/AppPrompt';
+import { RoomsInCallTracker } from '../../features/call-indicator/RoomsInCallTracker';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -303,6 +304,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <AndroidPushRegistrar />
       <CallUnreadCleaner />
       <AppPrompt />
+      <RoomsInCallTracker />
       {children}
     </>
   );

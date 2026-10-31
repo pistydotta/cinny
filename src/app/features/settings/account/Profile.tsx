@@ -43,6 +43,7 @@ import { ModalWide } from '../../../styles/Modal.css';
 import { createUploadAtom, UploadSuccess } from '../../../state/upload';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { DescriptionField } from '../../profile-description/DescriptionField';
 
 type ProfileProps = {
   profile: UserProfile;
@@ -331,6 +332,7 @@ export function Profile() {
       >
         <ProfileAvatar userId={userId} profile={profile} />
         <ProfileDisplayName userId={userId} profile={profile} />
+        <DescriptionField userId={userId} />
       </SequenceCard>
     </Box>
   );

@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Icon,
-  IconButton,
   Icons,
   Menu,
   MenuItem,
@@ -51,6 +50,8 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
+import { tr } from '../../../features/translation/tr';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -107,9 +108,14 @@ function DirectHeader() {
             </Text>
           </Box>
           <Box>
-            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+            <TipIconButton
+              label={tr('tips.more', 'More options')}
+              aria-pressed={!!menuAnchor}
+              variant="Background"
+              onClick={handleOpenMenu}
+            >
               <Icon src={Icons.VerticalDots} size="200" />
-            </IconButton>
+            </TipIconButton>
           </Box>
         </Box>
       </PageNavHeader>

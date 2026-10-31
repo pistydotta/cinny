@@ -36,6 +36,8 @@ import { KeySymbol } from '../../utils/key-symbol';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { stopPropagation } from '../../utils/keyboard';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
@@ -207,7 +209,8 @@ export function HeadingBlockButton() {
         </FocusTrap>
       }
     >
-      <IconButton
+      <TipIconButton
+        label={tr('tips.heading', 'Heading')}
         style={{ width: 'unset' }}
         variant="SurfaceVariant"
         onClick={handleMenuOpen}
@@ -217,7 +220,7 @@ export function HeadingBlockButton() {
       >
         <Icon size="200" src={level ? Icons[`Heading${level}`] : Icons.Heading1} />
         <Icon size="200" src={isActive ? Icons.Cross : Icons.ChevronBottom} />
-      </IconButton>
+      </TipIconButton>
     </PopOut>
   );
 }

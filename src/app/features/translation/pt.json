@@ -257,6 +257,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "profile_call_title": "Descrição no perfil e chamadas à vista",
+    "profile_call_body": "Escreva uma descrição em Configurações > Conta: ela aparece no seu cartão de perfil. E um ícone de som no servidor ou no Início avisa quando tem chamada rolando.",
     "title": "Novidades",
     "windows_title": "blazeroom para Windows",
     "windows_body": "O blazeroom agora tem um app para Windows, para usar sem o navegador. Num computador com Windows, baixe nesta página.",
@@ -324,6 +326,57 @@
     "download": "Baixar",
     "current": "Você já está nele",
     "soon": "Em desenvolvimento"
+  },
+  "tips": {
+    "attach": "Anexar arquivo",
+    "formatting": "Formatação de texto",
+    "stickers": "Figurinhas",
+    "emoji": "Emojis",
+    "send": "Enviar",
+    "cancel_reply": "Cancelar resposta",
+    "react": "Adicionar reação",
+    "reply": "Responder",
+    "thread": "Responder em tópico",
+    "edit": "Editar",
+    "more": "Mais opções",
+    "unpin": "Desafixar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "zoom_out": "Diminuir zoom",
+    "zoom_in": "Aumentar zoom",
+    "rotate_left": "Girar para a esquerda",
+    "rotate_right": "Girar para a direita",
+    "download": "Baixar",
+    "mute": "Silenciar",
+    "unmute": "Ativar som",
+    "cancel_upload": "Cancelar envio",
+    "previous": "Anterior",
+    "next": "Próximo",
+    "toggle_chat": "Mostrar ou ocultar o chat",
+    "scroll_top": "Ir para o topo",
+    "close_folder": "Fechar pasta",
+    "server_info": "Opções do servidor",
+    "show_password": "Mostrar senha",
+    "hide_password": "Ocultar senha",
+    "details": "Mostrar detalhes",
+    "hide_details": "Ocultar detalhes",
+    "undo_remove": "Desfazer remoção",
+    "choose_server": "Escolher servidor",
+    "heading": "Título"
+  },
+  "profile_description": {
+    "title": "Descrição",
+    "placeholder": "Aparece no seu cartão de perfil",
+    "save": "Salvar",
+    "failed": "Não foi possível salvar. Tente de novo."
+  },
+  "call_indicator": {
+    "label": "Chamada em andamento"
+  },
+  "coffee": {
+    "nav": "Pague um café",
+    "title": "Valeu pela intenção!",
+    "body": "O blazeroom é mantido em conjunto por quem usa o servidor e faz parte da minha vida. Por enquanto não dá para doar por aqui."
   },
   "app_prompt": {
     "text": "O blazeroom tem app para {{platform}}",

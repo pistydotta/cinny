@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
-import { Chip, Icon, IconButton, Icons, Text, color } from 'folds';
+import { Chip, Icon, Icons, Text, color } from 'folds';
 import { UploadCard, UploadCardError, CompactUploadCardProgress } from './UploadCard';
 import { TUploadAtom, UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { TUploadContent } from '../../utils/matrix';
 import { bytesToSize, getFileTypeIcon } from '../../utils/common';
 import { useMediaConfig } from '../../hooks/useMediaConfig';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 type CompactUploadCardRendererProps = {
   isEncrypted?: boolean;
@@ -62,7 +64,8 @@ export function CompactUploadCardRenderer({
               <Text size="B300">Retry</Text>
             </Chip>
           )}
-          <IconButton
+          <TipIconButton
+            label={tr('tips.cancel_upload', 'Cancel upload')}
             onClick={removeUpload}
             aria-label="Cancel Upload"
             variant="SurfaceVariant"
@@ -70,7 +73,7 @@ export function CompactUploadCardRenderer({
             size="300"
           >
             <Icon src={Icons.Cross} size="200" />
-          </IconButton>
+          </TipIconButton>
         </>
       }
     >
