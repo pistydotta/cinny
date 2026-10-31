@@ -28,7 +28,8 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`,
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `games`
+  (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.

@@ -269,7 +269,9 @@
     "android_title": "App para Android",
     "android_body": "O Blazeroom agora tem app para Android, com notificações, chamadas que tocam com o celular bloqueado e compartilhar de outros apps. Baixe em Apps disponíveis, no celular.",
     "push_title": "Notificações com o app fechado",
-    "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications."
+    "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications.",
+    "poker_title": "Jogos: poker com os amigos",
+    "poker_body": "Tem uma aba nova de Jogos na barra lateral. Cada um ganha 5.000 moedas para jogar Texas Hold’em com os amigos ou treinar contra bots."
   },
   "admin": {
     "deactivate": {
@@ -338,5 +340,243 @@
     "install_first": "No iPhone, primeiro adicione o blazeroom à tela de início: Compartilhar > Adicionar à Tela de Início. Depois abra por lá e ligue isto.",
     "blocked": "As notificações estão bloqueadas nas configurações do navegador.",
     "failed": "Não foi possível mudar isso. Tente de novo."
+  },
+  "games": {
+    "rank": {
+      "2": "Dois",
+      "3": "Três",
+      "4": "Quatro",
+      "5": "Cinco",
+      "6": "Seis",
+      "7": "Sete",
+      "8": "Oito",
+      "9": "Nove",
+      "10": "Dez",
+      "11": "Valete",
+      "12": "Dama",
+      "13": "Rei",
+      "14": "Ás"
+    },
+    "ranks": {
+      "2": "Dois",
+      "3": "Três",
+      "4": "Quatros",
+      "5": "Cincos",
+      "6": "Seis",
+      "7": "Setes",
+      "8": "Oitos",
+      "9": "Noves",
+      "10": "Dez",
+      "11": "Valetes",
+      "12": "Damas",
+      "13": "Reis",
+      "14": "Ases"
+    },
+    "rank_top": {
+      "2": "o Dois",
+      "3": "o Três",
+      "4": "o Quatro",
+      "5": "o Cinco",
+      "6": "o Seis",
+      "7": "o Sete",
+      "8": "o Oito",
+      "9": "o Nove",
+      "10": "o Dez",
+      "11": "o Valete",
+      "12": "a Dama",
+      "13": "o Rei",
+      "14": "o Ás"
+    },
+    "suit": {
+      "s": "Espadas",
+      "h": "Copas",
+      "d": "Ouros",
+      "c": "Paus"
+    },
+    "hand": {
+      "royal_flush": "Royal Flush",
+      "straight_flush": "Straight Flush até {{rank}}",
+      "quads": "Quadra de {{ranks}}",
+      "full_house": "Full House: {{ranks}} com {{ranks2}}",
+      "flush": "Flush de {{suit}}",
+      "straight": "Sequência até {{rank}}",
+      "trips": "Trinca de {{ranks}}",
+      "two_pair": "Dois Pares: {{ranks}} e {{ranks2}}",
+      "pair": "Par de {{ranks}}",
+      "high_card": "Carta Alta: {{rank}}"
+    },
+    "log": {
+      "sat": "{{name}} sentou à mesa com {{chips}} fichas",
+      "left": "{{name}} saiu da mesa",
+      "rebuy": "{{name}} recomprou {{chips}} fichas",
+      "hand": "Mão #{{n}}",
+      "small_blind": "{{name}} posta small blind {{chips}}",
+      "big_blind": "{{name}} posta big blind {{chips}}",
+      "fold": "{{name}} desistiu",
+      "check": "{{name}} passou",
+      "call": "{{name}} pagou {{chips}}",
+      "call_allin": "{{name}} pagou {{chips}} e está all-in",
+      "allin": "{{name}} foi all-in com {{chips}}",
+      "bet": "{{name}} apostou {{chips}}",
+      "raise": "{{name}} aumentou para {{chips}}",
+      "uncalled": "{{chips}} não pagos voltam para {{name}}",
+      "shows": "{{name}} mostra {{hand}}",
+      "won": "{{name}} ganhou {{chips}}",
+      "won_no_show": "{{name}} ganhou {{chips}} sem mostrar as cartas"
+    },
+    "status": {
+      "shuffling": "Embaralhando…",
+      "won": "Você levou {{chips}} do pote (+{{net}})",
+      "got_back": "Você recuperou {{chips}} do pote",
+      "lost": "Você perdeu {{chips}}",
+      "hand_over": "Mão encerrada",
+      "your_turn_to_call": "Sua vez — {{chips}} para pagar",
+      "your_turn": "Sua vez",
+      "you_folded": "Você desistiu desta mão",
+      "you_allin": "Você está all-in",
+      "thinking": "{{name}} está pensando…",
+      "your_hand": "Sua mão:",
+      "leaving": "Você sairá da mesa ao fim desta mão",
+      "waiting_players": "Aguardando mais jogadores para começar…"
+    },
+    "action": {
+      "raise": "Aumentar",
+      "allin": "All-in",
+      "bet": "Apostar",
+      "keep_playing": "Continuar jogando",
+      "fold": "Desistir",
+      "check": "Mesa",
+      "call": "Pagar",
+      "raise_to": "para",
+      "raise_amount": "Valor do aumento",
+      "back": "Voltar",
+      "cancel": "Cancelar",
+      "leave": "Sair da mesa"
+    },
+    "preset": {
+      "min": "Mín",
+      "half_pot": "½ pote",
+      "three_quarter_pot": "¾ pote",
+      "pot": "Pote"
+    },
+    "badge": {
+      "away": "Ausente",
+      "bet": "Apostou",
+      "call": "Pagou",
+      "check": "Mesa",
+      "fold": "Desistiu",
+      "raise": "Aumentou"
+    },
+    "buy_in": {
+      "label": "Fichas para levar à mesa",
+      "need_at_least": "Você precisa de pelo menos {{coins}} moedas para sentar.",
+      "sit": "Sentar à mesa"
+    },
+    "error": {
+      "action": "Sua jogada não foi enviada. Tente de novo.",
+      "buy_in": "Não foi possível comprar fichas.",
+      "cash_out": "Não foi possível devolver suas fichas.",
+      "create": "Não foi possível criar a mesa.",
+      "invalid_action": "Ação inválida",
+      "invalid_amount": "Valor inválido",
+      "join": "Não foi possível entrar na mesa.",
+      "leave": "Não foi possível sair da mesa. Tente de novo.",
+      "load_table": "Não foi possível carregar a mesa.",
+      "not_enough_coins": "Saldo insuficiente",
+      "rebuy": "Não foi possível recomprar agora.",
+      "seat": "Não foi possível sentar nesse lugar. Tente outro."
+    },
+    "hub": {
+      "more": "Mais jogos",
+      "more_meta": "Novos jogos vão usar a mesma carteira.",
+      "pick": "Escolha um jogo",
+      "play": "Jogar",
+      "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
+      "soon": "Em breve",
+      "subtitle": "Jogue com suas moedas. O saldo é o mesmo em todos os jogos."
+    },
+    "lobby": {
+      "accept": "Aceitar",
+      "blinds": "Blinds",
+      "buy_in_range": "Entrada de {{min}} a {{max}} fichas",
+      "create": "Criar mesa",
+      "create_text": "Você organiza a mesa e embaralha as cartas, mas não vê as cartas de ninguém. Se você sair, outro jogador assume.",
+      "creating": "Criando…",
+      "default_table_name": "Mesa de {{name}}",
+      "empty": "Nenhuma mesa por enquanto. Crie uma e convide seus amigos: eles recebem o convite como uma sala nova.",
+      "invalid_ids": "ID inválido: {{ids}} (use o formato @nome:servidor)",
+      "invite": "Convidar amigos",
+      "invite_from": "Convite de {{name}}",
+      "invite_pending": "Convite",
+      "joining": "Entrando…",
+      "members": "{{count}} na sala",
+      "open": "Abrir",
+      "other_ids": "Outros IDs, ex.: @amigo:matrix.org",
+      "practice": "Treino",
+      "selected": "{{count}} selecionados",
+      "subtitle": "Mesas com amigos e treino",
+      "table_name": "Nome da mesa",
+      "train": "Treinar",
+      "vs_bots": "Jogar contra bots",
+      "vs_bots_meta": "Mesa só sua, para praticar a qualquer hora",
+      "with_friends": "Mesas com amigos"
+    },
+    "nav": {
+      "games": "Jogos"
+    },
+    "practice": {
+      "join": "Entrar na mesa",
+      "note": "Aqui você joga contra bots. As fichas que você ganhar ou perder voltam para a sua carteira quando você sai da mesa.",
+      "opponents": "Adversários",
+      "subtitle": "Texas Hold’em sem limite · Blinds {{small}}/{{big}}",
+      "title": "Mesa de Poker"
+    },
+    "rebuy": {
+      "button": "Recomprar",
+      "button_amount": "Recomprar {{chips}}",
+      "not_enough": "Sua carteira não tem moedas suficientes.",
+      "text": "Compre mais fichas com as moedas da sua carteira ou saia da mesa.",
+      "title": "Suas fichas acabaram"
+    },
+    "result": {
+      "takes_pot": "{{name}} leva o pote de {{chips}}",
+      "split": "Pote dividido · {{hand}}",
+      "wins_with": "{{name}} vence com {{hand}}"
+    },
+    "shared": {
+      "away_text": "O tempo da sua jogada acabou, então você desistiu da mão e não vai receber cartas até voltar.",
+      "away_title": "Você ficou ausente",
+      "back_to_game": "Voltar a jogar",
+      "host_shuffles": "{{name}} embaralha",
+      "not_now": "Agora não",
+      "pick_seat": "Escolha um lugar para sentar",
+      "sit_text": "As fichas saem da sua carteira e voltam para ela quando você sair da mesa.",
+      "sit_title": "Sentar no lugar {{seat}}"
+    },
+    "table": {
+      "accept_first": "Aceite o convite da mesa na tela do Poker.",
+      "blinds": "Blinds {{small}}/{{big}}",
+      "card": "{{rank}} de {{suit}}",
+      "default_name": "Mesa de poker",
+      "empty": "vazio",
+      "face_down": "Carta virada",
+      "history": "Histórico da mesa",
+      "host_hint": "Organiza a mesa e embaralha as cartas",
+      "loading": "Carregando a mesa…",
+      "not_a_table": "Esta sala não é uma mesa de poker.",
+      "pot": "Pote",
+      "sit": "Sentar",
+      "topic": "Mesa de poker · Blinds {{small}}/{{big}}",
+      "you": "{{name}} (você)"
+    },
+    "wallet": {
+      "after_sitting": "Depois de sentar",
+      "at_table": "{{chips}} na mesa",
+      "at_tables_hint": "{{coins}} moedas estão em uma mesa e voltam quando você sair dela.",
+      "coins": "{{coins}} moedas",
+      "hint": "Moedas na sua carteira",
+      "starting_hint": "Toda conta nova começa com {{coins}} moedas.",
+      "yours": "Sua carteira"
+    }
   }
 }

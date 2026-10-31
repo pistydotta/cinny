@@ -25,6 +25,10 @@ import {
   SPACE_ROOM_PATH,
   SPACE_SEARCH_PATH,
   CREATE_PATH,
+  GAMES_PATH,
+  GAMES_POKER_PATH,
+  GAMES_POKER_PRACTICE_PATH,
+  GAMES_POKER_TABLE_PATH,
 } from './paths';
 import { trimLeadingSlash, trimTrailingSlash } from '../utils/common';
 import { HashRouterConfig } from '../hooks/useClientConfig';
@@ -157,6 +161,12 @@ export const getExploreServerPath = (server: string): string => {
 };
 
 export const getCreatePath = (): string => CREATE_PATH;
+
+export const getGamesPath = (): string => GAMES_PATH;
+export const getGamesPokerPath = (): string => GAMES_POKER_PATH;
+export const getGamesPokerPracticePath = (): string => GAMES_POKER_PRACTICE_PATH;
+export const getGamesPokerTablePath = (roomId: string): string =>
+  generatePath(GAMES_POKER_TABLE_PATH, { roomId: encodeURIComponent(roomId) });
 
 export const getInboxPath = (): string => INBOX_PATH;
 export const getFriendsPath = (): string => FRIENDS_PATH;
