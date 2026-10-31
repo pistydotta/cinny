@@ -19,6 +19,7 @@ import { useInboxSelected } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+import { tr } from '../../../features/translation/tr';
 
 export function InboxTab() {
   const screenSize = useScreenSizeContext();
@@ -45,7 +46,7 @@ export function InboxTab() {
 
   return (
     <SidebarItem active={inboxSelected}>
-      <SidebarItemTooltip tooltip="Inbox">
+      <SidebarItemTooltip tooltip={tr('nav.inbox', 'Inbox')}>
         {(triggerRef) => (
           <SidebarAvatar as="button" ref={triggerRef} outlined onClick={handleInboxClick}>
             <Icon src={Icons.Inbox} filled={inboxSelected} />

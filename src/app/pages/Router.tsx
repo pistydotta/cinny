@@ -12,6 +12,7 @@ import { ClientConfig } from '../hooks/useClientConfig';
 import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
+  FRIENDS_PATH,
   EXPLORE_PATH,
   HOME_PATH,
   LOGIN_PATH,
@@ -20,6 +21,7 @@ import {
   RESET_PASSWORD_PATH,
   SPACE_PATH,
   _CREATE_PATH,
+  _FEEDBACK_PATH,
   _FEATURED_PATH,
   _INVITES_PATH,
   _JOIN_PATH,
@@ -36,7 +38,7 @@ import {
 } from './paths';
 import {
   getAppPathFromHref,
-  getExploreFeaturedPath,
+  getExploreServerPath,
   getHomePath,
   getInboxNotificationsPath,
   getLoginPath,
@@ -45,13 +47,16 @@ import {
 } from './pathUtils';
 import { ClientBindAtoms, ClientLayout, ClientRoot } from './client';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
-import { Direct, DirectCreate, DirectRouteRoomProvider } from './client/direct';
+import { DirectRouteRoomProvider } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
-import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
+import { Explore, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
+import { FriendsPage } from '../features/friends';
+import { FeedbackPage } from '../features/feedback';
+import { NewChatPage } from '../features/friends/NewChatPage';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
 import { PageRoot } from '../components/page';
@@ -73,8 +78,16 @@ import { GamesHubPage, PokerLobbyPage, PokerPracticePage, PokerTablePage } from 
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
+import { getMxIdServer } from '../utils/matrix';
 import { CallStatusRenderer } from './CallStatusRenderer';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
+
+// blazeroom: Explore opens our server's open spaces and rooms; there's no Featured page.
+const redirectToOwnServerExplore = () => {
+  const userId = getFallbackSession()?.userId;
+  const server = userId ? getMxIdServer(userId) : undefined;
+  return redirect(server ? getExploreServerPath(server) : getHomePath());
+};
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -177,6 +190,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
           <Route path={_JOIN_PATH} element={<p>join</p>} />
           <Route path={_SEARCH_PATH} element={<HomeSearch />} />
+          <Route path={_FEEDBACK_PATH} element={<FeedbackPage />} />
           <Route
             path={_ROOM_PATH}
             element={
@@ -192,7 +206,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             <PageRoot
               nav={
                 <MobileFriendlyPageNav path={DIRECT_PATH}>
-                  <Direct />
+                  <Home />
                 </MobileFriendlyPageNav>
               }
             >
@@ -201,7 +215,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           }
         >
           {mobile ? null : <Route index element={<WelcomePage />} />}
-          <Route path={_CREATE_PATH} element={<DirectCreate />} />
+          <Route path={_CREATE_PATH} element={<NewChatPage />} />
           <Route
             path={_ROOM_PATH}
             element={
@@ -211,6 +225,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             }
           />
         </Route>
+        <Route path={FRIENDS_PATH} element={<FriendsPage />} />
         <Route
           path={SPACE_PATH}
           element={
@@ -266,13 +281,9 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           }
         >
           {mobile ? null : (
-            <Route
-              index
-              loader={() => redirect(getExploreFeaturedPath())}
-              element={<WelcomePage />}
-            />
+            <Route index loader={redirectToOwnServerExplore} element={<WelcomePage />} />
           )}
-          <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
+          <Route path={_FEATURED_PATH} loader={redirectToOwnServerExplore} />
           <Route path={_SERVER_PATH} element={<PublicRooms />} />
         </Route>
         <Route path={CREATE_PATH} element={<Create />} />

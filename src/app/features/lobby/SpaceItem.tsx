@@ -34,7 +34,6 @@ import { stopPropagation } from '../../utils/keyboard';
 import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenCreateRoomModal } from '../../state/hooks/createRoomModal';
-import { useOpenCreateSpaceModal } from '../../state/hooks/createSpaceModal';
 import { AddExistingModal } from '../add-existing';
 import { CreateRoomType } from '../../components/create-room/types';
 import { BetaNoticeBadge } from '../../components/BetaNoticeBadge';
@@ -320,73 +319,6 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
   );
 }
 
-function AddSpaceButton({ item }: { item: HierarchyItem }) {
-  const [cords, setCords] = useState<RectCords>();
-  const openCreateSpaceModal = useOpenCreateSpaceModal();
-  const [addExisting, setAddExisting] = useState(false);
-
-  const handleAddSpace: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setCords(evt.currentTarget.getBoundingClientRect());
-  };
-
-  const handleCreateSpace = () => {
-    openCreateSpaceModal(item.roomId as any);
-    setCords(undefined);
-  };
-
-  const handleAddExisting = () => {
-    setAddExisting(true);
-    setCords(undefined);
-  };
-  return (
-    <PopOut
-      anchor={cords}
-      position="Bottom"
-      align="End"
-      content={
-        <FocusTrap
-          focusTrapOptions={{
-            initialFocus: false,
-            onDeactivate: () => setCords(undefined),
-            clickOutsideDeactivates: true,
-            isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-            isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-            escapeDeactivates: stopPropagation,
-          }}
-        >
-          <Menu style={{ padding: config.space.S100 }}>
-            <MenuItem
-              size="300"
-              radii="300"
-              variant="Primary"
-              fill="None"
-              onClick={handleCreateSpace}
-            >
-              <Text size="T300">New Space</Text>
-            </MenuItem>
-            <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
-              <Text size="T300">Existing Space</Text>
-            </MenuItem>
-          </Menu>
-        </FocusTrap>
-      }
-    >
-      <Chip
-        variant="SurfaceVariant"
-        radii="Pill"
-        before={<Icon src={Icons.Plus} size="50" />}
-        onClick={handleAddSpace}
-        aria-pressed={!!cords}
-      >
-        <Text size="B300">Add Space</Text>
-      </Chip>
-      {addExisting && (
-        <AddExistingModal space parentId={item.roomId} requestClose={() => setAddExisting(false)} />
-      )}
-    </PopOut>
-  );
-}
-
 type SpaceItemCardProps = {
   summary: IHierarchyRoom | undefined;
   loading?: boolean;
@@ -497,7 +429,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
           {space && canEditChild && (
             <Box shrink="No" alignItems="Inherit" gap="200">
               <AddRoomButton item={item} />
-              {item.parentId === undefined && <AddSpaceButton item={item} />}
+              {/* blazeroom: no sub-spaces, a space is the whole server. */}
             </Box>
           )}
         </Box>

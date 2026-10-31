@@ -4,6 +4,7 @@ import { MatrixEvent } from 'matrix-js-sdk';
 import { IMemberContent, Membership } from '../../types/matrix/room';
 import { getMxIdLocalPart } from '../utils/matrix';
 import { isMembershipChanged } from '../utils/room';
+import { tr } from '../features/translation/tr';
 
 export type ParsedResult = {
   icon: IconSrc;
@@ -40,9 +41,9 @@ export const useMemberEventParser = (): MemberEventParser => {
             body: (
               <>
                 <b>{senderName}</b>
-                {' accepted '}
+                {tr('timeline.member.accepted', ' accepted ')}
                 <b>{userName}</b>
-                {`'s join request `}
+                {tr('timeline.member.join_request_end', "'s join request ")}
                 {reason}
               </>
             ),
@@ -54,7 +55,7 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{senderName}</b>
-              {' invited '}
+              {tr('timeline.member.invited', ' invited ')}
               <b>{userName}</b> {reason}
             </>
           ),
@@ -67,7 +68,7 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{userName}</b>
-              {' request to join room '}
+              {tr('timeline.member.knocked', ' request to join room ')}
               {reason}
             </>
           ),
@@ -80,7 +81,7 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{userName}</b>
-              {' joined the room'}
+              {tr('timeline.member.joined', ' joined the room')}
             </>
           ),
         };
@@ -94,15 +95,15 @@ export const useMemberEventParser = (): MemberEventParser => {
               senderId === userId ? (
                 <>
                   <b>{userName}</b>
-                  {' rejected the invitation '}
+                  {tr('timeline.member.rejected_invite', ' rejected the invitation ')}
                   {reason}
                 </>
               ) : (
                 <>
                   <b>{senderName}</b>
-                  {' rejected '}
+                  {tr('timeline.member.rejected', ' rejected ')}
                   <b>{userName}</b>
-                  {`'s join request `}
+                  {tr('timeline.member.join_request_end', "'s join request ")}
                   {reason}
                 </>
               ),
@@ -116,15 +117,15 @@ export const useMemberEventParser = (): MemberEventParser => {
               senderId === userId ? (
                 <>
                   <b>{userName}</b>
-                  {' revoked joined request '}
+                  {tr('timeline.member.revoked_request', ' revoked joined request ')}
                   {reason}
                 </>
               ) : (
                 <>
                   <b>{senderName}</b>
-                  {' revoked '}
+                  {tr('timeline.member.revoked', ' revoked ')}
                   <b>{userName}</b>
-                  {`'s invite `}
+                  {tr('timeline.member.invite_end', "'s invite ")}
                   {reason}
                 </>
               ),
@@ -137,7 +138,7 @@ export const useMemberEventParser = (): MemberEventParser => {
             body: (
               <>
                 <b>{senderName}</b>
-                {' unbanned '}
+                {tr('timeline.member.unbanned', ' unbanned ')}
                 <b>{userName}</b> {reason}
               </>
             ),
@@ -150,13 +151,13 @@ export const useMemberEventParser = (): MemberEventParser => {
             senderId === userId ? (
               <>
                 <b>{userName}</b>
-                {' left the room '}
+                {tr('timeline.member.left', ' left the room ')}
                 {reason}
               </>
             ) : (
               <>
                 <b>{senderName}</b>
-                {' kicked '}
+                {tr('timeline.member.kicked', ' kicked ')}
                 <b>{userName}</b> {reason}
               </>
             ),
@@ -169,7 +170,7 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{senderName}</b>
-              {' banned '}
+              {tr('timeline.member.banned', ' banned ')}
               <b>{userName}</b> {reason}
             </>
           ),
@@ -189,13 +190,13 @@ export const useMemberEventParser = (): MemberEventParser => {
           typeof content.displayname === 'string' ? (
             <>
               <b>{prevUserName}</b>
-              {' changed display name to '}
+              {tr('timeline.member.changed_name', ' changed display name to ')}
               <b>{userName}</b>
             </>
           ) : (
             <>
               <b>{prevUserName}</b>
-              {' removed their display name '}
+              {tr('timeline.member.removed_name', ' removed their display name ')}
             </>
           ),
       };
@@ -207,12 +208,12 @@ export const useMemberEventParser = (): MemberEventParser => {
           content.avatar_url && typeof content.avatar_url === 'string' ? (
             <>
               <b>{userName}</b>
-              {' changed their avatar'}
+              {tr('timeline.member.changed_avatar', ' changed their avatar')}
             </>
           ) : (
             <>
               <b>{userName}</b>
-              {' removed their avatar '}
+              {tr('timeline.member.removed_avatar', ' removed their avatar ')}
             </>
           ),
       };

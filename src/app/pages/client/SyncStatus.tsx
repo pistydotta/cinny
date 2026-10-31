@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { Box, config, Line, Text } from 'folds';
 import { useSyncState } from '../../hooks/useSyncState';
 import { ContainerColor } from '../../styles/ContainerColor.css';
+import { tr } from '../../features/translation/tr';
 
 type StateData = {
   current: SyncState | null;
@@ -30,12 +31,9 @@ export function SyncStatus({ mx }: SyncStatusProps) {
     }, [])
   );
 
-  if (
-    (stateData.current === SyncState.Prepared ||
-      stateData.current === SyncState.Syncing ||
-      stateData.current === SyncState.Catchup) &&
-    stateData.previous !== SyncState.Syncing
-  ) {
+  // Only while catching up after the connection dropped. Once the client is Prepared it already
+  // works; waiting for the next sync kept this up for as long as a quiet long-poll (~30-60s).
+  if (stateData.current === SyncState.Catchup) {
     return (
       <Box direction="Column" shrink="No">
         <Box
@@ -44,7 +42,7 @@ export function SyncStatus({ mx }: SyncStatusProps) {
           alignItems="Center"
           justifyContent="Center"
         >
-          <Text size="L400">Connecting...</Text>
+          <Text size="L400">{tr('sync.connecting', 'Connecting...')}</Text>
         </Box>
         <Line variant="Success" size="300" />
       </Box>
@@ -60,7 +58,7 @@ export function SyncStatus({ mx }: SyncStatusProps) {
           alignItems="Center"
           justifyContent="Center"
         >
-          <Text size="L400">Connection Lost! Reconnecting...</Text>
+          <Text size="L400">{tr('sync.reconnecting', 'Connection Lost! Reconnecting...')}</Text>
         </Box>
         <Line variant="Warning" size="300" />
       </Box>
@@ -76,7 +74,7 @@ export function SyncStatus({ mx }: SyncStatusProps) {
           alignItems="Center"
           justifyContent="Center"
         >
-          <Text size="L400">Connection Lost!</Text>
+          <Text size="L400">{tr('sync.lost', 'Connection Lost!')}</Text>
         </Box>
         <Line variant="Critical" size="300" />
       </Box>

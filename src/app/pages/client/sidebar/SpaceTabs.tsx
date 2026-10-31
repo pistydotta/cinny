@@ -93,6 +93,7 @@ import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
+import { tr } from '../../../features/translation/tr';
 
 type SpaceMenuProps = {
   room: Room;
@@ -166,7 +167,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             disabled={!unread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
+              {tr('menu.mark_as_read', 'Mark as Read')}
             </Text>
           </MenuItem>
           {onUnpin && (
@@ -177,7 +178,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
               after={<Icon size="100" src={Icons.Pin} />}
             >
               <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                Unpin
+                {tr('menu.unpin', 'Unpin')}
               </Text>
             </MenuItem>
           )}
@@ -195,7 +196,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
+              {tr('menu.invite', 'Invite')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -205,7 +206,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Copy Link
+              {tr('menu.copy_link', 'Copy Link')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -215,7 +216,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Space Settings
+              {tr('menu.space_settings', 'Space Settings')}
             </Text>
           </MenuItem>
         </Box>

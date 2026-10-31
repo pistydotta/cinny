@@ -8,7 +8,7 @@ import {
   SidebarStack,
 } from '../../components/sidebar';
 import {
-  DirectTab,
+  FriendsTab,
   HomeTab,
   SpaceTabs,
   InboxTab,
@@ -30,7 +30,7 @@ export function SidebarNav() {
           <Scroll ref={scrollRef} variant="Background" size="0">
             <SidebarStack>
               <HomeTab />
-              <DirectTab />
+              <FriendsTab />
             </SidebarStack>
             <SpaceTabs scrollRef={scrollRef} />
             <SidebarStackSeparator />

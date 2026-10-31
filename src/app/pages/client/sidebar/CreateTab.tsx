@@ -16,6 +16,7 @@ import {
 import { useCreateSelected } from '../../../hooks/router/useCreateSelected';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
+import { tr } from '../../../features/translation/tr';
 
 export function CreateTab() {
   const createSelected = useCreateSelected();
@@ -40,7 +41,7 @@ export function CreateTab() {
 
   return (
     <SidebarItem active={createSelected}>
-      <SidebarItemTooltip tooltip="Add Space">
+      <SidebarItemTooltip tooltip={tr('nav.add_space', 'Add Space')}>
         {(triggerRef) => (
           <PopOut
             anchor={menuCords}
@@ -73,9 +74,9 @@ export function CreateTab() {
                       onClick={handleCreateSpace}
                     >
                       <SettingTile before={<Icon size="400" src={Icons.Space} />}>
-                        <Text size="H6">Create Space</Text>
+                        <Text size="H6">{tr('nav.create_space', 'Create Space')}</Text>
                         <Text size="T300" priority="300">
-                          Build a space for your community.
+                          {tr('nav.create_space_desc', 'Build a space for your community.')}
                         </Text>
                       </SettingTile>
                     </SequenceCard>
@@ -90,9 +91,9 @@ export function CreateTab() {
                       onClick={handleJoinWithAddress}
                     >
                       <SettingTile before={<Icon size="400" src={Icons.Link} />}>
-                        <Text size="H6">Join with Address</Text>
+                        <Text size="H6">{tr('nav.join_with_address', 'Join with Address')}</Text>
                         <Text size="T300" priority="300">
-                          Become a part of existing community.
+                          {tr('nav.join_space_desc', 'Become a part of existing community.')}
                         </Text>
                       </SettingTile>
                     </SequenceCard>

@@ -23,6 +23,7 @@ import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEve
 import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
 import { EventReaders } from '../../components/event-readers';
 import { stopPropagation } from '../../utils/keyboard';
+import { tr } from '../translation/tr';
 
 export function RoomViewFollowingPlaceholder() {
   return <div className={css.RoomViewFollowingPlaceholder} />;
@@ -83,7 +84,7 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                   <>
                     <b>{names[0]}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' is following the conversation.'}
+                      {tr('room.is_following', ' is following the conversation.')}
                     </Text>
                   </>
                 )}
@@ -91,11 +92,11 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                   <>
                     <b>{names[0]}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' and '}
+                      {tr('room.and', ' and ')}
                     </Text>
                     <b>{names[1]}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' are following the conversation.'}
+                      {tr('room.are_following', ' are following the conversation.')}
                     </Text>
                   </>
                 )}
@@ -107,11 +108,11 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                     </Text>
                     <b>{names[1]}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' and '}
+                      {tr('room.and', ' and ')}
                     </Text>
                     <b>{names[2]}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' are following the conversation.'}
+                      {tr('room.are_following', ' are following the conversation.')}
                     </Text>
                   </>
                 )}
@@ -127,11 +128,11 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                     </Text>
                     <b>{names[2]}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' and '}
+                      {tr('room.and', ' and ')}
                     </Text>
-                    <b>{names.length - 3} others</b>
+                    <b>{tr('room.n_others', '{{n}} others', { n: names.length - 3 })}</b>
                     <Text as="span" size="Inherit" priority="300">
-                      {' are following the conversation.'}
+                      {tr('room.are_following', ' are following the conversation.')}
                     </Text>
                   </>
                 )}

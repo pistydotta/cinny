@@ -10,6 +10,7 @@ import { getNotificationState, usePermissionState } from '../../../hooks/usePerm
 import { useEmailNotifications } from '../../../hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { PushNotificationsTile } from '../../push/PushNotifications';
 
 function EmailNotification() {
   const mx = useMatrixClient();
@@ -27,7 +28,7 @@ function EmailNotification() {
             device_display_name: email,
             lang: 'en',
             data: {
-              brand: 'Cinny',
+              brand: 'blazeroom',
             },
             append: true,
           });
@@ -99,6 +100,7 @@ export function SystemNotification() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">System</Text>
+      <PushNotificationsTile />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

@@ -30,6 +30,11 @@ import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
+import { Admin } from './admin';
+import { FeedbackSettings } from '../feedback';
+import { tr } from '../translation/tr';
+import { useAdminRole } from '../admin/useAdminApi';
+import { AdminRole } from '../admin/adminApi';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
@@ -42,6 +47,8 @@ export enum SettingsPages {
   EmojisStickersPage,
   DeveloperToolsPage,
   AboutPage,
+  AdminPage,
+  FeedbackPage,
 }
 
 type SettingsMenuItem = {
@@ -50,8 +57,9 @@ type SettingsMenuItem = {
   icon: IconSrc;
 };
 
-const useSettingsMenuItems = (): SettingsMenuItem[] =>
-  useMemo(
+const useSettingsMenuItems = (adminRole: AdminRole): SettingsMenuItem[] => {
+  const isServerAdmin = adminRole.admin;
+  return useMemo(
     () => [
       {
         page: SettingsPages.GeneralPage,
@@ -83,14 +91,23 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
         name: 'Developer Tools',
         icon: Icons.Terminal,
       },
+      ...(isServerAdmin
+        ? [{ page: SettingsPages.AdminPage, name: 'Admin', icon: Icons.ShieldUser }]
+        : []),
+      {
+        page: SettingsPages.FeedbackPage,
+        name: tr('feedback.title', 'Help & feedback'),
+        icon: Icons.Bulb,
+      },
       {
         page: SettingsPages.AboutPage,
         name: 'About',
         icon: Icons.Info,
       },
     ],
-    []
+    [isServerAdmin]
   );
+};
 
 type SettingsProps = {
   initialPage?: SettingsPages;
@@ -111,7 +128,8 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     if (initialPage) return initialPage;
     return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
   });
-  const menuItems = useSettingsMenuItems();
+  const adminRole = useAdminRole();
+  const menuItems = useSettingsMenuItems(adminRole);
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
@@ -228,7 +246,13 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
       {activePage === SettingsPages.DeveloperToolsPage && (
         <DeveloperTools requestClose={handlePageRequestClose} />
       )}
+      {activePage === SettingsPages.FeedbackPage && (
+        <FeedbackSettings requestClose={handlePageRequestClose} />
+      )}
       {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
+      {activePage === SettingsPages.AdminPage && (
+        <Admin requestClose={handlePageRequestClose} role={adminRole} />
+      )}
     </PageRoot>
   );
 }

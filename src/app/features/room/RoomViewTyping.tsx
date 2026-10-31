@@ -10,6 +10,7 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import * as css from './RoomViewTyping.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
+import { tr } from '../translation/tr';
 
 export type RoomViewTypingProps = {
   room: Room;
@@ -58,7 +59,7 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
               <>
                 <b>{typingNames[0]}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' is typing...'}
+                  {tr('room.is_typing', ' is typing...')}
                 </Text>
               </>
             )}
@@ -66,11 +67,11 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
               <>
                 <b>{typingNames[0]}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' and '}
+                  {tr('room.and', ' and ')}
                 </Text>
                 <b>{typingNames[1]}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' are typing...'}
+                  {tr('room.are_typing', ' are typing...')}
                 </Text>
               </>
             )}
@@ -82,11 +83,11 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
                 </Text>
                 <b>{typingNames[1]}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' and '}
+                  {tr('room.and', ' and ')}
                 </Text>
                 <b>{typingNames[2]}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' are typing...'}
+                  {tr('room.are_typing', ' are typing...')}
                 </Text>
               </>
             )}
@@ -102,16 +103,21 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
                 </Text>
                 <b>{typingNames[2]}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' and '}
+                  {tr('room.and', ' and ')}
                 </Text>
-                <b>{typingNames.length - 3} others</b>
+                <b>{tr('room.n_others', '{{n}} others', { n: typingNames.length - 3 })}</b>
                 <Text as="span" size="Inherit" priority="300">
-                  {' are typing...'}
+                  {tr('room.are_typing', ' are typing...')}
                 </Text>
               </>
             )}
           </Text>
-          <IconButton title="Drop Typing Status" size="300" radii="Pill" onClick={handleDropAll}>
+          <IconButton
+            title={tr('room.drop_typing', 'Drop Typing Status')}
+            size="300"
+            radii="Pill"
+            onClick={handleDropAll}
+          >
             <Icon size="50" src={Icons.Cross} />
           </IconButton>
         </Box>

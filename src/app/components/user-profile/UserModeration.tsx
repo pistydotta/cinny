@@ -9,6 +9,7 @@ import { BreakWord } from '../../styles/Text.css';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { timeDayMonYear, timeHourMinute } from '../../utils/time';
+import { tr } from '../../features/translation/tr';
 
 type UserKickAlertProps = {
   reason?: string;
@@ -256,10 +257,10 @@ export function UserModeration({ userId, canKick, canBan, canInvite }: UserModer
     <Box direction="Column" gap="400">
       <Box direction="Column" gap="200">
         <Box grow="Yes" direction="Column" gap="100">
-          <Text size="L400">Moderation</Text>
+          <Text size="L400">{tr('profile.moderation', 'Moderation')}</Text>
           <Input
             ref={reasonInputRef}
-            placeholder="Reason"
+            placeholder={tr('profile.reason', 'Reason')}
             size="300"
             variant="Background"
             radii="300"
@@ -299,7 +300,7 @@ export function UserModeration({ userId, canKick, canBan, canInvite }: UserModer
               onClick={invite}
               disabled={disabled}
             >
-              <Text size="B300">Invite</Text>
+              <Text size="B300">{tr('menu.invite', 'Invite')}</Text>
             </Button>
           )}
           {canKick && (
@@ -319,7 +320,7 @@ export function UserModeration({ userId, canKick, canBan, canInvite }: UserModer
               onClick={kick}
               disabled={disabled}
             >
-              <Text size="B300">Kick</Text>
+              <Text size="B300">{tr('profile.kick', 'Kick')}</Text>
             </Button>
           )}
           {canBan && (
@@ -339,7 +340,7 @@ export function UserModeration({ userId, canKick, canBan, canInvite }: UserModer
               onClick={ban}
               disabled={disabled}
             >
-              <Text size="B300">Ban</Text>
+              <Text size="B300">{tr('profile.ban', 'Ban')}</Text>
             </Button>
           )}
         </Box>

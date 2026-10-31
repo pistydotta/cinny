@@ -54,6 +54,12 @@ import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useRoomName } from '../../../hooks/useRoomMeta';
 import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
+import { useAutoJoinSpaceRooms } from '../../../features/space-autojoin/useAutoJoinSpaceRooms';
+import {
+  canReorderSpace,
+  useRoomNavReorder,
+} from '../../../features/room-nav-reorder/useRoomNavReorder';
+import { ReorderableNavRoom } from '../../../features/room-nav-reorder/ReorderableNavRoom';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 import { usePowerLevels } from '../../../hooks/usePowerLevels';
@@ -85,6 +91,7 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { BreakWord } from '../../../styles/Text.css';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
 import { useCallEmbed } from '../../../hooks/useCallEmbed';
+import { tr } from '../../../features/translation/tr';
 
 type SpaceMenuProps = {
   room: Room;
@@ -158,7 +165,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
           disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
+            {tr('menu.mark_as_read', 'Mark as Read')}
           </Text>
         </MenuItem>
       </Box>
@@ -175,7 +182,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
           disabled={!canInvite}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Invite
+            {tr('menu.invite', 'Invite')}
           </Text>
         </MenuItem>
         <MenuItem
@@ -185,7 +192,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
           radii="300"
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Copy Link
+            {tr('menu.copy_link', 'Copy Link')}
           </Text>
         </MenuItem>
         <MenuItem
@@ -195,7 +202,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
           radii="300"
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Space Settings
+            {tr('menu.space_settings', 'Space Settings')}
           </Text>
         </MenuItem>
         {developerTools && (
@@ -226,7 +233,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
                 aria-pressed={promptLeave}
               >
                 <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                  Leave Space
+                  {tr('menu.leave_space', 'Leave Space')}
                 </Text>
               </MenuItem>
               {promptLeave && (
@@ -379,6 +386,8 @@ export function Space() {
   const mx = useMatrixClient();
   const space = useSpace();
   useNavToActivePathMapper(space.roomId);
+  useAutoJoinSpaceRooms(space);
+  useRoomNavReorder();
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
@@ -425,6 +434,17 @@ export function Space() {
     )
   );
 
+  // blazeroom: rooms can be dragged into order here too, not only in the lobby.
+  const reorderableSpaces = useMemo(
+    () =>
+      new Set(
+        hierarchy
+          .filter((item) => 'space' in item && canReorderSpace(mx, item.roomId))
+          .map((item) => item.roomId)
+      ),
+    [mx, hierarchy]
+  );
+
   const virtualizer = useVirtualizer({
     count: hierarchy.length,
     getScrollElement: () => scrollRef.current,
@@ -460,7 +480,7 @@ export function Space() {
                     </Avatar>
                     <Box as="span" grow="Yes">
                       <Text as="span" size="Inherit" truncate>
-                        Lobby
+                        {tr('nav.lobby', 'Lobby')}
                       </Text>
                     </Box>
                   </Box>
@@ -476,7 +496,7 @@ export function Space() {
                     </Avatar>
                     <Box as="span" grow="Yes">
                       <Text as="span" size="Inherit" truncate>
-                        Message Search
+                        {tr('nav.message_search', 'Message Search')}
                       </Text>
                     </Box>
                   </Box>
@@ -491,7 +511,7 @@ export function Space() {
             }}
           >
             {virtualizer.getVirtualItems().map((vItem) => {
-              const { roomId } = hierarchy[vItem.index] ?? {};
+              const { roomId, parentId } = hierarchy[vItem.index] ?? {};
               const room = mx.getRoom(roomId);
               if (!room) return null;
 
@@ -511,7 +531,7 @@ export function Space() {
                           onClick={handleCategoryClick}
                           closed={closedCategories.has(categoryId)}
                         >
-                          {roomId === space.roomId ? 'Rooms' : room?.name}
+                          {roomId === space.roomId ? tr('nav.rooms', 'Rooms') : room?.name}
                         </RoomNavCategoryButton>
                       </NavCategoryHeader>
                     </div>
@@ -521,14 +541,27 @@ export function Space() {
 
               return (
                 <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
-                  <RoomNavItem
-                    room={room}
-                    selected={selectedRoomId === roomId}
-                    showAvatar={mDirects.has(roomId)}
-                    direct={mDirects.has(roomId)}
-                    linkPath={getToLink(roomId)}
-                    notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
-                  />
+                  <ReorderableNavRoom
+                    roomId={roomId}
+                    parentId={parentId ?? space.roomId}
+                    enabled={
+                      !!parentId &&
+                      reorderableSpaces.has(parentId) &&
+                      !closedCategories.has(makeNavCategoryId(space.roomId, parentId))
+                    }
+                  >
+                    <RoomNavItem
+                      room={room}
+                      selected={selectedRoomId === roomId}
+                      showAvatar={mDirects.has(roomId)}
+                      direct={mDirects.has(roomId)}
+                      linkPath={getToLink(roomId)}
+                      notificationMode={getRoomNotificationMode(
+                        notificationPreferences,
+                        room.roomId
+                      )}
+                    />
+                  </ReorderableNavRoom>
                 </VirtualTile>
               );
             })}

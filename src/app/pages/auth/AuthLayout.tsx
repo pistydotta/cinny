@@ -94,12 +94,16 @@ export function AuthLayout() {
   }, [discoverServer, server]);
 
   // if server is mismatches with path server, update path
+  // (keeping the query, e.g. ?token= from an invite link)
   useEffect(() => {
     if (!urlEncodedServer || tryDecodeURIComponent(urlEncodedServer) !== server) {
       navigate(
-        generatePath(currentAuthPath(location.pathname), {
-          server: encodeURIComponent(server),
-        }),
+        {
+          pathname: generatePath(currentAuthPath(location.pathname), {
+            server: encodeURIComponent(server),
+          }),
+          search: location.search,
+        },
         { replace: true }
       );
     }
@@ -134,8 +138,8 @@ export function AuthLayout() {
         <Box direction="Column" className={css.AuthCard}>
           <Header className={css.AuthHeader} size="600" variant="Surface">
             <Box grow="Yes" direction="Row" gap="300" alignItems="Center">
-              <img className={css.AuthLogo} src={CinnySVG} alt="Cinny Logo" />
-              <Text size="H3">Cinny</Text>
+              <img className={css.AuthLogo} src={CinnySVG} alt="blazeroom logo" />
+              <Text size="H3">blazeroom</Text>
             </Box>
           </Header>
           <Box className={css.AuthCardContent} direction="Column">

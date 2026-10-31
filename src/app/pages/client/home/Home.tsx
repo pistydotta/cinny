@@ -58,6 +58,8 @@ import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCatego
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { HomeDirects } from '../../../features/home-direct/HomeDirects';
+import { useDirectRooms } from '../direct/useDirectRooms';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -65,6 +67,8 @@ import {
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
+import { tr } from '../../../features/translation/tr';
+import { HomeOverviewNavItem } from '../../../features/home-overview/HomeOverviewNavItem';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -92,7 +96,7 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
           aria-disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
+            {tr('menu.mark_as_read', 'Mark as Read')}
           </Text>
         </MenuItem>
       </Box>
@@ -117,7 +121,7 @@ function HomeHeader() {
         <Box alignItems="Center" grow="Yes" gap="300">
           <Box grow="Yes">
             <Text size="H4" truncate>
-              Home
+              {tr('nav.home', 'Home')}
             </Text>
           </Box>
           <Box>
@@ -161,19 +165,19 @@ function HomeEmpty() {
         icon={<Icon size="600" src={Icons.Hash} />}
         title={
           <Text size="H5" align="Center">
-            No Rooms
+            {tr('home.no_rooms', 'No Rooms')}
           </Text>
         }
         content={
           <Text size="T300" align="Center">
-            You do not have any rooms yet.
+            {tr('home.no_rooms_desc', 'You do not have any rooms yet.')}
           </Text>
         }
         options={
           <>
             <Button onClick={() => navigate(getHomeCreatePath())} variant="Secondary" size="300">
               <Text size="B300" truncate>
-                Create Room
+                {tr('nav.create_room', 'Create Room')}
               </Text>
             </Button>
             <Button
@@ -183,7 +187,7 @@ function HomeEmpty() {
               size="300"
             >
               <Text size="B300" truncate>
-                Explore Community Rooms
+                {tr('home.explore_rooms', 'Explore Community Rooms')}
               </Text>
             </Button>
           </>
@@ -206,7 +210,8 @@ export function Home() {
   const selectedRoomId = useSelectedRoom();
   const createRoomSelected = useHomeCreateSelected();
   const searchSelected = useHomeSearchSelected();
-  const noRoomToDisplay = rooms.length === 0;
+  const directs = useDirectRooms();
+  const noRoomToDisplay = rooms.length === 0 && directs.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedRooms = useMemo(() => {
@@ -241,6 +246,7 @@ export function Home() {
         <PageNavContent scrollRef={scrollRef}>
           <Box direction="Column" gap="300">
             <NavCategory>
+              <HomeOverviewNavItem />
               <NavItem variant="Background" radii="400" aria-selected={createRoomSelected}>
                 <NavButton onClick={() => navigate(getHomeCreatePath())}>
                   <NavItemContent>
@@ -250,7 +256,7 @@ export function Home() {
                       </Avatar>
                       <Box as="span" grow="Yes">
                         <Text as="span" size="Inherit" truncate>
-                          Create Room
+                          {tr('nav.create_room', 'Create Room')}
                         </Text>
                       </Box>
                     </Box>
@@ -269,7 +275,7 @@ export function Home() {
                             </Avatar>
                             <Box as="span" grow="Yes">
                               <Text as="span" size="Inherit" truncate>
-                                Join with Address
+                                {tr('nav.join_with_address', 'Join with Address')}
                               </Text>
                             </Box>
                           </Box>
@@ -304,7 +310,7 @@ export function Home() {
                       </Avatar>
                       <Box as="span" grow="Yes">
                         <Text as="span" size="Inherit" truncate>
-                          Message Search
+                          {tr('nav.message_search', 'Message Search')}
                         </Text>
                       </Box>
                     </Box>
@@ -312,6 +318,7 @@ export function Home() {
                 </NavLink>
               </NavItem>
             </NavCategory>
+            <HomeDirects />
             <NavCategory>
               <NavCategoryHeader>
                 <RoomNavCategoryButton
@@ -319,7 +326,7 @@ export function Home() {
                   data-category-id={DEFAULT_CATEGORY_ID}
                   onClick={handleCategoryClick}
                 >
-                  Rooms
+                  {tr('nav.rooms', 'Rooms')}
                 </RoomNavCategoryButton>
               </NavCategoryHeader>
               <div

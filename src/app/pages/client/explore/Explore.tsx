@@ -25,12 +25,9 @@ import {
   NavItemContent,
   NavLink,
 } from '../../../components/nav';
-import { getExploreFeaturedPath, getExploreServerPath } from '../../pathUtils';
+import { getExploreServerPath } from '../../pathUtils';
 import { useClientConfig } from '../../../hooks/useClientConfig';
-import {
-  useExploreFeaturedSelected,
-  useExploreServer,
-} from '../../../hooks/router/useExploreSelected';
+import { useExploreServer } from '../../../hooks/router/useExploreSelected';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -164,7 +161,6 @@ export function Explore() {
   const servers =
     clientConfig.featuredCommunities?.servers?.filter((server) => server !== userServer) ?? [];
 
-  const featuredSelected = useExploreFeaturedSelected();
   const selectedServer = useExploreServer();
 
   return (
@@ -182,22 +178,7 @@ export function Explore() {
       <PageNavContent>
         <Box direction="Column" gap="300">
           <NavCategory>
-            <NavItem variant="Background" radii="400" aria-selected={featuredSelected}>
-              <NavLink to={getExploreFeaturedPath()}>
-                <NavItemContent>
-                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                    <Avatar size="200" radii="400">
-                      <Icon src={Icons.Bulb} size="100" filled={featuredSelected} />
-                    </Avatar>
-                    <Box as="span" grow="Yes">
-                      <Text as="span" size="Inherit" truncate>
-                        Featured
-                      </Text>
-                    </Box>
-                  </Box>
-                </NavItemContent>
-              </NavLink>
-            </NavItem>
+            {/* blazeroom: no Featured page, only our server's open spaces and rooms */}
             {userServer && (
               <NavItem
                 variant="Background"

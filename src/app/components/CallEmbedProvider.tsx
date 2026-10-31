@@ -33,7 +33,6 @@ import {
   useCallJoined,
   useCallThemeSync,
   useCallMemberSoundSync,
-  useCallStart,
 } from '../hooks/useCallEmbed';
 import { callChatAtom, callEmbedAtom } from '../state/callEmbed';
 import { CallEmbed } from '../plugins/call';
@@ -56,6 +55,8 @@ import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
 import { useLivekitSupport } from '../hooks/useLivekitSupport';
 import { CallAvatarAnimation } from '../styles/Animations.css';
 import { webRTCSupported } from '../utils/rtc';
+import { CallRejoin } from '../features/call-rejoin/CallRejoin';
+import { useSwitchCall } from '../features/call-switch/useSwitchCall';
 
 type IncomingCallInfo = {
   room: Room;
@@ -232,7 +233,7 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
 
   const [callInfo, setCallInfo] = useState<IncomingCallInfo>();
   const dm = callInfo ? directs.has(callInfo.room.roomId) : false;
-  const startCall = useCallStart(dm);
+  const startCall = useSwitchCall(dm);
 
   const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = useCallback(
     async (event, room, toStartOfTimeline, removed, data) => {
@@ -339,7 +340,8 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
   if (callInfo && callEmbed?.roomId === callInfo.room.roomId) {
     return null;
   }
-  return !joined && callInfo ? (
+  // In a call, only a DM ringing you interrupts; answering it leaves the current call.
+  return callInfo && (!joined || callInfo.notificationType === 'ring') ? (
     <IncomingCall
       dm={dm}
       info={callInfo}
@@ -386,6 +388,7 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
       {callEmbed && <CallUtils embed={callEmbed} />}
       <CallEmbedRefContextProvider value={callEmbedRef}>
         <IncomingCallListener callEmbed={callEmbed} joined={joined} />
+        <CallRejoin callEmbed={callEmbed} joined={joined} />
         {children}
       </CallEmbedRefContextProvider>
       <div

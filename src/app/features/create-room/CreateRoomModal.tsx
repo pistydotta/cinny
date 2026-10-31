@@ -17,6 +17,7 @@ import FocusTrap from 'focus-trap-react';
 import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { SpaceProvider } from '../../hooks/useSpace';
 import { CreateRoomForm } from './CreateRoom';
+import { SpaceRoomForm } from '../space-rooms/SpaceRoomForm';
 import {
   useCloseCreateRoomModal,
   useCreateRoomModalState,
@@ -77,7 +78,11 @@ function CreateRoomModal({ state }: CreateRoomModalProps) {
                     direction="Column"
                     gap="500"
                   >
-                    <CreateRoomForm space={space} onCreate={closeDialog} defaultType={type} />
+                    {space ? (
+                      <SpaceRoomForm space={space} onCreate={closeDialog} defaultType={type} />
+                    ) : (
+                      <CreateRoomForm onCreate={closeDialog} defaultType={type} />
+                    )}
                   </Box>
                 </Scroll>
               </Box>

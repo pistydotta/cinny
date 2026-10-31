@@ -220,7 +220,7 @@ export function Direct() {
                       </Avatar>
                       <Box as="span" grow="Yes">
                         <Text as="span" size="Inherit" truncate>
-                          Create Chat
+                          New Chat
                         </Text>
                       </Box>
                     </Box>
