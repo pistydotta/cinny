@@ -13,6 +13,7 @@ import { useSearchParamsViaServers } from '../../../hooks/router/useSearchParams
 import { mDirectAtom } from '../../../state/mDirectList';
 import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
+import { AutoJoinWait, useAwaitingAutoJoin } from '../../../features/space-autojoin/AutoJoinRunner';
 
 export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
@@ -26,9 +27,11 @@ export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const viaServers = useSearchParamsViaServers();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
+  const awaitingAutoJoin = useAwaitingAutoJoin(space, roomId);
 
   if (!room || !allRooms.includes(room.roomId)) {
     // room is not joined
+    if (awaitingAutoJoin) return <AutoJoinWait />;
     return (
       <JoinBeforeNavigate
         roomIdOrAlias={roomIdOrAlias!}

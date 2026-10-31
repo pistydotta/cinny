@@ -28,6 +28,7 @@ import { getStateEvent } from '../utils/room';
 import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
 import { isSelfChatRoom } from '../features/self-chat/selfChatRoom';
+import { isAlwaysJoinedRoom } from '../features/space-autojoin/alwaysJoinedRoom';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -242,12 +243,13 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         name: Command.Leave,
         description: 'Leave current room.',
         exe: async (payload) => {
+          const canLeave = (id: string) => !isSelfChatRoom(mx, id) && !isAlwaysJoinedRoom(mx, id);
           if (payload.trim() === '') {
-            if (!isSelfChatRoom(mx, room.roomId)) mx.leave(room.roomId);
+            if (canLeave(room.roomId)) mx.leave(room.roomId);
             return;
           }
           const rawIds = splitWithSpace(payload);
-          const roomIds = rawIds.filter((id) => isRoomId(id) && !isSelfChatRoom(mx, id));
+          const roomIds = rawIds.filter((id) => isRoomId(id) && canLeave(id));
           roomIds.map((id) => mx.leave(id));
         },
       },
