@@ -705,3 +705,27 @@ const thumb = {
 
 globalStyle(`${Range}::-webkit-slider-thumb, ${RaiseSlider}::-webkit-slider-thumb`, thumb);
 globalStyle(`${Range}::-moz-range-thumb, ${RaiseSlider}::-moz-range-thumb`, thumb);
+
+export const RowActions = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  flexShrink: 0,
+});
+
+export const QuietButton = style({
+  height: 38,
+  padding: '0 14px',
+  borderRadius: 10,
+  border: '1px solid rgba(255,255,255,0.15)',
+  background: 'transparent',
+  color: 'rgba(255,255,255,0.8)',
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  selectors: {
+    '&:hover': { background: 'rgba(255,255,255,0.08)' },
+    '&:disabled': { opacity: 0.5, cursor: 'default' },
+  },
+});

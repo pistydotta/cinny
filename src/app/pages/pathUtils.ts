@@ -28,6 +28,7 @@ import {
   GAMES_PATH,
   GAMES_POKER_PATH,
   GAMES_POKER_PRACTICE_PATH,
+  GAMES_POKER_JOIN_PATH,
   GAMES_POKER_TABLE_PATH,
 } from './paths';
 import { trimLeadingSlash, trimTrailingSlash } from '../utils/common';
@@ -165,8 +166,10 @@ export const getCreatePath = (): string => CREATE_PATH;
 export const getGamesPath = (): string => GAMES_PATH;
 export const getGamesPokerPath = (): string => GAMES_POKER_PATH;
 export const getGamesPokerPracticePath = (): string => GAMES_POKER_PRACTICE_PATH;
-export const getGamesPokerTablePath = (roomId: string): string =>
-  generatePath(GAMES_POKER_TABLE_PATH, { roomId: encodeURIComponent(roomId) });
+export const getGamesPokerTablePath = (tableId: string): string =>
+  generatePath(GAMES_POKER_TABLE_PATH, { tableId: encodeURIComponent(tableId) });
+export const getGamesPokerJoinPath = (token: string): string =>
+  generatePath(GAMES_POKER_JOIN_PATH, { token: encodeURIComponent(token) });
 
 export const getInboxPath = (): string => INBOX_PATH;
 export const getFriendsPath = (): string => FRIENDS_PATH;

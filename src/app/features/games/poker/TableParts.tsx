@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { formatChips, LogEntry } from './engine';
+import { formatChips, LogEntry } from './types';
+import { logText } from './logText';
 import * as css from './pokerPage.css';
 import { tr } from '../../translation/tr';
 
@@ -57,12 +58,12 @@ export function HistoryDrawer({ log }: HistoryDrawerProps) {
       <div className={css.DrawerHeader}>{tr('games.table.history', 'Table history')}</div>
       <div className={css.DrawerList}>
         {history.map((entry) =>
-          entry.text.startsWith('—') ? (
+          entry.key === 'hand' ? (
             <div key={entry.id} className={css.DrawerHand}>
-              {entry.text}
+              {logText(entry)}
             </div>
           ) : (
-            <div key={entry.id}>{entry.text}</div>
+            <div key={entry.id}>{logText(entry)}</div>
           )
         )}
       </div>
