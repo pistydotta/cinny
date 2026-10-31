@@ -269,7 +269,9 @@
     "push_title": "Notificações com o app fechado",
     "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications.",
     "poker_title": "Jogos: poker com os amigos",
-    "poker_body": "Tem uma aba nova de Jogos na barra lateral. Cada um ganha 5.000 moedas para jogar Texas Hold’em com os amigos ou treinar contra bots."
+    "poker_body": "Tem uma aba nova de Jogos na barra lateral. Cada um ganha 5.000 moedas para jogar Texas Hold’em com os amigos ou treinar contra bots.",
+    "poker_server_title": "Poker: créditos zerados e mesas privadas",
+    "poker_server_body": "Os créditos de todo mundo recomeçaram em 5.000. As mesas agora são privadas: só entra quem você convida, por amigo ou por link. Crie uma na aba Jogos."
   },
   "admin": {
     "deactivate": {
@@ -412,7 +414,6 @@
       "won_no_show": "{{name}} ganhou {{chips}} sem mostrar as cartas"
     },
     "status": {
-      "shuffling": "Embaralhando…",
       "won": "Você levou {{chips}} do pote (+{{net}})",
       "got_back": "Você recuperou {{chips}} do pote",
       "lost": "Você perdeu {{chips}}",
@@ -430,7 +431,6 @@
       "raise": "Aumentar",
       "allin": "All-in",
       "bet": "Apostar",
-      "keep_playing": "Continuar jogando",
       "fold": "Desistir",
       "check": "Mesa",
       "call": "Pagar",
@@ -456,22 +456,33 @@
     },
     "buy_in": {
       "label": "Fichas para levar à mesa",
-      "need_at_least": "Você precisa de pelo menos {{coins}} moedas para sentar.",
+      "need_at_least": "Você precisa de pelo menos {{coins}} créditos para sentar.",
       "sit": "Sentar à mesa"
     },
     "error": {
-      "action": "Sua jogada não foi enviada. Tente de novo.",
-      "buy_in": "Não foi possível comprar fichas.",
-      "cash_out": "Não foi possível devolver suas fichas.",
-      "create": "Não foi possível criar a mesa.",
-      "invalid_action": "Ação inválida",
-      "invalid_amount": "Valor inválido",
-      "join": "Não foi possível entrar na mesa.",
-      "leave": "Não foi possível sair da mesa. Tente de novo.",
-      "load_table": "Não foi possível carregar a mesa.",
-      "not_enough_coins": "Saldo insuficiente",
-      "rebuy": "Não foi possível recomprar agora.",
-      "seat": "Não foi possível sentar nesse lugar. Tente outro."
+      "unknown": "Algo deu errado. Tente de novo.",
+      "not_member": "Você não faz parte desta mesa.",
+      "seat_taken": "Alguém sentou nesse lugar antes de você.",
+      "already_seated": "Você já está sentado em uma mesa. Saia dela primeiro.",
+      "invalid_seat": "Esse lugar não existe.",
+      "invalid_buy_in": "Essa quantidade de fichas não é permitida nesta mesa.",
+      "not_enough_credits": "Você não tem créditos suficientes para isso.",
+      "not_seated": "Você não está sentado nesta mesa.",
+      "invalid_amount": "Esse valor não é permitido.",
+      "not_away": "Você não está ausente.",
+      "stale_action": "A mão seguiu antes da sua jogada chegar.",
+      "not_your_turn": "Não é a sua vez.",
+      "invalid_action": "Essa jogada não é permitida agora.",
+      "not_friend": "Você só pode convidar seus amigos.",
+      "already_member": "Essa pessoa já está nesta mesa.",
+      "not_owner": "Só quem criou a mesa pode fazer isso.",
+      "not_found": "Esta mesa ou este link não existe mais.",
+      "owner_must_close": "Quem criou a mesa precisa fechá-la em vez de sair.",
+      "at_table": "Você não pode fazer isso enquanto está sentado em uma mesa.",
+      "invalid_name": "Escolha um nome para a mesa.",
+      "invalid_blinds": "Esses blinds não são permitidos.",
+      "already_practicing": "Você já tem uma mesa de treino.",
+      "network": "Não foi possível falar com o servidor. Confira sua conexão."
     },
     "hub": {
       "more": "Mais jogos",
@@ -480,25 +491,21 @@
       "play": "Jogar",
       "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
       "soon": "Em breve",
-      "subtitle": "Jogue com suas moedas. O saldo é o mesmo em todos os jogos."
+      "subtitle": "Jogue com seus créditos. O saldo é o mesmo em todos os jogos."
     },
     "lobby": {
       "accept": "Aceitar",
       "blinds": "Blinds",
       "buy_in_range": "Entrada de {{min}} a {{max}} fichas",
       "create": "Criar mesa",
-      "create_text": "Você organiza a mesa e embaralha as cartas, mas não vê as cartas de ninguém. Se você sair, outro jogador assume.",
       "creating": "Criando…",
       "default_table_name": "Mesa de {{name}}",
-      "empty": "Nenhuma mesa por enquanto. Crie uma e convide seus amigos: eles recebem o convite como uma sala nova.",
-      "invalid_ids": "ID inválido: {{ids}} (use o formato @nome:servidor)",
+      "empty": "Nenhuma mesa por enquanto. Crie uma e convide seus amigos, ou compartilhe o link dela.",
       "invite": "Convidar amigos",
       "invite_from": "Convite de {{name}}",
-      "invite_pending": "Convite",
       "joining": "Entrando…",
       "members": "{{count}} na sala",
       "open": "Abrir",
-      "other_ids": "Outros IDs, ex.: @amigo:matrix.org",
       "practice": "Treino",
       "selected": "{{count}} selecionados",
       "subtitle": "Mesas com amigos e treino",
@@ -506,7 +513,17 @@
       "train": "Treinar",
       "vs_bots": "Jogar contra bots",
       "vs_bots_meta": "Mesa só sua, para praticar a qualquer hora",
-      "with_friends": "Mesas com amigos"
+      "with_friends": "Mesas com amigos",
+      "no_friends": "Você ainda não tem amigos para convidar. Crie a mesa e compartilhe o link dela.",
+      "my_chips": "{{chips}} fichas suas",
+      "invites": "Convites",
+      "decline": "Recusar",
+      "close": "Fechar",
+      "leave": "Sair",
+      "resume": "Continuar",
+      "leave_title": "Sair da mesa?",
+      "leave_text": "Você recebe suas fichas de volta e a mesa some da sua lista. Só volta com um novo convite.",
+      "create_text": "O servidor distribui as cartas, então ninguém vê as de ninguém. Você pode fechar a mesa quando quiser."
     },
     "nav": {
       "games": "Jogos"
@@ -520,10 +537,10 @@
     },
     "rebuy": {
       "button": "Recomprar",
-      "button_amount": "Recomprar {{chips}}",
-      "not_enough": "Sua carteira não tem moedas suficientes.",
-      "text": "Compre mais fichas com as moedas da sua carteira ou saia da mesa.",
-      "title": "Suas fichas acabaram"
+      "not_enough": "Sua carteira não tem créditos suficientes.",
+      "text": "Compre mais fichas com os créditos da sua carteira ou saia da mesa.",
+      "title": "Suas fichas acabaram",
+      "top_up_after_leaving": "Saia da mesa para pegar mais créditos."
     },
     "result": {
       "takes_pot": "{{name}} leva o pote de {{chips}}",
@@ -534,36 +551,49 @@
       "away_text": "O tempo da sua jogada acabou, então você desistiu da mão e não vai receber cartas até voltar.",
       "away_title": "Você ficou ausente",
       "back_to_game": "Voltar a jogar",
-      "host_shuffles": "{{name}} embaralha",
       "not_now": "Agora não",
       "pick_seat": "Escolha um lugar para sentar",
       "sit_text": "As fichas saem da sua carteira e voltam para ela quando você sair da mesa.",
       "sit_title": "Sentar no lugar {{seat}}"
     },
     "table": {
-      "accept_first": "Aceite o convite da mesa na tela do Poker.",
       "blinds": "Blinds {{small}}/{{big}}",
       "card": "{{rank}} de {{suit}}",
-      "default_name": "Mesa de poker",
       "empty": "vazio",
       "face_down": "Carta virada",
       "history": "Histórico da mesa",
-      "host_hint": "Organiza a mesa e embaralha as cartas",
       "loading": "Carregando a mesa…",
-      "not_a_table": "Esta sala não é uma mesa de poker.",
       "pot": "Pote",
       "sit": "Sentar",
-      "topic": "Mesa de poker · Blinds {{small}}/{{big}}",
-      "you": "{{name}} (você)"
+      "you": "{{name}} (você)",
+      "close_title": "Fechar a mesa?",
+      "close_text": "Todo mundo volta para casa com suas fichas e a mesa é apagada.",
+      "close": "Fechar a mesa",
+      "invite_title": "Convidar amigos",
+      "invite_no_friends": "Você ainda não tem amigos para convidar.",
+      "invited": "Convidado",
+      "invite": "Convidar",
+      "done": "Pronto",
+      "back_to_lobby": "Voltar ao lobby",
+      "not_found": "Esta mesa não existe, ou você não está nela.",
+      "closed": "Esta mesa foi fechada.",
+      "copy_link": "Copiar link de convite",
+      "link_copied": "Copiado",
+      "reconnecting": "Conexão perdida. Reconectando…"
     },
     "wallet": {
-      "after_sitting": "Depois de sentar",
       "at_table": "{{chips}} na mesa",
-      "at_tables_hint": "{{coins}} moedas estão em uma mesa e voltam quando você sair dela.",
-      "coins": "{{coins}} moedas",
-      "hint": "Moedas na sua carteira",
-      "starting_hint": "Toda conta nova começa com {{coins}} moedas.",
-      "yours": "Sua carteira"
+      "at_tables_hint": "{{coins}} créditos estão em uma mesa e voltam quando você sair dela.",
+      "coins": "{{coins}} créditos",
+      "hint": "Créditos na sua carteira",
+      "yours": "Sua carteira",
+      "top_up": "Pegar mais créditos",
+      "at_tables": "{{chips}} em mesas"
+    },
+    "join": {
+      "title": "Entrar em uma mesa",
+      "back": "Ir para o lobby",
+      "joining": "Entrando na mesa…"
     }
   }
 }

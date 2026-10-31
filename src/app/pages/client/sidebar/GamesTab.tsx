@@ -12,6 +12,7 @@ import { useGamesSelected } from '../../../hooks/router/useGamesSelected';
 import { getGamesPath } from '../../pathUtils';
 import { GamesIcon } from '../../../features/games/GamesIcon';
 import { useLobby, useLobbyPoller } from '../../../features/games/poker/useLobby';
+import { useLeaveOldPokerRooms } from '../../../features/games/legacy/useLeaveOldPokerRooms';
 import { tr } from '../../../features/translation/tr';
 
 // Same narrowing as FriendsTab: upstream's tooltip returns ReactNode, rejected as a JSX component.
@@ -24,6 +25,7 @@ export function GamesTab() {
   const gamesSelected = useGamesSelected();
   // The sidebar is always mounted, so this is the app's single lobby poller.
   useLobbyPoller();
+  useLeaveOldPokerRooms();
   const { list } = useLobby();
   const inviteCount = list?.invites.length ?? 0;
 
