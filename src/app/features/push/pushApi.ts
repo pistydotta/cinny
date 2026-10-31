@@ -41,6 +41,13 @@ export const webPusher = (subscription: SubscriptionJson, config: PushConfig, la
   };
 };
 
+// From the m.direct account data. Read directly when a notification opens the app: mDirectAtom is
+// still empty that early, and a DM opened outside /direct shows only a preview of the room.
+export const isDirectRoom = (direct: unknown, roomId: string): boolean =>
+  typeof direct === 'object' &&
+  direct !== null &&
+  Object.values(direct).some((rooms) => Array.isArray(rooms) && rooms.includes(roomId));
+
 export type PushSupport = 'available' | 'install_first' | 'unavailable';
 
 // iPhones only have push once the site is installed to the home screen.

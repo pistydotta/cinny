@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Spinner, Switch, Text, color } from 'folds';
+import { useNavigate } from 'react-router-dom';
 import { IPusherRequest } from 'matrix-js-sdk';
 import { SequenceCard } from '../../components/sequence-card';
 import { SequenceCardStyle } from '../settings/styles.css';
@@ -8,9 +9,18 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useClientConfig } from '../../hooks/useClientConfig';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { getDirectRoomPath } from '../../pages/pathUtils';
+import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
 import { getLanguage } from '../translation/language';
 import { tr } from '../translation/tr';
-import { PUSH_APP_ID, PushConfig, pushSupport, vapidKeyBytes, webPusher } from './pushApi';
+import {
+  isDirectRoom,
+  PUSH_APP_ID,
+  PushConfig,
+  pushSupport,
+  vapidKeyBytes,
+  webPusher,
+} from './pushApi';
 
 const usePushSupport = () => {
   const { push } = useClientConfig();
@@ -145,6 +155,8 @@ export function PushNotificationsTile() {
 // Opens the room of a tapped notification: told by the service worker when a window was already
 // open, or by the address when it had to open a new one.
 export function PushRoomOpener() {
+  const mx = useMatrixClient();
+  const navigate = useNavigate();
   const { navigateRoom } = useRoomNavigate();
 
   useEffect(() => {
@@ -152,8 +164,13 @@ export function PushRoomOpener() {
     const roomId = params.get('push_room');
     if (!roomId) return;
     window.history.replaceState(null, '', window.location.pathname);
-    navigateRoom(roomId, params.get('push_event') ?? undefined);
-  }, [navigateRoom]);
+    const eventId = params.get('push_event') || undefined;
+    if (isDirectRoom(mx.getAccountData('m.direct')?.getContent(), roomId)) {
+      navigate(getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId), eventId));
+    } else {
+      navigateRoom(roomId, eventId);
+    }
+  }, [mx, navigate, navigateRoom]);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return undefined;
