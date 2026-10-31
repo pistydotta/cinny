@@ -31,6 +31,7 @@ import { PushRoomOpener } from '../../features/push/PushNotifications';
 import { SilentCallRules } from '../../features/call-notify/useSilentCallRules';
 import { AndroidPushRegistrar } from '../../features/android-app/AndroidPush';
 import { CallUnreadCleaner } from '../../features/call-notify/callUnread';
+import { AppPrompt } from '../../features/app-prompt/AppPrompt';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -301,6 +302,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <SilentCallRules />
       <AndroidPushRegistrar />
       <CallUnreadCleaner />
+      <AppPrompt />
       {children}
     </>
   );

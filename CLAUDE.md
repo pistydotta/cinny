@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `games`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `games`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -67,5 +67,8 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 - Nothing opens by itself when someone logs in. Visão geral (`features/home-overview`) greets
   them with what's left to set up (recovery key, Windows app, language); the encryption
   banner stays at the top until the key is done. Keep new onboarding there, not in a dialog.
+  The one exception the owners asked for is `features/app-prompt`: a small card, not a dialog,
+  offering the app to people in a browser on Android or Windows. It shows at most once a week and
+  three times per user and browser, and never again after a download.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

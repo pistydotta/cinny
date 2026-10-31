@@ -325,6 +325,10 @@
     "current": "Você já está nele",
     "soon": "Em desenvolvimento"
   },
+  "app_prompt": {
+    "text": "O blazeroom tem app para {{platform}}",
+    "not_now": "Agora não"
+  },
   "android_app": {
     "share_title": "Compartilhar em...",
     "share_search": "Buscar salas",
