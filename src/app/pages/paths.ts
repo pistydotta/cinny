@@ -54,6 +54,8 @@ export const HOME_COFFEE_PATH = `/home/${_COFFEE_PATH}`;
 export const _OVERVIEW_PATH = 'overview/';
 export const HOME_OVERVIEW_PATH = `/home/${_OVERVIEW_PATH}`;
 
+export const ABOUT_PATH = '/about/';
+
 export const DIRECT_PATH = '/direct/';
 export type DirectCreateSearchParams = {
   userId?: string;

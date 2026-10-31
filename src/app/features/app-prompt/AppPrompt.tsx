@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Box, Button, Text, color, config, toRem } from 'folds';
+import { Button, Text } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { ANDROID_DOWNLOAD_URL } from '../android-app/androidApp';
 import { DESKTOP_DOWNLOAD_URL } from '../desktop-download/desktopDownload';
+import { isCommunityOfferPending, readFirstLogin } from '../first-login/firstLogin';
 import { tr } from '../translation/tr';
+import { PromptCard } from './PromptCard';
 import {
   AppPromptState,
   PromptedApp,
@@ -45,6 +46,8 @@ export function AppPrompt() {
   const key = appPromptKey(mx.getUserId() ?? '');
   const app = promptedApp(navigator.userAgent);
   const [open, setOpen] = useState(() => {
+    // Only one card at a time: the community invite goes first.
+    if (isCommunityOfferPending(readFirstLogin(mx.getSafeUserId()))) return false;
     const state = app && readState(key);
     return !!state && shouldPrompt(state, Date.now());
   });
@@ -65,65 +68,27 @@ export function AppPrompt() {
     setOpen(false);
   };
 
-  return createPortal(
-    <Box
-      justifyContent="Center"
-      style={{
-        position: 'fixed',
-        left: config.space.S400,
-        right: config.space.S400,
-        bottom: config.space.S500,
-        zIndex: 9998,
-        pointerEvents: 'none',
-      }}
+  return (
+    <PromptCard
+      text={tr('app_prompt.text', 'Blazeroom has an app for {{platform}}', {
+        platform: APPS[app].name,
+      })}
     >
-      <Box
-        role="status"
-        alignItems="Center"
-        wrap="Wrap"
-        gap="300"
-        style={{
-          pointerEvents: 'auto',
-          maxWidth: toRem(480),
-          padding: `${config.space.S200} ${config.space.S200} ${config.space.S200} ${config.space.S400}`,
-          borderRadius: config.radii.R400,
-          background: color.Surface.Container,
-          color: color.Surface.OnContainer,
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
-        }}
+      <Button onClick={() => setOpen(false)} size="300" radii="300" variant="Secondary" fill="None">
+        <Text size="B300">{tr('app_prompt.not_now', 'Not now')}</Text>
+      </Button>
+      <Button
+        as="a"
+        href={APPS[app].url}
+        download
+        onClick={onDownload}
+        size="300"
+        radii="300"
+        variant="Primary"
+        fill="Solid"
       >
-        <Box grow="Yes">
-          <Text size="T300">
-            {tr('app_prompt.text', 'Blazeroom has an app for {{platform}}', {
-              platform: APPS[app].name,
-            })}
-          </Text>
-        </Box>
-        <Box alignItems="Center" gap="200">
-          <Button
-            onClick={() => setOpen(false)}
-            size="300"
-            radii="300"
-            variant="Secondary"
-            fill="None"
-          >
-            <Text size="B300">{tr('app_prompt.not_now', 'Not now')}</Text>
-          </Button>
-          <Button
-            as="a"
-            href={APPS[app].url}
-            download
-            onClick={onDownload}
-            size="300"
-            radii="300"
-            variant="Primary"
-            fill="Solid"
-          >
-            <Text size="B300">{tr('apps.download', 'Download')}</Text>
-          </Button>
-        </Box>
-      </Box>
-    </Box>,
-    document.body
+        <Text size="B300">{tr('apps.download', 'Download')}</Text>
+      </Button>
+    </PromptCard>
   );
 }

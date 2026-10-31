@@ -6,6 +6,7 @@ import { Password } from './Password';
 import { Profile } from './Profile';
 import { ContactInformation } from './ContactInfo';
 import { IgnoredUserList } from './IgnoredUserList';
+import { SelfChatSetting } from '../../self-chat/SelfChatHiding';
 
 type AccountProps = {
   requestClose: () => void;
@@ -36,6 +37,7 @@ export function Account({ requestClose }: AccountProps) {
               <Password />
               <ContactInformation />
               <IgnoredUserList />
+              <SelfChatSetting />
             </Box>
           </PageContent>
         </Scroll>

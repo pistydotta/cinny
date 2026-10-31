@@ -12,6 +12,8 @@ import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLo
 import { getLoginPath } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { RegisterPathSearchParams } from '../../paths';
+import { RegisterIntro } from '../../../features/register-page/RegisterIntro';
+import { tr } from '../../../features/translation/tr';
 
 const useRegisterSearchParams = (searchParams: URLSearchParams): RegisterPathSearchParams =>
   useMemo(
@@ -36,8 +38,9 @@ export function Register() {
   return (
     <Box direction="Column" gap="500">
       <Text size="H2" priority="400">
-        Register
+        {tr('register.title', 'Register')}
       </Text>
+      <RegisterIntro />
       {registerFlows.status === RegisterFlowStatus.RegistrationDisabled && !sso && (
         <Text style={{ color: color.Critical.Main }} size="T300">
           Registration has been disabled on this homeserver.
@@ -91,7 +94,8 @@ export function Register() {
         </>
       )}
       <Text align="Center">
-        Already have an account? <Link to={getLoginPath(server)}>Login</Link>
+        {tr('register.have_account', 'Already have an account?')}{' '}
+        <Link to={getLoginPath(server)}>{tr('register.login', 'Login')}</Link>
       </Text>
     </Box>
   );

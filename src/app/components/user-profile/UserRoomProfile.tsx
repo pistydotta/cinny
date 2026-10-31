@@ -22,6 +22,7 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
+import { SelfChatButton } from '../../features/self-chat/SelfChatButton';
 import { FriendCardButton } from '../../features/friends/FriendCardButton';
 import { InviteToServerButton } from '../../features/invite-to-server/InviteToServerButton';
 import { tr } from '../../features/translation/tr';
@@ -82,6 +83,11 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
         <Box direction="Column" gap="400">
           <Box gap="400" alignItems="Start">
             <UserHeroName displayName={displayName} userId={userId} />
+            {userId === myUserId && (
+              <Box shrink="No" direction="Column" gap="200">
+                <SelfChatButton onOpen={closeUserRoomProfile} />
+              </Box>
+            )}
             {userId !== myUserId && (
               <Box shrink="No" direction="Column" gap="200">
                 <Button

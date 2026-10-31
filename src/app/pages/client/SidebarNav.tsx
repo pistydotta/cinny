@@ -19,6 +19,7 @@ import {
   GamesTab,
 } from './sidebar';
 import { CreateTab } from './sidebar/CreateTab';
+import { AboutTab } from '../../features/about/AboutTab';
 
 export function SidebarNav() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -48,6 +49,7 @@ export function SidebarNav() {
               <SearchTab />
               <UnverifiedTab />
               <InboxTab />
+              <AboutTab />
               <SettingsTab />
             </SidebarStack>
           </>
