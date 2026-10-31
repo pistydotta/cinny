@@ -192,7 +192,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
           selected={!onlyPicked}
           icon={Icons.Category}
           title={tr('create_room.everyone_in', 'Everyone in {{space}}', { space: space.name })}
-          description={tr('create_room.everyone_desc', 'Anyone in the space can find and join it.')}
+          description={tr('create_room.everyone_desc', 'Everyone in the space is in it, always.')}
           onClick={() => setOnlyPicked(false)}
           disabled={loading}
         />

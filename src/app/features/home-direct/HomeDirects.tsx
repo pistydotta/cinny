@@ -29,6 +29,8 @@ import { AccountDataEvent } from '../../../types/matrix/accountData';
 import { useAccountData } from '../../hooks/useAccountData';
 import { visibleDirects } from '../self-chat/selfChat';
 import { useSelfChatHidden } from '../self-chat/SelfChatHiding';
+import { pinnedFirst } from '../pinned-chats/pinnedChats';
+import { usePinnedChats } from '../pinned-chats/PinChatMenuItem';
 import { tr } from '../translation/tr';
 
 // Same id as the Direct page's category, so collapsing it carries over.
@@ -59,12 +61,13 @@ export function HomeDirects() {
   const createSelected = useDirectCreateSelected();
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
   const closed = closedCategories.has(CATEGORY_ID);
+  const pinned = usePinnedChats();
 
   const sortedDirects = useMemo(() => {
-    const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
+    const items = pinnedFirst(Array.from(directs).sort(factoryRoomIdByActivity(mx)), pinned);
     if (closed) return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
     return items;
-  }, [mx, directs, closed, roomToUnread, selectedRoomId]);
+  }, [mx, directs, closed, roomToUnread, selectedRoomId, pinned]);
 
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)

@@ -33,6 +33,9 @@ import { markAsRead } from '../../utils/notifications';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { LeaveOrHideSelfChat } from '../self-chat/SelfChatHiding';
+import { isAlwaysJoinedRoom } from '../space-autojoin/alwaysJoinedRoom';
+import { isSelfChatRoom } from '../self-chat/selfChatRoom';
+import { PinChatMenuItem } from '../pinned-chats/PinChatMenuItem';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
 import { stopPropagation } from '../../utils/keyboard';
@@ -70,9 +73,10 @@ type RoomNavItemMenuProps = {
   room: Room;
   requestClose: () => void;
   notificationMode?: RoomNotificationMode;
+  direct?: boolean;
 };
 const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
-  ({ room, requestClose, notificationMode }, ref) => {
+  ({ room, requestClose, notificationMode, direct }, ref) => {
     const mx = useMatrixClient();
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -130,6 +134,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
               {tr('menu.mark_as_read', 'Mark as Read')}
             </Text>
           </MenuItem>
+          {direct && <PinChatMenuItem roomId={room.roomId} requestClose={requestClose} />}
           <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
             {(handleOpen, opened, changing) => (
               <MenuItem
@@ -189,37 +194,41 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             </Text>
           </MenuItem>
         </Box>
-        <Line variant="Surface" size="300" />
-        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-          <LeaveOrHideSelfChat roomId={room.roomId} onDone={requestClose}>
-            <UseStateProvider initial={false}>
-              {(promptLeave, setPromptLeave) => (
-                <>
-                  <MenuItem
-                    onClick={() => setPromptLeave(true)}
-                    variant="Critical"
-                    fill="None"
-                    size="300"
-                    after={<Icon size="100" src={Icons.ArrowGoLeft} />}
-                    radii="300"
-                    aria-pressed={promptLeave}
-                  >
-                    <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                      {tr('menu.leave_room', 'Leave Room')}
-                    </Text>
-                  </MenuItem>
-                  {promptLeave && (
-                    <LeaveRoomPrompt
-                      roomId={room.roomId}
-                      onDone={requestClose}
-                      onCancel={() => setPromptLeave(false)}
-                    />
+        {!isAlwaysJoinedRoom(mx, room.roomId) && (
+          <>
+            <Line variant="Surface" size="300" />
+            <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+              <LeaveOrHideSelfChat roomId={room.roomId} onDone={requestClose}>
+                <UseStateProvider initial={false}>
+                  {(promptLeave, setPromptLeave) => (
+                    <>
+                      <MenuItem
+                        onClick={() => setPromptLeave(true)}
+                        variant="Critical"
+                        fill="None"
+                        size="300"
+                        after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+                        radii="300"
+                        aria-pressed={promptLeave}
+                      >
+                        <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                          {tr('menu.leave_room', 'Leave Room')}
+                        </Text>
+                      </MenuItem>
+                      {promptLeave && (
+                        <LeaveRoomPrompt
+                          roomId={room.roomId}
+                          onDone={requestClose}
+                          onCancel={() => setPromptLeave(false)}
+                        />
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </UseStateProvider>
-          </LeaveOrHideSelfChat>
-        </Box>
+                </UseStateProvider>
+              </LeaveOrHideSelfChat>
+            </Box>
+          </>
+        )}
       </Menu>
     );
   }
@@ -367,7 +376,9 @@ export function RoomNavItem({
               </Avatar>
               <Box as="span" grow="Yes">
                 <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
-                  {roomName}
+                  {direct && isSelfChatRoom(mx, room.roomId)
+                    ? tr('self_chat.list_name', '{{name}} (you)', { name: roomName })
+                    : roomName}
                 </Text>
               </Box>
               {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
@@ -427,6 +438,7 @@ export function RoomNavItem({
                     room={room}
                     requestClose={() => setMenuAnchor(undefined)}
                     notificationMode={notificationMode}
+                    direct={direct}
                   />
                 </FocusTrap>
               }

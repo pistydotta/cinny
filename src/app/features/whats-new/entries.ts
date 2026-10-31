@@ -17,6 +17,25 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-always-joined-pins',
+    items: () => [
+      {
+        title: tr('whats_new.always_joined_title', 'Public rooms are always there'),
+        body: tr(
+          'whats_new.always_joined_body',
+          'Everyone in a server is in its public rooms, with nothing to join. Only private rooms can be left.'
+        ),
+      },
+      {
+        title: tr('whats_new.pinned_chats_title', 'Pin your chats'),
+        body: tr(
+          'whats_new.pinned_chats_body',
+          "Open a chat's menu in Direct Messages and choose Pin to top to keep it first in the list."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-self-chat-about',
     items: () => [
       {

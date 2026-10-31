@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `games`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `games`, `pinned-chats`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -74,6 +74,11 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   accounts never count as new. For its first 24 hours the top encryption banner stays hidden, with the
   recovery key still on Visão geral, and one card invites it to the community. That card is the other
   exception to nothing opening by itself, and the app card waits for it.
+- A space's public rooms work like Discord channels: `space-autojoin` joins everyone to them, and
+  `isAlwaysJoinedRoom` hides Leave, so only private rooms can be left. It runs from `SpaceProvider`,
+  not the sidebar, because a phone opening a room's link has no sidebar.
+- `features/pinned-chats` keeps pinned chats on top of the Direct Messages list
+  (`br.com.blazeroom.pinned_chats` in account data).
 - Everyone has a chat with themselves, created on load by `SelfChatKeeper` (`features/self-chat`). It's
   a DM listed under your own user in `m.direct`: `getDMRoomFor` with your own ID answers with any DM
   you're in, so use `findSelfChat`. The client's `m.direct` can be stale from the last visit, so check

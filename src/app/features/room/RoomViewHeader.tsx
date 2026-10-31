@@ -47,6 +47,7 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { LeaveOrHideSelfChat } from '../self-chat/SelfChatHiding';
+import { isAlwaysJoinedRoom } from '../space-autojoin/alwaysJoinedRoom';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { stopPropagation } from '../../utils/keyboard';
@@ -226,37 +227,41 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           )}
         </UseStateProvider>
       </Box>
-      <Line variant="Surface" size="300" />
-      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-        <LeaveOrHideSelfChat roomId={room.roomId} onDone={requestClose}>
-          <UseStateProvider initial={false}>
-            {(promptLeave, setPromptLeave) => (
-              <>
-                <MenuItem
-                  onClick={() => setPromptLeave(true)}
-                  variant="Critical"
-                  fill="None"
-                  size="300"
-                  after={<Icon size="100" src={Icons.ArrowGoLeft} />}
-                  radii="300"
-                  aria-pressed={promptLeave}
-                >
-                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                    Leave Room
-                  </Text>
-                </MenuItem>
-                {promptLeave && (
-                  <LeaveRoomPrompt
-                    roomId={room.roomId}
-                    onDone={requestClose}
-                    onCancel={() => setPromptLeave(false)}
-                  />
+      {!isAlwaysJoinedRoom(mx, room.roomId) && (
+        <>
+          <Line variant="Surface" size="300" />
+          <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+            <LeaveOrHideSelfChat roomId={room.roomId} onDone={requestClose}>
+              <UseStateProvider initial={false}>
+                {(promptLeave, setPromptLeave) => (
+                  <>
+                    <MenuItem
+                      onClick={() => setPromptLeave(true)}
+                      variant="Critical"
+                      fill="None"
+                      size="300"
+                      after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+                      radii="300"
+                      aria-pressed={promptLeave}
+                    >
+                      <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                        Leave Room
+                      </Text>
+                    </MenuItem>
+                    {promptLeave && (
+                      <LeaveRoomPrompt
+                        roomId={room.roomId}
+                        onDone={requestClose}
+                        onCancel={() => setPromptLeave(false)}
+                      />
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </UseStateProvider>
-        </LeaveOrHideSelfChat>
-      </Box>
+              </UseStateProvider>
+            </LeaveOrHideSelfChat>
+          </Box>
+        </>
+      )}
     </Menu>
   );
 });
