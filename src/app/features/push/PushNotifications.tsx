@@ -152,25 +152,36 @@ export function PushNotificationsTile() {
   );
 }
 
-// Opens the room of a tapped notification: told by the service worker when a window was already
-// open, or by the address when it had to open a new one.
-export function PushRoomOpener() {
+export const useOpenPushRoom = () => {
   const mx = useMatrixClient();
   const navigate = useNavigate();
   const { navigateRoom } = useRoomNavigate();
+
+  return useCallback(
+    (roomId: string, eventId?: string) => {
+      if (isDirectRoom(mx.getAccountData('m.direct')?.getContent(), roomId)) {
+        navigate(getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId), eventId));
+      } else {
+        navigateRoom(roomId, eventId);
+      }
+    },
+    [mx, navigate, navigateRoom]
+  );
+};
+
+// Opens the room of a tapped notification: told by the service worker when a window was already
+// open, or by the address when it had to open a new one.
+export function PushRoomOpener() {
+  const { navigateRoom } = useRoomNavigate();
+  const openPushRoom = useOpenPushRoom();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get('push_room');
     if (!roomId) return;
     window.history.replaceState(null, '', window.location.pathname);
-    const eventId = params.get('push_event') || undefined;
-    if (isDirectRoom(mx.getAccountData('m.direct')?.getContent(), roomId)) {
-      navigate(getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId), eventId));
-    } else {
-      navigateRoom(roomId, eventId);
-    }
-  }, [mx, navigate, navigateRoom]);
+    openPushRoom(roomId, params.get('push_event') || undefined);
+  }, [openPushRoom]);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return undefined;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pushNotification } from './pushPayload';
+import { callRingNotification, pushNotification } from './pushPayload';
 
 const base = { event_id: '$e', room_id: '!r:x', sender_display_name: 'Ana', room_name: 'Geral' };
 
@@ -94,6 +94,15 @@ describe('pushNotification for a call', () => {
   it('speaks English when the push does', () => {
     expect(pushNotification({ ...call, lang: 'en', content: joined })?.body).toBe('Ana is calling');
     expect(pushNotification({ ...call, lang: 'en', content: {} })?.body).toBe('Call ended');
+  });
+
+  it('turns the encrypted half of a call into its ring', () => {
+    const encrypted = { ...call, type: 'm.room.encrypted', content: { ciphertext: 'abc' } };
+    expect(callRingNotification(encrypted)).toMatchObject({
+      body: 'Ana está chamando',
+      tag: 'call:!r:x',
+      callEnded: false,
+    });
   });
 
   it('marks a message as not a call', () => {

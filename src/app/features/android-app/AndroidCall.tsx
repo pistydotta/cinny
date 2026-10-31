@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCallEmbed, useCallJoined } from '../../hooks/useCallEmbed';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useSwitchCall } from '../call-switch/useSwitchCall';
+import { useOpenPushRoom } from '../push/PushNotifications';
 import { callStateMessage, pendingCallRoom } from './androidApp';
 import { androidBridge } from './androidBridge';
 
@@ -16,6 +17,10 @@ export function AndroidCall() {
   const embed = useCallEmbed();
   const joined = useCallJoined(embed);
   const switchCall = useSwitchCall(true);
+  const openPushRoom = useOpenPushRoom();
+  // These change with the call and the route, and the listeners below stay for the whole page.
+  const latest = useRef({ switchCall, openPushRoom });
+  latest.current = { switchCall, openPushRoom };
   const roomId = joined ? embed?.roomId : undefined;
 
   useEffect(() => {
@@ -30,28 +35,36 @@ export function AndroidCall() {
     const off = androidBridge.on('pendingCall', (message) => {
       const answered = pendingCallRoom(message);
       if (!answered) return;
+      latest.current.openPushRoom(answered);
+      window.clearTimeout(timer);
       const deadline = Date.now() + JOIN_WAIT_MS;
       const tryJoin = () => {
         // The caller may have given up by now, and joining an empty call would start a new one.
         const room = mx.getRoom(answered);
         if (room && mx.matrixRTC.getRoomSession(room).memberships.length > 0) {
-          switchCall(room, { microphone: true, video: false, sound: true }).catch((e: unknown) => {
-            // eslint-disable-next-line no-console
-            console.warn("Couldn't join the call", e);
-          });
+          latest.current
+            .switchCall(room, { microphone: true, video: false, sound: true })
+            .catch((e: unknown) => {
+              // eslint-disable-next-line no-console
+              console.warn("Couldn't join the call", e);
+            });
           return;
         }
         if (Date.now() < deadline) timer = window.setTimeout(tryJoin, JOIN_POLL_MS);
       };
       tryJoin();
     });
+    const offOpen = androidBridge.on('openRoom', ({ roomId: room, eventId }) => {
+      if (typeof room === 'string' && room) {
+        latest.current.openPushRoom(room, typeof eventId === 'string' ? eventId : undefined);
+      }
+    });
     androidBridge.send({ type: 'getPendingCall' });
     return () => {
       off();
+      offOpen();
       window.clearTimeout(timer);
     };
-    // Asks once per page: switchCall changes with the call this very code starts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mx]);
 
   return null;

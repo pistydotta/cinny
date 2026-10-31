@@ -1,6 +1,7 @@
 /// <reference lib="WebWorker" />
 
-import { pushNotification } from './app/features/push/pushPayload';
+import { callRingNotification, pushNotification } from './app/features/push/pushPayload';
+import { createCallPairing } from './app/features/push/callPairing';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -160,6 +161,15 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   );
 });
 
+const callPairing = createCallPairing();
+
+// A browser may stop delivering to a site whose pushes show nothing, and iPhones are said to drop
+// the subscription. So a push with nothing to say shows something silent and closes it at once.
+const showNothing = async (title: string, tag: string) => {
+  await self.registration.showNotification(title, { tag, silent: true, icon: PUSH_ICON });
+  (await self.registration.getNotifications({ tag })).forEach((shown) => shown.close());
+};
+
 // A push from Sygnal. The open app notifies by itself while someone is looking at it.
 self.addEventListener('push', (event: PushEvent) => {
   event.waitUntil(
@@ -176,15 +186,35 @@ self.addEventListener('push', (event: PushEvent) => {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       if (windows.some((client) => client.visibilityState === 'visible')) return;
 
-      const { title, isCall, callEnded, ...options } = shown;
-      // An open site rings by itself, and in a caller's hidden tab this would announce the other
-      // person answering.
-      if (isCall && windows.length > 0) return;
-      // Only ever replaces a ring: on its own it would say a call ended after any call at all.
-      if (callEnded) {
-        const ringing = await self.registration.getNotifications({ tag: options.tag });
-        if (ringing.length === 0) return;
+      const push = payload as Record<string, unknown>;
+      const { roomId } = shown.data;
+      const sender = typeof push.sender === 'string' ? push.sender : '';
+      const now = Date.now();
+      const tag = `call:${roomId}`;
+
+      // A join alone may be someone answering, which is no news to the person who called.
+      if (shown.isCall && !shown.callEnded) {
+        callPairing.join(roomId, sender, now);
+        await showNothing(shown.title, `quiet:${tag}`);
+        return;
       }
+      const ring =
+        push.type === 'm.room.encrypted' && callPairing.isCallNotification(roomId, sender, now)
+          ? callRingNotification(push)
+          : null;
+      const display = ring ?? shown;
+
+      if (display.callEnded) callPairing.forget(roomId);
+      // Only ever replaces a ring: on its own it would say a call ended after any call at all.
+      const nothingToReplace =
+        display.callEnded && (await self.registration.getNotifications({ tag })).length === 0;
+      // An open site rings by itself.
+      if (nothingToReplace || (display.isCall && windows.length > 0)) {
+        await showNothing(display.title, `quiet:${tag}`);
+        return;
+      }
+
+      const { title, isCall, callEnded, ...options } = display;
       await self.registration.showNotification(title, { ...options, icon: PUSH_ICON });
     })()
   );

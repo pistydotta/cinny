@@ -58,3 +58,7 @@ export const pushNotification = (payload: unknown): PushDisplay | null => {
     callEnded: false,
   };
 };
+
+// The ring a join and the room's encrypted notification add up to (callPairing.ts).
+export const callRingNotification = (payload: Record<string, unknown>): PushDisplay | null =>
+  pushNotification({ ...payload, type: CALL_MEMBER_TYPE, content: { joined: true } });
