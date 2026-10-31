@@ -6,12 +6,14 @@ import { tr } from '../translation/tr';
 import { WelcomeCard } from './WelcomeCard';
 import { AppsCard } from './AppsCard';
 import { JokeLine } from './JokeLine';
+import { MobileBackHeader } from './MobileBackHeader';
 
 // Visão geral: the greeting with what's left to set up, then the latest news. Nothing here
 // opens by itself.
 export function HomeOverview() {
   return (
     <Page>
+      <MobileBackHeader title={tr('home.overview', 'Overview')} />
       <Scroll hideTrack visibility="Hover">
         <PageContent>
           <Box

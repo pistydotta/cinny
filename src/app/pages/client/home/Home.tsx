@@ -68,7 +68,10 @@ import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
 import { tr } from '../../../features/translation/tr';
-import { HomeOverviewNavItem } from '../../../features/home-overview/HomeOverviewNavItem';
+import {
+  HomeOverviewEmptyButton,
+  HomeOverviewNavItem,
+} from '../../../features/home-overview/HomeOverviewNavItem';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -175,6 +178,7 @@ function HomeEmpty() {
         }
         options={
           <>
+            <HomeOverviewEmptyButton />
             <Button onClick={() => navigate(getHomeCreatePath())} variant="Secondary" size="300">
               <Text size="B300" truncate>
                 {tr('nav.create_room', 'Create Room')}

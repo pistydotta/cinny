@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text, config, toRem } from 'folds';
 import { Page, PageContent, PageHeader } from '../../components/page';
+import { MobileBackHeader } from '../home-overview/MobileBackHeader';
 import { tr } from '../translation/tr';
 import { FeedbackForm } from './FeedbackForm';
 
@@ -10,6 +11,7 @@ const intro = () =>
 export function FeedbackPage() {
   return (
     <Page>
+      <MobileBackHeader />
       <Scroll hideTrack visibility="Hover">
         <PageContent>
           <Box
@@ -36,7 +38,6 @@ export function FeedbackPage() {
   );
 }
 
-// Visão geral isn't shown on mobile, so this is how phones get to the form.
 export function FeedbackSettings({ requestClose }: { requestClose: () => void }) {
   return (
     <Page>
