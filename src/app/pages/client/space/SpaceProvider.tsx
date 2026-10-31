@@ -6,6 +6,7 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { SpaceProvider } from '../../../hooks/useSpace';
 import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
+import { SpaceAutoJoin } from '../../../features/space-autojoin/AutoJoinRunner';
 import { useSearchParamsViaServers } from '../../../hooks/router/useSearchParamsViaServers';
 
 type RouteSpaceProviderProps = {
@@ -27,6 +28,7 @@ export function RouteSpaceProvider({ children }: RouteSpaceProviderProps) {
 
   return (
     <SpaceProvider key={space.roomId} value={space}>
+      <SpaceAutoJoin space={space} />
       {children}
     </SpaceProvider>
   );

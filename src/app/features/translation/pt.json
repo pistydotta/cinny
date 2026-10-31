@@ -142,7 +142,7 @@
     "topic": "Tópico (opcional)",
     "who_can_see": "Quem pode ver",
     "everyone_in": "Todo mundo em {{space}}",
-    "everyone_desc": "Qualquer pessoa do servidor pode encontrar e entrar.",
+    "everyone_desc": "Todo mundo do servidor está nela, sempre.",
     "only_picked": "Só quem eu escolher",
     "only_picked_desc": "Escondida para o resto do servidor.",
     "members": "Membros",
@@ -257,6 +257,10 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "always_joined_title": "Salas públicas sempre à mão",
+    "always_joined_body": "Todo mundo de um servidor já está nas salas públicas dele, sem precisar entrar. Só as salas privadas podem ser deixadas.",
+    "pinned_chats_title": "Fixe suas conversas",
+    "pinned_chats_body": "Abra o menu de uma conversa em Mensagens diretas e escolha Fixar no topo para ela ficar em primeiro na lista.",
     "self_chat_title": "Converse com você mesmo",
     "self_chat_body": "Agora todo mundo tem um chat consigo nas Mensagens diretas, com o próprio nome e foto, que ninguém mais consegue ler. E o novo ícone de i na barra lateral explica o que é o blazeroom.",
     "profile_call_title": "Descrição no perfil e chamadas à vista",
@@ -386,7 +390,12 @@
     "cost_title": "Quanto custa",
     "cost": "É gratuito. No futuro pode existir um VIP, para liberar recursos específicos e apoiar o servidor, mas comprar nunca vai ser obrigatório."
   },
+  "pinned_chats": {
+    "pin": "Fixar no topo",
+    "unpin": "Desafixar do topo"
+  },
   "self_chat": {
+    "list_name": "{{name}} (você)",
     "hide_title": "Esconder este chat",
     "hide_body": "Este chat sai da sua lista, mas nada é apagado. Para mostrá-lo de novo, abra Configurações > Account.",
     "hide": "Esconder",

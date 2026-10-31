@@ -53,7 +53,6 @@ import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useRoomName } from '../../../hooks/useRoomMeta';
 import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
-import { useAutoJoinSpaceRooms } from '../../../features/space-autojoin/useAutoJoinSpaceRooms';
 import {
   canReorderSpace,
   useRoomNavReorder,
@@ -391,7 +390,6 @@ export function Space() {
   const mx = useMatrixClient();
   const space = useSpace();
   useNavToActivePathMapper(space.roomId);
-  useAutoJoinSpaceRooms(space);
   useRoomNavReorder();
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
