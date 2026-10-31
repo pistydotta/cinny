@@ -1,3 +1,5 @@
+import { tr } from '../../translation/tr';
+
 /**
  * Coins shared by every game. Each user starts with STARTING_BALANCE coins.
  *
@@ -88,8 +90,10 @@ const withTable = (wallet: GameWalletContent, table: string, chips: number) => {
 export const buyInUpdate =
   (amount: number, table: string): WalletUpdate =>
   (wallet) => {
-    if (!Number.isInteger(amount) || amount <= 0) throw new Error('Valor inválido');
-    if (amount > wallet.balance) throw new Error('Saldo insuficiente');
+    if (!Number.isInteger(amount) || amount <= 0)
+      throw new Error(tr('games.error.invalid_amount', 'Invalid amount'));
+    if (amount > wallet.balance)
+      throw new Error(tr('games.error.not_enough_coins', 'Not enough coins'));
     return {
       ...wallet,
       balance: wallet.balance - amount,

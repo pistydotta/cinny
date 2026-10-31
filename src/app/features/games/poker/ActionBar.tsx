@@ -9,6 +9,7 @@ import {
   PokerPlayer,
   PokerState,
 } from './engine';
+import { tr } from '../../translation/tr';
 import * as css from './pokerPage.css';
 
 type ActionBarProps = {
@@ -22,11 +23,11 @@ type ActionBarProps = {
   waitingText?: string;
 };
 
-const PRESETS: { label: string; fraction?: number }[] = [
-  { label: 'Mín' },
-  { label: '½ pote', fraction: 0.5 },
-  { label: '¾ pote', fraction: 0.75 },
-  { label: 'Pote', fraction: 1 },
+const PRESETS: { key: string; label: string; fraction?: number }[] = [
+  { key: 'min', label: 'Min' },
+  { key: 'half_pot', label: '½ pot', fraction: 0.5 },
+  { key: 'three_quarter_pot', label: '¾ pot', fraction: 0.75 },
+  { key: 'pot', label: 'Pot', fraction: 1 },
 ];
 
 export function ActionBar({
@@ -36,7 +37,7 @@ export function ActionBar({
   leaveAfterHand,
   onAction,
   onCancelLeave,
-  waitingText = 'Embaralhando…',
+  waitingText = tr('games.status.shuffling', 'Shuffling…'),
 }: ActionBarProps) {
   const [raiseTo, setRaiseTo] = useState(0);
 
@@ -70,32 +71,42 @@ export function ActionBar({
     if (won > 0) {
       status =
         net > 0
-          ? `Você levou ${formatChips(won)} do pote (+${formatChips(net)})`
-          : `Você recuperou ${formatChips(won)} do pote`;
+          ? tr('games.status.won', 'You took {{chips}} from the pot (+{{net}})', {
+              chips: formatChips(won),
+              net: formatChips(net),
+            })
+          : tr('games.status.got_back', 'You got {{chips}} back from the pot', {
+              chips: formatChips(won),
+            });
       tone = 'win';
     } else if (hero.totalBet > 0) {
-      status = `Você perdeu ${formatChips(hero.totalBet)}`;
+      status = tr('games.status.lost', 'You lost {{chips}}', { chips: formatChips(hero.totalBet) });
       tone = 'lose';
     } else {
-      status = 'Mão encerrada';
+      status = tr('games.status.hand_over', 'Hand over');
     }
   } else if (myTurn) {
-    status = legal.toCall > 0 ? `Sua vez — ${formatChips(legal.toCall)} para pagar` : 'Sua vez';
+    status =
+      legal.toCall > 0
+        ? tr('games.status.your_turn_to_call', 'Your turn: {{chips}} to call', {
+            chips: formatChips(legal.toCall),
+          })
+        : tr('games.status.your_turn', 'Your turn');
     tone = 'turn';
   } else if (hero?.status === 'folded') {
-    status = 'Você desistiu desta mão';
+    status = tr('games.status.you_folded', 'You folded this hand');
   } else if (hero?.status === 'allin') {
-    status = 'Você está all-in';
+    status = tr('games.status.you_allin', 'You are all-in');
   } else if (state.phase === 'betting' && acting) {
-    status = `${acting.name} está pensando…`;
+    status = tr('games.status.thinking', '{{name}} is thinking…', { name: acting.name });
   } else if (state.phase === 'waiting') {
     status = waitingText;
   }
 
   const isAllIn = legal ? raiseTo >= legal.maxRaiseTo : false;
-  let raiseLabel = 'Aumentar';
-  if (isAllIn) raiseLabel = 'All-in';
-  else if (legal?.isBet) raiseLabel = 'Apostar';
+  let raiseLabel = tr('games.action.raise', 'Raise');
+  if (isAllIn) raiseLabel = tr('games.action.allin', 'All-in');
+  else if (legal?.isBet) raiseLabel = tr('games.action.bet', 'Bet');
 
   return (
     <div className={css.ActionBar}>
@@ -105,14 +116,15 @@ export function ActionBar({
         </div>
         {strength && (
           <div className={css.HandStrength}>
-            Sua mão: <span className={css.HandStrengthValue}>{strength}</span>
+            {tr('games.status.your_hand', 'Your hand:')}{' '}
+            <span className={css.HandStrengthValue}>{strength}</span>
           </div>
         )}
         {leaveAfterHand && (
           <div className={css.HandStrength}>
-            Você sairá da mesa ao fim desta mão ·{' '}
+            {tr('games.status.leaving', 'You will leave the table when this hand ends')} ·{' '}
             <button type="button" className={css.Preset} onClick={onCancelLeave}>
-              Continuar jogando
+              {tr('games.action.keep_playing', 'Keep playing')}
             </button>
           </div>
         )}
@@ -132,11 +144,11 @@ export function ActionBar({
                   )
                 }
               >
-                {preset.label}
+                {tr(`games.preset.${preset.key}`, preset.label)}
               </button>
             ))}
             <button type="button" className={css.Preset} onClick={() => setRaiseTo(maxRaiseTo)}>
-              All-in
+              {tr('games.action.allin', 'All-in')}
             </button>
             <input
               className={css.RaiseSlider}
@@ -146,7 +158,7 @@ export function ActionBar({
               step={state.config.smallBlind}
               value={raiseTo}
               onChange={(evt) => setRaiseTo(clamp(Number(evt.target.value)))}
-              aria-label="Valor do aumento"
+              aria-label={tr('games.action.raise_amount', 'Raise amount')}
             />
             <input
               className={css.AmountInput}
@@ -156,7 +168,7 @@ export function ActionBar({
               value={raiseTo}
               onChange={(evt) => setRaiseTo(Number(evt.target.value))}
               onBlur={() => setRaiseTo(clamp(raiseTo))}
-              aria-label="Valor do aumento"
+              aria-label={tr('games.action.raise_amount', 'Raise amount')}
             />
           </div>
         )}
@@ -167,7 +179,7 @@ export function ActionBar({
             disabled={!myTurn}
             onClick={() => onAction({ type: 'fold' })}
           >
-            Desistir
+            {tr('games.action.fold', 'Fold')}
           </button>
           <button
             type="button"
@@ -175,11 +187,15 @@ export function ActionBar({
             disabled={!myTurn}
             onClick={() => onAction(legal?.canCheck ? { type: 'check' } : { type: 'call' })}
           >
-            {legal?.canCheck !== false ? 'Mesa' : 'Pagar'}
+            {legal?.canCheck !== false
+              ? tr('games.action.check', 'Check')
+              : tr('games.action.call', 'Call')}
             {legal && legal.canCall && (
               <span className={css.ButtonSub}>
                 {formatChips(legal.callAmount)}
-                {legal.callAmount >= (hero?.stack ?? 0) ? ' · all-in' : ''}
+                {legal.callAmount >= (hero?.stack ?? 0)
+                  ? ` · ${tr('games.action.allin', 'All-in')}`
+                  : ''}
               </span>
             )}
           </button>
@@ -192,7 +208,7 @@ export function ActionBar({
             {raiseLabel}
             {legal?.canRaise && (
               <span className={css.ButtonSub}>
-                {legal.isBet ? '' : 'para '}
+                {legal.isBet ? '' : `${tr('games.action.raise_to', 'to')} `}
                 {formatChips(clamp(raiseTo))}
               </span>
             )}

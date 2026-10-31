@@ -1,3 +1,5 @@
+import { tr } from '../../../translation/tr';
+
 export type Suit = 's' | 'h' | 'd' | 'c';
 
 /** 2..14, where 11 = J, 12 = Q, 13 = K and 14 = A. */
@@ -21,12 +23,14 @@ export const SUIT_SYMBOL: Record<Suit, string> = {
   c: '♣',
 };
 
-export const SUIT_NAME: Record<Suit, string> = {
-  s: 'Espadas',
-  h: 'Copas',
-  d: 'Ouros',
-  c: 'Paus',
+const SUIT_EN: Record<Suit, string> = {
+  s: 'Spades',
+  h: 'Hearts',
+  d: 'Diamonds',
+  c: 'Clubs',
 };
+
+export const suitName = (suit: Suit): string => tr(`games.suit.${suit}`, SUIT_EN[suit]);
 
 export const RANK_LABEL: Record<Rank, string> = {
   2: '2',

@@ -23,6 +23,7 @@ import {
   succession,
 } from './replica';
 import { TableTransport } from './transport';
+import { tr } from '../../../translation/tr';
 
 const COLLECT_MS = 800;
 const STREET_MS = 450;
@@ -145,7 +146,7 @@ export const useSharedTable = (
       [...eventsRef.current, ...history].forEach((ev) => byId.set(ev.id, ev));
       rebuild(Array.from(byId.values()));
     } catch {
-      setError('Não foi possível carregar a mesa.');
+      setError(tr('games.error.load_table', 'Could not load the table.'));
     }
   }, [transport, rebuild]);
 
@@ -192,8 +193,8 @@ export const useSharedTable = (
           walletRef.current.refund(pending.amount, tableKey).catch(() => undefined);
           setError(
             content.kind === 'join'
-              ? 'Não foi possível sentar nesse lugar. Tente outro.'
-              : 'Não foi possível recomprar agora.'
+              ? tr('games.error.seat', 'Could not take that seat. Try another one.')
+              : tr('games.error.rebuy', 'Could not buy more chips right now.')
           );
         }
       }
@@ -228,7 +229,7 @@ export const useSharedTable = (
         setLoading(false);
       })
       .catch(() => {
-        if (alive) setError('Não foi possível carregar a mesa.');
+        if (alive) setError(tr('games.error.load_table', 'Could not load the table.'));
       });
     return () => {
       alive = false;
@@ -334,7 +335,9 @@ export const useSharedTable = (
       try {
         await walletRef.current.buyIn(buyIn, tableKey);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Saldo insuficiente');
+        setError(
+          e instanceof Error ? e.message : tr('games.error.not_enough_coins', 'Not enough coins')
+        );
         return;
       }
       pendingRef.current.push({ kind: 'join', amount: buyIn });
@@ -349,7 +352,7 @@ export const useSharedTable = (
       } catch {
         pendingRef.current.pop();
         await walletRef.current.refund(buyIn, tableKey);
-        setError('Não foi possível entrar na mesa.');
+        setError(tr('games.error.join', 'Could not join the table.'));
       }
     },
     [send, tableKey]
@@ -361,7 +364,7 @@ export const useSharedTable = (
       await send({ kind: 'leave' });
       await walletRef.current.cashOut(stack, tableKey);
     } catch {
-      setError('Não foi possível sair da mesa. Tente de novo.');
+      setError(tr('games.error.leave', 'Could not leave the table. Try again.'));
     }
   }, [send, tableKey, userId]);
 
@@ -373,7 +376,7 @@ export const useSharedTable = (
       actSentRef.current = key;
       send({ kind: 'act', hand: r.poker.handNumber, seq: r.seq, action }).catch(() => {
         actSentRef.current = undefined;
-        setError('Sua jogada não foi enviada. Tente de novo.');
+        setError(tr('games.error.action', 'Your move was not sent. Try again.'));
       });
     },
     [send]
@@ -385,7 +388,9 @@ export const useSharedTable = (
       try {
         await walletRef.current.buyIn(amount, tableKey);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Saldo insuficiente');
+        setError(
+          e instanceof Error ? e.message : tr('games.error.not_enough_coins', 'Not enough coins')
+        );
         return;
       }
       pendingRef.current.push({ kind: 'rebuy', amount });

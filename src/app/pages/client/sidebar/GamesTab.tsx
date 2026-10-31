@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { Icon } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '../../../components/sidebar';
 import { useGamesSelected } from '../../../hooks/router/useGamesSelected';
 import { getGamesPath } from '../../pathUtils';
-import { GamesIcon } from '../../../features/games';
+import { GamesIcon } from '../../../features/games/GamesIcon';
+import { tr } from '../../../features/translation/tr';
+
+// Same narrowing as FriendsTab: upstream's tooltip returns ReactNode, rejected as a JSX component.
+const GamesTooltip = SidebarItemTooltip as (
+  props: Parameters<typeof SidebarItemTooltip>[0]
+) => ReactElement | null;
 
 export function GamesTab() {
   const navigate = useNavigate();
@@ -12,7 +18,7 @@ export function GamesTab() {
 
   return (
     <SidebarItem active={gamesSelected}>
-      <SidebarItemTooltip tooltip="Jogos">
+      <GamesTooltip tooltip={tr('games.nav.games', 'Games')}>
         {(triggerRef) => (
           <SidebarAvatar
             as="button"
@@ -23,7 +29,7 @@ export function GamesTab() {
             <Icon src={GamesIcon} filled={gamesSelected} />
           </SidebarAvatar>
         )}
-      </SidebarItemTooltip>
+      </GamesTooltip>
     </SidebarItem>
   );
 }

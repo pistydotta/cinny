@@ -31,6 +31,7 @@ import {
   getHomePath,
 } from '../../pathUtils';
 import * as css from '../../../features/games/poker/pokerPage.css';
+import { tr } from '../../../features/translation/tr';
 
 const useMyProfile = () => {
   const mx = useMatrixClient();
@@ -75,7 +76,7 @@ export function PokerLobbyPage() {
       const inviter = invited ? room.getMember(me.userId)?.events.member?.getSender() : undefined;
       return {
         roomId,
-        name: room.name || config?.name || 'Mesa de poker',
+        name: room.name || config?.name || tr('games.table.default_name', 'Poker table'),
         smallBlind: config?.smallBlind,
         bigBlind: config?.bigBlind,
         members: room.getJoinedMemberCount(),
@@ -103,7 +104,7 @@ export function PokerLobbyPage() {
       balance={wallet.balance}
       tables={tables}
       contacts={contacts}
-      defaultTableName={`Mesa de ${me.name}`}
+      defaultTableName={tr('games.lobby.default_table_name', "{{name}}'s table", { name: me.name })}
       onBack={() => navigate(getGamesPath())}
       onPractice={() => navigate(getGamesPokerPracticePath())}
       onOpenTable={(roomId) => navigate(getGamesPokerTablePath(roomId))}
@@ -159,7 +160,7 @@ function TableMessage({ text, onBack }: { text: string; onBack: () => void }) {
         <div className={css.Dialog}>
           <h2 className={css.DialogTitle}>{text}</h2>
           <button type="button" className={css.SecondaryButton} onClick={onBack}>
-            Voltar
+            {tr('games.action.back', 'Back')}
           </button>
         </div>
       </div>
@@ -194,12 +195,23 @@ export function PokerTablePage() {
     [mx, useAuthentication]
   );
 
-  if (!room) return <TableMessage text="Carregando a mesa…" onBack={goBack} />;
+  if (!room)
+    return <TableMessage text={tr('games.table.loading', 'Loading the table…')} onBack={goBack} />;
   if (room.getMyMembership() !== 'join') {
-    return <TableMessage text="Aceite o convite da mesa na tela do Poker." onBack={goBack} />;
+    return (
+      <TableMessage
+        text={tr('games.table.accept_first', 'Accept the table invite on the Poker screen.')}
+        onBack={goBack}
+      />
+    );
   }
   if (!transport) {
-    return <TableMessage text="Esta sala não é uma mesa de poker." onBack={goBack} />;
+    return (
+      <TableMessage
+        text={tr('games.table.not_a_table', 'This room is not a poker table.')}
+        onBack={goBack}
+      />
+    );
   }
 
   return (

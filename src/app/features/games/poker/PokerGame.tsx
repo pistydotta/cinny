@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Icon, Icons } from 'folds';
 import { formatChips } from './engine';
 import { BuyInField, HistoryDrawer } from './TableParts';
+import { tr } from '../../translation/tr';
 import {
   MAX_BUY_IN,
   MIN_BUY_IN,
@@ -41,12 +42,18 @@ function JoinDialog({ balance, ready, error, onSit }: JoinDialogProps) {
   };
 
   return (
-    <div className={css.Dialog} role="dialog" aria-label="Entrar na mesa">
+    <div
+      className={css.Dialog}
+      role="dialog"
+      aria-label={tr('games.practice.join', 'Join the table')}
+    >
       <div>
-        <h2 className={css.DialogTitle}>Mesa de Poker</h2>
+        <h2 className={css.DialogTitle}>{tr('games.practice.title', 'Poker table')}</h2>
         <p className={css.DialogText}>
-          Texas Hold’em sem limite · Blinds {formatChips(POKER_CONFIG.smallBlind)}/
-          {formatChips(POKER_CONFIG.bigBlind)}
+          {tr('games.practice.subtitle', 'No-limit Texas Hold’em · Blinds {{small}}/{{big}}', {
+            small: formatChips(POKER_CONFIG.smallBlind),
+            big: formatChips(POKER_CONFIG.bigBlind),
+          })}
         </p>
       </div>
 
@@ -60,13 +67,15 @@ function JoinDialog({ balance, ready, error, onSit }: JoinDialogProps) {
         />
       ) : (
         <p className={css.ErrorText}>
-          Você precisa de pelo menos {formatChips(MIN_BUY_IN)} moedas para sentar.
+          {tr('games.buy_in.need_at_least', 'You need at least {{coins}} coins to sit down.', {
+            coins: formatChips(MIN_BUY_IN),
+          })}
         </p>
       )}
 
       <div className={css.Field}>
         <div className={css.FieldHeader}>
-          <span>Adversários</span>
+          <span>{tr('games.practice.opponents', 'Opponents')}</span>
         </div>
         <div className={css.Segmented}>
           {[1, 2, 3, 4, 5].map((n) => (
@@ -85,12 +94,18 @@ function JoinDialog({ balance, ready, error, onSit }: JoinDialogProps) {
 
       <div className={css.InfoBox}>
         <div className={css.InfoRow}>
-          <span>Sua carteira</span>
-          <strong>{formatChips(balance)} moedas</strong>
+          <span>{tr('games.wallet.yours', 'Your wallet')}</span>
+          <strong>
+            {tr('games.wallet.coins', '{{coins}} coins', { coins: formatChips(balance) })}
+          </strong>
         </div>
         <div className={css.InfoRow}>
-          <span>Depois de sentar</span>
-          <strong>{formatChips(Math.max(0, balance - buyIn))} moedas</strong>
+          <span>{tr('games.wallet.after_sitting', 'After sitting down')}</span>
+          <strong>
+            {tr('games.wallet.coins', '{{coins}} coins', {
+              coins: formatChips(Math.max(0, balance - buyIn)),
+            })}
+          </strong>
         </div>
       </div>
 
@@ -102,11 +117,13 @@ function JoinDialog({ balance, ready, error, onSit }: JoinDialogProps) {
         disabled={!ready || !canAfford || busy}
         onClick={handleSit}
       >
-        Sentar à mesa
+        {tr('games.buy_in.sit', 'Sit down')}
       </button>
       <p className={css.Note}>
-        Por enquanto você joga contra bots. As fichas que você ganhar ou perder voltam para a sua
-        carteira quando você sai da mesa.
+        {tr(
+          'games.practice.note',
+          'Here you play against bots. The chips you win or lose go back to your wallet when you leave the table.'
+        )}
       </p>
     </div>
   );
@@ -125,11 +142,14 @@ function RebuyDialog({ balance, error, onRebuy, onLeave }: RebuyDialogProps) {
   const canAfford = balance >= MIN_BUY_IN;
 
   return (
-    <div className={css.Dialog} role="dialog" aria-label="Recomprar fichas">
+    <div className={css.Dialog} role="dialog" aria-label={tr('games.rebuy.title', 'Out of chips')}>
       <div>
-        <h2 className={css.DialogTitle}>Suas fichas acabaram</h2>
+        <h2 className={css.DialogTitle}>{tr('games.rebuy.title', 'Out of chips')}</h2>
         <p className={css.DialogText}>
-          Você pode comprar mais fichas com as moedas da sua carteira ou sair da mesa.
+          {tr(
+            'games.rebuy.text',
+            'Buy more chips with the coins in your wallet, or leave the table.'
+          )}
         </p>
       </div>
       {canAfford ? (
@@ -141,7 +161,9 @@ function RebuyDialog({ balance, error, onRebuy, onLeave }: RebuyDialogProps) {
           onChange={setAmount}
         />
       ) : (
-        <p className={css.ErrorText}>Sua carteira não tem moedas suficientes para recomprar.</p>
+        <p className={css.ErrorText}>
+          {tr('games.rebuy.not_enough', 'Your wallet does not have enough coins.')}
+        </p>
       )}
       {error && <p className={css.ErrorText}>{error}</p>}
       <button
@@ -150,10 +172,10 @@ function RebuyDialog({ balance, error, onRebuy, onLeave }: RebuyDialogProps) {
         disabled={!canAfford}
         onClick={() => onRebuy(amount)}
       >
-        Recomprar {formatChips(amount)}
+        {tr('games.rebuy.button_amount', 'Buy {{chips}} chips', { chips: formatChips(amount) })}
       </button>
       <button type="button" className={css.SecondaryButton} onClick={onLeave}>
-        Sair da mesa
+        {tr('games.action.leave', 'Leave the table')}
       </button>
     </div>
   );
@@ -196,22 +218,37 @@ export function PokerGame({ hero: heroInfo, wallet, onBack }: PokerGameProps) {
     <div className={css.Page}>
       <div className={css.TopBar}>
         {onBack && (
-          <button type="button" className={css.IconButton} onClick={onBack} aria-label="Voltar">
+          <button
+            type="button"
+            className={css.IconButton}
+            onClick={onBack}
+            aria-label={tr('games.action.back', 'Back')}
+          >
             <Icon size="200" src={Icons.ArrowLeft} />
           </button>
         )}
         <div className={css.TopTitle}>
           <span className={css.TitleText}>Poker · Texas Hold’em</span>
           <span className={css.SubtitleText}>
-            {seated ? `Mão #${Math.max(state.handNumber, 1)} · ` : ''}Blinds{' '}
-            {formatChips(POKER_CONFIG.smallBlind)}/{formatChips(POKER_CONFIG.bigBlind)}
+            {seated
+              ? `${tr('games.log.hand', 'Hand #{{n}}', { n: Math.max(state.handNumber, 1) })} · `
+              : ''}
+            {tr('games.table.blinds', 'Blinds {{small}}/{{big}}', {
+              small: formatChips(POKER_CONFIG.smallBlind),
+              big: formatChips(POKER_CONFIG.bigBlind),
+            })}
           </span>
         </div>
-        <div className={css.WalletPill} title="Moedas na sua carteira">
+        <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
           <span className={css.Coin}>$</span>
           <span className={css.WalletValue}>{formatChips(wallet.balance)}</span>
           {seated && hero && (
-            <span className={css.WalletMuted}>· {formatChips(hero.stack)} na mesa</span>
+            <span className={css.WalletMuted}>
+              ·{' '}
+              {tr('games.wallet.at_table', '{{chips}} at the table', {
+                chips: formatChips(hero.stack),
+              })}
+            </span>
           )}
         </div>
         {seated && (
@@ -221,7 +258,7 @@ export function PokerGame({ hero: heroInfo, wallet, onBack }: PokerGameProps) {
               className={css.IconButton}
               aria-pressed={showHistory}
               onClick={() => setShowHistory((v) => !v)}
-              aria-label="Histórico da mesa"
+              aria-label={tr('games.table.history', 'Table history')}
             >
               <Icon size="200" src={Icons.RecentClock} />
             </button>
@@ -230,10 +267,10 @@ export function PokerGame({ hero: heroInfo, wallet, onBack }: PokerGameProps) {
               className={css.IconButton}
               onClick={() => table.leave()}
               disabled={table.leaveAfterHand}
-              aria-label="Sair da mesa"
+              aria-label={tr('games.action.leave', 'Leave the table')}
             >
               <Icon size="200" src={Icons.Power} />
-              <span className={css.WideOnly}>Sair da mesa</span>
+              <span className={css.WideOnly}>{tr('games.action.leave', 'Leave the table')}</span>
             </button>
           </>
         )}

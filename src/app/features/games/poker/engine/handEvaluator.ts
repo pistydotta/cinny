@@ -1,4 +1,5 @@
-import { Card, Rank, Suit, SUIT_NAME, SUITS } from './cards';
+import { tr } from '../../../translation/tr';
+import { Card, Rank, Suit, suitName, SUITS } from './cards';
 
 export enum HandCategory {
   HighCard = 0,
@@ -20,51 +21,42 @@ export type HandValue = {
   cards: Card[];
 };
 
-const RANK_SINGULAR: Record<Rank, string> = {
-  2: 'Dois',
-  3: 'Três',
-  4: 'Quatro',
-  5: 'Cinco',
-  6: 'Seis',
-  7: 'Sete',
-  8: 'Oito',
-  9: 'Nove',
-  10: 'Dez',
-  11: 'Valete',
-  12: 'Dama',
-  13: 'Rei',
-  14: 'Ás',
+const RANK_EN: Record<Rank, string> = {
+  2: 'Two',
+  3: 'Three',
+  4: 'Four',
+  5: 'Five',
+  6: 'Six',
+  7: 'Seven',
+  8: 'Eight',
+  9: 'Nine',
+  10: 'Ten',
+  11: 'Jack',
+  12: 'Queen',
+  13: 'King',
+  14: 'Ace',
 };
 
-const RANK_PLURAL: Record<Rank, string> = {
-  2: 'Dois',
-  3: 'Três',
-  4: 'Quatros',
-  5: 'Cincos',
-  6: 'Seis',
-  7: 'Setes',
-  8: 'Oitos',
-  9: 'Noves',
-  10: 'Dez',
-  11: 'Valetes',
-  12: 'Damas',
-  13: 'Reis',
-  14: 'Ases',
+const RANKS_EN: Record<Rank, string> = {
+  2: 'Twos',
+  3: 'Threes',
+  4: 'Fours',
+  5: 'Fives',
+  6: 'Sixes',
+  7: 'Sevens',
+  8: 'Eights',
+  9: 'Nines',
+  10: 'Tens',
+  11: 'Jacks',
+  12: 'Queens',
+  13: 'Kings',
+  14: 'Aces',
 };
 
-export const CATEGORY_NAME: Record<HandCategory, string> = {
-  [HandCategory.HighCard]: 'Carta Alta',
-  [HandCategory.OnePair]: 'Par',
-  [HandCategory.TwoPair]: 'Dois Pares',
-  [HandCategory.ThreeOfAKind]: 'Trinca',
-  [HandCategory.Straight]: 'Sequência',
-  [HandCategory.Flush]: 'Flush',
-  [HandCategory.FullHouse]: 'Full House',
-  [HandCategory.FourOfAKind]: 'Quadra',
-  [HandCategory.StraightFlush]: 'Straight Flush',
-};
-
-const withArticle = (rank: Rank): string => `${rank === 12 ? 'a' : 'o'} ${RANK_SINGULAR[rank]}`;
+const rankName = (rank: Rank) => tr(`games.rank.${rank}`, RANK_EN[rank]);
+const rankPlural = (rank: Rank) => tr(`games.ranks.${rank}`, RANKS_EN[rank]);
+/** Rank as the top of a straight ("o Rei" / "a Dama" in Portuguese). */
+const rankTop = (rank: Rank) => tr(`games.rank_top.${rank}`, RANK_EN[rank]);
 
 /** High card of the best straight among the ranks marked present (index = rank), or 0. */
 const findStraightHigh = (present: boolean[]): number => {
@@ -224,23 +216,31 @@ export const describeHand = (hand: HandValue): string => {
   const [r1, r2] = hand.ranks as Rank[];
   switch (hand.category) {
     case HandCategory.StraightFlush:
-      return r1 === 14 ? 'Royal Flush' : `Straight Flush até ${withArticle(r1)}`;
+      return r1 === 14
+        ? tr('games.hand.royal_flush', 'Royal Flush')
+        : tr('games.hand.straight_flush', 'Straight Flush, {{rank}} high', { rank: rankTop(r1) });
     case HandCategory.FourOfAKind:
-      return `Quadra de ${RANK_PLURAL[r1]}`;
+      return tr('games.hand.quads', 'Four of a Kind, {{ranks}}', { ranks: rankPlural(r1) });
     case HandCategory.FullHouse:
-      return `Full House: ${RANK_PLURAL[r1]} com ${RANK_PLURAL[r2]}`;
+      return tr('games.hand.full_house', 'Full House, {{ranks}} over {{ranks2}}', {
+        ranks: rankPlural(r1),
+        ranks2: rankPlural(r2),
+      });
     case HandCategory.Flush:
-      return `Flush de ${SUIT_NAME[hand.cards[0].suit]}`;
+      return tr('games.hand.flush', 'Flush, {{suit}}', { suit: suitName(hand.cards[0].suit) });
     case HandCategory.Straight:
-      return `Sequência até ${withArticle(r1)}`;
+      return tr('games.hand.straight', 'Straight, {{rank}} high', { rank: rankTop(r1) });
     case HandCategory.ThreeOfAKind:
-      return `Trinca de ${RANK_PLURAL[r1]}`;
+      return tr('games.hand.trips', 'Three of a Kind, {{ranks}}', { ranks: rankPlural(r1) });
     case HandCategory.TwoPair:
-      return `Dois Pares: ${RANK_PLURAL[r1]} e ${RANK_PLURAL[r2]}`;
+      return tr('games.hand.two_pair', 'Two Pair, {{ranks}} and {{ranks2}}', {
+        ranks: rankPlural(r1),
+        ranks2: rankPlural(r2),
+      });
     case HandCategory.OnePair:
-      return `Par de ${RANK_PLURAL[r1]}`;
+      return tr('games.hand.pair', 'Pair of {{ranks}}', { ranks: rankPlural(r1) });
     default:
-      return `Carta Alta: ${RANK_SINGULAR[r1]}`;
+      return tr('games.hand.high_card', 'High Card, {{rank}}', { rank: rankName(r1) });
   }
 };
 
@@ -254,11 +254,20 @@ export const describePartialHand = (cards: Card[]): string => {
   const counts = new Map<Rank, number>();
   sorted.forEach((c) => counts.set(c.rank, (counts.get(c.rank) ?? 0) + 1));
   const groups = Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || b[0] - a[0]);
-  if (groups[0][1] === 4) return `Quadra de ${RANK_PLURAL[groups[0][0]]}`;
-  if (groups[0][1] === 3) return `Trinca de ${RANK_PLURAL[groups[0][0]]}`;
-  if (groups[0][1] === 2 && groups[1]?.[1] === 2) {
-    return `Dois Pares: ${RANK_PLURAL[groups[0][0]]} e ${RANK_PLURAL[groups[1][0]]}`;
+  const [first, second] = groups;
+  const partial: HandValue = { category: HandCategory.HighCard, ranks: [sorted[0].rank], cards };
+  if (first[1] === 4)
+    return describeHand({ ...partial, category: HandCategory.FourOfAKind, ranks: [first[0]] });
+  if (first[1] === 3)
+    return describeHand({ ...partial, category: HandCategory.ThreeOfAKind, ranks: [first[0]] });
+  if (first[1] === 2 && second?.[1] === 2) {
+    return describeHand({
+      ...partial,
+      category: HandCategory.TwoPair,
+      ranks: [first[0], second[0]],
+    });
   }
-  if (groups[0][1] === 2) return `Par de ${RANK_PLURAL[groups[0][0]]}`;
-  return `Carta Alta: ${RANK_SINGULAR[sorted[0].rank]}`;
+  if (first[1] === 2)
+    return describeHand({ ...partial, category: HandCategory.OnePair, ranks: [first[0]] });
+  return describeHand(partial);
 };

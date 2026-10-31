@@ -25,6 +25,7 @@ import {
 } from './engine';
 import { GameWallet, PRACTICE_TABLE } from '../wallet/gameWallet';
 import type { TurnTimer } from './table/PokerTable';
+import { tr } from '../../translation/tr';
 
 export const POKER_CONFIG: PokerConfig = { smallBlind: 10, bigBlind: 20, maxSeats: 6 };
 export const MIN_BUY_IN = 20 * POKER_CONFIG.bigBlind;
@@ -151,7 +152,9 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
       });
 
     if (leaveAfterHandRef.current) {
-      cashOutAndReset(table).catch(() => setError('Não foi possível devolver suas fichas.'));
+      cashOutAndReset(table).catch(() =>
+        setError(tr('games.error.cash_out', 'Could not return your chips.'))
+      );
       return;
     }
     const me = getPlayer(table, heroId);
@@ -234,7 +237,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
       try {
         await walletRef.current.buyIn(setup.buyIn, PRACTICE_TABLE);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Não foi possível comprar fichas.');
+        setError(e instanceof Error ? e.message : tr('games.error.buy_in', 'Could not buy chips.'));
         return;
       }
       buyInRef.current = setup.buyIn;
@@ -262,7 +265,9 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
         setState(applyAction(table, heroId, action));
         setError(undefined);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Ação inválida');
+        setError(
+          e instanceof Error ? e.message : tr('games.error.invalid_action', 'Invalid action')
+        );
       }
     },
     [heroId]
@@ -287,7 +292,7 @@ export const usePokerTable = (heroInfo: PokerHero, wallet: GameWallet): PokerTab
       try {
         await walletRef.current.buyIn(amount, PRACTICE_TABLE);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Não foi possível comprar fichas.');
+        setError(e instanceof Error ? e.message : tr('games.error.buy_in', 'Could not buy chips.'));
         return;
       }
       stateRef.current = addChips(stateRef.current, heroId, amount);

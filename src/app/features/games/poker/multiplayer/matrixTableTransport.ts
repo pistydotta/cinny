@@ -9,6 +9,7 @@ import {
   TableEvent,
 } from './protocol';
 import { TableTransport } from './transport';
+import { tr } from '../../../translation/tr';
 
 const MAX_HISTORY_PAGES = 40;
 
@@ -106,7 +107,10 @@ export const createPokerTableRoom = async (
 ): Promise<string> => {
   const result = await mx.createRoom({
     name: config.name,
-    topic: `Mesa de poker · Blinds ${config.smallBlind}/${config.bigBlind}`,
+    topic: tr('games.table.topic', 'Poker table · Blinds {{small}}/{{big}}', {
+      small: config.smallBlind,
+      big: config.bigBlind,
+    }),
     invite,
     preset: Preset.PrivateChat,
     creation_content: { type: POKER_ROOM_TYPE },

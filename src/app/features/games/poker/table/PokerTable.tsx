@@ -1,4 +1,5 @@
-import React, { CSSProperties, useMemo } from 'react';
+import React, { CSSProperties, ReactNode, useMemo } from 'react';
+import { tr } from '../../../translation/tr';
 import {
   Card,
   cardKey,
@@ -27,20 +28,37 @@ const actionLabel = (action: LastAction): string => {
     case 'bb':
       return `BB${amount}`;
     case 'fold':
-      return 'Desistiu';
+      return tr('games.badge.fold', 'Fold');
     case 'check':
-      return 'Mesa';
+      return tr('games.badge.check', 'Check');
     case 'call':
-      return `Pagou${amount}`;
+      return `${tr('games.badge.call', 'Call')}${amount}`;
     case 'bet':
-      return `Apostou${amount}`;
+      return `${tr('games.badge.bet', 'Bet')}${amount}`;
     case 'raise':
-      return `Aumentou${amount}`;
+      return `${tr('games.badge.raise', 'Raise')}${amount}`;
     case 'allin':
-      return 'All-in';
+      return tr('games.action.allin', 'All-in');
     default:
       return '';
   }
+};
+
+/** A translated sentence with its placeholders shown highlighted. */
+const highlighted = (key: string, en: string, values: Record<string, string>): ReactNode => {
+  const marked = Object.fromEntries(Object.keys(values).map((k) => [k, `\u0000${k}\u0000`]));
+  return tr(key, en, marked)
+    .split('\u0000')
+    .map((part, index) =>
+      index % 2 === 1 ? (
+        // eslint-disable-next-line react/no-array-index-key
+        <span key={index} className={css.ResultHighlight}>
+          {values[part] ?? part}
+        </span>
+      ) : (
+        part
+      )
+    );
 };
 
 const nameHue = (name: string): number =>
@@ -155,31 +173,25 @@ export function PokerTable({
   const totalPot = state.pot;
   const showResult = phase === 'complete' && !!result;
 
-  let banner: React.ReactNode = null;
+  let banner: ReactNode = null;
   if (showResult && result) {
     const mainPot = result.pots[0];
     const names = mainPot.winnerIds.map((id) => state.players.find((p) => p.id === id)?.name);
     const total = Object.values(result.payouts).reduce((a, b) => a + b, 0);
     if (result.byFold) {
-      banner = (
-        <>
-          <span className={css.ResultHighlight}>{names[0]}</span> leva o pote de{' '}
-          <span className={css.ResultHighlight}>{formatChips(total)}</span>
-        </>
-      );
+      banner = highlighted('games.result.takes_pot', '{{name}} takes the pot of {{chips}}', {
+        name: names[0] ?? '',
+        chips: formatChips(total),
+      });
     } else if (mainPot.winnerIds.length > 1) {
-      banner = (
-        <>
-          Pote dividido · <span className={css.ResultHighlight}>{mainPot.handName}</span>
-        </>
-      );
+      banner = highlighted('games.result.split', 'Split pot · {{hand}}', {
+        hand: mainPot.handName ?? '',
+      });
     } else {
-      banner = (
-        <>
-          <span className={css.ResultHighlight}>{names[0]}</span> vence com{' '}
-          <span className={css.ResultHighlight}>{mainPot.handName}</span>
-        </>
-      );
+      banner = highlighted('games.result.wins_with', '{{name}} wins with {{hand}}', {
+        name: names[0] ?? '',
+        hand: mainPot.handName ?? '',
+      });
     }
   }
 
@@ -198,7 +210,7 @@ export function PokerTable({
       {/* Pot */}
       <div className={css.Pot} data-empty={totalPot <= 0}>
         <ChipStack amount={Math.max(totalPot, 1)} max={4} />
-        <span className={css.PotLabel}>Pote</span>
+        <span className={css.PotLabel}>{tr('games.table.pot', 'Pot')}</span>
         <span className={css.PotAmount}>{formatChips(totalPot)}</span>
       </div>
 
@@ -242,7 +254,7 @@ export function PokerTable({
             data-open={!!onSeatClick}
             onClick={() => onSeatClick?.(seat)}
           >
-            {onSeatClick ? 'Sentar' : 'vazio'}
+            {onSeatClick ? tr('games.table.sit', 'Sit') : tr('games.table.empty', 'empty')}
           </button>
         )
       )}
@@ -377,16 +389,19 @@ export function PokerTable({
               )}
               {away && (
                 <div className={css.ActionBadge} data-kind="fold">
-                  Ausente
+                  {tr('games.badge.away', 'Away')}
                 </div>
               )}
               <div className={css.PlateName}>
                 {hostId === p.id && (
-                  <span className={css.HostMark} title="Organiza a mesa e embaralha as cartas">
+                  <span
+                    className={css.HostMark}
+                    title={tr('games.table.host_hint', 'Runs the table and shuffles the cards')}
+                  >
                     ★{' '}
                   </span>
                 )}
-                {isHero ? `${p.name} (você)` : p.name}
+                {isHero ? tr('games.table.you', '{{name}} (you)', { name: p.name }) : p.name}
               </div>
               <div className={css.PlateStack}>{formatChips(p.stack)}</div>
               {shown && (

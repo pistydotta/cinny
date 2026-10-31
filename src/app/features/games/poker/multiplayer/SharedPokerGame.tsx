@@ -9,6 +9,7 @@ import { BuyInField, HistoryDrawer } from '../TableParts';
 import { TableTransport } from './transport';
 import { useSharedTable } from './useSharedTable';
 import * as css from '../pokerPage.css';
+import { tr } from '../../../translation/tr';
 
 type SeatDialogProps = {
   seat: number;
@@ -26,28 +27,41 @@ function SeatDialog({ seat, min, max, step, balance, onSit, onCancel }: SeatDial
   const canAfford = balance >= min;
 
   return (
-    <div className={css.Dialog} role="dialog" aria-label="Sentar à mesa">
+    <div className={css.Dialog} role="dialog" aria-label={tr('games.buy_in.sit', 'Sit down')}>
       <div>
-        <h2 className={css.DialogTitle}>Sentar no lugar {seat + 1}</h2>
+        <h2 className={css.DialogTitle}>
+          {tr('games.shared.sit_title', 'Sit in seat {{seat}}', { seat: seat + 1 })}
+        </h2>
         <p className={css.DialogText}>
-          As fichas saem da sua carteira e voltam para ela quando você sair da mesa.
+          {tr(
+            'games.shared.sit_text',
+            'The chips come out of your wallet and go back to it when you leave the table.'
+          )}
         </p>
       </div>
       {canAfford ? (
         <BuyInField value={buyIn} min={min} max={top} step={step} onChange={setBuyIn} />
       ) : (
         <p className={css.ErrorText}>
-          Você precisa de pelo menos {formatChips(min)} moedas para sentar.
+          {tr('games.buy_in.need_at_least', 'You need at least {{coins}} coins to sit down.', {
+            coins: formatChips(min),
+          })}
         </p>
       )}
       <div className={css.InfoBox}>
         <div className={css.InfoRow}>
-          <span>Sua carteira</span>
-          <strong>{formatChips(balance)} moedas</strong>
+          <span>{tr('games.wallet.yours', 'Your wallet')}</span>
+          <strong>
+            {tr('games.wallet.coins', '{{coins}} coins', { coins: formatChips(balance) })}
+          </strong>
         </div>
         <div className={css.InfoRow}>
-          <span>Depois de sentar</span>
-          <strong>{formatChips(Math.max(0, balance - buyIn))} moedas</strong>
+          <span>{tr('games.wallet.after_sitting', 'After sitting down')}</span>
+          <strong>
+            {tr('games.wallet.coins', '{{coins}} coins', {
+              coins: formatChips(Math.max(0, balance - buyIn)),
+            })}
+          </strong>
         </div>
       </div>
       <button
@@ -56,10 +70,10 @@ function SeatDialog({ seat, min, max, step, balance, onSit, onCancel }: SeatDial
         disabled={!canAfford}
         onClick={() => onSit(buyIn)}
       >
-        Sentar à mesa
+        {tr('games.buy_in.sit', 'Sit down')}
       </button>
       <button type="button" className={css.SecondaryButton} onClick={onCancel}>
-        Agora não
+        {tr('games.shared.not_now', 'Not now')}
       </button>
     </div>
   );
@@ -110,18 +124,33 @@ export function SharedPokerGame({
   const away = seated && !!me?.sittingOut;
   const playersSeated = display.players.length;
 
-  let subtitle = `Blinds ${formatChips(config.smallBlind)}/${formatChips(config.bigBlind)}`;
-  if (display.handNumber > 0) subtitle = `Mão #${display.handNumber} · ${subtitle}`;
-  if (host) subtitle = `${subtitle} · ★ ${host.name} embaralha`;
+  let subtitle = tr('games.table.blinds', 'Blinds {{small}}/{{big}}', {
+    small: formatChips(config.smallBlind),
+    big: formatChips(config.bigBlind),
+  });
+  if (display.handNumber > 0) {
+    subtitle = `${tr('games.log.hand', 'Hand #{{n}}', { n: display.handNumber })} · ${subtitle}`;
+  }
+  if (host) {
+    subtitle = `${subtitle} · ★ ${tr('games.shared.host_shuffles', '{{name}} shuffles', {
+      name: host.name,
+    })}`;
+  }
 
   let emptyLabel: string | undefined;
-  if (!table.loading && playersSeated === 0) emptyLabel = 'Escolha um lugar para sentar';
+  if (!table.loading && playersSeated === 0)
+    emptyLabel = tr('games.shared.pick_seat', 'Pick a seat to sit down');
 
   return (
     <div className={css.Page}>
       <div className={css.TopBar}>
         {onBack && (
-          <button type="button" className={css.IconButton} onClick={onBack} aria-label="Voltar">
+          <button
+            type="button"
+            className={css.IconButton}
+            onClick={onBack}
+            aria-label={tr('games.action.back', 'Back')}
+          >
             <Icon size="200" src={Icons.ArrowLeft} />
           </button>
         )}
@@ -129,11 +158,16 @@ export function SharedPokerGame({
           <span className={css.TitleText}>{config.name}</span>
           <span className={css.SubtitleText}>{subtitle}</span>
         </div>
-        <div className={css.WalletPill} title="Moedas na sua carteira">
+        <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
           <span className={css.Coin}>$</span>
           <span className={css.WalletValue}>{formatChips(wallet.balance)}</span>
           {seated && me && (
-            <span className={css.WalletMuted}>· {formatChips(me.stack)} na mesa</span>
+            <span className={css.WalletMuted}>
+              ·{' '}
+              {tr('games.wallet.at_table', '{{chips}} at the table', {
+                chips: formatChips(me.stack),
+              })}
+            </span>
           )}
         </div>
         <button
@@ -141,7 +175,7 @@ export function SharedPokerGame({
           className={css.IconButton}
           aria-pressed={showHistory}
           onClick={() => setShowHistory((v) => !v)}
-          aria-label="Histórico da mesa"
+          aria-label={tr('games.table.history', 'Table history')}
         >
           <Icon size="200" src={Icons.RecentClock} />
         </button>
@@ -150,10 +184,10 @@ export function SharedPokerGame({
             type="button"
             className={css.IconButton}
             onClick={() => table.leave()}
-            aria-label="Sair da mesa"
+            aria-label={tr('games.action.leave', 'Leave the table')}
           >
             <Icon size="200" src={Icons.Power} />
-            <span className={css.WideOnly}>Sair da mesa</span>
+            <span className={css.WideOnly}>{tr('games.action.leave', 'Leave the table')}</span>
           </button>
         )}
       </div>
@@ -178,7 +212,7 @@ export function SharedPokerGame({
         {table.loading && (
           <div className={css.Overlay}>
             <div className={css.Dialog}>
-              <h2 className={css.DialogTitle}>Carregando a mesa…</h2>
+              <h2 className={css.DialogTitle}>{tr('games.table.loading', 'Loading the table…')}</h2>
             </div>
           </div>
         )}
@@ -202,11 +236,18 @@ export function SharedPokerGame({
 
         {busted && !away && (
           <div className={css.Overlay}>
-            <div className={css.Dialog} role="dialog" aria-label="Recomprar fichas">
+            <div
+              className={css.Dialog}
+              role="dialog"
+              aria-label={tr('games.rebuy.title', 'Out of chips')}
+            >
               <div>
-                <h2 className={css.DialogTitle}>Suas fichas acabaram</h2>
+                <h2 className={css.DialogTitle}>{tr('games.rebuy.title', 'Out of chips')}</h2>
                 <p className={css.DialogText}>
-                  Compre mais fichas com as moedas da sua carteira ou saia da mesa.
+                  {tr(
+                    'games.rebuy.text',
+                    'Buy more chips with the coins in your wallet, or leave the table.'
+                  )}
                 </p>
               </div>
               {wallet.balance >= config.minBuyIn ? (
@@ -218,7 +259,9 @@ export function SharedPokerGame({
                   onChange={setRebuyAmount}
                 />
               ) : (
-                <p className={css.ErrorText}>Sua carteira não tem moedas suficientes.</p>
+                <p className={css.ErrorText}>
+                  {tr('games.rebuy.not_enough', 'Your wallet does not have enough coins.')}
+                </p>
               )}
               <button
                 type="button"
@@ -226,10 +269,10 @@ export function SharedPokerGame({
                 disabled={wallet.balance < config.minBuyIn}
                 onClick={() => table.rebuy(Math.min(rebuyAmount, wallet.balance, config.maxBuyIn))}
               >
-                Recomprar
+                {tr('games.rebuy.button', 'Buy chips')}
               </button>
               <button type="button" className={css.SecondaryButton} onClick={() => table.leave()}>
-                Sair da mesa
+                {tr('games.action.leave', 'Leave the table')}
               </button>
             </div>
           </div>
@@ -237,19 +280,27 @@ export function SharedPokerGame({
 
         {away && (
           <div className={css.Overlay}>
-            <div className={css.Dialog} role="dialog" aria-label="Você está ausente">
+            <div
+              className={css.Dialog}
+              role="dialog"
+              aria-label={tr('games.shared.away_title', 'You were away')}
+            >
               <div>
-                <h2 className={css.DialogTitle}>Você ficou ausente</h2>
+                <h2 className={css.DialogTitle}>
+                  {tr('games.shared.away_title', 'You were away')}
+                </h2>
                 <p className={css.DialogText}>
-                  O tempo da sua jogada acabou, então você desistiu da mão e não vai receber cartas
-                  até voltar.
+                  {tr(
+                    'games.shared.away_text',
+                    "You ran out of time, so you folded that hand. You won't be dealt in until you come back."
+                  )}
                 </p>
               </div>
               <button type="button" className={css.PrimaryButton} onClick={table.back}>
-                Voltar a jogar
+                {tr('games.shared.back_to_game', 'Back to the game')}
               </button>
               <button type="button" className={css.SecondaryButton} onClick={() => table.leave()}>
-                Sair da mesa
+                {tr('games.action.leave', 'Leave the table')}
               </button>
             </div>
           </div>
@@ -271,7 +322,9 @@ export function SharedPokerGame({
           onAction={table.act}
           onCancelLeave={() => undefined}
           waitingText={
-            canStartHand(display) ? 'Embaralhando…' : 'Aguardando mais jogadores para começar…'
+            canStartHand(display)
+              ? tr('games.status.shuffling', 'Shuffling…')
+              : tr('games.status.waiting_players', 'Waiting for more players to start…')
           }
         />
       )}

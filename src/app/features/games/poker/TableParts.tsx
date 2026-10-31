@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { formatChips, LogEntry } from './engine';
 import * as css from './pokerPage.css';
+import { tr } from '../../translation/tr';
 
 type BuyInFieldProps = {
   value: number;
@@ -14,7 +15,7 @@ export function BuyInField({ value, min, max, step, onChange }: BuyInFieldProps)
   return (
     <div className={css.Field}>
       <div className={css.FieldHeader}>
-        <span>Fichas para levar à mesa</span>
+        <span>{tr('games.buy_in.label', 'Chips to bring to the table')}</span>
         <span className={css.FieldValue}>{formatChips(value)}</span>
       </div>
       <input
@@ -25,7 +26,7 @@ export function BuyInField({ value, min, max, step, onChange }: BuyInFieldProps)
         step={step}
         value={value}
         onChange={(evt) => onChange(Number(evt.target.value))}
-        aria-label="Fichas para levar à mesa"
+        aria-label={tr('games.buy_in.label', 'Chips to bring to the table')}
       />
       <div className={css.RangeLimits}>
         <span>{formatChips(min)}</span>
@@ -53,7 +54,7 @@ export function HistoryDrawer({ log }: HistoryDrawerProps) {
 
   return (
     <div className={css.Drawer}>
-      <div className={css.DrawerHeader}>Histórico da mesa</div>
+      <div className={css.DrawerHeader}>{tr('games.table.history', 'Table history')}</div>
       <div className={css.DrawerList}>
         {history.map((entry) =>
           entry.text.startsWith('—') ? (

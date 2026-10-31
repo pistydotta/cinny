@@ -3,6 +3,7 @@ import { Icon, Icons } from 'folds';
 import { formatChips } from './engine';
 import { BLIND_LEVELS } from './multiplayer/protocol';
 import * as css from './pokerPage.css';
+import { tr } from '../../translation/tr';
 
 export type LobbyTable = {
   roomId: string;
@@ -56,7 +57,11 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
       .filter(Boolean);
     const invalid = typed.filter((id) => !MXID.test(id));
     if (invalid.length > 0) {
-      setError(`ID inválido: ${invalid.join(', ')} (use o formato @nome:servidor)`);
+      setError(
+        tr('games.lobby.invalid_ids', 'Invalid ID: {{ids}} (use the @name:server format)', {
+          ids: invalid.join(', '),
+        })
+      );
       return;
     }
     setBusy(true);
@@ -70,24 +75,32 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
         invite: Array.from(new Set([...selected, ...typed])),
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Não foi possível criar a mesa.');
+      setError(
+        e instanceof Error ? e.message : tr('games.error.create', 'Could not create the table.')
+      );
       setBusy(false);
     }
   };
 
   return (
-    <form className={css.Dialog} onSubmit={handleSubmit} aria-label="Criar mesa">
+    <form
+      className={css.Dialog}
+      onSubmit={handleSubmit}
+      aria-label={tr('games.lobby.create', 'Create table')}
+    >
       <div>
-        <h2 className={css.DialogTitle}>Criar mesa</h2>
+        <h2 className={css.DialogTitle}>{tr('games.lobby.create', 'Create table')}</h2>
         <p className={css.DialogText}>
-          Você organiza a mesa e embaralha as cartas, mas não vê as cartas de ninguém. Se você sair,
-          outro jogador assume.
+          {tr(
+            'games.lobby.create_text',
+            "You run the table and shuffle the cards, but you don't see anyone's cards. If you leave, another player takes over."
+          )}
         </p>
       </div>
 
       <div className={css.Field}>
         <div className={css.FieldHeader}>
-          <span>Nome da mesa</span>
+          <span>{tr('games.lobby.table_name', 'Table name')}</span>
         </div>
         <input
           className={css.TextInput}
@@ -99,10 +112,12 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
 
       <div className={css.Field}>
         <div className={css.FieldHeader}>
-          <span>Blinds</span>
+          <span>{tr('games.lobby.blinds', 'Blinds')}</span>
           <span className={css.Muted}>
-            Entrada de {formatChips(BLIND_LEVELS[level].bigBlind * 20)} a{' '}
-            {formatChips(BLIND_LEVELS[level].bigBlind * 100)} fichas
+            {tr('games.lobby.buy_in_range', 'Buy-in from {{min}} to {{max}} chips', {
+              min: formatChips(BLIND_LEVELS[level].bigBlind * 20),
+              max: formatChips(BLIND_LEVELS[level].bigBlind * 100),
+            })}
           </span>
         </div>
         <div className={css.Segmented} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
@@ -122,8 +137,10 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
 
       <div className={css.Field}>
         <div className={css.FieldHeader}>
-          <span>Convidar amigos</span>
-          <span className={css.Muted}>{selected.length} selecionados</span>
+          <span>{tr('games.lobby.invite', 'Invite friends')}</span>
+          <span className={css.Muted}>
+            {tr('games.lobby.selected', '{{count}} selected', { count: selected.length })}
+          </span>
         </div>
         {contacts.length > 0 && (
           <div className={css.ContactList}>
@@ -148,7 +165,7 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
         )}
         <input
           className={css.TextInput}
-          placeholder="Outros IDs, ex.: @amigo:matrix.org"
+          placeholder={tr('games.lobby.other_ids', 'Other IDs, e.g. @friend:matrix.org')}
           value={extra}
           onChange={(evt) => setExtra(evt.target.value)}
         />
@@ -156,10 +173,10 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
 
       {error && <p className={css.ErrorText}>{error}</p>}
       <button type="submit" className={css.PrimaryButton} disabled={busy}>
-        {busy ? 'Criando…' : 'Criar mesa'}
+        {busy ? tr('games.lobby.creating', 'Creating…') : tr('games.lobby.create', 'Create table')}
       </button>
       <button type="button" className={css.SecondaryButton} onClick={onCancel}>
-        Cancelar
+        {tr('games.action.cancel', 'Cancel')}
       </button>
     </form>
   );
@@ -195,15 +212,22 @@ export function PokerLobby({
     <div className={css.Page}>
       <div className={css.TopBar}>
         {onBack && (
-          <button type="button" className={css.IconButton} onClick={onBack} aria-label="Voltar">
+          <button
+            type="button"
+            className={css.IconButton}
+            onClick={onBack}
+            aria-label={tr('games.action.back', 'Back')}
+          >
             <Icon size="200" src={Icons.ArrowLeft} />
           </button>
         )}
         <div className={css.TopTitle}>
           <span className={css.TitleText}>Poker · Texas Hold’em</span>
-          <span className={css.SubtitleText}>Mesas com amigos e treino</span>
+          <span className={css.SubtitleText}>
+            {tr('games.lobby.subtitle', 'Tables with friends and practice')}
+          </span>
         </div>
-        <div className={css.WalletPill} title="Moedas na sua carteira">
+        <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
           <span className={css.Coin}>$</span>
           <span className={css.WalletValue}>{formatChips(balance)}</span>
         </div>
@@ -212,16 +236,20 @@ export function PokerLobby({
       <div className={css.LobbyScroll}>
         <div className={css.LobbyInner}>
           <div className={css.SectionHeader}>
-            <h2 className={css.SectionTitle}>Mesas com amigos</h2>
+            <h2 className={css.SectionTitle}>
+              {tr('games.lobby.with_friends', 'Tables with friends')}
+            </h2>
             <button type="button" className={css.SmallButton} onClick={() => setCreating(true)}>
-              Criar mesa
+              {tr('games.lobby.create', 'Create table')}
             </button>
           </div>
 
           {tables.length === 0 ? (
             <div className={css.EmptyState}>
-              Nenhuma mesa por enquanto. Crie uma e convide seus amigos — eles recebem o convite
-              como uma sala nova.
+              {tr(
+                'games.lobby.empty',
+                'No tables yet. Create one and invite your friends: they get the invite as a new room.'
+              )}
             </div>
           ) : (
             <div className={css.TableList}>
@@ -231,10 +259,21 @@ export function PokerLobby({
                   <div className={css.TableInfo}>
                     <span className={css.TableName}>{table.name}</span>
                     <span className={css.TableMeta}>
-                      {table.bigBlind ? `Blinds ${table.smallBlind}/${table.bigBlind} · ` : ''}
+                      {table.bigBlind
+                        ? `${tr('games.table.blinds', 'Blinds {{small}}/{{big}}', {
+                            small: table.smallBlind ?? 0,
+                            big: table.bigBlind,
+                          })} · `
+                        : ''}
                       {table.invited
-                        ? `Convite${table.invitedBy ? ` de ${table.invitedBy}` : ''}`
-                        : `${table.members} na sala`}
+                        ? (table.invitedBy &&
+                            tr('games.lobby.invite_from', 'Invite from {{name}}', {
+                              name: table.invitedBy,
+                            })) ||
+                          tr('games.lobby.invite_pending', 'Invite')
+                        : tr('games.lobby.members', '{{count}} in the room', {
+                            count: table.members,
+                          })}
                     </span>
                   </div>
                   {table.invited ? (
@@ -251,7 +290,9 @@ export function PokerLobby({
                         }
                       }}
                     >
-                      {accepting === table.roomId ? 'Entrando…' : 'Aceitar'}
+                      {accepting === table.roomId
+                        ? tr('games.lobby.joining', 'Joining…')
+                        : tr('games.lobby.accept', 'Accept')}
                     </button>
                   ) : (
                     <button
@@ -259,7 +300,7 @@ export function PokerLobby({
                       className={css.SmallButton}
                       onClick={() => onOpenTable(table.roomId)}
                     >
-                      Abrir
+                      {tr('games.lobby.open', 'Open')}
                     </button>
                   )}
                 </div>
@@ -267,17 +308,21 @@ export function PokerLobby({
             </div>
           )}
 
-          <h2 className={css.SectionTitle}>Treino</h2>
+          <h2 className={css.SectionTitle}>{tr('games.lobby.practice', 'Practice')}</h2>
           <div className={css.PracticeCard}>
             <div className={css.TableIcon} style={{ background: '#1b65c0' }}>
               ♣
             </div>
             <div className={css.TableInfo}>
-              <span className={css.TableName}>Jogar contra bots</span>
-              <span className={css.TableMeta}>Mesa só sua, para praticar a qualquer hora</span>
+              <span className={css.TableName}>
+                {tr('games.lobby.vs_bots', 'Play against bots')}
+              </span>
+              <span className={css.TableMeta}>
+                {tr('games.lobby.vs_bots_meta', 'A table just for you, to practice any time')}
+              </span>
             </div>
             <button type="button" className={css.SmallButton} onClick={onPractice}>
-              Treinar
+              {tr('games.lobby.train', 'Practice')}
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { CSSProperties } from 'react';
 import classNames from 'classnames';
-import { Card, isRedSuit, RANK_LABEL, SUIT_NAME, SUIT_SYMBOL } from '../engine';
+import { Card, isRedSuit, RANK_LABEL, suitName, SUIT_SYMBOL } from '../engine';
+import { tr } from '../../../translation/tr';
 import * as css from './pokerTable.css';
 
 type PlayingCardProps = {
@@ -26,7 +27,13 @@ export function PlayingCard({
   style,
 }: PlayingCardProps) {
   const showFace = faceUp && !!card;
-  const label = card ? `${RANK_LABEL[card.rank]} de ${SUIT_NAME[card.suit]}` : 'Carta virada';
+  const faceDown = tr('games.table.face_down', 'Face-down card');
+  const label = card
+    ? tr('games.table.card', '{{rank}} of {{suit}}', {
+        rank: RANK_LABEL[card.rank],
+        suit: suitName(card.suit),
+      })
+    : faceDown;
 
   return (
     <div
@@ -36,7 +43,7 @@ export function PlayingCard({
       data-dim={dim || undefined}
       style={{ ...style, ['--delay' as string]: `${delayMs ?? 0}ms` }}
       role="img"
-      aria-label={showFace ? label : 'Carta virada'}
+      aria-label={showFace ? label : faceDown}
     >
       <div
         className={css.CardInner}

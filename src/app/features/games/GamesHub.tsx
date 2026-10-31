@@ -5,6 +5,7 @@ import { PlayingCard } from './poker/table/PlayingCard';
 import { ChipStack } from './poker/table/Chips';
 import { GameWallet, STARTING_BALANCE } from './wallet/gameWallet';
 import * as css from './gamesHub.css';
+import { tr } from '../translation/tr';
 
 const ROYAL: Card[] = [
   { rank: 10, suit: 's' },
@@ -26,14 +27,22 @@ export function GamesHub({ wallet, onOpenPoker, onBack }: GamesHubProps) {
       <div className={css.HubInner}>
         <div className={css.HubHeader}>
           {onBack && (
-            <button type="button" className={css.BackButton} onClick={onBack} aria-label="Voltar">
+            <button
+              type="button"
+              className={css.BackButton}
+              onClick={onBack}
+              aria-label={tr('games.action.back', 'Back')}
+            >
               <Icon size="200" src={Icons.ArrowLeft} />
             </button>
           )}
           <div>
-            <h1 className={css.Title}>Jogos</h1>
+            <h1 className={css.Title}>{tr('games.nav.games', 'Games')}</h1>
             <p className={css.Subtitle}>
-              Jogue com suas moedas. O saldo é o mesmo em todos os jogos.
+              {tr(
+                'games.hub.subtitle',
+                'Play with your coins. Your balance is shared by every game.'
+              )}
             </p>
           </div>
         </div>
@@ -41,21 +50,31 @@ export function GamesHub({ wallet, onOpenPoker, onBack }: GamesHubProps) {
         <div className={css.WalletCard}>
           <div className={css.BigCoin}>$</div>
           <div className={css.WalletInfo}>
-            <span className={css.WalletLabel}>Sua carteira</span>
+            <span className={css.WalletLabel}>{tr('games.wallet.yours', 'Your wallet')}</span>
             <span className={css.WalletBalance}>
-              {wallet.ready ? formatChips(wallet.balance) : '—'} moedas
+              {tr('games.wallet.coins', '{{coins}} coins', {
+                coins: wallet.ready ? formatChips(wallet.balance) : '—',
+              })}
             </span>
             <span className={css.WalletHint}>
               {wallet.atTable > 0
-                ? `${formatChips(
-                    wallet.atTable
-                  )} moedas estão em uma mesa e voltam quando você sair dela.`
-                : `Toda conta nova começa com ${formatChips(STARTING_BALANCE)} moedas.`}
+                ? tr(
+                    'games.wallet.at_tables_hint',
+                    '{{coins}} coins are at a table and come back when you leave it.',
+                    { coins: formatChips(wallet.atTable) }
+                  )
+                : tr(
+                    'games.wallet.starting_hint',
+                    'Every new account starts with {{coins}} coins.',
+                    {
+                      coins: formatChips(STARTING_BALANCE),
+                    }
+                  )}
             </span>
           </div>
         </div>
 
-        <h2 className={css.SectionTitle}>Escolha um jogo</h2>
+        <h2 className={css.SectionTitle}>{tr('games.hub.pick', 'Pick a game')}</h2>
         <div className={css.Grid}>
           <div className={css.GameCard} data-playable="true">
             <div className={css.PokerArt}>
@@ -79,9 +98,11 @@ export function GamesHub({ wallet, onOpenPoker, onBack }: GamesHubProps) {
             </div>
             <div className={css.CardBody}>
               <span className={css.GameName}>Poker</span>
-              <span className={css.GameMeta}>Texas Hold’em sem limite · 2 a 6 jogadores</span>
+              <span className={css.GameMeta}>
+                {tr('games.hub.poker_meta', 'No-limit Texas Hold’em · 2 to 6 players')}
+              </span>
               <button type="button" className={css.PlayButton} onClick={onOpenPoker}>
-                Jogar
+                {tr('games.hub.play', 'Play')}
               </button>
             </div>
           </div>
@@ -89,10 +110,12 @@ export function GamesHub({ wallet, onOpenPoker, onBack }: GamesHubProps) {
           <div className={css.GameCard}>
             <div className={css.SoonArt}>?</div>
             <div className={css.CardBody}>
-              <span className={css.GameName}>Mais jogos</span>
-              <span className={css.GameMeta}>Novos jogos vão usar a mesma carteira.</span>
+              <span className={css.GameName}>{tr('games.hub.more', 'More games')}</span>
+              <span className={css.GameMeta}>
+                {tr('games.hub.more_meta', 'New games will use the same wallet.')}
+              </span>
               <button type="button" className={css.PlayButton} disabled>
-                Em breve
+                {tr('games.hub.soon', 'Coming soon')}
               </button>
             </div>
           </div>

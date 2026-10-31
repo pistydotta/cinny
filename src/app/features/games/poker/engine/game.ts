@@ -3,6 +3,7 @@
 import produce, { Draft } from 'immer';
 import { Card, createDeck, RandomFn, randomInt, shuffle } from './cards';
 import { compareHands, describeHand, evaluateBest, HandValue } from './handEvaluator';
+import { tr } from '../../../translation/tr';
 
 /*
  * No-Limit Texas Hold'em engine.
@@ -242,7 +243,13 @@ export const addPlayer = (state: PokerState, player: NewPlayer): PokerState =>
       lastActionBetLevel: 0,
     });
     d.players.sort((a, b) => a.seat - b.seat);
-    pushLog(d, `${player.name} sentou à mesa com ${formatChips(player.stack)} fichas`);
+    pushLog(
+      d,
+      tr('games.log.sat', '{{name}} sat down with {{chips}} chips', {
+        name: player.name,
+        chips: formatChips(player.stack),
+      })
+    );
   });
 
 /** Removes a player between hands, or a player that is not part of the current hand. */
@@ -258,7 +265,7 @@ export const removePlayer = (state: PokerState, playerId: string): PokerState =>
       throw new Error('Wait for the hand to finish before removing a folded player');
     }
     d.players = d.players.filter((pl) => pl.id !== playerId);
-    pushLog(d, `${p.name} saiu da mesa`);
+    pushLog(d, tr('games.log.left', '{{name}} left the table', { name: p.name }));
   });
 
 export const addChips = (state: PokerState, playerId: string, amount: number): PokerState =>
@@ -267,7 +274,13 @@ export const addChips = (state: PokerState, playerId: string, amount: number): P
     const p = d.players.find((pl) => pl.id === playerId);
     if (!p) throw new Error('Unknown player');
     p.stack += amount;
-    pushLog(d, `${p.name} recomprou ${formatChips(amount)} fichas`);
+    pushLog(
+      d,
+      tr('games.log.rebuy', '{{name}} bought {{chips}} more chips', {
+        name: p.name,
+        chips: formatChips(amount),
+      })
+    );
   });
 
 const isDealtIn = (p: PokerPlayer) => p.stack > 0 && !p.sittingOut;
@@ -321,15 +334,27 @@ export const startHand = (
     d.sbSeat = sb.seat;
     d.bbSeat = bb.seat;
 
-    pushLog(d, `— Mão #${d.handNumber} —`);
+    pushLog(d, `— ${tr('games.log.hand', 'Hand #{{n}}', { n: d.handNumber })} —`);
     const sbPlayer = d.players.find((p) => p.id === sb.id) as Draft<PokerPlayer>;
     const bbPlayer = d.players.find((p) => p.id === bb.id) as Draft<PokerPlayer>;
     commit(sbPlayer, smallBlind);
     sbPlayer.lastAction = { type: 'sb', amount: sbPlayer.streetBet };
-    pushLog(d, `${sbPlayer.name} posta small blind ${formatChips(sbPlayer.streetBet)}`);
+    pushLog(
+      d,
+      tr('games.log.small_blind', '{{name}} posts the small blind of {{chips}}', {
+        name: sbPlayer.name,
+        chips: formatChips(sbPlayer.streetBet),
+      })
+    );
     commit(bbPlayer, bigBlind);
     bbPlayer.lastAction = { type: 'bb', amount: bbPlayer.streetBet };
-    pushLog(d, `${bbPlayer.name} posta big blind ${formatChips(bbPlayer.streetBet)}`);
+    pushLog(
+      d,
+      tr('games.log.big_blind', '{{name}} posts the big blind of {{chips}}', {
+        name: bbPlayer.name,
+        chips: formatChips(bbPlayer.streetBet),
+      })
+    );
 
     d.currentBet = bigBlind;
     d.minRaise = bigBlind;
@@ -387,13 +412,13 @@ export const applyAction = (
       case 'fold': {
         p.status = 'folded';
         p.lastAction = { type: 'fold' };
-        pushLog(d, `${p.name} desistiu`);
+        pushLog(d, tr('games.log.fold', '{{name}} folds', { name: p.name }));
         break;
       }
       case 'check': {
         if (!legal.canCheck) throw new Error('Cannot check facing a bet');
         p.lastAction = { type: 'check' };
-        pushLog(d, `${p.name} passou`);
+        pushLog(d, tr('games.log.check', '{{name}} checks', { name: p.name }));
         break;
       }
       case 'call': {
@@ -406,8 +431,14 @@ export const applyAction = (
         pushLog(
           d,
           p.status === 'allin'
-            ? `${p.name} pagou ${formatChips(legal.callAmount)} e está all-in`
-            : `${p.name} pagou ${formatChips(legal.callAmount)}`
+            ? tr('games.log.call_allin', '{{name}} calls {{chips}} and is all-in', {
+                name: p.name,
+                chips: formatChips(legal.callAmount),
+              })
+            : tr('games.log.call', '{{name}} calls {{chips}}', {
+                name: p.name,
+                chips: formatChips(legal.callAmount),
+              })
         );
         break;
       }
@@ -425,9 +456,14 @@ export const applyAction = (
         const verb = legal.isBet ? 'bet' : 'raise';
         p.lastAction =
           p.status === 'allin' ? { type: 'allin', amount: to } : { type: verb, amount: to };
-        if (p.status === 'allin') pushLog(d, `${p.name} foi all-in com ${formatChips(to)}`);
-        else if (verb === 'bet') pushLog(d, `${p.name} apostou ${formatChips(to)}`);
-        else pushLog(d, `${p.name} aumentou para ${formatChips(to)}`);
+        const values = { name: p.name, chips: formatChips(to) };
+        if (p.status === 'allin') {
+          pushLog(d, tr('games.log.allin', '{{name}} goes all-in for {{chips}}', values));
+        } else if (verb === 'bet') {
+          pushLog(d, tr('games.log.bet', '{{name}} bets {{chips}}', values));
+        } else {
+          pushLog(d, tr('games.log.raise', '{{name}} raises to {{chips}}', values));
+        }
         break;
       }
       default:
@@ -450,7 +486,13 @@ const collectBets = (d: Draft<PokerState>) => {
     top.streetBet -= refund;
     top.totalBet -= refund;
     if (top.status === 'allin') top.status = 'active';
-    pushLog(d, `${formatChips(refund)} não pagos voltam para ${top.name}`);
+    pushLog(
+      d,
+      tr('games.log.uncalled', 'Uncalled {{chips}} returned to {{name}}', {
+        name: top.name,
+        chips: formatChips(refund),
+      })
+    );
   }
   d.players.forEach((p) => {
     d.pot += p.streetBet;
@@ -533,14 +575,20 @@ const showdown = (d: Draft<PokerState>) => {
   contenders.forEach((p) => {
     const value = values.get(p.id) as HandValue;
     hands[p.id] = { name: describeHand(value), cards: value.cards };
-    pushLog(d, `${p.name} mostra ${describeHand(value)}`);
+    pushLog(
+      d,
+      tr('games.log.shows', '{{name}} shows {{hand}}', { name: p.name, hand: describeHand(value) })
+    );
   });
 
   d.players.forEach((p) => {
     const won = payouts[p.id];
     if (won) {
       p.stack += won;
-      pushLog(d, `${p.name} ganhou ${formatChips(won)}`);
+      pushLog(
+        d,
+        tr('games.log.won', '{{name}} wins {{chips}}', { name: p.name, chips: formatChips(won) })
+      );
     }
   });
 
@@ -574,7 +622,13 @@ export const advanceHand = (state: PokerState): PokerState =>
         payouts: { [winner.id]: amount },
         hands: {},
       };
-      pushLog(d, `${winner.name} ganhou ${formatChips(amount)} sem mostrar as cartas`);
+      pushLog(
+        d,
+        tr('games.log.won_no_show', '{{name}} wins {{chips}} without showing', {
+          name: winner.name,
+          chips: formatChips(amount),
+        })
+      );
       d.pot = 0;
       d.phase = 'complete';
       d.actingSeat = null;

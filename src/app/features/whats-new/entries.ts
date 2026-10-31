@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-poker',
+    items: () => [
+      {
+        title: tr('whats_new.poker_title', 'Games: poker with friends'),
+        body: tr(
+          'whats_new.poker_body',
+          'There is a new Games tab in the sidebar. Everyone gets 5,000 coins to play Texas Hold’em with friends, or to practice against bots.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-10-push',
     items: () => [
       {
