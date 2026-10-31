@@ -1,3 +1,4 @@
+import { isAndroidApp } from '../android-app/androidApp';
 import { isDesktopApp } from '../desktop-download/desktopDownload';
 
 // Matches `apps:` in templates/sygnal.yaml (blazeroom repo).
@@ -40,6 +41,13 @@ export const webPusher = (subscription: SubscriptionJson, config: PushConfig, la
   };
 };
 
+// From the m.direct account data. Read directly when a notification opens the app: mDirectAtom is
+// still empty that early, and a DM opened outside /direct shows only a preview of the room.
+export const isDirectRoom = (direct: unknown, roomId: string): boolean =>
+  typeof direct === 'object' &&
+  direct !== null &&
+  Object.values(direct).some((rooms) => Array.isArray(rooms) && rooms.includes(roomId));
+
 export type PushSupport = 'available' | 'install_first' | 'unavailable';
 
 // iPhones only have push once the site is installed to the home screen.
@@ -58,7 +66,10 @@ export const pushSupport = ({
   userAgent: string;
   configured: boolean;
 }): PushSupport => {
-  if (!configured || !serviceWorker || isDesktopApp(userAgent)) return 'unavailable';
+  // The Android app has its own switch: a WebView has no Web Push.
+  if (!configured || !serviceWorker || isDesktopApp(userAgent) || isAndroidApp(userAgent)) {
+    return 'unavailable';
+  }
   if (pushManager && notification) return 'available';
   return /iPhone|iPad/.test(userAgent) && !standalone ? 'install_first' : 'unavailable';
 };

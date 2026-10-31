@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, Text, config, toRem } from 'folds';
 import { SequenceCard } from '../../components/sequence-card';
 import { SequenceCardStyle } from '../settings/styles.css';
+import { ANDROID_DOWNLOAD_URL } from '../android-app/androidApp';
 import { DESKTOP_DOWNLOAD_URL } from '../desktop-download/desktopDownload';
 import { tr } from '../translation/tr';
 import { AppId, AppStatus, availableApps } from './availableApps';
@@ -23,12 +24,17 @@ const APP_NAMES: Record<AppId, string> = {
   apple: 'Apple',
 };
 
-function AppStatusLine({ status }: { status: AppStatus }) {
+const DOWNLOAD_URLS: Partial<Record<AppId, string>> = {
+  windows: DESKTOP_DOWNLOAD_URL,
+  android: ANDROID_DOWNLOAD_URL,
+};
+
+function AppStatusLine({ id, status }: { id: AppId; status: AppStatus }) {
   if (status === 'download') {
     return (
       <Button
         as="a"
-        href={DESKTOP_DOWNLOAD_URL}
+        href={DOWNLOAD_URLS[id]}
         download
         size="300"
         radii="300"
@@ -85,7 +91,7 @@ export function AppsCard() {
               <ItemTitle>{APP_NAMES[id]}</ItemTitle>
             </Text>
             <Box alignItems="Center" style={{ minHeight: toRem(32) }}>
-              <AppStatusLine status={status} />
+              <AppStatusLine id={id} status={status} />
             </Box>
           </SequenceCard>
         ))}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PUSH_APP_ID, pushSupport, vapidKeyBytes, webPusher } from './pushApi';
+import { PUSH_APP_ID, pushSupport, vapidKeyBytes, webPusher, isDirectRoom } from './pushApi';
 
 const config = { gatewayUrl: 'https://matrix.x/_matrix/push/v1/notify', vapidKey: 'AQAB-_' };
 const CHROME = 'Mozilla/5.0 (Windows NT 10.0) Chrome/141.0';
@@ -66,5 +66,22 @@ describe('pushSupport', () => {
     expect(
       pushSupport({ ...browser, pushManager: false, userAgent: CHROME, configured: true })
     ).toBe('unavailable');
+  });
+});
+
+describe('isDirectRoom', () => {
+  const direct = { '@ana:x': ['!a:x', '!b:x'], '@bia:x': ['!c:x'] };
+
+  it('finds a room in the account data', () => {
+    expect(isDirectRoom(direct, '!c:x')).toBe(true);
+  });
+
+  it('leaves other rooms out', () => {
+    expect(isDirectRoom(direct, '!z:x')).toBe(false);
+  });
+
+  it('copes with missing or odd data', () => {
+    expect(isDirectRoom(undefined, '!a:x')).toBe(false);
+    expect(isDirectRoom({ '@ana:x': 'not a list' }, '!a:x')).toBe(false);
   });
 });

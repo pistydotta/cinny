@@ -266,6 +266,8 @@
     "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor.",
     "feedback_title": "Ajuda e feedback",
     "feedback_body": "Agora dá para mandar bugs e ideias pelo app, com captura de tela se quiser. Fica em Configurações > Ajuda e feedback.",
+    "android_title": "App para Android",
+    "android_body": "O Blazeroom agora tem app para Android, com notificações, chamadas que tocam com o celular bloqueado e compartilhar de outros apps. Baixe em Apps disponíveis, no celular.",
     "push_title": "Notificações com o app fechado",
     "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications.",
     "poker_title": "Jogos: poker com os amigos",
@@ -322,6 +324,17 @@
     "download": "Baixar",
     "current": "Você já está nele",
     "soon": "Em desenvolvimento"
+  },
+  "android_app": {
+    "share_title": "Compartilhar em...",
+    "share_search": "Buscar salas",
+    "share_failed": "Não foi possível ler o que foi compartilhado. Pode ter sido apagado ou ser grande demais.",
+    "share_cancel": "Cancelar",
+    "calls_title": "Chamadas com o celular bloqueado",
+    "calls_body": "Para uma chamada acender a tela, o Android precisa de uma opção ligada para o Blazeroom. Nos celulares Xiaomi há uma segunda: Mostrar na tela de bloqueio.",
+    "calls_open": "Abrir",
+    "push_body": "Receba avisos neste celular mesmo com o app fechado. Mensagens criptografadas mostram quem escreveu, não o texto.",
+    "push_denied": "As notificações estão bloqueadas. Ative nas configurações do Android para o Blazeroom."
   },
   "push": {
     "title": "Notificações com o app fechado",

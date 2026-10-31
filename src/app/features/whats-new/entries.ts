@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-android',
+    items: () => [
+      {
+        title: tr('whats_new.android_title', 'App for Android'),
+        body: tr(
+          'whats_new.android_body',
+          'Blazeroom now has an Android app, with notifications, calls that ring on a locked phone and sharing from other apps. Download it in Available apps, on the phone.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-poker-server',
     items: () => [
       {

@@ -11,6 +11,7 @@ import { useEmailNotifications } from '../../../hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { PushNotificationsTile } from '../../push/PushNotifications';
+import { AndroidPushTile } from '../../android-app/AndroidPush';
 
 function EmailNotification() {
   const mx = useMatrixClient();
@@ -101,6 +102,7 @@ export function SystemNotification() {
     <Box direction="Column" gap="100">
       <Text size="L400">System</Text>
       <PushNotificationsTile />
+      <AndroidPushTile />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"
