@@ -34,17 +34,12 @@ export function PracticeScreen({ onBack }: PracticeScreenProps) {
 
   useEffect(() => {
     let cancelled = false;
-    refresh();
-    api
-      .list()
-      .then(({ practiceId }) => {
-        if (cancelled) return;
-        if (practiceId) setTableId(practiceId);
-        else setChecking(false);
-      })
-      .catch(() => {
-        if (!cancelled) setChecking(false);
-      });
+    // Waits for the wallet too: until it answers, an empty one and an unknown one look the same.
+    Promise.all([api.list().catch(() => undefined), refresh()]).then(([list]) => {
+      if (cancelled) return;
+      if (list?.practiceId) setTableId(list.practiceId);
+      else setChecking(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -103,9 +98,15 @@ export function PracticeScreen({ onBack }: PracticeScreenProps) {
             />
           ) : (
             <p className={css.ErrorText}>
-              {tr('games.buy_in.need_at_least', 'You need at least {{coins}} coins to sit down.', {
-                coins: formatChips(MIN_BUY_IN),
-              })}
+              {balance === undefined
+                ? tr('games.wallet.load_failed', 'Could not load your wallet.')
+                : tr(
+                    'games.buy_in.need_at_least',
+                    'You need at least {{coins}} coins to sit down.',
+                    {
+                      coins: formatChips(MIN_BUY_IN),
+                    }
+                  )}
             </p>
           )}
 
@@ -132,7 +133,9 @@ export function PracticeScreen({ onBack }: PracticeScreenProps) {
             <div className={css.InfoRow}>
               <span>{tr('games.wallet.yours', 'Your wallet')}</span>
               <strong>
-                {tr('games.wallet.coins', '{{coins}} coins', { coins: formatChips(money) })}
+                {tr('games.wallet.coins', '{{coins}} coins', {
+                  coins: balance === undefined ? '—' : formatChips(money),
+                })}
               </strong>
             </div>
           </div>
@@ -148,9 +151,11 @@ export function PracticeScreen({ onBack }: PracticeScreenProps) {
               type="button"
               className={css.PrimaryButton}
               disabled={busy}
-              onClick={() => attempt(topUp)}
+              onClick={() => attempt(balance === undefined ? refresh : topUp)}
             >
-              {tr('games.wallet.top_up', 'Get more coins')}
+              {balance === undefined
+                ? tr('games.wallet.retry', 'Try again')
+                : tr('games.wallet.top_up', 'Get more coins')}
             </button>
           )}
           <button type="button" className={css.SecondaryButton} onClick={onBack}>
