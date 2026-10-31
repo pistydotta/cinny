@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { newerView, parseSse } from './tableStream';
+import { describe, expect, it, vi } from 'vitest';
+import { newerView, parseSse, readWithTimeout } from './tableStream';
 import type { TableView } from './types';
 
 const view = (version: number) => ({ id: 't', version } as unknown as TableView);
@@ -39,5 +39,29 @@ describe('newerView', () => {
     expect(newerView(undefined, incoming)).toBe(incoming);
     const same = view(5);
     expect(newerView(view(5), same)).toBe(same);
+  });
+});
+
+describe('readWithTimeout', () => {
+  it('gives the value of a read that finishes in time', async () => {
+    await expect(readWithTimeout(Promise.resolve(7), 50)).resolves.toEqual({
+      timedOut: false,
+      value: 7,
+    });
+  });
+
+  it('gives up on a read that never finishes', async () => {
+    vi.useFakeTimers();
+    const never = new Promise<number>(() => {
+      // Never settles.
+    });
+    const result = readWithTimeout(never, 60_000);
+    vi.advanceTimersByTime(60_000);
+    await expect(result).resolves.toEqual({ timedOut: true });
+    vi.useRealTimers();
+  });
+
+  it('passes a failed read on', async () => {
+    await expect(readWithTimeout(Promise.reject(new Error('reset')), 50)).rejects.toThrow('reset');
   });
 });

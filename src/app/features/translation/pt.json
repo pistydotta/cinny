@@ -507,7 +507,7 @@
       "members": "{{count}} na sala",
       "open": "Abrir",
       "practice": "Treino",
-      "selected": "{{count}} selecionados",
+      "selected": "Selecionados: {{count}}",
       "subtitle": "Mesas com amigos e treino",
       "table_name": "Nome da mesa",
       "train": "Treinar",

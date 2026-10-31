@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { createPokerApi } from './api';
-import { newerView, parseSse } from './tableStream';
+import { newerView, parseSse, readWithTimeout, STREAM_SILENCE_MS } from './tableStream';
 import type { PlayReply, TableView } from './types';
 
 export const BACKOFF_MS = [1000, 2000, 4000, 8000, 15000];
@@ -67,8 +67,15 @@ export const useTable = (
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      const pump = async (): Promise<boolean> => {
-        const { done, value } = await reader.read();
+      for (;;) {
+        // eslint-disable-next-line no-await-in-loop
+        const read = await readWithTimeout(reader.read(), STREAM_SILENCE_MS);
+        if (read.timedOut) {
+          // Not awaited: cancelling a half-open socket may never settle either.
+          reader.cancel().catch(() => undefined);
+          return true;
+        }
+        const { done, value } = read.value;
         if (done) return true;
         buffer += decoder.decode(value, { stream: true });
         const parsed = parseSse(buffer);
@@ -82,9 +89,7 @@ export const useTable = (
           setClosed(true);
           return false;
         }
-        return pump();
-      };
-      return pump();
+      }
     };
 
     const run = async (attempt: number): Promise<void> => {

@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon, Icons } from 'folds';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { ApiError } from '../../../utils/blazeroomApi';
@@ -182,6 +182,14 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
     refreshLobby();
     refreshCredits();
   }, [refreshLobby, refreshCredits]);
+
+  // A table can take chips back on its own (away or idle rule); the balance has to follow.
+  const chipsKey = (list?.tables ?? []).map((t) => `${t.id}:${t.myChips}`).join(',');
+  const lastChipsKey = useRef(chipsKey);
+  useEffect(() => {
+    if (lastChipsKey.current !== chipsKey) refreshCredits();
+    lastChipsKey.current = chipsKey;
+  }, [chipsKey, refreshCredits]);
 
   const friends = useMemo(
     () =>

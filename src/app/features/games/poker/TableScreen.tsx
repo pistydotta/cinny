@@ -15,6 +15,7 @@ import { HistoryDrawer } from './TableParts';
 import { AwayDialog, CloseDialog, InviteDialog, RebuyDialog, SeatDialog } from './TableDialogs';
 import { errorText } from './errorText';
 import { createInFlight } from './inFlight';
+import { avatarSource } from './avatarSource';
 import { turnTimerFor } from './turnTimer';
 import { formatChips, PokerAction } from './types';
 import { useTable } from './useTable';
@@ -81,9 +82,10 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
 
   const resolveAvatar = useCallback(
     (url: string) =>
-      url.startsWith('mxc://')
-        ? mxcUrlToHttp(mx, url, useAuthentication, 128, 128, 'crop') ?? undefined
-        : url,
+      avatarSource(
+        url,
+        (mxc) => mxcUrlToHttp(mx, mxc, useAuthentication, 128, 128, 'crop') ?? undefined
+      ),
     [mx, useAuthentication]
   );
 
@@ -121,6 +123,17 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
     setError(undefined);
   }, [handNumber, legalSeq]);
 
+  const me = view?.players.find((p) => p.id === userId);
+  // A player who left still holds the seat until the hand ends, but is no longer seated.
+  const seated = !!me && !me.leaving;
+
+  // The away and idle rules remove a player on the server; the balance has to follow.
+  const wasSeated = useRef(false);
+  useEffect(() => {
+    if (wasSeated.current && !seated) refreshCredits();
+    wasSeated.current = seated;
+  }, [seated, refreshCredits]);
+
   if (notFound) {
     return (
       <Message
@@ -133,9 +146,6 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
     return <Message text={tr('games.table.closed', 'This table was closed.')} onBack={onBack} />;
   }
 
-  const me = view?.players.find((p) => p.id === userId);
-  // A player who left still holds the seat until the hand ends, but is no longer seated.
-  const seated = !!me && !me.leaving;
   const handOver = view?.phase === 'waiting' || view?.phase === 'complete';
   const busted = seated && me.stack === 0 && view?.pendingChips === 0 && handOver;
   const away = seated && me.away;
@@ -197,7 +207,9 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           <Icon size="200" src={Icons.ArrowLeft} />
         </button>
         <div className={css.TopTitle}>
-          <span className={css.TitleText}>{view?.name}</span>
+          <span className={css.TitleText}>
+            {view?.kind === 'practice' ? tr('games.lobby.practice', 'Practice') : view?.name}
+          </span>
           <span className={css.SubtitleText}>{subtitle}</span>
         </div>
         <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
@@ -207,7 +219,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
             <span className={css.WalletMuted}>
               ·{' '}
               {tr('games.wallet.at_table', '{{chips}} at the table', {
-                chips: formatChips(me.stack),
+                chips: formatChips(me.stack + (view?.pendingChips ?? 0)),
               })}
             </span>
           )}
@@ -281,7 +293,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
               turnTimer={turnTimerFor(view, Date.now())}
               layout={layout}
               seatOffset={me?.seat ?? 0}
-              onSeatClick={seated ? undefined : setPickedSeat}
+              onSeatClick={me ? undefined : setPickedSeat}
               resolveAvatar={resolveAvatar}
               emptyLabel={tr('games.shared.pick_seat', 'Pick a seat to sit down')}
             />

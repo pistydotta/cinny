@@ -27,3 +27,23 @@ export const parseSse = (buffer: string): { events: SseEvent[]; rest: string } =
 // Views can arrive out of order: a play reply races the stream.
 export const newerView = (current: TableView | undefined, incoming: TableView): TableView =>
   current && incoming.version < current.version ? current : incoming;
+
+// The server pings every 25 s, so a socket that says nothing for longer is half-open.
+export const STREAM_SILENCE_MS = 60_000;
+
+export type TimedRead<T> = { timedOut: true } | { timedOut: false; value: T };
+
+export const readWithTimeout = <T>(read: Promise<T>, ms: number): Promise<TimedRead<T>> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve({ timedOut: true }), ms);
+    read.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve({ timedOut: false, value });
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });

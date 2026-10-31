@@ -306,7 +306,8 @@ export function PokerTable({
         const timer = myTurn && turnTimer?.seat === p.seat ? turnTimer : undefined;
         const won = showResult ? result?.payouts[p.id] : undefined;
         const shown = showdown ? result?.hands[p.id] : undefined;
-        const showCards = inHand && p.hasCards && (!folded || isHero);
+        // A folded hero keeps seeing their own cards, dimmed; the server sends them.
+        const showCards = inHand && (p.hasCards || (isHero && p.holeCards.length > 0));
         // Other players' cards stay hidden, but the table still deals them.
         const cards: (Card | undefined)[] =
           p.holeCards.length > 0 ? p.holeCards : [undefined, undefined];
