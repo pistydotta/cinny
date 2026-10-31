@@ -4,7 +4,6 @@ import {
   Avatar,
   Box,
   Icon,
-  IconButton,
   Icons,
   Text,
   Menu,
@@ -64,6 +63,7 @@ import { CallMemberAvatars } from './CallMemberAvatars';
 import { StateEvent } from '../../../types/matrix/room';
 import { webRTCSupported } from '../../utils/rtc';
 import { tr } from '../translation/tr';
+import { TipIconButton } from '../tooltips/TipIconButton';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -226,7 +226,8 @@ function CallChatToggle() {
   const [chat, setChat] = useAtom(callChatAtom);
 
   return (
-    <IconButton
+    <TipIconButton
+      label={tr('tips.toggle_chat', 'Show or hide chat')}
       onClick={() => setChat(!chat)}
       aria-pressed={chat}
       aria-label="Toggle Chat"
@@ -236,7 +237,7 @@ function CallChatToggle() {
       radii="300"
     >
       <Icon size="50" src={Icons.Message} filled={chat} />
-    </IconButton>
+    </TipIconButton>
   );
 }
 
@@ -385,6 +386,7 @@ export function RoomNavItem({
               )}
               {callMembers.length > 0 && (
                 <Badge variant="Critical" fill="Solid" size="400">
+                  <Icon size="50" src={Icons.VolumeHigh} filled />
                   <Text as="span" size="L400" truncate>
                     {tr('nav.live', 'Live')}
                   </Text>
@@ -426,7 +428,8 @@ export function RoomNavItem({
                 </FocusTrap>
               }
             >
-              <IconButton
+              <TipIconButton
+                label={tr('tips.more', 'More options')}
                 onClick={handleOpenMenu}
                 aria-pressed={!!menuAnchor}
                 aria-controls={`menu-${room.roomId}`}
@@ -437,7 +440,7 @@ export function RoomNavItem({
                 radii="300"
               >
                 <Icon size="50" src={Icons.VerticalDots} />
-              </IconButton>
+              </TipIconButton>
             </PopOut>
           </NavItemOptions>
         )}

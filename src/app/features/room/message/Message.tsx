@@ -79,6 +79,8 @@ import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -918,7 +920,8 @@ export const Message = as<'div', MessageProps>(
                       />
                     }
                   >
-                    <IconButton
+                    <TipIconButton
+                      label={tr('tips.react', 'Add reaction')}
                       onClick={handleOpenEmojiBoard}
                       variant="SurfaceVariant"
                       size="300"
@@ -926,10 +929,11 @@ export const Message = as<'div', MessageProps>(
                       aria-pressed={!!emojiBoardAnchor}
                     >
                       <Icon src={Icons.SmilePlus} size="100" />
-                    </IconButton>
+                    </TipIconButton>
                   </PopOut>
                 )}
-                <IconButton
+                <TipIconButton
+                  label={tr('tips.reply', 'Reply')}
                   onClick={onReplyClick}
                   data-event-id={mEvent.getId()}
                   variant="SurfaceVariant"
@@ -937,9 +941,10 @@ export const Message = as<'div', MessageProps>(
                   radii="300"
                 >
                   <Icon src={Icons.ReplyArrow} size="100" />
-                </IconButton>
+                </TipIconButton>
                 {!isThreadedMessage && (
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.thread', 'Reply in thread')}
                     onClick={(ev) => onReplyClick(ev, true)}
                     data-event-id={mEvent.getId()}
                     variant="SurfaceVariant"
@@ -947,17 +952,18 @@ export const Message = as<'div', MessageProps>(
                     radii="300"
                   >
                     <Icon src={Icons.ThreadPlus} size="100" />
-                  </IconButton>
+                  </TipIconButton>
                 )}
                 {canEditEvent(mx, mEvent) && onEditId && (
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.edit', 'Edit')}
                     onClick={() => onEditId(mEvent.getId())}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
                   >
                     <Icon src={Icons.Pencil} size="100" />
-                  </IconButton>
+                  </TipIconButton>
                 )}
                 <PopOut
                   anchor={menuAnchor}
@@ -1115,7 +1121,8 @@ export const Message = as<'div', MessageProps>(
                     </FocusTrap>
                   }
                 >
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.more', 'More options')}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
@@ -1123,7 +1130,7 @@ export const Message = as<'div', MessageProps>(
                     aria-pressed={!!menuAnchor}
                   >
                     <Icon src={Icons.VerticalDots} size="100" />
-                  </IconButton>
+                  </TipIconButton>
                 </PopOut>
               </Box>
             </Menu>
@@ -1281,7 +1288,8 @@ export const Event = as<'div', EventProps>(
                     </FocusTrap>
                   }
                 >
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.more', 'More options')}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
@@ -1289,7 +1297,7 @@ export const Event = as<'div', EventProps>(
                     aria-pressed={!!menuAnchor}
                   >
                     <Icon src={Icons.VerticalDots} size="100" />
-                  </IconButton>
+                  </TipIconButton>
                 </PopOut>
               </Box>
             </Menu>

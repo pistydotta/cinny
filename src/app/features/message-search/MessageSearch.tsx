@@ -1,5 +1,5 @@
 import React, { RefObject, useEffect, useMemo, useRef } from 'react';
-import { Text, Box, Icon, Icons, config, Spinner, IconButton, Line, toRem } from 'folds';
+import { Text, Box, Icon, Icons, config, Spinner, Line, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -23,6 +23,8 @@ import { SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
 import { VirtualTile } from '../../components/virtualizer';
+import { TipIconButton } from '../tooltips/TipIconButton';
+import { tr } from '../translation/tr';
 
 const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
   useMemo(
@@ -192,7 +194,8 @@ export function MessageSearch({
   return (
     <Box direction="Column" gap="700">
       <ScrollTopContainer scrollRef={scrollRef} anchorRef={scrollTopAnchorRef}>
-        <IconButton
+        <TipIconButton
+          label={tr('tips.scroll_top', 'Scroll to top')}
           onClick={() => virtualizer.scrollToOffset(0)}
           variant="SurfaceVariant"
           radii="Pill"
@@ -201,7 +204,7 @@ export function MessageSearch({
           aria-label="Scroll to Top"
         >
           <Icon src={Icons.ChevronTop} size="300" />
-        </IconButton>
+        </TipIconButton>
       </ScrollTopContainer>
       <Box ref={scrollTopAnchorRef} direction="Column" gap="300">
         <SearchInput

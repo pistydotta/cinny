@@ -55,6 +55,8 @@ export const useCallMembers = (session: MatrixRTCSession): CallMembership[] => {
   const [memberships, setMemberships] = useState<CallMembership[]>(session.memberships);
 
   useCallMembersChange(session, setMemberships);
+  // A new session works out its members just after this render, before the listener above is on.
+  useEffect(() => setMemberships(session.memberships), [session]);
 
   return memberships;
 };

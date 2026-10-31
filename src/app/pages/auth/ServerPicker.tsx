@@ -6,23 +6,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Header,
-  Icon,
-  IconButton,
-  Icons,
-  Input,
-  Menu,
-  MenuItem,
-  PopOut,
-  RectCords,
-  Text,
-  config,
-} from 'folds';
+import { Header, Icon, Icons, Input, Menu, MenuItem, PopOut, RectCords, Text, config } from 'folds';
 import FocusTrap from 'focus-trap-react';
 
 import { useDebounce } from '../../hooks/useDebounce';
 import { stopPropagation } from '../../utils/keyboard';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 export function ServerPicker({
   server,
@@ -128,7 +118,8 @@ export function ServerPicker({
               </FocusTrap>
             }
           >
-            <IconButton
+            <TipIconButton
+              label={tr('tips.choose_server', 'Choose server')}
               onClick={handleOpenServerMenu}
               variant={allowCustomServer ? 'Background' : 'Surface'}
               size="300"
@@ -136,7 +127,7 @@ export function ServerPicker({
               radii="300"
             >
               <Icon src={Icons.ChevronBottom} />
-            </IconButton>
+            </TipIconButton>
           </PopOut>
         )
       }

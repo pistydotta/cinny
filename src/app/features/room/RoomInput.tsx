@@ -16,7 +16,6 @@ import {
   Box,
   Dialog,
   Icon,
-  IconButton,
   Icons,
   Line,
   Overlay,
@@ -120,6 +119,7 @@ import { useComposingCheck } from '../../hooks/useComposingCheck';
 import { SWAPPED_KEY, swapHtml, swapText } from '../word-swap/wordSwap';
 import { useWordSwapBurst, useWordSwaps } from '../word-swap/useWordSwaps';
 import { tr } from '../translation/tr';
+import { TipIconButton } from '../tooltips/TipIconButton';
 
 interface RoomInputProps {
   editor: Editor;
@@ -580,14 +580,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   gap="300"
                   style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                 >
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.cancel_reply', 'Cancel reply')}
                     onClick={() => setReplyDraft(undefined)}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
                   >
                     <Icon src={Icons.Cross} size="50" />
-                  </IconButton>
+                  </TipIconButton>
                   <Box direction="Row" gap="200" alignItems="Center">
                     {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
                     <ReplyLayout
@@ -612,25 +613,27 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             )
           }
           before={
-            <IconButton
+            <TipIconButton
+              label={tr('tips.attach', 'Attach file')}
               onClick={() => pickFile('*')}
               variant="SurfaceVariant"
               size="300"
               radii="300"
             >
               <Icon src={Icons.PlusCircle} />
-            </IconButton>
+            </TipIconButton>
           }
           after={
             <>
-              <IconButton
+              <TipIconButton
+                label={tr('tips.formatting', 'Text formatting')}
                 variant="SurfaceVariant"
                 size="300"
                 radii="300"
                 onClick={() => setToolbar(!toolbar)}
               >
                 <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
-              </IconButton>
+              </TipIconButton>
               <UseStateProvider initial={undefined}>
                 {(emojiBoardTab: EmojiBoardTab | undefined, setEmojiBoardTab) => (
                   <PopOut
@@ -665,7 +668,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     }
                   >
                     {!hideStickerBtn && (
-                      <IconButton
+                      <TipIconButton
+                        label={tr('tips.stickers', 'Stickers')}
                         aria-pressed={emojiBoardTab === EmojiBoardTab.Sticker}
                         onClick={() => setEmojiBoardTab(EmojiBoardTab.Sticker)}
                         variant="SurfaceVariant"
@@ -676,9 +680,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                           src={Icons.Sticker}
                           filled={emojiBoardTab === EmojiBoardTab.Sticker}
                         />
-                      </IconButton>
+                      </TipIconButton>
                     )}
-                    <IconButton
+                    <TipIconButton
+                      label={tr('tips.emoji', 'Emoji')}
                       ref={emojiBtnRef}
                       aria-pressed={
                         hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
@@ -694,13 +699,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                           hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
                         }
                       />
-                    </IconButton>
+                    </TipIconButton>
                   </PopOut>
                 )}
               </UseStateProvider>
-              <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
+              <TipIconButton
+                label={tr('tips.send', 'Send')}
+                onClick={submit}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+              >
                 <Icon src={Icons.Send} />
-              </IconButton>
+              </TipIconButton>
             </>
           }
           bottom={

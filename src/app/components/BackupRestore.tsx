@@ -8,7 +8,6 @@ import {
   color,
   config,
   Icon,
-  IconButton,
   Icons,
   Menu,
   percent,
@@ -30,6 +29,8 @@ import {
 } from '../hooks/useKeyBackup';
 import { stopPropagation } from '../utils/keyboard';
 import { useRestoreBackupOnVerification } from '../hooks/useRestoreBackupOnVerification';
+import { TipIconButton } from '../features/tooltips/TipIconButton';
+import { tr } from '../features/translation/tr';
 
 type BackupStatusProps = {
   enabled: boolean;
@@ -176,7 +177,8 @@ export function BackupRestoreTile({ crypto }: BackupRestoreTileProps) {
           ) : (
             <BackupSyncing count={remainingSession} />
           )}
-          <IconButton
+          <TipIconButton
+            label={tr('tips.more', 'More options')}
             aria-pressed={!!menuCords}
             size="300"
             variant="Surface"
@@ -184,7 +186,7 @@ export function BackupRestoreTile({ crypto }: BackupRestoreTileProps) {
             onClick={handleMenu}
           >
             <Icon size="100" src={Icons.VerticalDots} />
-          </IconButton>
+          </TipIconButton>
           <PopOut
             anchor={menuCords}
             offset={5}

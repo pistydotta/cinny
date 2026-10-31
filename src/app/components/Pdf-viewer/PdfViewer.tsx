@@ -8,7 +8,6 @@ import {
   Chip,
   Header,
   Icon,
-  IconButton,
   Icons,
   Input,
   Menu,
@@ -27,6 +26,8 @@ import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { useZoom } from '../../hooks/useZoom';
 import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '../../plugins/pdfjs-dist';
 import { stopPropagation } from '../../utils/keyboard';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 export type PdfViewerProps = {
   name: string;
@@ -108,15 +109,21 @@ export const PdfViewer = as<'div', PdfViewerProps>(
       <Box className={classNames(css.PdfViewer, className)} direction="Column" {...props} ref={ref}>
         <Header className={css.PdfViewerHeader} size="400">
           <Box grow="Yes" alignItems="Center" gap="200">
-            <IconButton size="300" radii="300" onClick={requestClose}>
+            <TipIconButton
+              label={tr('tips.back', 'Back')}
+              size="300"
+              radii="300"
+              onClick={requestClose}
+            >
               <Icon size="50" src={Icons.ArrowLeft} />
-            </IconButton>
+            </TipIconButton>
             <Text size="T300" truncate>
               {name}
             </Text>
           </Box>
           <Box shrink="No" alignItems="Center" gap="200">
-            <IconButton
+            <TipIconButton
+              label={tr('tips.zoom_out', 'Zoom out')}
               variant={zoom < 1 ? 'Success' : 'SurfaceVariant'}
               outlined={zoom < 1}
               size="300"
@@ -125,11 +132,12 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               aria-label="Zoom Out"
             >
               <Icon size="50" src={Icons.Minus} />
-            </IconButton>
+            </TipIconButton>
             <Chip variant="SurfaceVariant" radii="Pill" onClick={() => setZoom(zoom === 1 ? 2 : 1)}>
               <Text size="B300">{Math.round(zoom * 100)}%</Text>
             </Chip>
-            <IconButton
+            <TipIconButton
+              label={tr('tips.zoom_in', 'Zoom in')}
               variant={zoom > 1 ? 'Success' : 'SurfaceVariant'}
               outlined={zoom > 1}
               size="300"
@@ -138,7 +146,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               aria-label="Zoom In"
             >
               <Icon size="50" src={Icons.Plus} />
-            </IconButton>
+            </TipIconButton>
             <Chip
               variant="Primary"
               onClick={handleDownload}

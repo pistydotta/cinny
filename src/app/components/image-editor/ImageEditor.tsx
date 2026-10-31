@@ -5,6 +5,8 @@ import { Box, Chip, Header, Icon, IconButton, Icons, Spinner, Text, as, color } 
 import * as css from './ImageEditor.css';
 import { turn } from './cropGeometry';
 import { cropImage } from './cropImage';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
@@ -95,14 +97,15 @@ export const ImageEditor = as<'div', ImageEditorProps>(
           />
         </div>
         <Box className={css.Controls} alignItems="Center" gap="200">
-          <IconButton
+          <TipIconButton
+            label={tr('tips.zoom_out', 'Zoom out')}
             size="300"
             radii="300"
             onClick={() => setZoom((z) => clampZoom(z - ZOOM_STEP))}
             aria-label="Zoom out"
           >
             <Icon size="100" src={Icons.Minus} />
-          </IconButton>
+          </TipIconButton>
           <input
             className={css.ZoomSlider}
             type="range"
@@ -113,30 +116,33 @@ export const ImageEditor = as<'div', ImageEditorProps>(
             onChange={handleZoomInput}
             aria-label="Zoom"
           />
-          <IconButton
+          <TipIconButton
+            label={tr('tips.zoom_in', 'Zoom in')}
             size="300"
             radii="300"
             onClick={() => setZoom((z) => clampZoom(z + ZOOM_STEP))}
             aria-label="Zoom in"
           >
             <Icon size="100" src={Icons.Plus} />
-          </IconButton>
-          <IconButton
+          </TipIconButton>
+          <TipIconButton
+            label={tr('tips.rotate_left', 'Rotate left')}
             size="300"
             radii="300"
             onClick={() => setRotation((r) => turn(r, -90))}
             aria-label="Rotate left"
           >
             <Icon className={css.Mirrored} size="100" src={Icons.Reload} />
-          </IconButton>
-          <IconButton
+          </TipIconButton>
+          <TipIconButton
+            label={tr('tips.rotate_right', 'Rotate right')}
             size="300"
             radii="300"
             onClick={() => setRotation((r) => turn(r, 90))}
             aria-label="Rotate right"
           >
             <Icon size="100" src={Icons.Reload} />
-          </IconButton>
+          </TipIconButton>
         </Box>
         {error && (
           <Box className={css.Controls}>

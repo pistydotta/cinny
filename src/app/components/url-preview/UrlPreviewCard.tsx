@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from 'matrix-js-sdk';
-import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
+import { Box, Icon, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
 import { ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -15,6 +15,8 @@ import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { ImageViewer } from '../image-viewer';
 import { onEnterOrSpace } from '../../utils/keyboard';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 const linkStyles = { color: color.Success.Main };
 
@@ -180,7 +182,8 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
           {!backVisible && (
             <>
               <div className={css.UrlPreviewHolderGradient({ position: 'Left' })} />
-              <IconButton
+              <TipIconButton
+                label={tr('tips.previous', 'Previous')}
                 className={css.UrlPreviewHolderBtn({ position: 'Left' })}
                 variant="Secondary"
                 radii="Pill"
@@ -189,7 +192,7 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
                 onClick={handleScrollBack}
               >
                 <Icon size="300" src={Icons.ArrowLeft} />
-              </IconButton>
+              </TipIconButton>
             </>
           )}
           <Box alignItems="Inherit" gap="200">
@@ -198,7 +201,8 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
             {!frontVisible && (
               <>
                 <div className={css.UrlPreviewHolderGradient({ position: 'Right' })} />
-                <IconButton
+                <TipIconButton
+                  label={tr('tips.next', 'Next')}
                   className={css.UrlPreviewHolderBtn({ position: 'Right' })}
                   variant="Primary"
                   radii="Pill"
@@ -207,7 +211,7 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
                   onClick={handleScrollFront}
                 >
                   <Icon size="300" src={Icons.ArrowRight} />
-                </IconButton>
+                </TipIconButton>
               </>
             )}
             <div ref={frontAnchorRef} />

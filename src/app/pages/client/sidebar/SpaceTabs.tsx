@@ -13,7 +13,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Icon,
-  IconButton,
   Icons,
   Line,
   Menu,
@@ -94,6 +93,8 @@ import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
 import { tr } from '../../../features/translation/tr';
+import { SpacesCallBadge } from '../../../features/call-indicator/CallTabBadge';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
 
 type SpaceMenuProps = {
   room: Room;
@@ -469,6 +470,7 @@ function SpaceTab({
               <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
             </SidebarItemBadge>
           )}
+          <SpacesCallBadge spaceIds={[space.roomId]} />
           {menuAnchor && (
             <PopOut
               anchor={menuAnchor}
@@ -523,9 +525,15 @@ function OpenedSpaceFolder({ folder, onClose, children }: OpenedSpaceFolderProps
     >
       <SidebarFolderDropTarget ref={aboveTargetRef} position="Top" />
       <SidebarAvatar size="300">
-        <IconButton data-id={folder.id} size="300" variant="Background" onClick={onClose}>
+        <TipIconButton
+          label={tr('tips.close_folder', 'Close folder')}
+          data-id={folder.id}
+          size="300"
+          variant="Background"
+          onClick={onClose}
+        >
           <Icon size="400" src={Icons.ChevronTop} filled />
-        </IconButton>
+        </TipIconButton>
       </SidebarAvatar>
       {children}
       <SidebarFolderDropTarget ref={belowTargetRef} position="Bottom" />
@@ -600,6 +608,7 @@ function ClosedSpaceFolder({
               <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
             </SidebarItemBadge>
           )}
+          <SpacesCallBadge spaceIds={folder.content} />
         </SidebarItem>
       )}
     </RoomsUnreadProvider>

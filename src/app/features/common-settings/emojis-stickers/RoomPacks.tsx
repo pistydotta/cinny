@@ -40,6 +40,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAlive } from '../../../hooks/useAlive';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 type CreatePackTileProps = {
   packs: ImagePack[];
@@ -214,7 +216,8 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
             <Box alignItems="Center" gap="300">
               {canEdit &&
                 (removed ? (
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.undo_remove', 'Undo removal')}
                     size="300"
                     radii="Pill"
                     variant="Critical"
@@ -222,7 +225,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
                     disabled={applyingChanges}
                   >
                     <Icon src={Icons.Plus} size="100" />
-                  </IconButton>
+                  </TipIconButton>
                 ) : (
                   <IconButton
                     size="300"

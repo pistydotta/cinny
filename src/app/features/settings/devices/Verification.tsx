@@ -12,7 +12,6 @@ import {
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
-  IconButton,
   RectCords,
   PopOut,
   Menu,
@@ -35,6 +34,8 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
 import { withSearchParam } from '../../../pages/pathUtils';
 import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 type VerificationStatusBadgeProps = {
   verificationStatus: VerificationStatus;
@@ -287,7 +288,8 @@ export function DeviceVerificationOptions() {
 
   return (
     <>
-      <IconButton
+      <TipIconButton
+        label={tr('tips.more', 'More options')}
         aria-pressed={!!menuCords}
         variant="SurfaceVariant"
         size="300"
@@ -295,7 +297,7 @@ export function DeviceVerificationOptions() {
         onClick={handleMenu}
       >
         <Icon size="100" src={Icons.VerticalDots} />
-      </IconButton>
+      </TipIconButton>
       <PopOut
         anchor={menuCords}
         offset={5}

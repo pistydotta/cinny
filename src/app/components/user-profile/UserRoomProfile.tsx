@@ -25,6 +25,7 @@ import { DirectCreateSearchParams } from '../../pages/paths';
 import { FriendCardButton } from '../../features/friends/FriendCardButton';
 import { InviteToServerButton } from '../../features/invite-to-server/InviteToServerButton';
 import { tr } from '../../features/translation/tr';
+import { UserDescription } from '../../features/profile-description/UserDescription';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -98,6 +99,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
               </Box>
             )}
           </Box>
+          <UserDescription userId={userId} />
           <Box alignItems="Center" gap="200" wrap="Wrap">
             {server && <ServerChip server={server} />}
             <ShareChip userId={userId} />

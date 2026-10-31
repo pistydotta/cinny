@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React, { ReactNode, useCallback, useRef, useState } from 'react';
-import { Badge, Chip, Icon, IconButton, Icons, ProgressBar, Spinner, Text, toRem } from 'folds';
+import { Badge, Chip, Icon, Icons, ProgressBar, Spinner, Text, toRem } from 'folds';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { Range } from 'react-range';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -23,6 +23,8 @@ import {
   mxcUrlToHttp,
 } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
+import { tr } from '../../../features/translation/tr';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -155,7 +157,8 @@ export function AudioContent({
     ),
     rightControl: (
       <>
-        <IconButton
+        <TipIconButton
+          label={mute ? tr('tips.unmute', 'Unmute') : tr('tips.mute', 'Mute')}
           variant="SurfaceVariant"
           size="300"
           radii="Pill"
@@ -163,7 +166,7 @@ export function AudioContent({
           aria-pressed={mute}
         >
           <Icon src={mute ? Icons.VolumeMute : Icons.VolumeHigh} size="50" />
-        </IconButton>
+        </TipIconButton>
         <Range
           step={0.1}
           min={0}

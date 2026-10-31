@@ -30,6 +30,7 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
 import { tr } from '../../../features/translation/tr';
+import { RoomsCallBadge } from '../../../features/call-indicator/CallTabBadge';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -121,6 +122,7 @@ export function HomeTab() {
           <UnreadBadge highlight={homeUnread.highlight > 0} count={homeUnread.total} />
         </SidebarItemBadge>
       )}
+      <RoomsCallBadge roomIds={homeRooms} />
       {menuAnchor && (
         <PopOut
           anchor={menuAnchor}

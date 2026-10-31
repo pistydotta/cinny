@@ -1,5 +1,5 @@
 import React, { MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, config } from 'folds';
+import { Box, Chip, Icon, Icons, Line, Scroll, Spinner, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +56,8 @@ import { useGetRoom } from '../../hooks/useGetRoom';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
 import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
+import { TipIconButton } from '../tooltips/TipIconButton';
+import { tr } from '../translation/tr';
 
 const useCanDropLobbyItem = (
   space: Room,
@@ -444,7 +446,8 @@ export function Lobby() {
                     anchorRef={heroSectionRef}
                     onVisibilityChange={setOnTop}
                   >
-                    <IconButton
+                    <TipIconButton
+                      label={tr('tips.scroll_top', 'Scroll to top')}
                       onClick={() => virtualizer.scrollToOffset(0)}
                       variant="SurfaceVariant"
                       radii="Pill"
@@ -453,7 +456,7 @@ export function Lobby() {
                       aria-label="Scroll to Top"
                     >
                       <Icon src={Icons.ChevronTop} size="300" />
-                    </IconButton>
+                    </TipIconButton>
                   </ScrollTopContainer>
                   <div
                     style={{

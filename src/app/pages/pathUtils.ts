@@ -12,6 +12,7 @@ import {
   HOME_ROOM_PATH,
   HOME_SEARCH_PATH,
   HOME_FEEDBACK_PATH,
+  HOME_COFFEE_PATH,
   HOME_OVERVIEW_PATH,
   LOGIN_PATH,
   INBOX_INVITES_PATH,
@@ -100,6 +101,7 @@ export const getHomeCreatePath = (): string => HOME_CREATE_PATH;
 export const getHomeJoinPath = (): string => HOME_JOIN_PATH;
 export const getHomeSearchPath = (): string => HOME_SEARCH_PATH;
 export const getHomeFeedbackPath = (): string => HOME_FEEDBACK_PATH;
+export const getHomeCoffeePath = (): string => HOME_COFFEE_PATH;
 export const getHomeOverviewPath = (): string => HOME_OVERVIEW_PATH;
 export const getHomeRoomPath = (roomIdOrAlias: string, eventId?: string): string => {
   const params = {

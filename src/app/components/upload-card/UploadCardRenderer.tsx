@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
+import { Box, Chip, Icon, Icons, Text, color, config, toRem } from 'folds';
 import { UploadCard, UploadCardError, UploadCardProgress } from './UploadCard';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -12,6 +12,8 @@ import {
 } from '../../state/room/roomInputDrafts';
 import { useObjectURL } from '../../hooks/useObjectURL';
 import { useMediaConfig } from '../../hooks/useMediaConfig';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 type PreviewImageProps = {
   fileItem: TUploadItem;
@@ -159,7 +161,8 @@ export function UploadCardRenderer({
               <Text size="B300">Retry</Text>
             </Chip>
           )}
-          <IconButton
+          <TipIconButton
+            label={tr('tips.cancel_upload', 'Cancel upload')}
             onClick={removeUpload}
             aria-label="Cancel Upload"
             variant="SurfaceVariant"
@@ -167,7 +170,7 @@ export function UploadCardRenderer({
             size="300"
           >
             <Icon src={Icons.Cross} size="200" />
-          </IconButton>
+          </TipIconButton>
         </>
       }
       bottom={

@@ -12,7 +12,6 @@ import {
   Box,
   Button,
   Icon,
-  IconButton,
   Icons,
   Line,
   Menu,
@@ -92,6 +91,7 @@ import { BreakWord } from '../../../styles/Text.css';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
 import { useCallEmbed } from '../../../hooks/useCallEmbed';
 import { tr } from '../../../features/translation/tr';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
 
 type SpaceMenuProps = {
   room: Room;
@@ -280,9 +280,14 @@ function SpaceHeader() {
             {joinRules?.join_rule !== JoinRule.Public && <Icon src={Icons.Lock} size="50" />}
           </Box>
           <Box shrink="No">
-            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+            <TipIconButton
+              label={tr('tips.more', 'More options')}
+              aria-pressed={!!menuAnchor}
+              variant="Background"
+              onClick={handleOpenMenu}
+            >
               <Icon src={Icons.VerticalDots} size="200" />
-            </IconButton>
+            </TipIconButton>
           </Box>
         </Box>
       </PageNavHeader>

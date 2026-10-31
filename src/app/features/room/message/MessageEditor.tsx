@@ -5,20 +5,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import {
-  Box,
-  Chip,
-  Icon,
-  IconButton,
-  Icons,
-  Line,
-  PopOut,
-  RectCords,
-  Spinner,
-  Text,
-  as,
-  config,
-} from 'folds';
+import { Box, Chip, Icon, Icons, Line, PopOut, RectCords, Spinner, Text, as, config } from 'folds';
 import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { IContent, IMentions, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
@@ -54,6 +41,8 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getEditedEvent, getMentionContent, trimReplyFromFormattedBody } from '../../../utils/room';
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useComposingCheck } from '../../../hooks/useComposingCheck';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 type MessageEditorProps = {
   roomId: string;
@@ -288,14 +277,15 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                   </Chip>
                 </Box>
                 <Box gap="Inherit">
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.formatting', 'Text formatting')}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
                     onClick={() => setToolbar(!toolbar)}
                   >
                     <Icon size="400" src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
-                  </IconButton>
+                  </TipIconButton>
                   <UseStateProvider initial={undefined}>
                     {(anchor: RectCords | undefined, setAnchor) => (
                       <PopOut
@@ -321,7 +311,8 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                           />
                         }
                       >
-                        <IconButton
+                        <TipIconButton
+                          label={tr('tips.emoji', 'Emoji')}
                           aria-pressed={anchor !== undefined}
                           onClick={
                             ((evt) =>
@@ -334,7 +325,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                           radii="300"
                         >
                           <Icon size="400" src={Icons.Smile} filled={anchor !== undefined} />
-                        </IconButton>
+                        </TipIconButton>
                       </PopOut>
                     )}
                   </UseStateProvider>

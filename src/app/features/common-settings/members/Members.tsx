@@ -56,6 +56,8 @@ import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { getMouseEventCords } from '../../../utils/dom';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,
@@ -276,7 +278,8 @@ export function Members({ requestClose }: MembersProps) {
                 scrollRef={scrollRef}
                 anchorRef={scrollTopAnchorRef}
               >
-                <IconButton
+                <TipIconButton
+                  label={tr('tips.scroll_top', 'Scroll to top')}
                   onClick={() => virtualizer.scrollToOffset(0)}
                   variant="Surface"
                   radii="Pill"
@@ -285,7 +288,7 @@ export function Members({ requestClose }: MembersProps) {
                   aria-label="Scroll to Top"
                 >
                   <Icon src={Icons.ChevronTop} size="300" />
-                </IconButton>
+                </TipIconButton>
               </ScrollTopContainer>
               {fetchingMembers && (
                 <Box justifyContent="Center">

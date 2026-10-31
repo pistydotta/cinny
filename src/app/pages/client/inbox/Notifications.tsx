@@ -97,6 +97,8 @@ import {
 } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
+import { tr } from '../../../features/translation/tr';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -693,7 +695,8 @@ export function Notifications() {
                   anchorRef={scrollTopAnchorRef}
                   onVisibilityChange={handleScrollTopVisibility}
                 >
-                  <IconButton
+                  <TipIconButton
+                    label={tr('tips.scroll_top', 'Scroll to top')}
                     onClick={() => virtualizer.scrollToOffset(0)}
                     variant="SurfaceVariant"
                     radii="Pill"
@@ -702,7 +705,7 @@ export function Notifications() {
                     aria-label="Scroll to Top"
                   >
                     <Icon src={Icons.ChevronTop} size="300" />
-                  </IconButton>
+                  </TipIconButton>
                 </ScrollTopContainer>
                 <div
                   style={{

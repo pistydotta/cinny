@@ -59,6 +59,8 @@ import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { TipIconButton } from '../tooltips/TipIconButton';
+import { tr } from '../translation/tr';
 
 type MemberDrawerHeaderProps = {
   room: Room;
@@ -358,7 +360,8 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
             </Box>
 
             <ScrollTopContainer scrollRef={scrollRef} anchorRef={scrollTopAnchorRef}>
-              <IconButton
+              <TipIconButton
+                label={tr('tips.scroll_top', 'Scroll to top')}
                 onClick={() => virtualizer.scrollToOffset(0)}
                 variant="Surface"
                 radii="Pill"
@@ -367,7 +370,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                 aria-label="Scroll to Top"
               >
                 <Icon src={Icons.ChevronTop} size="300" />
-              </IconButton>
+              </TipIconButton>
             </ScrollTopContainer>
 
             {!fetchingMembers && !result && processMembers.length === 0 && (

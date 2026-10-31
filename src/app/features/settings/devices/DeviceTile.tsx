@@ -2,7 +2,6 @@ import React, { FormEventHandler, ReactNode, useCallback, useEffect, useState } 
 import {
   Box,
   Text,
-  IconButton,
   Icon,
   Icons,
   Chip,
@@ -29,6 +28,8 @@ import { LogoutDialog } from '../../../components/LogoutDialog';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { TipIconButton } from '../../tooltips/TipIconButton';
+import { tr } from '../../translation/tr';
 
 export function DeviceTilePlaceholder() {
   return (
@@ -287,14 +288,17 @@ export function DeviceTile({
     <>
       <SettingTile
         before={
-          <IconButton
+          <TipIconButton
+            label={
+              details ? tr('tips.hide_details', 'Hide details') : tr('tips.details', 'Show details')
+            }
             variant={deleted ? 'Critical' : 'Secondary'}
             outlined={deleted}
             radii="300"
             onClick={() => setDetails(!details)}
           >
             <Icon size="50" src={details ? Icons.ChevronBottom : Icons.ChevronRight} />
-          </IconButton>
+          </TipIconButton>
         }
         after={
           !edit && (

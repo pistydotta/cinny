@@ -4,7 +4,6 @@ import {
   config,
   Dialog,
   Icon,
-  IconButton,
   Icons,
   Menu,
   MenuItem,
@@ -36,6 +35,8 @@ import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { getFallbackSession } from '../../state/sessions';
 import { AutoDiscovery } from './AutoDiscovery';
+import { TipIconButton } from '../../features/tooltips/TipIconButton';
+import { tr } from '../../features/translation/tr';
 
 function ClientRootLoading() {
   return (
@@ -60,7 +61,8 @@ function ClientRootOptions({ mx }: { mx?: MatrixClient }) {
   };
 
   return (
-    <IconButton
+    <TipIconButton
+      label={tr('tips.more', 'More options')}
       style={{
         position: 'absolute',
         top: config.space.S100,
@@ -119,7 +121,7 @@ function ClientRootOptions({ mx }: { mx?: MatrixClient }) {
           </FocusTrap>
         }
       />
-    </IconButton>
+    </TipIconButton>
   );
 }
 

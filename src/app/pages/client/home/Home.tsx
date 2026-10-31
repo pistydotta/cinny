@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Icon,
-  IconButton,
   Icons,
   Menu,
   MenuItem,
@@ -72,6 +71,8 @@ import {
   HomeOverviewEmptyButton,
   HomeOverviewNavItem,
 } from '../../../features/home-overview/HomeOverviewNavItem';
+import { CoffeeNavItem } from '../../../features/coffee/CoffeeNavItem';
+import { TipIconButton } from '../../../features/tooltips/TipIconButton';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -128,9 +129,14 @@ function HomeHeader() {
             </Text>
           </Box>
           <Box>
-            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+            <TipIconButton
+              label={tr('tips.more', 'More options')}
+              aria-pressed={!!menuAnchor}
+              variant="Background"
+              onClick={handleOpenMenu}
+            >
               <Icon src={Icons.VerticalDots} size="200" />
-            </IconButton>
+            </TipIconButton>
           </Box>
         </Box>
       </PageNavHeader>
@@ -251,6 +257,7 @@ export function Home() {
           <Box direction="Column" gap="300">
             <NavCategory>
               <HomeOverviewNavItem />
+              <CoffeeNavItem />
               <NavItem variant="Background" radii="400" aria-selected={createRoomSelected}>
                 <NavButton onClick={() => navigate(getHomeCreatePath())}>
                   <NavItemContent>
