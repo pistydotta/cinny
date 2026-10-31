@@ -14,6 +14,7 @@ import { ActionBar } from './ActionBar';
 import { HistoryDrawer } from './TableParts';
 import { AwayDialog, CloseDialog, InviteDialog, RebuyDialog, SeatDialog } from './TableDialogs';
 import { errorText } from './errorText';
+import { createInFlight } from './inFlight';
 import { turnTimerFor } from './turnTimer';
 import { formatChips, PokerAction } from './types';
 import { useTable } from './useTable';
@@ -56,6 +57,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string>();
   const areaRef = useRef<HTMLDivElement>(null);
+  const inFlight = useRef(createInFlight()).current;
 
   useEffect(() => {
     refreshCredits();
@@ -96,12 +98,14 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
 
   // Runs what the person asked for and shows the server's refusal, if any.
   const run = async <T,>(
+    key: string,
     task: () => Promise<T>,
     refresh = false
   ): Promise<{ ok: boolean; value?: T }> => {
     setError(undefined);
     try {
-      const value = await task();
+      const { skipped, value } = await inFlight(key, task);
+      if (skipped) return { ok: false };
       if (refresh) refreshCredits();
       return { ok: true, value };
     } catch (e) {
@@ -109,6 +113,13 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
       return { ok: false };
     }
   };
+
+  // A refusal belongs to the moment it happened; a new turn or hand makes it stale.
+  const handNumber = view?.handNumber;
+  const legalSeq = view?.legal?.seq;
+  useEffect(() => {
+    setError(undefined);
+  }, [handNumber, legalSeq]);
 
   if (notFound) {
     return (
@@ -129,27 +140,28 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   const busted = seated && me.stack === 0 && view?.pendingChips === 0 && handOver;
   const away = seated && me.away;
   const step = (view?.bigBlind ?? 0) * 5;
+  // Dialogs cover the page, so they show the error themselves.
+  const inDialog =
+    (pickedSeat !== undefined && !seated) || (busted && !away) || away || confirmClose;
 
   const leave = async () => {
     if (!view) return;
-    const { value: reply } = await run(() => api.leave(tableId), true);
+    const { value: reply } = await run('leave', () => api.leave(tableId), true);
     if (reply && 'closed' in reply && view.kind === 'practice') onBack();
   };
 
   const sit = async (seat: number, buyIn: number) => {
-    setPickedSeat(undefined);
-    await run(() => api.sit(tableId, seat, buyIn), true);
+    if ((await run('sit', () => api.sit(tableId, seat, buyIn), true)).ok) setPickedSeat(undefined);
   };
 
-  const topUpCredits = () => run(topUp);
+  const topUpCredits = () => run('topUp', topUp);
 
   const close = async () => {
-    setConfirmClose(false);
-    if ((await run(() => api.close(tableId), true)).ok) onBack();
+    if ((await run('close', () => api.close(tableId), true)).ok) onBack();
   };
 
   const copyLink = async () => {
-    const { value: token } = await run(() => api.inviteLink(tableId));
+    const { value: token } = await run('link', () => api.inviteLink(tableId));
     if (!token) return;
     try {
       await navigator.clipboard.writeText(
@@ -297,6 +309,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
             onCancel={() => setPickedSeat(undefined)}
             onSit={(buyIn) => sit(pickedSeat, buyIn)}
             onTopUp={topUpCredits}
+            error={error}
           />
         )}
 
@@ -307,12 +320,19 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
             max={view.maxBuyIn}
             step={step}
             balance={balance ?? 0}
-            onRebuy={(amount) => run(() => api.rebuy(tableId, amount), true)}
+            onRebuy={(amount) => run('rebuy', () => api.rebuy(tableId, amount), true)}
             onLeave={leave}
+            error={error}
           />
         )}
 
-        {away && <AwayDialog onBack={() => run(() => api.back(tableId))} onLeave={leave} />}
+        {away && (
+          <AwayDialog
+            onBack={() => run('back', () => api.back(tableId))}
+            onLeave={leave}
+            error={error}
+          />
+        )}
 
         {showInvite && (
           <InviteDialog
@@ -322,10 +342,12 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           />
         )}
 
-        {confirmClose && <CloseDialog onClose={close} onCancel={() => setConfirmClose(false)} />}
+        {confirmClose && (
+          <CloseDialog onClose={close} onCancel={() => setConfirmClose(false)} error={error} />
+        )}
       </div>
 
-      {error && (
+      {error && !inDialog && (
         <p className={css.ErrorText} style={{ padding: '0 16px' }}>
           {error}
         </p>
@@ -337,7 +359,10 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           hero={me}
           onAction={(action: PokerAction) => {
             const { legal } = view;
-            if (legal) run(() => api.act(tableId, legal.hand, legal.seq, action));
+            if (legal)
+              run(`act:${legal.hand}:${legal.seq}`, () =>
+                api.act(tableId, legal.hand, legal.seq, action)
+              );
           }}
         />
       )}

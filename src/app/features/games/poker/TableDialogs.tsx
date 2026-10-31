@@ -7,9 +7,9 @@ import { formatChips } from './types';
 import * as css from './pokerPage.css';
 import { tr } from '../../translation/tr';
 
-type DialogFrameProps = { title: string; text?: string; children: ReactNode };
+type DialogFrameProps = { title: string; text?: string; error?: string; children: ReactNode };
 
-function DialogFrame({ title, text, children }: DialogFrameProps) {
+function DialogFrame({ title, text, error, children }: DialogFrameProps) {
   return (
     <div className={css.Overlay}>
       <div className={css.Dialog} role="dialog" aria-label={title}>
@@ -18,6 +18,7 @@ function DialogFrame({ title, text, children }: DialogFrameProps) {
           {text && <p className={css.DialogText}>{text}</p>}
         </div>
         {children}
+        {error && <p className={css.ErrorText}>{error}</p>}
       </div>
     </div>
   );
@@ -26,6 +27,7 @@ function DialogFrame({ title, text, children }: DialogFrameProps) {
 type BuyInLimits = { min: number; max: number; step: number; balance: number };
 
 type SeatDialogProps = BuyInLimits & {
+  error?: string;
   seat: number;
   onSit: (buyIn: number) => void;
   onTopUp: () => void;
@@ -41,6 +43,7 @@ export function SeatDialog({
   onSit,
   onTopUp,
   onCancel,
+  error,
 }: SeatDialogProps) {
   const [buyIn, setBuyIn] = useState(() => defaultBuyIn(balance, min, max, step));
   const canAfford = balance >= min;
@@ -48,6 +51,7 @@ export function SeatDialog({
   return (
     <DialogFrame
       title={tr('games.shared.sit_title', 'Sit in seat {{seat}}', { seat: seat + 1 })}
+      error={error}
       text={tr(
         'games.shared.sit_text',
         'The chips come out of your wallet and go back to it when you leave the table.'
@@ -93,17 +97,27 @@ export function SeatDialog({
 }
 
 type RebuyDialogProps = BuyInLimits & {
+  error?: string;
   onRebuy: (amount: number) => void;
   onLeave: () => void;
 };
 
-export function RebuyDialog({ min, max, step, balance, onRebuy, onLeave }: RebuyDialogProps) {
+export function RebuyDialog({
+  min,
+  max,
+  step,
+  balance,
+  onRebuy,
+  onLeave,
+  error,
+}: RebuyDialogProps) {
   const [amount, setAmount] = useState(() => defaultBuyIn(balance, min, max, step));
   const canAfford = balance >= min;
 
   return (
     <DialogFrame
       title={tr('games.rebuy.title', 'Out of chips')}
+      error={error}
       text={tr(
         'games.rebuy.text',
         'Buy more chips with the coins in your wallet, or leave the table.'
@@ -139,10 +153,19 @@ export function RebuyDialog({ min, max, step, balance, onRebuy, onLeave }: Rebuy
   );
 }
 
-export function AwayDialog({ onBack, onLeave }: { onBack: () => void; onLeave: () => void }) {
+export function AwayDialog({
+  onBack,
+  onLeave,
+  error,
+}: {
+  onBack: () => void;
+  onLeave: () => void;
+  error?: string;
+}) {
   return (
     <DialogFrame
       title={tr('games.shared.away_title', 'You were away')}
+      error={error}
       text={tr(
         'games.shared.away_text',
         "You ran out of time, so you folded that hand. You won't be dealt in until you come back."
@@ -158,10 +181,19 @@ export function AwayDialog({ onBack, onLeave }: { onBack: () => void; onLeave: (
   );
 }
 
-export function CloseDialog({ onClose, onCancel }: { onClose: () => void; onCancel: () => void }) {
+export function CloseDialog({
+  onClose,
+  onCancel,
+  error,
+}: {
+  onClose: () => void;
+  onCancel: () => void;
+  error?: string;
+}) {
   return (
     <DialogFrame
       title={tr('games.table.close_title', 'Close the table?')}
+      error={error}
       text={tr(
         'games.table.close_text',
         'Everyone is sent home with their chips and the table is deleted.'
