@@ -148,6 +148,8 @@ export type TableView = {
   log: LogEntry[];
   result: ViewResult | null;
   legal: ViewLegal | null;
+  /** The viewer's best hand from their cards and the board; null without cards. */
+  myHand: HandName | null;
   pendingChips: number;
   players: ViewPlayer[];
 };

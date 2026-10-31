@@ -1,26 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
-import {
-  GamesHub,
-  LobbyTable,
-  PokerLobby,
-  PracticeScreen,
-  TableScreen,
-  createPokerTableRoom,
-  createTableConfig,
-  getTableConfig,
-  isPokerTableRoom,
-  useMatrixGameWallet,
-} from '../../../features/games';
+import { GamesHub, PokerLobby, PracticeScreen, TableScreen } from '../../../features/games';
+import { createPokerApi } from '../../../features/games/poker/api';
+import { errorText } from '../../../features/games/poker/errorText';
+import * as css from '../../../features/games/poker/pokerPage.css';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useUserProfile } from '../../../hooks/useUserProfile';
-import { useDirectUsers } from '../../../hooks/useDirectUsers';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
+import { ApiError } from '../../../utils/blazeroomApi';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import {
   getGamesPath,
   getGamesPokerPath,
@@ -30,26 +16,12 @@ import {
 } from '../../pathUtils';
 import { tr } from '../../../features/translation/tr';
 
-const useMyProfile = () => {
-  const mx = useMatrixClient();
-  const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId() as string;
-  const profile = useUserProfile(userId);
-  const name = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarHttp = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 128, 128, 'crop') ?? undefined
-    : undefined;
-  return { userId, name, avatarMxc: profile.avatarUrl, avatarHttp };
-};
-
 export function GamesHubPage() {
   const navigate = useNavigate();
   const screenSize = useScreenSizeContext();
-  const wallet = useMatrixGameWallet();
 
   return (
     <GamesHub
-      wallet={wallet}
       onOpenPoker={() => navigate(getGamesPokerPath())}
       onBack={screenSize === ScreenSize.Mobile ? () => navigate(getHomePath()) : undefined}
     />
@@ -57,65 +29,13 @@ export function GamesHubPage() {
 }
 
 export function PokerLobbyPage() {
-  const mx = useMatrixClient();
   const navigate = useNavigate();
-  const wallet = useMatrixGameWallet();
-  const me = useMyProfile();
-  const joinedRooms = useAtomValue(allRoomsAtom);
-  const invites = useAtomValue(allInvitesAtom);
-  const directUsers = useDirectUsers();
-
-  const tables: LobbyTable[] = useMemo(() => {
-    const toTable = (roomId: string, invited: boolean): LobbyTable | undefined => {
-      const room = mx.getRoom(roomId);
-      if (!room || !isPokerTableRoom(room)) return undefined;
-      const config = getTableConfig(room);
-      const inviter = invited ? room.getMember(me.userId)?.events.member?.getSender() : undefined;
-      return {
-        roomId,
-        name: room.name || config?.name || tr('games.table.default_name', 'Poker table'),
-        smallBlind: config?.smallBlind,
-        bigBlind: config?.bigBlind,
-        members: room.getJoinedMemberCount(),
-        invited,
-        invitedBy: inviter ? mx.getUser(inviter)?.displayName ?? inviter : undefined,
-      };
-    };
-    return [
-      ...invites.map((id) => toTable(id, true)),
-      ...joinedRooms.map((id) => toTable(id, false)),
-    ].filter((t): t is LobbyTable => !!t);
-  }, [mx, joinedRooms, invites, me.userId]);
-
-  const contacts = useMemo(
-    () =>
-      directUsers.map((userId) => ({
-        userId,
-        name: mx.getUser(userId)?.displayName ?? getMxIdLocalPart(userId) ?? userId,
-      })),
-    [mx, directUsers]
-  );
 
   return (
     <PokerLobby
-      balance={wallet.balance}
-      tables={tables}
-      contacts={contacts}
-      defaultTableName={tr('games.lobby.default_table_name', "{{name}}'s table", { name: me.name })}
       onBack={() => navigate(getGamesPath())}
       onPractice={() => navigate(getGamesPokerPracticePath())}
-      onOpenTable={(roomId) => navigate(getGamesPokerTablePath(roomId))}
-      onAcceptInvite={async (roomId) => {
-        await mx.joinRoom(roomId);
-        navigate(getGamesPokerTablePath(roomId));
-      }}
-      onCreateTable={async ({ name, smallBlind, bigBlind, invite }) => {
-        const roomId = await createPokerTableRoom(mx, {
-          config: createTableConfig(name, smallBlind, bigBlind),
-          invite,
-        });
-        navigate(getGamesPokerTablePath(roomId));
-      }}
+      onOpenTable={(tableId) => navigate(getGamesPokerTablePath(tableId))}
     />
   );
 }
@@ -131,4 +51,50 @@ export function PokerTablePage() {
   const goBack = useCallback(() => navigate(getGamesPokerPath()), [navigate]);
 
   return <TableScreen key={tableId} tableId={decodeURIComponent(tableId)} onBack={goBack} />;
+}
+
+// Joining twice (a remount) is harmless: the API answers the same table either way.
+export function PokerJoinPage() {
+  const mx = useMatrixClient();
+  const navigate = useNavigate();
+  const { token = '' } = useParams();
+  const [error, setError] = useState<string>();
+  const posted = useRef<string>();
+
+  useEffect(() => {
+    if (posted.current === token) return;
+    posted.current = token;
+    createPokerApi(() => mx.getAccessToken())
+      .join(decodeURIComponent(token))
+      .then((id) => navigate(getGamesPokerTablePath(id), { replace: true }))
+      .catch((e) => setError(errorText(e instanceof ApiError ? e.code : 'unknown')));
+  }, [mx, navigate, token]);
+
+  return (
+    <div className={css.Page}>
+      <div className={css.Overlay} style={{ position: 'relative', flexGrow: 1 }}>
+        <div
+          className={css.Dialog}
+          role="dialog"
+          aria-label={tr('games.join.title', 'Join a table')}
+        >
+          <h2 className={css.DialogTitle}>{tr('games.join.title', 'Join a table')}</h2>
+          {error ? (
+            <>
+              <p className={css.ErrorText}>{error}</p>
+              <button
+                type="button"
+                className={css.PrimaryButton}
+                onClick={() => navigate(getGamesPokerPath())}
+              >
+                {tr('games.join.back', 'Go to the lobby')}
+              </button>
+            </>
+          ) : (
+            <p className={css.DialogText}>{tr('games.join.joining', 'Joining the table…')}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { describePartialHand } from './engine';
 import { formatChips, PokerAction, TableView, ViewPlayer } from './types';
+import { handText } from './logText';
 import { tr } from '../../translation/tr';
 import * as css from './pokerPage.css';
 
@@ -39,9 +39,7 @@ export function ActionBar({ view, hero, onAction }: ActionBarProps) {
 
   const acting = view.players.find((p) => p.seat === view.actingSeat);
   const myTurn = !!legal;
-  const holeCards = hero?.holeCards ?? [];
-  const inHand = !!hero && holeCards.length > 0 && hero.status !== 'sitting-out';
-  const strength = inHand ? describePartialHand([...holeCards, ...view.board]) : undefined;
+  const strength = view.myHand ? handText(view.myHand) : undefined;
 
   let status = '';
   let tone: 'turn' | 'win' | 'lose' | undefined;

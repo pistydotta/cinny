@@ -209,6 +209,34 @@ export function CloseDialog({
   );
 }
 
+export function LeaveDialog({
+  onLeave,
+  onCancel,
+  error,
+}: {
+  onLeave: () => void;
+  onCancel: () => void;
+  error?: string;
+}) {
+  return (
+    <DialogFrame
+      title={tr('games.lobby.leave_title', 'Leave the table?')}
+      error={error}
+      text={tr(
+        'games.lobby.leave_text',
+        'You get your chips back and the table leaves your list. You can only come back with a new invite.'
+      )}
+    >
+      <button type="button" className={css.PrimaryButton} onClick={onLeave}>
+        {tr('games.action.leave', 'Leave the table')}
+      </button>
+      <button type="button" className={css.SecondaryButton} onClick={onCancel}>
+        {tr('games.shared.not_now', 'Not now')}
+      </button>
+    </DialogFrame>
+  );
+}
+
 export type InviteFriend = { userId: string; name: string };
 
 type InviteDialogProps = {

@@ -1,46 +1,38 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Icon, Icons } from 'folds';
-import { formatChips } from './engine';
-import { BLIND_LEVELS } from './multiplayer/protocol';
+import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { ApiError } from '../../../utils/blazeroomApi';
+import { friendDisplayName } from '../../friends/userDisplay';
+import { useFriends } from '../../friends/useFriends';
+import { TopUpButton } from '../credits/TopUpButton';
+import { useCredits } from '../credits/useCredits';
+import { createPokerApi } from './api';
+import { errorText } from './errorText';
+import { CloseDialog, LeaveDialog } from './TableDialogs';
+import { formatChips, LobbyTable } from './types';
+import { useLobby } from './useLobby';
 import * as css from './pokerPage.css';
 import { tr } from '../../translation/tr';
 
-export type LobbyTable = {
-  roomId: string;
-  name: string;
-  smallBlind?: number;
-  bigBlind?: number;
-  members: number;
-  invited: boolean;
-  invitedBy?: string;
-};
+const BLIND_LEVELS = [
+  { smallBlind: 10, bigBlind: 20 },
+  { smallBlind: 25, bigBlind: 50 },
+  { smallBlind: 50, bigBlind: 100 },
+];
 
-export type LobbyContact = {
-  userId: string;
-  name: string;
-};
-
-export type NewTable = {
-  name: string;
-  smallBlind: number;
-  bigBlind: number;
-  invite: string[];
-};
+type NewTable = { name: string; smallBlind: number; invite: string[] };
 
 type CreateTableDialogProps = {
   defaultName: string;
-  contacts: LobbyContact[];
+  friends: { userId: string; name: string }[];
   onCreate: (table: NewTable) => Promise<void>;
   onCancel: () => void;
 };
 
-const MXID = /^@[^:\s]+:[^\s]+$/;
-
-function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: CreateTableDialogProps) {
+function CreateTableDialog({ defaultName, friends, onCreate, onCancel }: CreateTableDialogProps) {
   const [name, setName] = useState(defaultName);
   const [level, setLevel] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
-  const [extra, setExtra] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -51,33 +43,16 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
 
   const handleSubmit = async (evt: FormEvent) => {
     evt.preventDefault();
-    const typed = extra
-      .split(/[\s,]+/)
-      .map((id) => id.trim())
-      .filter(Boolean);
-    const invalid = typed.filter((id) => !MXID.test(id));
-    if (invalid.length > 0) {
-      setError(
-        tr('games.lobby.invalid_ids', 'Invalid ID: {{ids}} (use the @name:server format)', {
-          ids: invalid.join(', '),
-        })
-      );
-      return;
-    }
     setBusy(true);
     setError(undefined);
     try {
-      const { smallBlind, bigBlind } = BLIND_LEVELS[level];
       await onCreate({
         name: name.trim() || defaultName,
-        smallBlind,
-        bigBlind,
-        invite: Array.from(new Set([...selected, ...typed])),
+        smallBlind: BLIND_LEVELS[level].smallBlind,
+        invite: selected,
       });
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : tr('games.error.create', 'Could not create the table.')
-      );
+      setError(errorText(e instanceof ApiError ? e.code : 'unknown'));
       setBusy(false);
     }
   };
@@ -93,7 +68,7 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
         <p className={css.DialogText}>
           {tr(
             'games.lobby.create_text',
-            "You run the table and shuffle the cards, but you don't see anyone's cards. If you leave, another player takes over."
+            "The server deals the cards, so nobody sees anyone else's. You can close the table at any time."
           )}
         </p>
       </div>
@@ -142,33 +117,33 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
             {tr('games.lobby.selected', '{{count}} selected', { count: selected.length })}
           </span>
         </div>
-        {contacts.length > 0 && (
+        {friends.length > 0 ? (
           <div className={css.ContactList}>
-            {contacts.map((contact) => (
+            {friends.map((friend) => (
               <label
-                key={contact.userId}
+                key={friend.userId}
                 className={css.CheckRow}
-                htmlFor={`invite-${contact.userId}`}
+                htmlFor={`invite-${friend.userId}`}
               >
                 <input
-                  id={`invite-${contact.userId}`}
+                  id={`invite-${friend.userId}`}
                   className={css.CheckInput}
                   type="checkbox"
-                  checked={selected.includes(contact.userId)}
-                  onChange={() => toggle(contact.userId)}
+                  checked={selected.includes(friend.userId)}
+                  onChange={() => toggle(friend.userId)}
                 />
-                <span>{contact.name}</span>
-                <span className={css.Muted}>{contact.userId}</span>
+                <span>{friend.name}</span>
               </label>
             ))}
           </div>
+        ) : (
+          <p className={css.Note}>
+            {tr(
+              'games.lobby.no_friends',
+              'You have no friends to invite yet. Create the table and share its link instead.'
+            )}
+          </p>
         )}
-        <input
-          className={css.TextInput}
-          placeholder={tr('games.lobby.other_ids', 'Other IDs, e.g. @friend:matrix.org')}
-          value={extra}
-          onChange={(evt) => setExtra(evt.target.value)}
-        />
       </div>
 
       {error && <p className={css.ErrorText}>{error}</p>}
@@ -182,31 +157,107 @@ function CreateTableDialog({ defaultName, contacts, onCreate, onCancel }: Create
   );
 }
 
+type Confirm = { kind: 'leave' | 'close'; id: string };
+
 type PokerLobbyProps = {
-  balance: number;
-  tables: LobbyTable[];
-  contacts: LobbyContact[];
-  defaultTableName: string;
-  onOpenTable: (roomId: string) => void;
-  onAcceptInvite: (roomId: string) => Promise<void>;
-  onCreateTable: (table: NewTable) => Promise<void>;
+  onOpenTable: (tableId: string) => void;
   onPractice: () => void;
   onBack?: () => void;
 };
 
-export function PokerLobby({
-  balance,
-  tables,
-  contacts,
-  defaultTableName,
-  onOpenTable,
-  onAcceptInvite,
-  onCreateTable,
-  onPractice,
-  onBack,
-}: PokerLobbyProps) {
+export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps) {
+  const mx = useMatrixClient();
+  const api = useMemo(() => createPokerApi(() => mx.getAccessToken()), [mx]);
+  const { list, refresh: refreshLobby } = useLobby();
+  const { balance, atTables, refresh: refreshCredits, topUp } = useCredits();
+  const { lists } = useFriends();
   const [creating, setCreating] = useState(false);
-  const [accepting, setAccepting] = useState<string>();
+  const [confirm, setConfirm] = useState<Confirm>();
+  const [busyId, setBusyId] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  const myId = mx.getUserId() ?? '';
+
+  useEffect(() => {
+    refreshLobby();
+    refreshCredits();
+  }, [refreshLobby, refreshCredits]);
+
+  const friends = useMemo(
+    () =>
+      (lists?.friends ?? []).map((f) => ({
+        userId: f.userId,
+        name: friendDisplayName(mx, f.userId),
+      })),
+    [mx, lists]
+  );
+
+  // Practice has its own card below, so it is not a row here.
+  const tables = (list?.tables ?? []).filter((t) => t.id !== list?.practiceId);
+  const invites = list?.invites ?? [];
+
+  const refreshAll = () => Promise.all([refreshLobby(), refreshCredits()]);
+
+  // Runs what the person asked for and shows the server's refusal, if any.
+  const run = async (id: string, task: () => Promise<void>): Promise<boolean> => {
+    setBusyId(id);
+    setError(undefined);
+    try {
+      await task();
+      return true;
+    } catch (e) {
+      setError(errorText(e instanceof ApiError ? e.code : 'unknown'));
+      return false;
+    } finally {
+      setBusyId(undefined);
+    }
+  };
+
+  const accept = (table: LobbyTable) =>
+    run(table.id, async () => {
+      await api.accept(table.id);
+      await refreshAll();
+      onOpenTable(table.id);
+    });
+
+  const decline = (table: LobbyTable) =>
+    run(table.id, async () => {
+      await api.dropMembership(table.id);
+      await refreshAll();
+    });
+
+  const ask = (kind: Confirm['kind'], id: string) => {
+    setError(undefined);
+    setConfirm({ kind, id });
+  };
+
+  const confirmed = async () => {
+    if (!confirm) return;
+    const { kind, id } = confirm;
+    const ok = await run(id, async () => {
+      if (kind === 'close') await api.close(id);
+      else await api.dropMembership(id);
+      await refreshAll();
+    });
+    if (ok) setConfirm(undefined);
+  };
+
+  const create = async ({ name, smallBlind, invite }: NewTable) => {
+    const id = await api.create({ name, smallBlind, invite });
+    await refreshAll();
+    setCreating(false);
+    onOpenTable(id);
+  };
+
+  const meta = (table: LobbyTable) =>
+    [
+      tr('games.table.blinds', 'Blinds {{small}}/{{big}}', {
+        small: table.smallBlind,
+        big: table.bigBlind,
+      }),
+      tr('games.lobby.members', '{{count}} in the room', { count: table.memberCount }),
+      tr('games.lobby.my_chips', '{{chips}} chips of yours', { chips: formatChips(table.myChips) }),
+    ].join(' · ');
 
   return (
     <div className={css.Page}>
@@ -229,12 +280,64 @@ export function PokerLobby({
         </div>
         <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
           <span className={css.Coin}>$</span>
-          <span className={css.WalletValue}>{formatChips(balance)}</span>
+          <span className={css.WalletValue}>{formatChips(balance ?? 0)}</span>
+          {atTables > 0 && (
+            <span className={css.WalletMuted}>
+              ·{' '}
+              {tr('games.wallet.at_tables', '{{chips}} at tables', {
+                chips: formatChips(atTables),
+              })}
+            </span>
+          )}
         </div>
+        <TopUpButton atTables={atTables} topUp={topUp} className={css.SmallButton} />
       </div>
 
       <div className={css.LobbyScroll}>
         <div className={css.LobbyInner}>
+          {error && !confirm && <p className={css.ErrorText}>{error}</p>}
+
+          {invites.length > 0 && (
+            <>
+              <h2 className={css.SectionTitle}>{tr('games.lobby.invites', 'Invites')}</h2>
+              <div className={css.TableList}>
+                {invites.map((table) => (
+                  <div key={table.id} className={css.TableRow}>
+                    <div className={css.TableIcon}>♠</div>
+                    <div className={css.TableInfo}>
+                      <span className={css.TableName}>{table.name}</span>
+                      <span className={css.TableMeta}>
+                        {tr('games.lobby.invite_from', 'Invite from {{name}}', {
+                          name: friendDisplayName(mx, table.invitedBy),
+                        })}
+                      </span>
+                    </div>
+                    <div className={css.RowActions}>
+                      <button
+                        type="button"
+                        className={css.QuietButton}
+                        disabled={busyId === table.id}
+                        onClick={() => decline(table)}
+                      >
+                        {tr('games.lobby.decline', 'Decline')}
+                      </button>
+                      <button
+                        type="button"
+                        className={css.SmallButton}
+                        disabled={busyId === table.id}
+                        onClick={() => accept(table)}
+                      >
+                        {busyId === table.id
+                          ? tr('games.lobby.joining', 'Joining…')
+                          : tr('games.lobby.accept', 'Accept')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           <div className={css.SectionHeader}>
             <h2 className={css.SectionTitle}>
               {tr('games.lobby.with_friends', 'Tables with friends')}
@@ -248,63 +351,41 @@ export function PokerLobby({
             <div className={css.EmptyState}>
               {tr(
                 'games.lobby.empty',
-                'No tables yet. Create one and invite your friends: they get the invite as a new room.'
+                'No tables yet. Create one and invite your friends, or share its link.'
               )}
             </div>
           ) : (
             <div className={css.TableList}>
-              {tables.map((table) => (
-                <div key={table.roomId} className={css.TableRow}>
-                  <div className={css.TableIcon}>♠</div>
-                  <div className={css.TableInfo}>
-                    <span className={css.TableName}>{table.name}</span>
-                    <span className={css.TableMeta}>
-                      {table.bigBlind
-                        ? `${tr('games.table.blinds', 'Blinds {{small}}/{{big}}', {
-                            small: table.smallBlind ?? 0,
-                            big: table.bigBlind,
-                          })} · `
-                        : ''}
-                      {table.invited
-                        ? (table.invitedBy &&
-                            tr('games.lobby.invite_from', 'Invite from {{name}}', {
-                              name: table.invitedBy,
-                            })) ||
-                          tr('games.lobby.invite_pending', 'Invite')
-                        : tr('games.lobby.members', '{{count}} in the room', {
-                            count: table.members,
-                          })}
-                    </span>
+              {tables.map((table) => {
+                const owned = table.ownerId === myId;
+                return (
+                  <div key={table.id} className={css.TableRow}>
+                    <div className={css.TableIcon}>♠</div>
+                    <div className={css.TableInfo}>
+                      <span className={css.TableName}>{table.name}</span>
+                      <span className={css.TableMeta}>{meta(table)}</span>
+                    </div>
+                    <div className={css.RowActions}>
+                      <button
+                        type="button"
+                        className={css.QuietButton}
+                        onClick={() => ask(owned ? 'close' : 'leave', table.id)}
+                      >
+                        {owned
+                          ? tr('games.lobby.close', 'Close')
+                          : tr('games.lobby.leave', 'Leave')}
+                      </button>
+                      <button
+                        type="button"
+                        className={css.SmallButton}
+                        onClick={() => onOpenTable(table.id)}
+                      >
+                        {tr('games.lobby.open', 'Open')}
+                      </button>
+                    </div>
                   </div>
-                  {table.invited ? (
-                    <button
-                      type="button"
-                      className={css.SmallButton}
-                      disabled={accepting === table.roomId}
-                      onClick={async () => {
-                        setAccepting(table.roomId);
-                        try {
-                          await onAcceptInvite(table.roomId);
-                        } finally {
-                          setAccepting(undefined);
-                        }
-                      }}
-                    >
-                      {accepting === table.roomId
-                        ? tr('games.lobby.joining', 'Joining…')
-                        : tr('games.lobby.accept', 'Accept')}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className={css.SmallButton}
-                      onClick={() => onOpenTable(table.roomId)}
-                    >
-                      {tr('games.lobby.open', 'Open')}
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -322,7 +403,9 @@ export function PokerLobby({
               </span>
             </div>
             <button type="button" className={css.SmallButton} onClick={onPractice}>
-              {tr('games.lobby.train', 'Practice')}
+              {list?.practiceId
+                ? tr('games.lobby.resume', 'Resume')
+                : tr('games.lobby.train', 'Practice')}
             </button>
           </div>
         </div>
@@ -331,12 +414,20 @@ export function PokerLobby({
       {creating && (
         <div className={css.Overlay}>
           <CreateTableDialog
-            defaultName={defaultTableName}
-            contacts={contacts}
-            onCreate={onCreateTable}
+            defaultName={tr('games.lobby.default_table_name', "{{name}}'s table", {
+              name: friendDisplayName(mx, myId),
+            })}
+            friends={friends}
+            onCreate={create}
             onCancel={() => setCreating(false)}
           />
         </div>
+      )}
+      {confirm?.kind === 'leave' && (
+        <LeaveDialog error={error} onLeave={confirmed} onCancel={() => setConfirm(undefined)} />
+      )}
+      {confirm?.kind === 'close' && (
+        <CloseDialog error={error} onClose={confirmed} onCancel={() => setConfirm(undefined)} />
       )}
     </div>
   );
