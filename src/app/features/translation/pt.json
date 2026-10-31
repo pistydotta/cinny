@@ -709,6 +709,8 @@
       "hint": "Créditos na sua carteira",
       "yours": "Sua carteira",
       "top_up": "Pegar mais créditos",
+      "load_failed": "Não foi possível carregar sua carteira.",
+      "retry": "Tentar de novo",
       "at_tables": "{{chips}} em mesas"
     },
     "join": {
