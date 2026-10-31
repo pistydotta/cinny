@@ -215,3 +215,11 @@ export const PlayButton = style({
     },
   },
 });
+
+export const WalletTopUp = style([
+  PlayButton,
+  {
+    marginTop: 0,
+    padding: '0 18px',
+  },
+]);

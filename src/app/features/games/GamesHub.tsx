@@ -1,9 +1,10 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useEffect } from 'react';
 import { Icon, Icons } from 'folds';
-import { Card, formatChips } from './poker/engine';
+import { Card, formatChips } from './poker/types';
 import { PlayingCard } from './poker/table/PlayingCard';
 import { ChipStack } from './poker/table/Chips';
-import { GameWallet, STARTING_BALANCE } from './wallet/gameWallet';
+import { TopUpButton } from './credits/TopUpButton';
+import { useCredits } from './credits/useCredits';
 import * as css from './gamesHub.css';
 import { tr } from '../translation/tr';
 
@@ -16,12 +17,17 @@ const ROYAL: Card[] = [
 ];
 
 type GamesHubProps = {
-  wallet: GameWallet;
   onOpenPoker: () => void;
   onBack?: () => void;
 };
 
-export function GamesHub({ wallet, onOpenPoker, onBack }: GamesHubProps) {
+export function GamesHub({ onOpenPoker, onBack }: GamesHubProps) {
+  const { balance, atTables, refresh, topUp } = useCredits();
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
   return (
     <div className={css.Hub}>
       <div className={css.HubInner}>
@@ -53,25 +59,20 @@ export function GamesHub({ wallet, onOpenPoker, onBack }: GamesHubProps) {
             <span className={css.WalletLabel}>{tr('games.wallet.yours', 'Your wallet')}</span>
             <span className={css.WalletBalance}>
               {tr('games.wallet.coins', '{{coins}} coins', {
-                coins: wallet.ready ? formatChips(wallet.balance) : '—',
+                coins: balance === undefined ? '—' : formatChips(balance),
               })}
             </span>
-            <span className={css.WalletHint}>
-              {wallet.atTable > 0
-                ? tr(
-                    'games.wallet.at_tables_hint',
-                    '{{coins}} coins are at a table and come back when you leave it.',
-                    { coins: formatChips(wallet.atTable) }
-                  )
-                : tr(
-                    'games.wallet.starting_hint',
-                    'Every new account starts with {{coins}} coins.',
-                    {
-                      coins: formatChips(STARTING_BALANCE),
-                    }
-                  )}
-            </span>
+            {atTables > 0 && (
+              <span className={css.WalletHint}>
+                {tr(
+                  'games.wallet.at_tables_hint',
+                  '{{coins}} coins are at a table and come back when you leave it.',
+                  { coins: formatChips(atTables) }
+                )}
+              </span>
+            )}
           </div>
+          <TopUpButton atTables={atTables} topUp={topUp} className={css.WalletTopUp} />
         </div>
 
         <h2 className={css.SectionTitle}>{tr('games.hub.pick', 'Pick a game')}</h2>

@@ -33,6 +33,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
+- Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes
+  none: it shows the view the API sends and posts the player's action. The credits wallet
+  (`games/credits`) is the API's too. `games/legacy` only cleans up the old Matrix-room tables and
+  can go once people have opened the app.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):
