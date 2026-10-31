@@ -320,6 +320,10 @@
     "soon": "Em desenvolvimento"
   },
   "android_app": {
+    "share_title": "Compartilhar em...",
+    "share_search": "Buscar salas",
+    "share_failed": "Não foi possível ler o que foi compartilhado. Pode ter sido apagado ou ser grande demais.",
+    "share_cancel": "Cancelar",
     "calls_title": "Chamadas com o celular bloqueado",
     "calls_body": "Para uma chamada acender a tela, o Android precisa de uma opção ligada para o Blazeroom. Nos celulares Xiaomi há uma segunda: Mostrar na tela de bloqueio.",
     "calls_open": "Abrir",
