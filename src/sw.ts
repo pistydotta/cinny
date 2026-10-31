@@ -176,7 +176,15 @@ self.addEventListener('push', (event: PushEvent) => {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       if (windows.some((client) => client.visibilityState === 'visible')) return;
 
-      const { title, ...options } = shown;
+      const { title, isCall, callEnded, ...options } = shown;
+      // An open site rings by itself, and in a caller's hidden tab this would announce the other
+      // person answering.
+      if (isCall && windows.length > 0) return;
+      // Only ever replaces a ring: on its own it would say a call ended after any call at all.
+      if (callEnded) {
+        const ringing = await self.registration.getNotifications({ tag: options.tag });
+        if (ringing.length === 0) return;
+      }
       await self.registration.showNotification(title, { ...options, icon: PUSH_ICON });
     })()
   );
