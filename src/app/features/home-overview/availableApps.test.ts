@@ -24,9 +24,16 @@ describe('availableApps', () => {
     );
   });
 
-  it('marks Android and Apple as still in development', () => {
-    const status = statusOf('Mozilla/5.0');
-    expect(status.android).toBe('soon');
-    expect(status.apple).toBe('soon');
+  it('offers the Android download, or says you are using it', () => {
+    expect(statusOf('Chrome/130').android).toBe('download');
+    expect(statusOf('x BlazeroomAndroid/1').android).toBe('current');
+  });
+
+  it('still offers the Windows download inside the Android app', () => {
+    expect(statusOf('x BlazeroomAndroid/1').windows).toBe('download');
+  });
+
+  it('marks Apple as still in development', () => {
+    expect(statusOf('Mozilla/5.0').apple).toBe('soon');
   });
 });

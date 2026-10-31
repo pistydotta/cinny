@@ -4,6 +4,9 @@ export const ANDROID_PUSH_APP_ID = 'br.com.blazeroom.android';
 // Set when the user turns notifications off in Settings, on this phone only.
 export const ANDROID_PUSH_OFF_KEY = 'blazeroom_android_push_off';
 
+// Served by the server's Caddy, uploaded by its deploy (blazeroom repo, android/).
+export const ANDROID_DOWNLOAD_URL = '/download/Blazeroom.apk';
+
 // The Android app adds itself to the user agent (blazeroom repo, android/).
 export const isAndroidApp = (userAgent: string): boolean => userAgent.includes('BlazeroomAndroid/');
 

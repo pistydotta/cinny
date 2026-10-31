@@ -266,6 +266,8 @@
     "fixes_body": "Correções de bugs e pequenas melhorias, como o cartão de perfil que não fecha mais quando você usa o menu Convidar para servidor.",
     "feedback_title": "Ajuda e feedback",
     "feedback_body": "Agora dá para mandar bugs e ideias pelo app, com captura de tela se quiser. Fica em Configurações > Ajuda e feedback.",
+    "android_title": "App para Android",
+    "android_body": "O Blazeroom agora tem app para Android, com notificações, chamadas que tocam com o celular bloqueado e compartilhar de outros apps. Baixe em Apps disponíveis, no celular.",
     "push_title": "Notificações com o app fechado",
     "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications."
   },
