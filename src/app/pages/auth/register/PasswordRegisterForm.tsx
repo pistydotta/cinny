@@ -21,6 +21,8 @@ import {
   createClient,
 } from 'matrix-js-sdk';
 import { PasswordInput } from '../../../components/password-input';
+import { InviteTokenField } from '../../../features/register-page/InviteTokenField';
+import { tr } from '../../../features/translation/tr';
 import {
   getLoginTermUrl,
   getUIAFlowForStages,
@@ -207,6 +209,9 @@ export function PasswordRegisterForm({
 
   useRegisterComplete(customRegisterResp);
 
+  const missingInvite =
+    !defaultRegisterToken && requiredStageInFlows(uiaFlows, AuthType.RegistrationToken);
+
   const handleSubmit: ChangeEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
     const {
@@ -259,7 +264,7 @@ export function PasswordRegisterForm({
       <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="400">
         <Box direction="Column" gap="100">
           <Text as="label" size="L400" priority="300">
-            Username
+            {tr('register.username', 'Username')}
           </Text>
           <Input
             variant="Background"
@@ -270,13 +275,15 @@ export function PasswordRegisterForm({
             required
           />
           {registerError?.errcode === RegisterError.UserTaken && (
-            <FieldError message="This username is already taken." />
+            <FieldError message={tr('register.user_taken', 'This username is already taken.')} />
           )}
           {registerError?.errcode === RegisterError.UserInvalid && (
-            <FieldError message="This username contains invalid characters." />
+            <FieldError
+              message={tr('register.user_invalid', 'This username contains invalid characters.')}
+            />
           )}
           {registerError?.errcode === RegisterError.UserExclusive && (
-            <FieldError message="This username is reserved." />
+            <FieldError message={tr('register.user_reserved', 'This username is reserved.')} />
           )}
         </Box>
         <ConfirmPasswordMatch initialValue>
@@ -284,7 +291,7 @@ export function PasswordRegisterForm({
             <>
               <Box direction="Column" gap="100">
                 <Text as="label" size="L400" priority="300">
-                  Password
+                  {tr('register.password', 'Password')}
                 </Text>
                 <PasswordInput
                   ref={passRef}
@@ -314,7 +321,7 @@ export function PasswordRegisterForm({
               </Box>
               <Box direction="Column" gap="100">
                 <Text as="label" size="L400" priority="300">
-                  Confirm Password
+                  {tr('register.confirm_password', 'Confirm Password')}
                 </Text>
                 <PasswordInput
                   ref={confPassRef}
@@ -330,24 +337,8 @@ export function PasswordRegisterForm({
             </>
           )}
         </ConfirmPasswordMatch>
-        {hasStageInFlows(uiaFlows, AuthType.RegistrationToken) && (
-          <Box direction="Column" gap="100">
-            <Text as="label" size="L400" priority="300">
-              {requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)
-                ? 'Registration Token'
-                : 'Registration Token (Optional)'}
-            </Text>
-            <Input
-              variant="Background"
-              defaultValue={defaultRegisterToken}
-              // blazeroom: a token from an invite link stays as is
-              readOnly={!!defaultRegisterToken}
-              name="tokenInput"
-              size="500"
-              required={requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)}
-              outlined
-            />
-          </Box>
+        {(defaultRegisterToken || missingInvite) && (
+          <InviteTokenField token={defaultRegisterToken} />
         )}
         {hasStageInFlows(uiaFlows, AuthType.Email) && (
           <Box direction="Column" gap="100">
@@ -391,9 +382,9 @@ export function PasswordRegisterForm({
           <FieldError message={registerError.data.error ?? 'Failed to register. Unknown Reason.'} />
         )}
         <span data-spacing-node />
-        <Button variant="Primary" size="500" type="submit">
+        <Button variant="Primary" size="500" type="submit" disabled={missingInvite}>
           <Text as="span" size="B500">
-            Register
+            {tr('register.submit', 'Register')}
           </Text>
         </Button>
       </Box>

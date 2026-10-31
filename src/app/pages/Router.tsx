@@ -23,6 +23,7 @@ import {
   _CREATE_PATH,
   _FEEDBACK_PATH,
   _COFFEE_PATH,
+  ABOUT_PATH,
   _OVERVIEW_PATH,
   _FEATURED_PATH,
   _INVITES_PATH,
@@ -60,6 +61,7 @@ import { Lobby } from '../features/lobby';
 import { FriendsPage } from '../features/friends';
 import { FeedbackPage } from '../features/feedback';
 import { CoffeePage } from '../features/coffee/CoffeePage';
+import { AboutPage } from '../features/about/AboutPage';
 import { NewChatPage } from '../features/friends/NewChatPage';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
@@ -242,6 +244,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           />
         </Route>
         <Route path={FRIENDS_PATH} element={<FriendsPage />} />
+        <Route path={ABOUT_PATH} element={<AboutPage />} />
         <Route
           path={SPACE_PATH}
           element={

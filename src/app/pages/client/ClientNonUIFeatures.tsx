@@ -32,6 +32,8 @@ import { SilentCallRules } from '../../features/call-notify/useSilentCallRules';
 import { AndroidPushRegistrar } from '../../features/android-app/AndroidPush';
 import { CallUnreadCleaner } from '../../features/call-notify/callUnread';
 import { AppPrompt } from '../../features/app-prompt/AppPrompt';
+import { CommunityPrompt } from '../../features/first-login/CommunityPrompt';
+import { SelfChatKeeper } from '../../features/self-chat/SelfChatKeeper';
 import { RoomsInCallTracker } from '../../features/call-indicator/RoomsInCallTracker';
 
 function SystemEmojiFeature() {
@@ -303,6 +305,8 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <SilentCallRules />
       <AndroidPushRegistrar />
       <CallUnreadCleaner />
+      <SelfChatKeeper />
+      <CommunityPrompt />
       <AppPrompt />
       <RoomsInCallTracker />
       {children}

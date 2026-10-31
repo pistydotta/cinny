@@ -32,6 +32,7 @@ import { ManualVerificationTile } from '../../components/ManualVerification';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { EncryptionStep, getEncryptionStep } from './encryptionStep';
+import { isEncryptionBannerQuiet, readFirstLogin } from '../first-login/firstLogin';
 import { tr } from '../translation/tr';
 
 const toVerified = (status: VerificationStatus): boolean | null | undefined => {
@@ -218,11 +219,14 @@ export function EncryptionFlow({ step, onClose }: { step: EncryptionStep; onClos
 // history can't follow a user to a new device without it. Nothing opens by itself: the
 // banner and the welcome card on Visão geral are the way in.
 export function EncryptionSetup() {
+  const mx = useMatrixClient();
   const step = useEncryptionStep();
   const [open, setOpen] = useState(false);
   const handleClose = useCallback(() => setOpen(false), []);
 
   if (step !== 'create' && step !== 'unlock') return null;
+  if (step === 'create' && isEncryptionBannerQuiet(readFirstLogin(mx.getSafeUserId()), Date.now()))
+    return null;
 
   return (
     <>

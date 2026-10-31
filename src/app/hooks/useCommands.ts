@@ -27,6 +27,7 @@ import { Membership, StateEvent } from '../../types/matrix/room';
 import { getStateEvent } from '../utils/room';
 import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
+import { isSelfChatRoom } from '../features/self-chat/selfChatRoom';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -242,11 +243,11 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: 'Leave current room.',
         exe: async (payload) => {
           if (payload.trim() === '') {
-            mx.leave(room.roomId);
+            if (!isSelfChatRoom(mx, room.roomId)) mx.leave(room.roomId);
             return;
           }
           const rawIds = splitWithSpace(payload);
-          const roomIds = rawIds.filter((id) => isRoomId(id));
+          const roomIds = rawIds.filter((id) => isRoomId(id) && !isSelfChatRoom(mx, id));
           roomIds.map((id) => mx.leave(id));
         },
       },

@@ -25,6 +25,10 @@ import { useCategoryHandler } from '../../hooks/useCategoryHandler';
 import { useDirectRooms } from '../../pages/client/direct/useDirectRooms';
 import { useClosedNavCategoriesAtom } from '../../state/hooks/closedNavCategories';
 import { useDirectCreateSelected } from '../../hooks/router/useDirectSelected';
+import { AccountDataEvent } from '../../../types/matrix/accountData';
+import { useAccountData } from '../../hooks/useAccountData';
+import { visibleDirects } from '../self-chat/selfChat';
+import { useSelfChatHidden } from '../self-chat/SelfChatHiding';
 import { tr } from '../translation/tr';
 
 // Same id as the Direct page's category, so collapsing it carries over.
@@ -34,11 +38,24 @@ const CATEGORY_ID = makeNavCategoryId('direct', 'direct');
 // A group of friends has few DMs, so this skips the Direct page's virtualized list.
 export function HomeDirects() {
   const mx = useMatrixClient();
-  const directs = useDirectRooms();
+  const allDirects = useDirectRooms();
+  const selfChatHidden = useSelfChatHidden();
+  const directsEvent = useAccountData(AccountDataEvent.Direct);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
   const selectedRoomId = useSelectedRoom();
+  const directs = useMemo(
+    () =>
+      visibleDirects(
+        allDirects,
+        directsEvent?.getContent(),
+        mx.getSafeUserId(),
+        selfChatHidden,
+        selectedRoomId
+      ),
+    [allDirects, directsEvent, mx, selfChatHidden, selectedRoomId]
+  );
   const createSelected = useDirectCreateSelected();
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
   const closed = closedCategories.has(CATEGORY_ID);

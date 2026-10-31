@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `games`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `games`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -70,6 +70,16 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   The one exception the owners asked for is `features/app-prompt`: a small card, not a dialog,
   offering the app to people in a browser on Android or Windows. It shows at most once a week and
   three times per user and browser, and never again after a download.
+- A new account (`features/first-login`) is marked in the browser when registration succeeds, so old
+  accounts never count as new. For its first 24 hours the top encryption banner stays hidden, with the
+  recovery key still on Visão geral, and one card invites it to the community. That card is the other
+  exception to nothing opening by itself, and the app card waits for it.
+- Everyone has a chat with themselves, created on load by `SelfChatKeeper` (`features/self-chat`). It's
+  a DM listed under your own user in `m.direct`: `getDMRoomFor` with your own ID answers with any DM
+  you're in, so use `findSelfChat`. The client's `m.direct` can be stale from the last visit, so check
+  the server before creating or writing it, or two devices make two rooms and DMs get lost. It can't be
+  left in this app, only hidden (`br.com.blazeroom.self_chat` in account data), and Settings > Account
+  brings it back.
 - Icon buttons with no text use `TipIconButton` (`features/tooltips`), so they say what they do on
   hover. Obvious close and back buttons in settings dialogs are left as they are.
 - The profile description is a custom field on the Matrix profile (`features/profile-description`).

@@ -257,6 +257,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "self_chat_title": "Converse com você mesmo",
+    "self_chat_body": "Agora todo mundo tem um chat consigo nas Mensagens diretas, com o próprio nome e foto, que ninguém mais consegue ler. E o novo ícone de i na barra lateral explica o que é o blazeroom.",
     "profile_call_title": "Descrição no perfil e chamadas à vista",
     "profile_call_body": "Escreva uma descrição em Configurações > Conta: ela aparece no seu cartão de perfil. E um ícone de som no servidor ou no Início avisa quando tem chamada rolando.",
     "title": "Novidades",
@@ -372,6 +374,46 @@
   },
   "call_indicator": {
     "label": "Chamada em andamento"
+  },
+  "about": {
+    "nav": "Sobre",
+    "title": "Sobre o blazeroom",
+    "what": "O blazeroom é um chat no estilo Discord, com servidores, salas, mensagens diretas e chamadas de voz. É um servidor privado, que mantenho para mim e para as pessoas da minha vida.",
+    "how_title": "Como é feito",
+    "how": "Ele roda no Matrix, um protocolo aberto de mensagens, também usado pelas forças armadas da Alemanha e pelo governo da França. O servidor é o Synapse e o app é uma versão modificada do Cinny, ambos de código aberto.",
+    "files_title": "Por quanto tempo os arquivos ficam",
+    "files": "Os arquivos não têm prazo de validade: ficam no servidor até eu removê-los. Apagar uma mensagem não apaga o arquivo dela do servidor. Cada arquivo pode ter até 100 MB. Se o espaço acabar, isso pode mudar.",
+    "cost_title": "Quanto custa",
+    "cost": "É gratuito. No futuro pode existir um VIP, para liberar recursos específicos e apoiar o servidor, mas comprar nunca vai ser obrigatório."
+  },
+  "self_chat": {
+    "hide_title": "Esconder este chat",
+    "hide_body": "Este chat sai da sua lista, mas nada é apagado. Para mostrá-lo de novo, abra Configurações > Account.",
+    "hide": "Esconder",
+    "setting_section": "Chat com você mesmo",
+    "setting_title": "Mostrar na minha lista de conversas",
+    "intro": "Este é um chat com você mesmo. As mensagens e os arquivos são criptografados e ninguém mais tem acesso, nem o dono do servidor. Para lê-los em outros dispositivos, você precisa da sua chave de recuperação."
+  },
+  "register": {
+    "title": "Criar conta",
+    "intro": "O blazeroom é um chat privado no estilo Discord, para quem recebeu um convite. É gratuito e você só precisa escolher um nome de usuário e uma senha.",
+    "username": "Nome de usuário",
+    "password": "Senha",
+    "confirm_password": "Confirme a senha",
+    "token": "Token de convite",
+    "token_hint": "Veio com o seu link de convite. Não precisa fazer nada aqui.",
+    "needs_invite": "O cadastro é só por convite. Peça um link a quem te convidou.",
+    "submit": "Criar conta",
+    "have_account": "Já tem uma conta?",
+    "login": "Entrar",
+    "user_taken": "Este nome de usuário já está em uso.",
+    "user_invalid": "Este nome de usuário tem caracteres inválidos.",
+    "user_reserved": "Este nome de usuário é reservado."
+  },
+  "first_login": {
+    "community": "Quer entrar na comunidade do blazeroom?",
+    "community_join": "Entrar",
+    "community_failed": "Não deu para entrar na comunidade. Tente de novo."
   },
   "coffee": {
     "nav": "Pague um café",

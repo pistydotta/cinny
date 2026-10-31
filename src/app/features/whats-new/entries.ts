@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-self-chat-about',
+    items: () => [
+      {
+        title: tr('whats_new.self_chat_title', 'Chat with yourself'),
+        body: tr(
+          'whats_new.self_chat_body',
+          'Everyone now has a chat with themselves in Direct messages, with their own name and photo, that nobody else can read. And the new i icon in the sidebar says what blazeroom is.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-profile-call',
     items: () => [
       {

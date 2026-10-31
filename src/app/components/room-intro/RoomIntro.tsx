@@ -18,6 +18,7 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { InviteUserPrompt } from '../invite-user-prompt';
 import { tr } from '../../features/translation/tr';
+import { isSelfChatRoom } from '../../features/self-chat/selfChatRoom';
 
 export type RoomIntroProps = {
   room: Room;
@@ -29,6 +30,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const { navigateRoom } = useRoomNavigate();
   const mDirects = useAtomValue(mDirectAtom);
   const [invitePrompt, setInvitePrompt] = useState(false);
+  const selfChat = isSelfChatRoom(mx, room.roomId);
 
   const createEvent = getStateEvent(room, StateEvent.RoomCreate);
   const avatarMxc = useRoomAvatar(room, mDirects.has(room.roomId));
@@ -67,9 +69,15 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             {name}
           </Text>
           <Text size="T400" priority="400">
-            {typeof topic === 'string'
-              ? topic
-              : tr('room_intro.beginning', 'This is the beginning of conversation.')}
+            {selfChat &&
+              tr(
+                'self_chat.intro',
+                'This is a chat with yourself. Messages and files are encrypted and nobody else has access, not even the server owner. To read them on other devices, you need your recovery key.'
+              )}
+            {!selfChat &&
+              (typeof topic === 'string'
+                ? topic
+                : tr('room_intro.beginning', 'This is the beginning of conversation.'))}
           </Text>
           {creatorName && ts && (
             <Text size="T200" priority="300">
@@ -83,9 +91,16 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
           )}
         </Box>
         <Box gap="200" wrap="Wrap">
-          <Button onClick={() => setInvitePrompt(true)} variant="Secondary" size="300" radii="300">
-            <Text size="B300">{tr('room_intro.invite_member', 'Invite Member')}</Text>
-          </Button>
+          {!selfChat && (
+            <Button
+              onClick={() => setInvitePrompt(true)}
+              variant="Secondary"
+              size="300"
+              radii="300"
+            >
+              <Text size="B300">{tr('room_intro.invite_member', 'Invite Member')}</Text>
+            </Button>
+          )}
 
           {invitePrompt && (
             <InviteUserPrompt room={room} requestClose={() => setInvitePrompt(false)} />

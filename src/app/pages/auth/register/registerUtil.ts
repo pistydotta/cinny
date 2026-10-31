@@ -17,6 +17,7 @@ import {
 import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
 import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
 import { setFallbackSession } from '../../../state/sessions';
+import { markRegistered } from '../../../features/first-login/firstLogin';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',
@@ -117,6 +118,8 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
       const userId = response.user_id;
       const accessToken = response.access_token;
       const deviceId = response.device_id;
+
+      markRegistered(userId, Date.now());
 
       if (accessToken && deviceId) {
         setFallbackSession(accessToken, deviceId, userId, baseUrl);
