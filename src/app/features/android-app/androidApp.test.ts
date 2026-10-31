@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { pushSupport } from '../push/pushApi';
-import { ANDROID_PUSH_APP_ID, androidPusher, isAndroidApp, shouldRegister } from './androidApp';
+import {
+  ANDROID_PUSH_APP_ID,
+  androidPusher,
+  callStateMessage,
+  isAndroidApp,
+  pendingCallRoom,
+  shouldRegister,
+} from './androidApp';
 import { createAndroidBridge, NativeBridge } from './androidBridge';
 
 const fakeNative = () => {
@@ -59,6 +66,27 @@ describe('shouldRegister', () => {
     expect(shouldRegister({ off: false, token: 'tok' })).toBe(true);
     expect(shouldRegister({ off: true, token: 'tok' })).toBe(false);
     expect(shouldRegister({ off: false, token: undefined })).toBe(false);
+  });
+});
+
+describe('call messages', () => {
+  it('tells the app about the call', () => {
+    expect(callStateMessage('!r:x', true)).toEqual({
+      type: 'callState',
+      roomId: '!r:x',
+      active: true,
+    });
+    expect(callStateMessage('!r:x', false).active).toBe(false);
+  });
+
+  it('reads the room of an answered call', () => {
+    expect(pendingCallRoom({ type: 'pendingCall', roomId: '!r:x' })).toBe('!r:x');
+  });
+
+  it('finds no answered call in an empty answer', () => {
+    expect(pendingCallRoom({ type: 'pendingCall', roomId: '' })).toBeUndefined();
+    expect(pendingCallRoom({ type: 'pendingCall' })).toBeUndefined();
+    expect(pendingCallRoom({ type: 'pendingCall', roomId: 3 })).toBeUndefined();
   });
 });
 

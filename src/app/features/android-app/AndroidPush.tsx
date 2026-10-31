@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Spinner, Switch, Text, color } from 'folds';
+import { Box, Button, Spinner, Switch, Text, color } from 'folds';
 import { IPusherRequest, MatrixClient } from 'matrix-js-sdk';
 import { SequenceCard } from '../../components/sequence-card';
 import { SequenceCardStyle } from '../settings/styles.css';
@@ -178,6 +178,24 @@ export function AndroidPushTile() {
               </Text>
             )}
           </Box>
+        }
+      />
+      <SettingTile
+        title={tr('android_app.calls_title', 'Calls on the locked phone')}
+        description={tr(
+          'android_app.calls_body',
+          "For a call to light up the screen, Android needs a setting turned on for Blazeroom. On Xiaomi phones there's a second one: Show on Lock screen."
+        )}
+        after={
+          <Button
+            size="300"
+            variant="Secondary"
+            fill="Soft"
+            radii="300"
+            onClick={() => androidBridge.send({ type: 'openCallSettings' })}
+          >
+            <Text size="B300">{tr('android_app.calls_open', 'Open')}</Text>
+          </Button>
         }
       />
     </SequenceCard>

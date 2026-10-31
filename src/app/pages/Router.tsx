@@ -60,6 +60,7 @@ import { ScreenSize } from '../hooks/useScreenSize';
 import { MobileFriendlyPageNav, MobileFriendlyClientNav } from './MobileFriendly';
 import { ClientInitStorageAtom } from './client/ClientInitStorageAtom';
 import { ClientNonUIFeatures } from './client/ClientNonUIFeatures';
+import { AndroidCall } from '../features/android-app/AndroidCall';
 import { AuthRouteThemeManager, UnAuthRouteThemeManager } from './ThemeManager';
 import { ReceiveSelfDeviceVerification } from '../components/DeviceVerification';
 import { AutoRestoreBackupOnVerification } from '../components/BackupRestore';
@@ -150,6 +151,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                           <Outlet />
                         </ClientLayout>
                         <CallStatusRenderer />
+                        <AndroidCall />
                       </CallEmbedProvider>
                       <SearchModalRenderer />
                       <UserRoomProfileRenderer />

@@ -24,5 +24,15 @@ export const androidPusher = (token: string, gatewayUrl: string, lang: string) =
   },
 });
 
+export const callStateMessage = (roomId: string, active: boolean) => ({
+  type: 'callState',
+  roomId,
+  active,
+});
+
+// The app's answer to getPendingCall: the room of a call just answered on its screen, if any.
+export const pendingCallRoom = (message: Record<string, unknown>): string | undefined =>
+  typeof message.roomId === 'string' && message.roomId ? message.roomId : undefined;
+
 export const shouldRegister = ({ off, token }: { off: boolean; token?: string }): boolean =>
   !off && !!token;
