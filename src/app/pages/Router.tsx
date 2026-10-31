@@ -31,6 +31,10 @@ import {
   _SEARCH_PATH,
   _SERVER_PATH,
   CREATE_PATH,
+  GAMES_PATH,
+  GAMES_POKER_PATH,
+  GAMES_POKER_PRACTICE_PATH,
+  GAMES_POKER_TABLE_PATH,
 } from './paths';
 import {
   getAppPathFromHref,
@@ -70,6 +74,7 @@ import { UserRoomProfileRenderer } from '../components/UserRoomProfileRenderer';
 import { CreateRoomModalRenderer } from '../features/create-room';
 import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
+import { GamesHubPage, PokerLobbyPage, PokerPracticePage, PokerTablePage } from './client/games';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
@@ -282,6 +287,10 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_SERVER_PATH} element={<PublicRooms />} />
         </Route>
         <Route path={CREATE_PATH} element={<Create />} />
+        <Route path={GAMES_PATH} element={<GamesHubPage />} />
+        <Route path={GAMES_POKER_PATH} element={<PokerLobbyPage />} />
+        <Route path={GAMES_POKER_PRACTICE_PATH} element={<PokerPracticePage />} />
+        <Route path={GAMES_POKER_TABLE_PATH} element={<PokerTablePage />} />
         <Route
           path={INBOX_PATH}
           element={
