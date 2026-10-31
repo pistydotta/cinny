@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react';
 import classNames from 'classnames';
-import { Card, isRedSuit, RANK_LABEL, suitName, SUIT_SYMBOL } from '../engine';
+import { Card, isRedSuit, RANK_LABEL, suitName, SUIT_SYMBOL } from '../types';
 import { tr } from '../../../translation/tr';
 import * as css from './pokerTable.css';
 

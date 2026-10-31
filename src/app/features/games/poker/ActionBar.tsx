@@ -1,26 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import {
-  describePartialHand,
-  formatChips,
-  getPlayerAtSeat,
-  getTotalPot,
-  LegalActions,
-  PokerAction,
-  PokerPlayer,
-  PokerState,
-} from './engine';
+import { describePartialHand } from './engine';
+import { formatChips, PokerAction, TableView, ViewPlayer } from './types';
 import { tr } from '../../translation/tr';
 import * as css from './pokerPage.css';
 
 type ActionBarProps = {
-  state: PokerState;
-  hero?: PokerPlayer;
-  legal?: LegalActions;
-  leaveAfterHand: boolean;
+  view: TableView;
+  hero?: ViewPlayer;
   onAction: (action: PokerAction) => void;
-  onCancelLeave: () => void;
-  /** Status while no hand is being played. */
-  waitingText?: string;
 };
 
 const PRESETS: { key: string; label: string; fraction?: number }[] = [
@@ -30,43 +17,36 @@ const PRESETS: { key: string; label: string; fraction?: number }[] = [
   { key: 'pot', label: 'Pot', fraction: 1 },
 ];
 
-export function ActionBar({
-  state,
-  hero,
-  legal,
-  leaveAfterHand,
-  onAction,
-  onCancelLeave,
-  waitingText = tr('games.status.shuffling', 'Shuffling…'),
-}: ActionBarProps) {
+export function ActionBar({ view, hero, onAction }: ActionBarProps) {
   const [raiseTo, setRaiseTo] = useState(0);
+  const { legal } = view;
 
   // Start every new decision at the minimum raise.
   const minRaiseTo = legal?.minRaiseTo ?? 0;
   const maxRaiseTo = legal?.maxRaiseTo ?? 0;
   useEffect(() => {
     setRaiseTo(minRaiseTo);
-  }, [minRaiseTo, state.logCounter]);
+  }, [minRaiseTo, legal?.hand, legal?.seq]);
 
   const clamp = (value: number) =>
     Math.min(maxRaiseTo, Math.max(minRaiseTo, Math.round(value || 0)));
 
   const potRaiseTo = (fraction: number) => {
     if (!legal) return 0;
-    const pot = getTotalPot(state);
-    return clamp(state.currentBet + fraction * (pot + legal.toCall));
+    const currentBet = Math.max(0, ...view.players.map((p) => p.streetBet));
+    return clamp(currentBet + fraction * (view.pot + legal.toCall));
   };
 
-  const acting = getPlayerAtSeat(state, state.actingSeat);
+  const acting = view.players.find((p) => p.seat === view.actingSeat);
   const myTurn = !!legal;
   const holeCards = hero?.holeCards ?? [];
   const inHand = !!hero && holeCards.length > 0 && hero.status !== 'sitting-out';
-  const strength = inHand ? describePartialHand([...holeCards, ...state.board]) : undefined;
+  const strength = inHand ? describePartialHand([...holeCards, ...view.board]) : undefined;
 
   let status = '';
   let tone: 'turn' | 'win' | 'lose' | undefined;
-  if (state.phase === 'complete' && state.result && hero) {
-    const won = state.result.payouts[hero.id] ?? 0;
+  if (view.phase === 'complete' && view.result && hero) {
+    const won = view.result.payouts[hero.id] ?? 0;
     const net = won - hero.totalBet;
     if (won > 0) {
       status =
@@ -97,10 +77,10 @@ export function ActionBar({
     status = tr('games.status.you_folded', 'You folded this hand');
   } else if (hero?.status === 'allin') {
     status = tr('games.status.you_allin', 'You are all-in');
-  } else if (state.phase === 'betting' && acting) {
+  } else if (view.phase === 'betting' && acting) {
     status = tr('games.status.thinking', '{{name}} is thinking…', { name: acting.name });
-  } else if (state.phase === 'waiting') {
-    status = waitingText;
+  } else if (view.phase === 'waiting') {
+    status = tr('games.status.waiting_players', 'Waiting for more players to start…');
   }
 
   const isAllIn = legal ? raiseTo >= legal.maxRaiseTo : false;
@@ -120,12 +100,9 @@ export function ActionBar({
             <span className={css.HandStrengthValue}>{strength}</span>
           </div>
         )}
-        {leaveAfterHand && (
+        {hero?.leaving && (
           <div className={css.HandStrength}>
-            {tr('games.status.leaving', 'You will leave the table when this hand ends')} ·{' '}
-            <button type="button" className={css.Preset} onClick={onCancelLeave}>
-              {tr('games.action.keep_playing', 'Keep playing')}
-            </button>
+            {tr('games.status.leaving', 'You will leave the table when this hand ends')}
           </div>
         )}
       </div>
@@ -155,7 +132,7 @@ export function ActionBar({
               type="range"
               min={minRaiseTo}
               max={maxRaiseTo}
-              step={state.config.smallBlind}
+              step={view.smallBlind}
               value={raiseTo}
               onChange={(evt) => setRaiseTo(clamp(Number(evt.target.value)))}
               aria-label={tr('games.action.raise_amount', 'Raise amount')}

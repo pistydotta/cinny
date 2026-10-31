@@ -1,14 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { ClientEvent, Room } from 'matrix-js-sdk';
 import {
   GamesHub,
   LobbyTable,
-  PokerGame,
   PokerLobby,
-  SharedPokerGame,
-  createMatrixTableTransport,
+  PracticeScreen,
+  TableScreen,
   createPokerTableRoom,
   createTableConfig,
   getTableConfig,
@@ -30,7 +28,6 @@ import {
   getGamesPokerTablePath,
   getHomePath,
 } from '../../pathUtils';
-import * as css from '../../../features/games/poker/pokerPage.css';
 import { tr } from '../../../features/translation/tr';
 
 const useMyProfile = () => {
@@ -125,104 +122,13 @@ export function PokerLobbyPage() {
 
 export function PokerPracticePage() {
   const navigate = useNavigate();
-  const wallet = useMatrixGameWallet();
-  const me = useMyProfile();
-
-  const hero = useMemo(
-    () => ({ id: me.userId, name: me.name, avatarUrl: me.avatarHttp }),
-    [me.userId, me.name, me.avatarHttp]
-  );
-
-  return <PokerGame hero={hero} wallet={wallet} onBack={() => navigate(getGamesPokerPath())} />;
-}
-
-/** The room of a table, once the client knows it (right after creating it, it may not yet). */
-const useLiveRoom = (roomId: string): Room | undefined => {
-  const mx = useMatrixClient();
-  const [room, setRoom] = useState(() => mx.getRoom(roomId) ?? undefined);
-  useEffect(() => {
-    setRoom(mx.getRoom(roomId) ?? undefined);
-    const onRoom = (r: Room) => {
-      if (r.roomId === roomId) setRoom(r);
-    };
-    mx.on(ClientEvent.Room, onRoom);
-    return () => {
-      mx.removeListener(ClientEvent.Room, onRoom);
-    };
-  }, [mx, roomId]);
-  return room;
-};
-
-function TableMessage({ text, onBack }: { text: string; onBack: () => void }) {
-  return (
-    <div className={css.Page}>
-      <div className={css.Overlay} style={{ position: 'relative', flexGrow: 1 }}>
-        <div className={css.Dialog}>
-          <h2 className={css.DialogTitle}>{text}</h2>
-          <button type="button" className={css.SecondaryButton} onClick={onBack}>
-            {tr('games.action.back', 'Back')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  return <PracticeScreen onBack={() => navigate(getGamesPokerPath())} />;
 }
 
 export function PokerTablePage() {
-  const mx = useMatrixClient();
   const navigate = useNavigate();
-  const useAuthentication = useMediaAuthentication();
-  const { roomId: encodedRoomId = '' } = useParams();
-  const roomId = decodeURIComponent(encodedRoomId);
-  const room = useLiveRoom(roomId);
-  const wallet = useMatrixGameWallet();
-  const me = useMyProfile();
+  const { tableId = '' } = useParams();
   const goBack = useCallback(() => navigate(getGamesPokerPath()), [navigate]);
 
-  const config = room ? getTableConfig(room) : undefined;
-  const configKey = config ? JSON.stringify(config) : '';
-  const transport = useMemo(
-    () => (room && config ? createMatrixTableTransport(mx, room, config) : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mx, room, configKey]
-  );
-
-  const resolveAvatar = useCallback(
-    (url: string) =>
-      url.startsWith('mxc://')
-        ? mxcUrlToHttp(mx, url, useAuthentication, 128, 128, 'crop') ?? undefined
-        : url,
-    [mx, useAuthentication]
-  );
-
-  if (!room)
-    return <TableMessage text={tr('games.table.loading', 'Loading the table…')} onBack={goBack} />;
-  if (room.getMyMembership() !== 'join') {
-    return (
-      <TableMessage
-        text={tr('games.table.accept_first', 'Accept the table invite on the Poker screen.')}
-        onBack={goBack}
-      />
-    );
-  }
-  if (!transport) {
-    return (
-      <TableMessage
-        text={tr('games.table.not_a_table', 'This room is not a poker table.')}
-        onBack={goBack}
-      />
-    );
-  }
-
-  return (
-    <SharedPokerGame
-      key={roomId}
-      transport={transport}
-      tableKey={roomId}
-      profile={{ name: me.name, avatarUrl: me.avatarMxc }}
-      resolveAvatar={resolveAvatar}
-      wallet={wallet}
-      onBack={goBack}
-    />
-  );
+  return <TableScreen key={tableId} tableId={decodeURIComponent(tableId)} onBack={goBack} />;
 }

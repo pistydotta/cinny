@@ -1,15 +1,8 @@
 import React, { CSSProperties, ReactNode, useMemo } from 'react';
 import { tr } from '../../../translation/tr';
-import {
-  Card,
-  cardKey,
-  cardsEqual,
-  formatChips,
-  getPlayerAtSeat,
-  LastAction,
-  PokerPlayer,
-  PokerState,
-} from '../engine';
+import { Card, formatChips, HandName, LastAction, TableView, ViewPlayer } from '../types';
+import { handText } from '../logText';
+import { TurnTimer } from '../turnTimer';
 
 import { PlayingCard } from './PlayingCard';
 import { ChipStack } from './Chips';
@@ -17,6 +10,7 @@ import { LAYOUTS, offset, pct, TableLayout } from './layout';
 import * as css from './pokerTable.css';
 
 const SEATS = [0, 1, 2, 3, 4, 5];
+const sameCard = (a: Card, b: Card) => a.rank === b.rank && a.suit === b.suit;
 const RING_RADIUS = 48;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
@@ -61,6 +55,8 @@ const highlighted = (key: string, en: string, values: Record<string, string>): R
     );
 };
 
+const handLabel = (name?: HandName): string => (name ? handText(name) : '');
+
 const nameHue = (name: string): number =>
   Array.from(name).reduce((hash, ch) => (hash * 31 + ch.charCodeAt(0)) % 360, 7);
 
@@ -73,7 +69,7 @@ const initials = (name: string): string =>
     .join('');
 
 type PlayerAvatarProps = {
-  player: PokerPlayer;
+  player: ViewPlayer;
   resolveAvatar?: (url: string) => string | undefined;
 };
 
@@ -99,24 +95,14 @@ function PlayerAvatar({ player, resolveAvatar }: PlayerAvatarProps) {
   );
 }
 
-export type TurnTimer = {
-  seat: number;
-  ms: number;
-  /** Time already used, when the turn started before this render. */
-  elapsedMs?: number;
-  key: string;
-};
-
 type PokerTableProps = {
-  state: PokerState;
+  view: TableView;
   heroId?: string;
   turnTimer?: TurnTimer;
-  /** Seat shown at the bottom (the local player's seat at a shared table). */
+  /** Seat shown at the bottom (the local player's seat). */
   seatOffset?: number;
   /** Makes empty seats clickable. */
   onSeatClick?: (seat: number) => void;
-  /** Player who organizes a shared table. */
-  hostId?: string | null;
   /** Turns stored avatar urls (e.g. mxc://) into urls the browser can load. */
   resolveAvatar?: (url: string) => string | undefined;
   layout: TableLayout;
@@ -125,14 +111,13 @@ type PokerTableProps = {
 };
 
 export function PokerTable({
-  state,
+  view,
   heroId,
   turnTimer,
   layout,
   emptyLabel,
   seatOffset = 0,
   onSeatClick,
-  hostId,
   resolveAvatar,
 }: PokerTableProps) {
   const layoutSpec = LAYOUTS[layout];
@@ -143,9 +128,9 @@ export function PokerTable({
     bets: SEATS.map((seat) => layoutSpec.bets[(seat - seatOffset + 12) % 6]),
     dealer: SEATS.map((seat) => layoutSpec.dealer[(seat - seatOffset + 12) % 6]),
   };
-  const { result, phase } = state;
+  const { result, phase } = view;
 
-  const contesting = state.players.filter((p) => p.status === 'active' || p.status === 'allin');
+  const contesting = view.players.filter((p) => p.status === 'active' || p.status === 'allin');
   const canStillBet = contesting.filter((p) => p.status === 'active').length;
   // Cards are turned face up at showdown, or as soon as an all-in leaves nobody able to bet.
   const allInRunOut = phase === 'street-complete' && contesting.length >= 2 && canStillBet <= 1;
@@ -159,24 +144,25 @@ export function PokerTable({
     const mainWinner = result.pots[0]?.winnerIds[0];
     return (mainWinner && result.hands[mainWinner]?.cards) || [];
   }, [showdown, result]);
-  const isWinningCard = (card: Card) => winningCards.some((c) => cardsEqual(c, card));
+  const isWinningCard = (card: Card) => winningCards.some((c) => sameCard(c, card));
 
   // Deal order starts left of the button; used to stagger the deal animation.
   const dealOrder = useMemo(() => {
-    const dealt = state.players.filter((p) => p.holeCards.length > 0);
-    const button = state.buttonSeat ?? 0;
+    const dealt = view.players.filter((p) => p.hasCards);
+    const button = view.buttonSeat ?? 0;
     return [...dealt.filter((p) => p.seat > button), ...dealt.filter((p) => p.seat <= button)].map(
       (p) => p.seat
     );
-  }, [state.players, state.buttonSeat]);
+  }, [view.players, view.buttonSeat]);
 
-  const totalPot = state.pot;
+  // The server's pot includes the bets still on the felt, which are drawn apart.
+  const totalPot = view.pot - view.players.reduce((sum, p) => sum + p.streetBet, 0);
   const showResult = phase === 'complete' && !!result;
 
   let banner: ReactNode = null;
   if (showResult && result) {
     const mainPot = result.pots[0];
-    const names = mainPot.winnerIds.map((id) => state.players.find((p) => p.id === id)?.name);
+    const names = mainPot.winnerIds.map((id) => view.players.find((p) => p.id === id)?.name);
     const total = Object.values(result.payouts).reduce((a, b) => a + b, 0);
     if (result.byFold) {
       banner = highlighted('games.result.takes_pot', '{{name}} takes the pot of {{chips}}', {
@@ -185,12 +171,12 @@ export function PokerTable({
       });
     } else if (mainPot.winnerIds.length > 1) {
       banner = highlighted('games.result.split', 'Split pot · {{hand}}', {
-        hand: mainPot.handName ?? '',
+        hand: handLabel(mainPot.handName),
       });
     } else {
       banner = highlighted('games.result.wins_with', '{{name}} wins with {{hand}}', {
         name: names[0] ?? '',
-        hand: mainPot.handName ?? '',
+        hand: handLabel(mainPot.handName),
       });
     }
   }
@@ -217,12 +203,12 @@ export function PokerTable({
       {/* Board */}
       <div className={css.Board}>
         {[0, 1, 2, 3, 4].map((i) => {
-          const card = state.board[i];
+          const card = view.board[i];
           return (
             <div key={i} className={css.BoardSlot}>
               {card && (
                 <PlayingCard
-                  key={`${state.handNumber}-${i}`}
+                  key={`${view.handNumber}-${i}`}
                   card={card}
                   faceUp
                   anim="flip"
@@ -236,7 +222,7 @@ export function PokerTable({
         })}
       </div>
 
-      {state.players.length === 0 && emptyLabel && (
+      {view.players.length === 0 && emptyLabel && (
         <div className={css.ResultBanner} style={{ animation: 'none' }}>
           {emptyLabel}
         </div>
@@ -244,7 +230,7 @@ export function PokerTable({
 
       {/* Empty seats */}
       {SEATS.map((seat) =>
-        getPlayerAtSeat(state, seat) ? null : (
+        view.players.some((p) => p.seat === seat) ? null : (
           <button
             key={`empty-${seat}`}
             type="button"
@@ -260,14 +246,14 @@ export function PokerTable({
       )}
 
       {/* Dealer button */}
-      {state.buttonSeat !== null && (
-        <div className={css.DealerButton} style={pct(spec.dealer[state.buttonSeat])}>
+      {view.buttonSeat !== null && (
+        <div className={css.DealerButton} style={pct(spec.dealer[view.buttonSeat])}>
           D
         </div>
       )}
 
       {/* Bets */}
-      {state.players.map((p) => {
+      {view.players.map((p) => {
         if (p.streetBet <= 0) return null;
         const from = offset(spec.bets[p.seat], spec.seats[p.seat]);
         return (
@@ -293,12 +279,12 @@ export function PokerTable({
       {showResult &&
         result &&
         Object.entries(result.payouts).map(([id, amount]) => {
-          const winner = state.players.find((p) => p.id === id);
+          const winner = view.players.find((p) => p.id === id);
           if (!winner) return null;
           const to = offset(spec.pot, spec.seats[winner.seat]);
           return (
             <div
-              key={`pile-${state.handNumber}-${id}`}
+              key={`pile-${view.handNumber}-${id}`}
               className={css.WinnerPile}
               style={{ '--to-x': to.x, '--to-y': to.y } as CSSProperties}
             >
@@ -308,7 +294,7 @@ export function PokerTable({
         })}
 
       {/* Seats */}
-      {state.players.map((p) => {
+      {view.players.map((p) => {
         const isHero = p.id === heroId;
         const seatPos = spec.seats[p.seat];
         const fromDealer = offset(seatPos, spec.center);
@@ -316,17 +302,20 @@ export function PokerTable({
         const folded = p.status === 'folded';
         const reveal = revealCards && (p.status === 'active' || p.status === 'allin');
         const faceUp = isHero || reveal;
-        const myTurn = phase === 'betting' && state.actingSeat === p.seat;
+        const myTurn = phase === 'betting' && view.actingSeat === p.seat;
         const timer = myTurn && turnTimer?.seat === p.seat ? turnTimer : undefined;
         const won = showResult ? result?.payouts[p.id] : undefined;
         const shown = showdown ? result?.hands[p.id] : undefined;
-        const showCards = inHand && p.holeCards.length > 0 && (!folded || isHero);
+        const showCards = inHand && p.hasCards && (!folded || isHero);
+        // Other players' cards stay hidden, but the table still deals them.
+        const cards: (Card | undefined)[] =
+          p.holeCards.length > 0 ? p.holeCards : [undefined, undefined];
         const orderIndex = dealOrder.indexOf(p.seat);
 
-        let badge: LastAction | undefined = p.lastAction;
+        const { away } = p;
+        let badge: LastAction | undefined = p.lastAction ?? undefined;
         if (p.status === 'allin') badge = { type: 'allin' };
         if (showResult) badge = undefined;
-        const away = p.sittingOut && p.status === 'sitting-out';
 
         return (
           <div
@@ -339,15 +328,16 @@ export function PokerTable({
           >
             {showCards && (
               <div className={css.SeatCards} data-revealed={reveal && !isHero}>
-                {p.holeCards.map((card, i) => (
+                {cards.map((card, i) => (
                   <PlayingCard
-                    key={`${state.handNumber}-${cardKey(card)}`}
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`${view.handNumber}-${i}`}
                     className={css.SeatCard}
                     card={faceUp ? card : undefined}
                     faceUp={faceUp}
                     anim="deal"
                     delayMs={(i * dealOrder.length + Math.max(orderIndex, 0)) * 90}
-                    highlight={showdown && winnerIds.has(p.id) && isWinningCard(card)}
+                    highlight={showdown && winnerIds.has(p.id) && !!card && isWinningCard(card)}
                     dim={(isHero && folded) || (showdown && !winnerIds.has(p.id))}
                     style={
                       {
@@ -393,25 +383,17 @@ export function PokerTable({
                 </div>
               )}
               <div className={css.PlateName}>
-                {hostId === p.id && (
-                  <span
-                    className={css.HostMark}
-                    title={tr('games.table.host_hint', 'Runs the table and shuffles the cards')}
-                  >
-                    ★{' '}
-                  </span>
-                )}
                 {isHero ? tr('games.table.you', '{{name}} (you)', { name: p.name }) : p.name}
               </div>
               <div className={css.PlateStack}>{formatChips(p.stack)}</div>
               {shown && (
                 <div className={css.HandName} data-winner={!!won}>
-                  {shown.name}
+                  {handText(shown.name)}
                 </div>
               )}
             </div>
             {!!won && (
-              <div key={`won-${state.handNumber}`} className={css.WinAmount}>
+              <div key={`won-${view.handNumber}`} className={css.WinAmount}>
                 +{formatChips(won)}
               </div>
             )}
