@@ -22,6 +22,7 @@ import {
   SPACE_PATH,
   _CREATE_PATH,
   _FEEDBACK_PATH,
+  _OVERVIEW_PATH,
   _FEATURED_PATH,
   _INVITES_PATH,
   _JOIN_PATH,
@@ -202,6 +203,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           <Route path={_JOIN_PATH} element={<p>join</p>} />
           <Route path={_SEARCH_PATH} element={<HomeSearch />} />
           <Route path={_FEEDBACK_PATH} element={<FeedbackPage />} />
+          <Route path={_OVERVIEW_PATH} element={<WelcomePage />} />
           <Route
             path={_ROOM_PATH}
             element={
