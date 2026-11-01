@@ -281,7 +281,9 @@
     "poker_title": "Jogos: poker com os amigos",
     "poker_body": "Tem uma aba nova de Jogos na barra lateral. Cada um ganha 5.000 moedas para jogar Texas Hold’em com os amigos ou treinar contra bots.",
     "poker_server_title": "Poker: créditos zerados e mesas privadas",
-    "poker_server_body": "Os créditos de todo mundo recomeçaram em 5.000. As mesas agora são privadas: só entra quem você convida, por amigo ou por link. Crie uma na aba Jogos."
+    "poker_server_body": "Os créditos de todo mundo recomeçaram em 5.000. As mesas agora são privadas: só entra quem você convida, por amigo ou por link. Crie uma na aba Jogos.",
+    "idle_title": "Novo jogo: Crônicas da Brasa",
+    "idle_body": "Um RPG idle na aba Jogos. Escolha entre 10 classes, junte equipamentos, monte a mochila e suba de fase, mesmo com o app em outra tela. Tem arena para duelos também."
   },
   "admin": {
     "deactivate": {
@@ -612,7 +614,8 @@
       "play": "Jogar",
       "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
       "soon": "Em breve",
-      "subtitle": "Jogue com seus créditos. O saldo é o mesmo em todos os jogos."
+      "subtitle": "Jogue com seus créditos. O saldo é o mesmo em todos os jogos.",
+      "idle_meta": "RPG idle · 10 classes, saque, mochila e arena"
     },
     "lobby": {
       "accept": "Aceitar",
@@ -717,6 +720,315 @@
       "title": "Entrar em uma mesa",
       "back": "Ir para o lobby",
       "joining": "Entrando na mesa…"
+    },
+    "idle": {
+      "title": "Crônicas da Brasa",
+      "subtitle": "Um RPG idle: seu herói continua lutando enquanto o app está aberto.",
+      "abandon": "Novo herói",
+      "abandon_confirm": "Isso apaga seu herói de vez. Tem certeza?",
+      "abandon_no": "Manter meu herói",
+      "abandon_yes": "Sim, começar de novo",
+      "add_point": "Colocar um ponto em {{attr}}",
+      "advancing": "Avançando ▶",
+      "farming": "Farmando ⟳",
+      "farming_hint": "Farmando esta fase. Ligue Avançando quando estiver forte o bastante.",
+      "arena": "Arena",
+      "arena_hint": "Duele com outros heróis. Por enquanto são rivais feitos no seu nível; em breve serão os heróis dos seus amigos.",
+      "attr_hint": "★ atributo principal: aumenta o dano. Vitalidade: vida. Agilidade: velocidade, crítico e esquiva. Força: armadura. Intelecto: habilidades.",
+      "attributes": "Atributos",
+      "backpack": "Mochila",
+      "backpack_hint": "Toque num item e depois onde ele deve ficar. Amuletos só funcionam na mochila e ficam mais fortes encostados em amuletos do mesmo elemento.",
+      "best_stage": "Melhor fase {{stage}}",
+      "boss": "Chefe",
+      "boss_stage": "Fase do chefe",
+      "boss_timer": "Tempo restante: {{sec}}s",
+      "cell": "Espaço {{x}}, {{y}}",
+      "cells": "{{used}}/{{total}} espaços",
+      "charm_hint": "Funciona enquanto estiver na mochila. +25% para cada amuleto de {{element}} encostado.",
+      "charm_links": "Agora: +{{pct}}%",
+      "collect": "Boa!",
+      "cooldown": "recarga de {{sec}}s",
+      "dps_line": "{{dmg}} de dano · {{speed}}/s",
+      "duel": "Duelar",
+      "duel_lost": "Derrotado por {{name}}.",
+      "duel_summary": "{{sec}}s · sua vida {{mine}}% · a dele {{theirs}}%",
+      "duel_won": "Vitória contra {{name}}!",
+      "equip": "Equipar",
+      "equipment": "Equipamento",
+      "equipment_hint": "Toque num espaço para ver a peça. Equipamentos novos caem na mochila.",
+      "equipped_now": "Equipado agora",
+      "go_max": "Ir para a fase {{stage}}",
+      "item_level": "Nível {{level}}",
+      "kills": "{{kills}}/{{total}} derrotados",
+      "last_duel": "Último duelo",
+      "log_empty": "A luta está começando…",
+      "log_title": "Registro da batalha",
+      "lv": "Nv {{level}}",
+      "maxed": "Máx",
+      "no_duel": "Escolha um rival. O duelo é decidido pelos seus atributos e um pouco de sorte.",
+      "nothing_selected": "Escolha um item na mochila.",
+      "offline_levels": "+{{count}} níveis",
+      "offline_text": "{{kills}} inimigos derrotados · +{{gold}} de ouro · +{{xp}} XP · {{items}} itens",
+      "offline_title": "Enquanto você esteve fora ({{time}})",
+      "points": "{{count}} pontos para gastar",
+      "power": "Poder {{power}}",
+      "rating": "Pontuação {{rating}}",
+      "record": "{{wins}}V · {{losses}}D",
+      "respawn": "Levanta em {{sec}}s",
+      "rotate": "Girar",
+      "searching": "Procurando uma luta…",
+      "selected": "Item escolhido",
+      "sell": "Vender",
+      "sells_for": "Vende por {{gold}} de ouro",
+      "skill_bar": "Habilidade",
+      "stage": "Fase {{stage}}",
+      "stats": "Status",
+      "stunned": "atordoado",
+      "unequip": "Guardar na mochila",
+      "upgrades": "Treino",
+      "upgrades_hint": "Gaste ouro em bônus permanentes. Cada nível custa mais que o anterior.",
+      "xp": "{{xp}} / {{need}} XP",
+      "pick": {
+        "title": "Escolha sua classe",
+        "text": "Seu herói luta sozinho, até com o jogo fechado. Você escolhe o equipamento, os pontos e quando avançar.",
+        "name": "Nome do herói",
+        "start": "Começar a jornada"
+      },
+      "tab": {
+        "battle": "Batalha",
+        "hero": "Herói",
+        "backpack": "Mochila",
+        "upgrades": "Treino",
+        "arena": "Arena"
+      },
+      "error": {
+        "bag_full": "Não tem espaço na mochila para isso.",
+        "gold": "Ouro insuficiente.",
+        "maxed": "Já está no nível máximo.",
+        "points": "Sem pontos para gastar.",
+        "not_found": "Esse item não está mais aí."
+      },
+      "effect": {
+        "strike": "Um golpe de {{pct}}% de dano",
+        "strikes": "{{hits}} golpes de {{pct}}% de dano",
+        "heal": "Cura {{pct}}% da vida",
+        "shield": "Escudo de {{pct}}% da vida por {{sec}}s",
+        "dot": "{{pct}}% de dano ao longo de {{sec}}s",
+        "buff": "{{mods}} por {{sec}}s",
+        "stun": "Atordoa por {{sec}}s",
+        "drain": "Drena {{pct}}% de dano e cura {{heal}}% disso"
+      },
+      "log": {
+        "boss": "Luta contra o chefe: {{foe}}!",
+        "fight": "Aparece: {{foe}}.",
+        "skill_hero": "Você usa {{skill}}.",
+        "skill_foe": "O inimigo usa {{skill}}.",
+        "kill": "{{foe}} derrotado: +{{gold}} de ouro, +{{xp}} XP",
+        "loot": "Encontrou: {{item}} ({{rarity}})",
+        "sold": "Mochila cheia: {{item}} vendido por {{gold}} de ouro",
+        "level": "Nível {{level}}! Você tem um ponto para gastar.",
+        "stage": "Fase {{stage}}.",
+        "death": "Você caiu. Voltando uma fase para ficar mais forte.",
+        "timeout": "O chefe aguentou mais que você. Voltando uma fase."
+      },
+      "class": {
+        "guardian": {
+          "name": "Guardião",
+          "desc": "Uma muralha de aço. Ergue o escudo e aguenta tudo."
+        },
+        "berserker": {
+          "name": "Berserker",
+          "desc": "Fica mais furioso quanto mais a luta dura, e se cura batendo."
+        },
+        "paladin": {
+          "name": "Paladino",
+          "desc": "Guerreiro sagrado que se cura no meio da luta e revida forte."
+        },
+        "ranger": {
+          "name": "Patrulheiro",
+          "desc": "Flechas rápidas, muitos críticos e uma rajada na hora certa."
+        },
+        "assassin": {
+          "name": "Assassino",
+          "desc": "Atordoa e ataca das sombras com críticos enormes."
+        },
+        "mage": {
+          "name": "Arcanista",
+          "desc": "Lento no ataque, devastador com um meteoro."
+        },
+        "necromancer": {
+          "name": "Necromante",
+          "desc": "Drena a vida dos inimigos e deixa uma maldição terminar o serviço."
+        },
+        "druid": {
+          "name": "Druida",
+          "desc": "A natureza cura e fortalece, para uma luta longa e firme."
+        },
+        "shaman": {
+          "name": "Xamã",
+          "desc": "Invoca raios que saltam e atordoam."
+        },
+        "monk": {
+          "name": "Monge",
+          "desc": "Os punhos mais rápidos que existem, e difícil de acertar."
+        }
+      },
+      "role": {
+        "tank": "Tanque",
+        "melee": "Corpo a corpo",
+        "ranged": "À distância",
+        "caster": "Conjurador",
+        "support": "Suporte"
+      },
+      "skill": {
+        "shield_wall": "Muralha de Escudos",
+        "blood_rage": "Fúria Sangrenta",
+        "holy_light": "Luz Sagrada",
+        "volley": "Rajada",
+        "shadowstep": "Passo Sombrio",
+        "meteor": "Meteoro",
+        "soul_drain": "Dreno de Alma",
+        "wild_growth": "Crescimento Selvagem",
+        "chain_lightning": "Corrente de Raios",
+        "hundred_fists": "Cem Punhos",
+        "root_slam": "Raízes Esmagadoras",
+        "eruption": "Erupção",
+        "venom": "Veneno",
+        "frost_breath": "Sopro Gélido",
+        "hellfire": "Fogo Infernal"
+      },
+      "attr": {
+        "str": "Força",
+        "agi": "Agilidade",
+        "int": "Intelecto",
+        "vit": "Vitalidade"
+      },
+      "stat": {
+        "maxHp": "Vida",
+        "damage": "Dano",
+        "attackSpeed": "Velocidade de ataque",
+        "critChance": "Chance de crítico",
+        "critDamage": "Dano crítico",
+        "armor": "Armadura",
+        "dodge": "Esquiva",
+        "lifesteal": "Roubo de vida",
+        "regen": "Vida por segundo",
+        "skillPower": "Poder de habilidade",
+        "cooldownReduction": "Redução de recarga",
+        "damagePct": "Dano",
+        "maxHpPct": "Vida",
+        "attackSpeedPct": "Velocidade de ataque",
+        "goldFind": "Ouro encontrado",
+        "xpGain": "Experiência"
+      },
+      "slot": {
+        "weapon": "Arma",
+        "offhand": "Mão secundária",
+        "head": "Cabeça",
+        "chest": "Peito",
+        "hands": "Mãos",
+        "feet": "Pés",
+        "ring": "Anel",
+        "amulet": "Colar",
+        "charm": "Amuleto"
+      },
+      "rarity": {
+        "common": "Comum",
+        "uncommon": "Incomum",
+        "rare": "Raro",
+        "epic": "Épico",
+        "legendary": "Lendário"
+      },
+      "element": {
+        "fire": "Fogo",
+        "frost": "Gelo",
+        "nature": "Natureza",
+        "shadow": "Sombra",
+        "holy": "Sagrado"
+      },
+      "item": {
+        "sword": "Espada Longa",
+        "axe": "Machado de Guerra",
+        "mace": "Martelo de Guerra",
+        "bow": "Arco Longo",
+        "dagger": "Adaga",
+        "staff": "Cajado",
+        "wand": "Varinha",
+        "claws": "Garras",
+        "shield": "Escudo",
+        "tome": "Tomo",
+        "quiver": "Aljava",
+        "helm": "Elmo",
+        "hood": "Capuz",
+        "plate": "Armadura de Placas",
+        "robe": "Manto",
+        "gloves": "Luvas",
+        "boots": "Botas",
+        "ring": "Anel",
+        "amulet": "Colar",
+        "ember_rune": "Runa de Brasa",
+        "frost_shard": "Fragmento de Gelo",
+        "living_seed": "Semente Viva",
+        "void_sigil": "Selo do Vazio",
+        "saint_relic": "Relíquia Santa"
+      },
+      "zone": {
+        "whispering_woods": "Bosque dos Sussurros",
+        "ash_mines": "Minas de Cinzas",
+        "rot_marsh": "Pântano Podre",
+        "frost_peaks": "Picos Gelados",
+        "infernal_citadel": "Cidadela Infernal"
+      },
+      "enemy": {
+        "wolf": "Lobo",
+        "goblin": "Goblin",
+        "spider": "Aranha Gigante",
+        "treant": "Ent Ancião",
+        "kobold": "Kobold",
+        "golem": "Golem de Pedra",
+        "bat": "Morcego das Cavernas",
+        "magma_lord": "Senhor do Magma",
+        "slime": "Gosma",
+        "lizardman": "Homem-lagarto",
+        "wisp": "Fogo-fátuo",
+        "hydra": "Hidra",
+        "yeti": "Yeti",
+        "ice_elemental": "Elemental de Gelo",
+        "harpy": "Harpia",
+        "frost_wyrm": "Serpe Gélida",
+        "imp": "Diabrete",
+        "hellhound": "Cão Infernal",
+        "death_knight": "Cavaleiro da Morte",
+        "archdemon": "Arquidemônio"
+      },
+      "upgrade": {
+        "might": {
+          "name": "Poder",
+          "desc": "+6% de dano por nível"
+        },
+        "vigor": {
+          "name": "Vigor",
+          "desc": "+6% de vida por nível"
+        },
+        "swiftness": {
+          "name": "Rapidez",
+          "desc": "+2% de velocidade de ataque por nível"
+        },
+        "fortune": {
+          "name": "Fortuna",
+          "desc": "+8% de ouro por nível"
+        },
+        "wisdom": {
+          "name": "Sabedoria",
+          "desc": "+8% de experiência por nível"
+        },
+        "satchel": {
+          "name": "Mochila maior",
+          "desc": "Mais uma fileira na mochila"
+        }
+      },
+      "sell_commons": "Vender comuns",
+      "sell_uncommons": "Vender comuns e incomuns"
     }
   }
 }

@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-idle-rpg',
+    items: () => [
+      {
+        title: tr('whats_new.idle_title', 'New game: Ember Chronicles'),
+        body: tr(
+          'whats_new.idle_body',
+          'An idle RPG in the Games tab. Pick one of 10 classes, collect gear, arrange your backpack and climb stages, even with the app on another screen. There is an arena for duels too.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-always-joined-pins',
     items: () => [
       {
