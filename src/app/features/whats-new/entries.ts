@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-music-bot',
+    items: () => [
+      {
+        title: tr('whats_new.music_bot_title', 'A music bot in calls'),
+        body: tr(
+          'whats_new.music_bot_body',
+          "In a call, paste a YouTube, Spotify, SoundCloud or other link (or just the song's name) in the bot's bar, or type /play in the room's chat. Everyone in the call listens together, each at their own volume."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-always-joined-pins',
     items: () => [
       {
