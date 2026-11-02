@@ -56,6 +56,7 @@ import { useLivekitSupport } from '../hooks/useLivekitSupport';
 import { CallAvatarAnimation } from '../styles/Animations.css';
 import { webRTCSupported } from '../utils/rtc';
 import { CallRejoin } from '../features/call-rejoin/CallRejoin';
+import { MusicBotPlayer } from '../features/music-bot/MusicBotPlayer';
 import { useSwitchCall } from '../features/call-switch/useSwitchCall';
 
 type IncomingCallInfo = {
@@ -389,6 +390,7 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
       <CallEmbedRefContextProvider value={callEmbedRef}>
         <IncomingCallListener callEmbed={callEmbed} joined={joined} />
         <CallRejoin callEmbed={callEmbed} joined={joined} />
+        <MusicBotPlayer callEmbed={callEmbed} joined={joined} />
         {children}
       </CallEmbedRefContextProvider>
       <div

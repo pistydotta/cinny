@@ -29,6 +29,7 @@ import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
 import { isSelfChatRoom } from '../features/self-chat/selfChatRoom';
 import { isAlwaysJoinedRoom } from '../features/space-autojoin/alwaysJoinedRoom';
+import { musicCommands } from '../features/music-bot/musicCommands';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -161,6 +162,9 @@ export enum Command {
   UnFlip = 'unflip',
   Delete = 'delete',
   Acl = 'acl',
+  Play = 'play',
+  Skip = 'skip',
+  Stop = 'stop',
 }
 
 export type CommandContent = {
@@ -176,6 +180,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
   const commands: CommandRecord = useMemo(
     () => ({
+      ...musicCommands(mx, room),
       [Command.Me]: {
         name: Command.Me,
         description: 'Send action message',

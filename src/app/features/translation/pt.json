@@ -257,6 +257,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "music_bot_title": "Bot de música nas chamadas",
+    "music_bot_body": "Numa chamada, cole um link do YouTube, Spotify, SoundCloud e outros (ou só o nome da música) na barra do bot, ou digite /play no chat da sala. Todo mundo na chamada ouve junto, cada um no seu volume.",
     "always_joined_title": "Salas públicas sempre à mão",
     "always_joined_body": "Todo mundo de um servidor já está nas salas públicas dele, sem precisar entrar. Só as salas privadas podem ser deixadas.",
     "pinned_chats_title": "Fixe suas conversas",
@@ -1030,5 +1032,31 @@
       "sell_commons": "Vender comuns",
       "sell_uncommons": "Vender comuns e incomuns"
     }
+  },
+  "music_bot": {
+    "error_invalid": "Cole um link ou digite o nome de uma música.",
+    "error_unsupported": "Esse site não é suportado. Tente YouTube, SoundCloud, Spotify, Deezer ou Apple Music.",
+    "error_not_found": "Nenhuma música encontrada.",
+    "error_too_long": "As músicas podem ter no máximo 90 minutos.",
+    "error_queue_full": "A fila está cheia.",
+    "error_nothing_playing": "Nada está tocando.",
+    "error_fetch": "Não deu para pegar essa música. Tente outro link.",
+    "error_unavailable": "O bot de música não está disponível no servidor.",
+    "error_network": "Sem conexão com o servidor.",
+    "error_unknown": "Algo deu errado. Tente de novo.",
+    "requested_by": "adicionada por {{name}}",
+    "remove": "Tirar da fila",
+    "loading": "Pegando a música...",
+    "resume": "Continuar",
+    "pause": "Pausar",
+    "skip": "Pular",
+    "stop": "Parar e limpar a fila",
+    "placeholder": "Bot de música: cole um link do YouTube, Spotify ou SoundCloud, ou o nome da música",
+    "play": "Tocar",
+    "queue": "Fila ({{count}})",
+    "volume": "Volume da música",
+    "command_play": "Bot de música: toca um link (YouTube, Spotify, SoundCloud...) ou o nome de uma música na chamada desta sala. Exemplo: /play lofi",
+    "command_skip": "Bot de música: pula a música que está tocando",
+    "command_stop": "Bot de música: para a música e limpa a fila"
   }
 }
