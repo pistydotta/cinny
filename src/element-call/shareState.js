@@ -5,6 +5,30 @@
 // bring back a share the person already closed, or make them pick a volume again.
 const FORGET_AFTER_MS = 30_000;
 
+// LiveKit's Track.Source values.
+const VIDEO_SOURCE = 'screen_share';
+const SOUND_SOURCE = 'screen_share_audio';
+
+// This code runs inside Element Call's layout pipeline, where a throw breaks the layout.
+const guarded = (fn) => {
+  try {
+    fn();
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('blazeroom screen share:', e);
+  }
+};
+
+// LiveKit subscribes to every track and adaptiveStream only stops a video that was once
+// attached, so a share nobody opened would keep downloading. Dropping the subscription also
+// spares the sound a race: a volume of 0 set before the element attaches gets skipped, and the
+// share plays at 100%.
+const subscribeTo = (participant, source, on) =>
+  guarded(() => {
+    const publication = participant.getTrackPublication(source);
+    if (publication && publication.isDesired !== on) publication.setSubscribed(on);
+  });
+
 const sameRemote = (a, b) =>
   a.id === b.id &&
   a.userId === b.userId &&
@@ -33,7 +57,8 @@ const sameSnapshot = (a, b) =>
 // and what they are sharing themselves. Cinny reads it through getSnapshot/subscribe (React's
 // useSyncExternalStore); Element Call's layout pipeline goes through layoutShares and `changes`.
 export const createShareStore = () => {
-  // id -> { id, userId, vm, unsubs, name, hasSound, watching, volume, muted, decided, timer }
+  // id -> { id, userId, vm, unsubs, participant, offPublished, name, hasSound, watching, volume,
+  // muted, decided, timer }
   const entries = new Map();
   const listeners = new Set();
   const observers = new Set();
@@ -86,9 +111,38 @@ export const createShareStore = () => {
     e.vm.commitPlaybackVolume();
   };
 
+  const applySubscriptions = (e) => {
+    if (!e.vm || !e.participant) return;
+    subscribeTo(e.participant, VIDEO_SOURCE, e.watching);
+    subscribeTo(e.participant, SOUND_SOURCE, e.watching && !e.muted);
+  };
+
+  const unbindParticipant = (e) => {
+    e.offPublished?.();
+    e.offPublished = null;
+    e.participant = null;
+  };
+
+  // The sound can be published after the view model appears, when layoutShares won't run again.
+  const bindParticipant = (e, participant) => {
+    if (e.participant !== participant) {
+      unbindParticipant(e);
+      if (participant) {
+        e.participant = participant;
+        const onPublished = () => applySubscriptions(e);
+        guarded(() => {
+          participant.on('trackPublished', onPublished);
+          e.offPublished = () => guarded(() => participant.off('trackPublished', onPublished));
+        });
+      }
+    }
+    applySubscriptions(e);
+  };
+
   const release = (e) => {
     e.unsubs.forEach((u) => u.unsubscribe());
     e.unsubs = [];
+    unbindParticipant(e);
     e.vm = null;
   };
 
@@ -109,7 +163,11 @@ export const createShareStore = () => {
         })
       );
     }
+    // After the volume: a track subscribed from here attaches at the volume already set.
     applyVolume(e);
+    if (vm.video$) {
+      e.unsubs.push(vm.video$.subscribe((ref) => bindParticipant(e, ref?.participant ?? null)));
+    }
   };
 
   const clearLocal = () => {
@@ -139,6 +197,8 @@ export const createShareStore = () => {
             userId: vm.userId,
             vm: null,
             unsubs: [],
+            participant: null,
+            offPublished: null,
             name: '',
             hasSound: false,
             watching: false,
@@ -182,6 +242,7 @@ export const createShareStore = () => {
     if (!e) return;
     change(e);
     applyVolume(e);
+    applySubscriptions(e);
     refresh();
   };
 

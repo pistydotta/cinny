@@ -21,6 +21,18 @@ export type LocalShare = {
 
 export type ShareSnapshot = { local: LocalShare | null; remotes: RemoteShare[] };
 
+// The parts of LiveKit's RemoteTrackPublication and RemoteParticipant that we use.
+export type SharePublication = {
+  isDesired: boolean;
+  setSubscribed: (subscribed: boolean) => void;
+};
+
+export type ShareParticipant = {
+  getTrackPublication: (source: string) => SharePublication | undefined;
+  on: (event: 'trackPublished', listener: () => void) => unknown;
+  off: (event: 'trackPublished', listener: () => void) => unknown;
+};
+
 // The part of a screen share view model from the Element Call bundle that we use.
 export type ShareVm = {
   id: string;
@@ -28,6 +40,7 @@ export type ShareVm = {
   local: boolean;
   displayName$: Stream$<string>;
   audioEnabled$?: Stream$<boolean>;
+  video$?: Stream$<{ participant: ShareParticipant } | undefined>;
   adjustPlaybackVolume: (volume: number) => void;
   commitPlaybackVolume: () => void;
 };

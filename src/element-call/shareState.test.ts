@@ -54,6 +54,235 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+const fakePublication = () => {
+  const publication = {
+    isDesired: true,
+    setSubscribed: vi.fn((on: boolean) => {
+      publication.isDesired = on;
+    }),
+  };
+  return publication;
+};
+type FakePublication = ReturnType<typeof fakePublication>;
+
+// Same shape as LiveKit's RemoteParticipant, for what the store uses.
+const fakeParticipant = (sources: Record<string, FakePublication>) => {
+  const publications = new Map(Object.entries(sources));
+  const listeners = new Set<() => void>();
+  return {
+    getTrackPublication: (source: string) => publications.get(source),
+    on: (event: string, fn: () => void) => {
+      if (event === 'trackPublished') listeners.add(fn);
+    },
+    off: (event: string, fn: () => void) => {
+      if (event === 'trackPublished') listeners.delete(fn);
+    },
+    publish: (source: string, publication: FakePublication) => {
+      publications.set(source, publication);
+      listeners.forEach((fn) => fn());
+    },
+    listenerCount: () => listeners.size,
+  };
+};
+
+const fakeShare = (id = 'a', withSound = true) => {
+  const video = fakePublication();
+  const sound = fakePublication();
+  const participant = fakeParticipant({
+    screen_share: video,
+    ...(withSound ? { screen_share_audio: sound } : {}),
+  });
+  const video$ = fakeSubject<unknown>({ participant, publication: video, source: 'screen_share' });
+  return { vm: fakeVm(id, { video$ }), video, sound, participant, video$ };
+};
+
+describe('remote share downloads', () => {
+  it('subscribes to neither video nor sound while never watched', () => {
+    const store = createShareStore();
+    const { vm, video, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    expect(video.isDesired).toBe(false);
+    expect(sound.isDesired).toBe(false);
+  });
+
+  it('subscribes to both on watch and to neither on unwatch', () => {
+    const store = createShareStore();
+    const { vm, video, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0.5);
+    expect(video.isDesired).toBe(true);
+    expect(sound.isDesired).toBe(true);
+    store.unwatch('a');
+    expect(video.isDesired).toBe(false);
+    expect(sound.isDesired).toBe(false);
+  });
+
+  it('sets the volume before subscribing, so the element attaches at the right value', () => {
+    const store = createShareStore();
+    const { vm, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    sound.setSubscribed.mockClear();
+    vm.adjustPlaybackVolume.mockClear();
+    store.watch('a', 0.5);
+    expect(vm.adjustPlaybackVolume).toHaveBeenCalledWith(0.5);
+    expect(vm.adjustPlaybackVolume.mock.invocationCallOrder[0]).toBeLessThan(
+      sound.setSubscribed.mock.invocationCallOrder[0]
+    );
+  });
+
+  it('muting only drops the sound, and unmuting brings it back', () => {
+    const store = createShareStore();
+    const { vm, video, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0.5);
+    store.setMuted('a', true);
+    expect(video.isDesired).toBe(true);
+    expect(sound.isDesired).toBe(false);
+    store.setMuted('a', false);
+    expect(video.isDesired).toBe(true);
+    expect(sound.isDesired).toBe(true);
+  });
+
+  it('keeps a muted share muted when watched again', () => {
+    const store = createShareStore();
+    const { vm, video, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0.5);
+    store.setMuted('a', true);
+    store.unwatch('a');
+    store.watch('a', 0.5);
+    expect(video.isDesired).toBe(true);
+    expect(sound.isDesired).toBe(false);
+  });
+
+  it('only calls setSubscribed when the wish changes', () => {
+    const store = createShareStore();
+    const { vm, video } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.layoutShares(asVms([vm]));
+    store.setVolume('a', 0.3);
+    expect(video.setSubscribed).toHaveBeenCalledTimes(1);
+  });
+
+  it('a late sound publication follows the state: not watching', () => {
+    const store = createShareStore();
+    const { vm, participant } = fakeShare('a', false);
+    store.layoutShares(asVms([vm]));
+    const late = fakePublication();
+    participant.publish('screen_share_audio', late);
+    expect(late.isDesired).toBe(false);
+  });
+
+  it('a late sound publication follows the state: watching', () => {
+    const store = createShareStore();
+    const { vm, participant } = fakeShare('a', false);
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0.5);
+    const late = fakePublication();
+    participant.publish('screen_share_audio', late);
+    expect(late.setSubscribed).not.toHaveBeenCalled();
+    expect(late.isDesired).toBe(true);
+  });
+
+  it('a late sound publication follows the state: watching but muted', () => {
+    const store = createShareStore();
+    const { vm, participant } = fakeShare('a', false);
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0.5);
+    store.setMuted('a', true);
+    const late = fakePublication();
+    participant.publish('screen_share_audio', late);
+    expect(late.isDesired).toBe(false);
+  });
+
+  it('applies the rule when the participant shows up after the view model', () => {
+    const store = createShareStore();
+    const { vm, video, sound, video$, participant } = fakeShare();
+    video$.next(undefined);
+    store.layoutShares(asVms([vm]));
+    expect(video.isDesired).toBe(true);
+    video$.next({ participant, publication: video, source: 'screen_share' });
+    expect(video.isDesired).toBe(false);
+    expect(sound.isDesired).toBe(false);
+  });
+
+  it('lets go of the publication listener when the view model goes', () => {
+    const store = createShareStore();
+    const { vm, participant, video$ } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.layoutShares(asVms([vm]));
+    expect(participant.listenerCount()).toBe(1);
+    store.layoutShares([]);
+    expect(participant.listenerCount()).toBe(0);
+    expect(video$.count()).toBe(0);
+  });
+
+  it('moves the listener when the participant changes', () => {
+    const store = createShareStore();
+    const { vm, participant, video$ } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    const next = fakeParticipant({ screen_share: fakePublication() });
+    video$.next({ participant: next });
+    expect(participant.listenerCount()).toBe(0);
+    expect(next.listenerCount()).toBe(1);
+  });
+
+  it('re-applies the rule to a returning view model', () => {
+    const store = createShareStore();
+    const first = fakeShare();
+    store.layoutShares(asVms([first.vm]));
+    store.watch('a', 0.5);
+    store.setMuted('a', true);
+    store.layoutShares([]);
+    vi.advanceTimersByTime(10_000);
+    const again = fakeShare();
+    store.layoutShares(asVms([again.vm]));
+    expect(again.video.isDesired).toBe(true);
+    expect(again.sound.isDesired).toBe(false);
+  });
+
+  it('copes with a view model without the API', () => {
+    const store = createShareStore();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const a = fakeVm('a');
+    expect(() => store.layoutShares(asVms([a]))).not.toThrow();
+    expect(() => store.watch('a', 0.5)).not.toThrow();
+    const b = fakeVm('b', { video$: fakeSubject(undefined) });
+    expect(() => store.layoutShares(asVms([a, b]))).not.toThrow();
+    const c = fakeVm('c', { video$: fakeSubject({ participant: {} }) });
+    expect(() => store.layoutShares(asVms([a, b, c]))).not.toThrow();
+    expect(() => store.watch('c', 0.5)).not.toThrow();
+    error.mockRestore();
+  });
+
+  it('logs and carries on when the publication API throws', () => {
+    const store = createShareStore();
+    const { vm, video, sound } = fakeShare();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    video.setSubscribed.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    expect(store.layoutShares(asVms([vm]))).toEqual([]);
+    expect(error).toHaveBeenCalled();
+    expect(sound.isDesired).toBe(false);
+    expect(() => store.watch('a', 0.5)).not.toThrow();
+    expect(store.layoutShares(asVms([vm]))).toEqual([vm]);
+    error.mockRestore();
+  });
+
+  it('never emits on changes from layoutShares or a late publication', () => {
+    const store = createShareStore();
+    const { vm, participant } = fakeShare('a', false);
+    const next = vi.fn();
+    store.changes.subscribe(next);
+    next.mockClear();
+    store.layoutShares(asVms([vm]));
+    participant.publish('screen_share_audio', fakePublication());
+    store.layoutShares([]);
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
 describe('remote shares', () => {
   it('hides remote shares until watched', () => {
     const store = createShareStore();
