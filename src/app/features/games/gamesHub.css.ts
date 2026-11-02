@@ -167,6 +167,21 @@ globalStyle(`${ArtChips} > *`, {
   vars: { '--chip': '26px' },
 });
 
+export const IdleArt = style({
+  height: 170,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  background: 'radial-gradient(ellipse at 50% 70%, #6b3a17 0%, #3a1d0e 45%, #160a06 100%)',
+  boxShadow: 'inset 0 -20px 40px rgba(0,0,0,0.35)',
+});
+
+export const IdleArtIcon = style({
+  fontSize: 38,
+  filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.5))',
+});
+
 export const SoonArt = style({
   height: 170,
   display: 'flex',

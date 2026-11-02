@@ -13,6 +13,8 @@ import { getGamesPath } from '../../pathUtils';
 import { GamesIcon } from '../../../features/games/GamesIcon';
 import { useLobby, useLobbyPoller } from '../../../features/games/poker/useLobby';
 import { useLeaveOldPokerRooms } from '../../../features/games/legacy/useLeaveOldPokerRooms';
+import { useIdleBackground } from '../../../features/games/idle/useIdleGame';
+import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { tr } from '../../../features/translation/tr';
 
 // Same narrowing as FriendsTab: upstream's tooltip returns ReactNode, rejected as a JSX component.
@@ -26,6 +28,9 @@ export function GamesTab() {
   // The sidebar is always mounted, so this is the app's single lobby poller.
   useLobbyPoller();
   useLeaveOldPokerRooms();
+  // Keeps an idle hero fighting on every screen, not only while the game is open.
+  const mx = useMatrixClient();
+  useIdleBackground(mx.getUserId());
   const { list } = useLobby();
   const inviteCount = list?.invites.length ?? 0;
 
