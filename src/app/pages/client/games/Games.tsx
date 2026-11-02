@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GamesHub, PokerLobby, PracticeScreen, TableScreen } from '../../../features/games';
+import { IdleGame } from '../../../features/games/idle';
 import { createPokerApi } from '../../../features/games/poker/api';
 import { errorText } from '../../../features/games/poker/errorText';
 import * as css from '../../../features/games/poker/pokerPage.css';
@@ -9,6 +10,7 @@ import { ApiError } from '../../../utils/blazeroomApi';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import {
   getGamesPath,
+  getGamesIdlePath,
   getGamesPokerPath,
   getGamesPokerPracticePath,
   getGamesPokerTablePath,
@@ -23,8 +25,20 @@ export function GamesHubPage() {
   return (
     <GamesHub
       onOpenPoker={() => navigate(getGamesPokerPath())}
+      onOpenIdle={() => navigate(getGamesIdlePath())}
       onBack={screenSize === ScreenSize.Mobile ? () => navigate(getHomePath()) : undefined}
     />
+  );
+}
+
+export function IdleGamePage() {
+  const mx = useMatrixClient();
+  const navigate = useNavigate();
+  const userId = mx.getUserId() ?? '';
+  const defaultName = mx.getUser(userId)?.displayName ?? userId.replace(/^@|:.*$/g, '');
+
+  return (
+    <IdleGame userId={userId} defaultName={defaultName} onBack={() => navigate(getGamesPath())} />
   );
 }
 
