@@ -18,10 +18,11 @@ const ROYAL: Card[] = [
 
 type GamesHubProps = {
   onOpenPoker: () => void;
+  onOpenIdle: () => void;
   onBack?: () => void;
 };
 
-export function GamesHub({ onOpenPoker, onBack }: GamesHubProps) {
+export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
   const { balance, atTables, refresh, topUp } = useCredits();
 
   useEffect(() => {
@@ -103,6 +104,29 @@ export function GamesHub({ onOpenPoker, onBack }: GamesHubProps) {
                 {tr('games.hub.poker_meta', 'No-limit Texas Hold’em · 2 to 6 players')}
               </span>
               <button type="button" className={css.PlayButton} onClick={onOpenPoker}>
+                {tr('games.hub.play', 'Play')}
+              </button>
+            </div>
+          </div>
+
+          <div className={css.GameCard} data-playable="true">
+            <div className={css.IdleArt}>
+              {['🛡️', '🔮', '🏹', '🐉', '🗡️'].map((icon, i) => (
+                <span
+                  key={icon}
+                  className={css.IdleArtIcon}
+                  style={{ transform: `translateY(${Math.abs(i - 2) * 8}px)` }}
+                >
+                  {icon}
+                </span>
+              ))}
+            </div>
+            <div className={css.CardBody}>
+              <span className={css.GameName}>{tr('games.idle.title', 'Ember Chronicles')}</span>
+              <span className={css.GameMeta}>
+                {tr('games.hub.idle_meta', 'Idle RPG · 10 classes, loot, backpack and arena')}
+              </span>
+              <button type="button" className={css.PlayButton} onClick={onOpenIdle}>
                 {tr('games.hub.play', 'Play')}
               </button>
             </div>

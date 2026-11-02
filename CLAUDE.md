@@ -37,6 +37,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   none: it shows the view the API sends and posts the player's action. The credits wallet
   (`games/credits`) is the API's too. `games/legacy` only cleans up the old Matrix-room tables and
   can go once people have opened the app.
+- `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser and saves in
+  localStorage. `engine/` is plain, deterministic TS (seeded rng in the save, time passed in), so a
+  server can replay fights later for PvP; classes, items and zones are data there. `runner.ts` keeps it
+  playing on every screen once `GamesTab` sees a save.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):

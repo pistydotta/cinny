@@ -39,6 +39,7 @@ import {
   GAMES_POKER_PRACTICE_PATH,
   GAMES_POKER_JOIN_PATH,
   GAMES_POKER_TABLE_PATH,
+  GAMES_IDLE_PATH,
 } from './paths';
 import {
   getAppPathFromHref,
@@ -84,6 +85,7 @@ import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import {
   GamesHubPage,
+  IdleGamePage,
   PokerJoinPage,
   PokerLobbyPage,
   PokerPracticePage,
@@ -311,6 +313,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route path={GAMES_POKER_PRACTICE_PATH} element={<PokerPracticePage />} />
         <Route path={GAMES_POKER_TABLE_PATH} element={<PokerTablePage />} />
         <Route path={GAMES_POKER_JOIN_PATH} element={<PokerJoinPage />} />
+        <Route path={GAMES_IDLE_PATH} element={<IdleGamePage />} />
         <Route
           path={INBOX_PATH}
           element={
