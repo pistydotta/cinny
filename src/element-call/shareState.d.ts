@@ -1,0 +1,62 @@
+type Unsubscribable = { unsubscribe: () => void };
+type Stream$<T> = { subscribe: (next: (value: T) => void) => Unsubscribable };
+
+export type RemoteShare = {
+  id: string;
+  userId: string;
+  name: string;
+  hasSound: boolean;
+  watching: boolean;
+  volume: number;
+  muted: boolean;
+  decided: boolean;
+};
+
+export type LocalShare = {
+  name: string;
+  hasSound: boolean;
+  soundOn: boolean;
+  videoTrack: MediaStreamTrack;
+};
+
+export type ShareSnapshot = { local: LocalShare | null; remotes: RemoteShare[] };
+
+// The part of a screen share view model from the Element Call bundle that we use.
+export type ShareVm = {
+  id: string;
+  userId: string;
+  local: boolean;
+  displayName$: Stream$<string>;
+  audioEnabled$?: Stream$<boolean>;
+  adjustPlaybackVolume: (volume: number) => void;
+  commitPlaybackVolume: () => void;
+};
+
+// Accepted by RxJS (combineLatest and friends) through the '@@observable' key.
+export type ShareChanges = {
+  subscribe: (
+    observer: ((revision: number) => void) | { next?: (revision: number) => void }
+  ) => Unsubscribable;
+  '@@observable': () => ShareChanges;
+};
+
+export type ShareStore = {
+  getSnapshot: () => ShareSnapshot;
+  subscribe: (listener: () => void) => () => void;
+  changes: ShareChanges;
+  layoutShares: (vms: ShareVm[]) => ShareVm[];
+  watch: (id: string, volume: number) => void;
+  unwatch: (id: string) => void;
+  setVolume: (id: string, volume: number) => void;
+  setMuted: (id: string, muted: boolean) => void;
+  markDecided: (id: string) => void;
+  setLocalStream: (stream: MediaStream) => void;
+  setLocalSound: (on: boolean) => void;
+};
+
+export function createShareStore(): ShareStore;
+
+export function wrapGetDisplayMedia(
+  mediaDevices: Pick<MediaDevices, 'getDisplayMedia'>,
+  store: ShareStore
+): void;
