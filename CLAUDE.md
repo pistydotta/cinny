@@ -14,9 +14,10 @@ tags it `blazeroom-vN` (the next number) and opens the PR in blazeroom that bump
 `#blazeroom-vN` in `docker-compose.yml`, closing older deploy PRs still open. Merging that
 PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
-- The checks (`test`, `build`, `typecheck`) run on PRs only, in parallel; the merge runs
-  only `release`. A branch rule on `blazeroom` requires those three checks to pass before
-  merging, so a red PR can't ship. Don't push straight to `blazeroom`: nothing would check it.
+- One job, `check` (lint, types, tests, build), runs on PRs only; the merge runs only
+  `release`. Keep it one job: GitHub warned the account about the Actions volume when each
+  PR ran three. A branch rule on `blazeroom` requires `check` to pass before merging, so a
+  red PR can't ship. Don't push straight to `blazeroom`: nothing would check it.
 
 - It needs the `BLAZEROOM_TOKEN` Actions secret on this fork: a fine-grained token with
   access to `pistydotta/blazeroom` only, with Contents and Pull requests set to read and
