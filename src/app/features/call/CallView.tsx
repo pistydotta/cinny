@@ -15,6 +15,7 @@ import * as css from './styles.css';
 import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
+import { MusicBotBar } from '../music-bot/MusicBotBar';
 
 function LivekitServerMissingMessage() {
   return (
@@ -132,6 +133,7 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
   return (
     <Box grow="Yes" direction="Column">
       <Box grow="Yes" ref={containerRef} />
+      {callEmbed && joined && <MusicBotBar />}
       {callEmbed && joined && <CallControls callEmbed={callEmbed} />}
     </Box>
   );
