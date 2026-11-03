@@ -3,7 +3,7 @@ import { formatBig } from './format';
 import { fighterName, itemName, rarityName, skillName } from './labels';
 import { tr } from '../../translation/tr';
 
-export type LogTone = 'good' | 'bad' | 'gold' | 'loot' | undefined;
+export type LogTone = 'good' | 'bad' | 'gold' | 'loot' | 'great' | undefined;
 
 /** One line of the battle log, or undefined for events the log doesn't show. */
 export const logText = (e: GameEvent): { text: string; tone: LogTone } | undefined => {
@@ -34,25 +34,35 @@ export const logText = (e: GameEvent): { text: string; tone: LogTone } | undefin
         }),
         tone: 'gold',
       };
-    case 'loot':
+    case 'loot': {
+      const { item, fate, better } = e.entry;
+      const name = `${itemName(item)} (${rarityName(item.rarity)})`;
+      if (fate !== 'kept') {
+        return {
+          text: tr('games.idle.log.salvaged', '{{item}} broken down into stones', { item: name }),
+          tone: undefined,
+        };
+      }
       return {
-        text: tr('games.idle.log.loot', 'Found: {{item}} ({{rarity}})', {
-          item: itemName(e.item.baseId),
-          rarity: rarityName(e.item.rarity),
-        }),
-        tone: 'loot',
+        text: better
+          ? tr('games.idle.log.loot_better', 'Found: {{item}} — better than yours!', { item: name })
+          : tr('games.idle.log.loot', 'Found: {{item}}', { item: name }),
+        tone: better || ['epic', 'legendary', 'mythic'].includes(item.rarity) ? 'great' : 'loot',
       };
-    case 'sold':
+    }
+    case 'materials':
       return {
-        text: tr('games.idle.log.sold', 'Backpack full: {{item}} sold for {{gold}} gold', {
-          item: itemName(e.item.baseId),
-          gold: formatBig(e.item.value),
-        }),
-        tone: undefined,
+        text:
+          e.cores > 0
+            ? tr('games.idle.log.materials_core', '+{{stones}} ember stones and a fire core', {
+                stones: e.stones,
+              })
+            : tr('games.idle.log.materials', '+{{stones}} ember stones', { stones: e.stones }),
+        tone: 'loot',
       };
     case 'level':
       return {
-        text: tr('games.idle.log.level', 'Level {{level}}! You have a point to spend.', {
+        text: tr('games.idle.log.level', 'Level {{level}}! A new talent point.', {
           level: e.level,
         }),
         tone: 'good',

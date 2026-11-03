@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
-import { getClass } from './engine/classes';
-import { heroMods, heroStats, economy } from './engine/progress';
-import { attributesAt, powerOf, sumMods } from './engine/stats';
-import { ATTRIBUTES, Attribute, GameState, SLOTS, Slot, StatKey } from './engine/types';
+import { SPEC_LEVEL, getClass, getSpec, looksOf, skillsOf } from './engine/classes';
+import { economy, heroStats, totalMods } from './engine/progress';
+import { attributesAt, powerOf } from './engine/stats';
+import { ATTRIBUTES, GameState, SLOTS, Slot, SpecId, StatKey } from './engine/types';
 import { formatBig, formatMod } from './format';
+import { ItemCard, ItemDetails } from './ItemDetails';
 import {
-  RARITY_COLOR,
   attrName,
   classDesc,
   className,
   effectText,
+  modsText,
   roleName,
   skillName,
   slotName,
+  specDesc,
+  specName,
+  statHint,
   statName,
 } from './labels';
-import { ItemDetails } from './ItemDetails';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
@@ -31,6 +34,10 @@ const SHOWN: StatKey[] = [
   'regen',
   'skillPower',
   'cooldownReduction',
+  'thorns',
+  'execute',
+  'rage',
+  'petPower',
 ];
 
 const statValue = (key: StatKey, value: number): string => {
@@ -39,6 +46,10 @@ const statValue = (key: StatKey, value: number): string => {
     case 'dodge':
     case 'lifesteal':
     case 'cooldownReduction':
+    case 'thorns':
+    case 'execute':
+    case 'rage':
+    case 'petPower':
       return formatMod(key, value).slice(1);
     case 'critDamage':
     case 'skillPower':
@@ -46,7 +57,7 @@ const statValue = (key: StatKey, value: number): string => {
     case 'attackSpeed':
       return `${value.toFixed(2).replace('.', ',')}/s`;
     case 'regen':
-      return value.toFixed(1).replace('.', ',');
+      return value < 100 ? value.toFixed(1).replace('.', ',') : formatBig(value);
     default:
       return formatBig(value);
   }
@@ -55,72 +66,117 @@ const statValue = (key: StatKey, value: number): string => {
 type HeroViewProps = {
   state: GameState;
   error?: string;
-  onAllocate: (attr: Attribute) => void;
   onUnequip: (slot: Slot) => void;
+  onSpec: (id: SpecId) => void;
+  onForge: (id: string) => void;
 };
 
-export function HeroView({ state, error, onAllocate, onUnequip }: HeroViewProps) {
+export function HeroView({ state, error, onUnequip, onSpec, onForge }: HeroViewProps) {
   const [picked, setPicked] = useState<Slot>();
+  const [specPick, setSpecPick] = useState<SpecId>();
   const cls = getClass(state.hero.classId);
+  const spec = getSpec(state.hero.specId);
+  const look = looksOf(cls, state.hero.specId);
   const stats = heroStats(state);
-  const attrs = attributesAt(cls, state.hero.level, state.hero.allocated, sumMods(heroMods(state)));
+  const attrs = attributesAt(cls, state.hero.level, totalMods(state));
   const eco = economy(state);
   const pickedItem = picked ? state.equipment[picked] : undefined;
+  const canSpec = !spec && state.hero.level >= SPEC_LEVEL;
 
   return (
     <div className={css.Columns}>
       <div className={css.Panel}>
         <h2 className={css.PanelTitle}>
-          <span style={{ fontSize: 22 }}>{cls.icon}</span>
-          <span style={{ color: cls.color }}>{className(cls.id)}</span>
-          <span className={css.Muted}>· {roleName(cls.role)}</span>
+          <span style={{ fontSize: 26 }}>{look.icon}</span>
+          <span style={{ color: look.color }}>{spec ? specName(spec.id) : className(cls.id)}</span>
+          <span className={css.Muted}>
+            · {spec ? `${className(cls.id)} · ` : ''}
+            {roleName(spec?.role ?? cls.role)}
+          </span>
         </h2>
-        <span className={css.Muted}>{classDesc(cls.id)}</span>
-        <span style={{ fontSize: 13 }}>
-          <b>{skillName(cls.skill.id)}</b>
-          {' — '}
-          {cls.skill.effects.map(effectText).join(' · ')}
-        </span>
-
-        <div className={css.Row} style={{ justifyContent: 'space-between' }}>
-          <h3 className={css.PanelTitle}>{tr('games.idle.attributes', 'Attributes')}</h3>
-          {state.hero.freePoints > 0 && (
-            <span className={css.Pill}>
-              {tr('games.idle.points', '{{count}} points to spend', {
-                count: state.hero.freePoints,
-              })}
+        <span className={css.Muted}>{spec ? specDesc(spec.id) : classDesc(cls.id)}</span>
+        {skillsOf(cls, state.hero.specId).map((sk) => (
+          <span key={sk.id} style={{ fontSize: 13 }}>
+            <b>{skillName(sk.id)}</b>
+            {' — '}
+            {sk.effects.map(effectText).join(' · ')}
+            <span className={css.Mini}>
+              {' · '}
+              {tr('games.idle.cooldown', '{{sec}}s cooldown', { sec: sk.cooldownMs / 1000 })}
             </span>
-          )}
-        </div>
+          </span>
+        ))}
+        {spec && (
+          <span className={css.Mini}>
+            {tr('games.idle.spec_passive', 'Passive: {{mods}}', { mods: modsText(spec.passive) })}
+          </span>
+        )}
+
+        {!spec && (
+          <div
+            className={css.ItemBox}
+            style={{ borderColor: canSpec ? '#ffd36b' : 'rgba(255,255,255,0.1)' }}
+          >
+            <span className={css.Strong}>
+              {canSpec
+                ? `✨ ${tr('games.idle.spec_ready', 'Choose your specialization')}`
+                : tr('games.idle.spec_at', 'Specialization at level {{level}}', {
+                    level: SPEC_LEVEL,
+                  })}
+            </span>
+            <span className={css.Muted}>
+              {tr(
+                'games.idle.spec_hint',
+                'Each class grows in one of two ways, with a second skill and a new passive. The choice is for good and survives rebirths.'
+              )}
+            </span>
+            <div className={css.SpecGrid}>
+              {cls.specs.map((sp) => (
+                <button
+                  key={sp.id}
+                  type="button"
+                  className={css.ClassCard}
+                  aria-pressed={specPick === sp.id}
+                  style={{ borderColor: specPick === sp.id ? sp.color : undefined }}
+                  disabled={!canSpec}
+                  onClick={() => setSpecPick(sp.id)}
+                >
+                  <span className={css.ClassIcon}>{sp.icon}</span>
+                  <span className={css.Strong} style={{ color: sp.color }}>
+                    {specName(sp.id)}
+                  </span>
+                  <span className={css.Mini}>{specDesc(sp.id)}</span>
+                  <span style={{ fontSize: 12 }}>
+                    <b>{skillName(sp.skill.id)}</b>: {sp.skill.effects.map(effectText).join(' · ')}
+                  </span>
+                  <span className={css.Mini}>{modsText(sp.passive)}</span>
+                </button>
+              ))}
+            </div>
+            {canSpec && specPick && (
+              <button type="button" className={css.Button} onClick={() => onSpec(specPick)}>
+                {tr('games.idle.spec_confirm', 'Become {{spec}}', { spec: specName(specPick) })}
+              </button>
+            )}
+          </div>
+        )}
+
+        <h3 className={css.PanelTitle}>{tr('games.idle.attributes', 'Attributes')}</h3>
         <div className={css.StatGrid}>
           {ATTRIBUTES.map((a) => (
-            <div key={a} className={css.StatRow} style={{ alignItems: 'center' }}>
+            <div key={a} className={css.StatRow}>
               <span>
                 {attrName(a)}
                 {a === cls.mainStat && ' ★'}
               </span>
-              <span className={css.Row}>
-                <span className={css.StatValue}>{attrs[a]}</span>
-                {state.hero.freePoints > 0 && (
-                  <button
-                    type="button"
-                    className={css.SmallButton}
-                    onClick={() => onAllocate(a)}
-                    aria-label={tr('games.idle.add_point', 'Add a point to {{attr}}', {
-                      attr: attrName(a),
-                    })}
-                  >
-                    +
-                  </button>
-                )}
-              </span>
+              <span className={css.StatValue}>{attrs[a]}</span>
             </div>
           ))}
         </div>
-        <span className={css.Muted}>
+        <span className={css.Mini}>
           {tr(
             'games.idle.attr_hint',
-            '★ main attribute: raises damage. Vitality: life. Agility: speed, crit and dodge. Strength: armor. Intellect: skills.'
+            'Attributes grow with each level and with gear. ★ main attribute: raises damage. Vitality: life. Agility: speed, crit and dodge. Strength: armor. Intellect: skills.'
           )}
         </span>
 
@@ -131,8 +187,10 @@ export function HeroView({ state, error, onAllocate, onUnequip }: HeroViewProps)
           </span>
         </h3>
         <div className={css.StatGrid}>
-          {SHOWN.map((key) => (
-            <div key={key} className={css.StatRow}>
+          {SHOWN.filter(
+            (key) => !['thorns', 'execute', 'rage', 'petPower'].includes(key) || stats[key] > 0
+          ).map((key) => (
+            <div key={key} className={css.StatRow} title={statHint(key)}>
               <span>{statName(key)}</span>
               <span className={css.StatValue}>{statValue(key, stats[key])}</span>
             </div>
@@ -145,6 +203,10 @@ export function HeroView({ state, error, onAllocate, onUnequip }: HeroViewProps)
             <span>{statName('xpGain')}</span>
             <span className={css.StatValue}>{Math.round(eco.xp * 100)}%</span>
           </div>
+          <div className={css.StatRow}>
+            <span>{statName('dropRate')}</span>
+            <span className={css.StatValue}>{Math.round(eco.drop * 100)}%</span>
+          </div>
         </div>
       </div>
 
@@ -153,17 +215,27 @@ export function HeroView({ state, error, onAllocate, onUnequip }: HeroViewProps)
         <div className={css.SlotGrid}>
           {SLOTS.map((slot) => {
             const item = state.equipment[slot];
-            return (
+            return item ? (
+              <div
+                key={slot}
+                style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}
+              >
+                <ItemCard
+                  item={item}
+                  selected={picked === slot}
+                  onClick={() => setPicked(picked === slot ? undefined : slot)}
+                />
+                <span className={css.Mini}>{slotName(slot)}</span>
+              </div>
+            ) : (
               <button
                 key={slot}
                 type="button"
                 className={css.SlotBox}
-                data-filled={!!item}
-                aria-pressed={picked === slot}
-                style={{ borderColor: item ? RARITY_COLOR[item.rarity] : undefined }}
-                onClick={() => setPicked(picked === slot ? undefined : slot)}
+                data-filled={false}
+                onClick={() => setPicked(undefined)}
               >
-                <span className={css.SlotIcon}>{item ? item.icon : '·'}</span>
+                <span className={css.SlotIcon}>·</span>
                 <span>{slotName(slot)}</span>
               </button>
             );
@@ -172,6 +244,9 @@ export function HeroView({ state, error, onAllocate, onUnequip }: HeroViewProps)
         {pickedItem && picked ? (
           <ItemDetails item={pickedItem}>
             <div className={css.Row}>
+              <button type="button" className={css.Button} onClick={() => onForge(pickedItem.id)}>
+                ⚒️ {tr('games.idle.to_forge', 'Forge')}
+              </button>
               <button
                 type="button"
                 className={css.GhostButton}
@@ -188,7 +263,7 @@ export function HeroView({ state, error, onAllocate, onUnequip }: HeroViewProps)
           <span className={css.Muted}>
             {tr(
               'games.idle.equipment_hint',
-              'Tap a slot to see the piece. New gear drops into the backpack.'
+              'Tap a piece to see it. New gear goes to the backpack.'
             )}
           </span>
         )}

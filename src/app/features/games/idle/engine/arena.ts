@@ -1,10 +1,11 @@
-import { CLASSES, getClass } from './classes';
+import { CLASSES, SPEC_LEVEL, getClass, looksOf, skillsOf } from './classes';
 import { makeFighter, outcomeOf, stepBattle } from './combat';
-import { generateItem } from './items';
+import { generateItem, itemMods } from './items';
 import { createRng, hashSeed, pick, rollInt } from './rng';
+import { altarMore } from './prestige';
 import { heroStats } from './progress';
 import { computeStats, powerOf } from './stats';
-import { ArenaRecord, Attributes, ClassId, CombatEvent, GameState, SLOTS, Stats } from './types';
+import { ArenaRecord, ClassId, CombatEvent, GameState, SLOTS, SpecId, Stats } from './types';
 
 // PvP, built to go online later. A fighter is a snapshot: a frozen copy of a hero's final
 // stats. Today the rivals are made up here; later the server hands out other players'
@@ -16,9 +17,11 @@ export type HeroSnapshot = {
   id: string;
   name: string;
   classId: ClassId;
+  specId?: SpecId;
   level: number;
   stats: Stats;
   rating: number;
+  rebirths: number;
 };
 
 export const DUEL_LIMIT_MS = 60000;
@@ -27,9 +30,11 @@ export const toSnapshot = (s: GameState, id: string): HeroSnapshot => ({
   id,
   name: s.hero.name,
   classId: s.hero.classId,
+  specId: s.hero.specId,
   level: s.hero.level,
   stats: heroStats(s),
   rating: s.arena.rating,
+  rebirths: s.prestige.rebirths,
 });
 
 export type DuelResult = {
@@ -46,8 +51,8 @@ export const duel = (a: HeroSnapshot, b: HeroSnapshot, seed: number): DuelResult
   const ca = getClass(a.classId);
   const cb = getClass(b.classId);
   const battle = {
-    hero: makeFighter(a.name, ca.icon, a.level, a.stats, ca.skill),
-    foe: makeFighter(b.name, cb.icon, b.level, b.stats, cb.skill),
+    hero: makeFighter(a.name, looksOf(ca, a.specId).icon, a.level, a.stats, skillsOf(ca, a.specId)),
+    foe: makeFighter(b.name, looksOf(cb, b.specId).icon, b.level, b.stats, skillsOf(cb, b.specId)),
     elapsedMs: 0,
     boss: false,
     timeLimitMs: DUEL_LIMIT_MS,
@@ -103,25 +108,28 @@ export const rivalsFor = (s: GameState, userId: string, day: string): HeroSnapsh
     const cls = pick(rng, CLASSES);
     const level = Math.max(1, s.hero.level + rollInt(rng, -2, 2));
     const gearLevel = Math.max(1, Math.round(s.maxStage * (1 + spread)));
-    const mods = SLOTS.map(
-      (slot, n) =>
+    const mods = SLOTS.map((slot, n) =>
+      itemMods(
         generateItem(rng, cls, `r${i}-${n}`, {
           level: gearLevel,
           kind: slot,
           rarity: pick(rng, ['uncommon', 'rare', 'rare', 'epic'] as const),
-        }).mods
+        })
+      )
     );
+    const spec = level >= SPEC_LEVEL ? pick(rng, cls.specs) : undefined;
+    // Talents, roughly: a point per level split between damage and life.
     const points = level - 1;
-    const allocated: Attributes = { str: 0, agi: 0, int: 0, vit: 0 };
-    allocated[cls.mainStat] = Math.ceil(points / 2);
-    allocated.vit = Math.floor(points / 2);
+    mods.push({ damagePct: 0.02 * points, maxHpPct: 0.02 * points }, spec?.passive ?? {});
     return {
       id: `rival:${i}`,
       name: pick(rng, RIVAL_NAMES),
       classId: cls.id,
+      specId: spec?.id,
       level,
-      stats: computeStats({ cls, level, allocated, mods }),
+      stats: computeStats({ cls, level, mods, more: altarMore(s.prestige) }),
       rating: Math.max(0, s.arena.rating + Math.round(spread * 400) + rollInt(rng, -25, 25)),
+      rebirths: s.prestige.rebirths,
     };
   });
 };

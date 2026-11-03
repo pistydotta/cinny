@@ -15,9 +15,21 @@ type EnemyDef = {
   skill?: SkillDef;
 };
 
+/** What floats in the air of a zone's battle background. */
+export type Ambient =
+  | 'leaves'
+  | 'embers'
+  | 'spores'
+  | 'snow'
+  | 'ash'
+  | 'bubbles'
+  | 'sparks'
+  | 'void';
+
 export type ZoneDef = {
   id: string;
   icon: string;
+  ambient: Ambient;
   /** Two colors for the battle background. */
   sky: [string, string];
   enemies: EnemyDef[];
@@ -29,6 +41,7 @@ export type ZoneDef = {
 export const ZONES: ZoneDef[] = [
   {
     id: 'whispering_woods',
+    ambient: 'leaves',
     icon: '🌲',
     sky: ['#1d3b2a', '#0b1a12'],
     enemies: [
@@ -48,6 +61,7 @@ export const ZONES: ZoneDef[] = [
   },
   {
     id: 'ash_mines',
+    ambient: 'embers',
     icon: '⛏️',
     sky: ['#3b2a1d', '#140c06'],
     enemies: [
@@ -67,6 +81,7 @@ export const ZONES: ZoneDef[] = [
   },
   {
     id: 'rot_marsh',
+    ambient: 'spores',
     icon: '🍄',
     sky: ['#2b3320', '#0e120a'],
     enemies: [
@@ -90,6 +105,7 @@ export const ZONES: ZoneDef[] = [
   },
   {
     id: 'frost_peaks',
+    ambient: 'snow',
     icon: '🏔️',
     sky: ['#1d2e3b', '#070d14'],
     enemies: [
@@ -116,6 +132,7 @@ export const ZONES: ZoneDef[] = [
   },
   {
     id: 'infernal_citadel',
+    ambient: 'ash',
     icon: '🏰',
     sky: ['#3b1d1d', '#140606'],
     enemies: [
@@ -140,6 +157,111 @@ export const ZONES: ZoneDef[] = [
       },
     },
   },
+  {
+    id: 'sunken_temple',
+    ambient: 'bubbles',
+    icon: '🏛️',
+    sky: ['#16323b', '#050f14'],
+    enemies: [
+      { id: 'naga', icon: '🧜', hp: 1.1, damage: 1.1, attackSpeed: 1.1, armor: 1 },
+      { id: 'crab', icon: '🦀', hp: 1.5, damage: 0.9, attackSpeed: 0.8, armor: 3 },
+      { id: 'eel', icon: '🐟', hp: 0.7, damage: 1.2, attackSpeed: 1.6, armor: 0.4, dodge: 0.12 },
+    ],
+    boss: {
+      id: 'kraken',
+      icon: '🦑',
+      hp: 9.5,
+      damage: 1.6,
+      attackSpeed: 1.1,
+      armor: 3,
+      skill: {
+        id: 'tidal_crush',
+        cooldownMs: 7000,
+        effects: [
+          { kind: 'strike', multiplier: 0.8, hits: 3 },
+          { kind: 'stun', durationMs: 700 },
+        ],
+      },
+    },
+  },
+  {
+    id: 'storm_spire',
+    ambient: 'sparks',
+    icon: '🌩️',
+    sky: ['#232447', '#0a0a1a'],
+    enemies: [
+      { id: 'gargoyle', icon: '🗿', hp: 1.5, damage: 1.1, attackSpeed: 0.8, armor: 3 },
+      {
+        id: 'storm_hawk',
+        icon: '🦅',
+        hp: 0.8,
+        damage: 1.2,
+        attackSpeed: 1.6,
+        armor: 0.5,
+        dodge: 0.15,
+      },
+      {
+        id: 'sparkling',
+        icon: '⚡',
+        hp: 0.9,
+        damage: 1.4,
+        attackSpeed: 1.2,
+        armor: 0.8,
+        crit: 0.15,
+      },
+    ],
+    boss: {
+      id: 'thunder_titan',
+      icon: '🌪️',
+      hp: 10,
+      damage: 1.8,
+      attackSpeed: 1,
+      armor: 3.5,
+      skill: {
+        id: 'thunderclap',
+        cooldownMs: 6500,
+        effects: [
+          { kind: 'strike', multiplier: 2.2 },
+          { kind: 'curse', mods: { attackSpeedPct: -0.25 }, durationMs: 4000 },
+        ],
+      },
+    },
+  },
+  {
+    id: 'void_rift',
+    ambient: 'void',
+    icon: '🌌',
+    sky: ['#24123b', '#06020d'],
+    enemies: [
+      { id: 'voidling', icon: '👾', hp: 0.9, damage: 1.3, attackSpeed: 1.3, armor: 0.8 },
+      {
+        id: 'mind_flayer',
+        icon: '🦑',
+        hp: 1.2,
+        damage: 1.2,
+        attackSpeed: 1,
+        armor: 1.5,
+        crit: 0.12,
+      },
+      { id: 'star_eater', icon: '🌑', hp: 1.8, damage: 1.1, attackSpeed: 0.7, armor: 2.5 },
+    ],
+    boss: {
+      id: 'void_herald',
+      icon: '👁️',
+      hp: 11,
+      damage: 1.9,
+      attackSpeed: 1.1,
+      armor: 4,
+      skill: {
+        id: 'unmaking',
+        cooldownMs: 7000,
+        effects: [
+          { kind: 'drain', multiplier: 2.2, healPct: 0.6 },
+          { kind: 'curse', mods: { damagePct: -0.2 }, durationMs: 5000 },
+        ],
+      },
+    },
+  },
 ];
 
 export const STAGES_PER_ZONE = 10;
@@ -157,7 +279,7 @@ export const loopOf = (stage: number): number =>
 
 /** The baseline enemy at a stage. Grows faster than gear, so new gear keeps mattering. */
 export const stageBaseline = (stage: number) => {
-  const g = 1.085 ** (stage - 1);
+  const g = 1.12 ** (stage - 1);
   return { hp: 38 * g + stage * 6, damage: 4.2 * g + stage * 0.6, armor: 2 + stage * 1.5 };
 };
 
@@ -178,8 +300,12 @@ export const makeEnemy = (stage: number, rng: Rng): Fighter => {
     regen: 0,
     skillPower: 1,
     cooldownReduction: 0,
+    thorns: 0,
+    execute: 0,
+    rage: 0,
+    petPower: 0,
   };
-  return makeFighter(def.id, def.icon, stage, stats, def.skill);
+  return makeFighter(def.id, def.icon, stage, stats, def.skill ? [def.skill] : []);
 };
 
 export const rewardsFor = (stage: number, boss: boolean) => {
@@ -188,6 +314,6 @@ export const rewardsFor = (stage: number, boss: boolean) => {
   return {
     gold: Math.round((4 + stage) * g * mult),
     xp: Math.round((6 + stage * 1.5 + stage ** 1.4 * 0.5) * mult),
-    dropChance: boss ? 1 : 0.12,
+    dropChance: boss ? 1 : 0.14,
   };
 };

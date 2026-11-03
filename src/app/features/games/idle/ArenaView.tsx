@@ -7,10 +7,10 @@ import {
   snapshotPower,
   toSnapshot,
 } from './engine/arena';
-import { getClass } from './engine/classes';
+import { getClass, looksOf } from './engine/classes';
 import { GameState } from './engine/types';
 import { formatBig } from './format';
-import { className } from './labels';
+import { className, specName } from './labels';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
@@ -46,7 +46,7 @@ export function ArenaView({ state, userId, onFight }: ArenaViewProps) {
         <span className={css.Muted}>
           {tr(
             'games.idle.arena_hint',
-            'Duel other heroes. For now they are rivals made to match you; soon it will be your friends’ heroes.'
+            'Duel other heroes. For now they are rivals made to match you; next come the heroes of other players, with a ranking.'
           )}
         </span>
         <div className={css.Row}>
@@ -65,16 +65,16 @@ export function ArenaView({ state, userId, onFight }: ArenaViewProps) {
         </div>
         <div className={css.List}>
           {rivals.map((r) => {
-            const cls = getClass(r.classId);
+            const look = looksOf(getClass(r.classId), r.specId);
             return (
               <div key={r.id} className={css.ListItem}>
-                <span className={css.ListIcon} style={{ background: `${cls.color}33` }}>
-                  {cls.icon}
+                <span className={css.ListIcon} style={{ background: `${look.color}33` }}>
+                  {look.icon}
                 </span>
                 <div className={css.Grow}>
                   <div className={css.Strong}>{r.name}</div>
                   <div className={css.Muted}>
-                    {className(r.classId)} ·{' '}
+                    {r.specId ? specName(r.specId) : className(r.classId)} ·{' '}
                     {tr('games.idle.lv', 'Lv {{level}}', { level: r.level })}
                     {' · '}
                     {tr('games.idle.power', 'Power {{power}}', {

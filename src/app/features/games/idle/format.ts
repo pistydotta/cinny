@@ -12,6 +12,15 @@ const PERCENT: ModKey[] = [
   'cooldownReduction',
   'goldFind',
   'xpGain',
+  'armorPct',
+  'regenPct',
+  'thorns',
+  'execute',
+  'rage',
+  'petPower',
+  'dropRate',
+  'forgeChance',
+  'salvageYield',
 ];
 
 export const isPercent = (key: ModKey): boolean => PERCENT.includes(key);
@@ -33,7 +42,8 @@ export const formatMod = (key: ModKey, value: number): string => {
   const abs = Math.abs(value);
   if (isPercent(key)) {
     const pct = abs * 100;
-    return `${sign}${(Math.round(pct * 10) / 10).toString().replace('.', ',')}%`;
+    const digits = pct < 1 ? 100 : 10;
+    return `${sign}${(Math.round(pct * digits) / digits).toString().replace('.', ',')}%`;
   }
   if (abs < 10 && !Number.isInteger(abs)) return `${sign}${abs.toFixed(1).replace('.', ',')}`;
   return `${sign}${formatBig(abs)}`;
@@ -46,3 +56,7 @@ export const formatDuration = (ms: number): string => {
   if (min > 0) return `${min}min`;
   return `${Math.max(1, Math.floor(ms / 1000))}s`;
 };
+
+/** A change, signed and colored by the caller: "+17", "−3,5%". Zero is "±0". */
+export const formatDelta = (key: ModKey, value: number): string =>
+  Math.abs(value) < 1e-9 ? '±0' : formatMod(key, value);

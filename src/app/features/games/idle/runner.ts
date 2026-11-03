@@ -3,7 +3,7 @@ import { STEP_MS } from './engine/combat';
 import { OfflineReport, REPLAY_MS, catchUp } from './engine/offline';
 import { advance, newGame } from './engine/progress';
 import { hashSeed } from './engine/rng';
-import { deserialize, serialize } from './engine/save';
+import { deserialize, isOldSave, serialize } from './engine/save';
 import { ClassId, GameEvent, GameState } from './engine/types';
 
 // Keeps the game going while the app is open, on any screen: one runner per logged-in user,
@@ -24,6 +24,8 @@ export type IdleView = {
   recent: GameEvent[];
   /** Changes on every update, since `state` is the same object stepped in place. */
   tick: number;
+  /** The save was from before the rework and was dropped. */
+  wiped: boolean;
 };
 
 const LOG_SIZE = 60;
@@ -62,6 +64,8 @@ export type IdleRunner = {
   /** For actions that change the state and return more than that (the arena). */
   replace: (state: GameState) => void;
   dismissOffline: () => void;
+  /** Every batch of events as it happens, for the battle effects. */
+  onEvents: (listener: (events: GameEvent[], spanMs: number) => void) => () => void;
   abandon: () => void;
   stop: () => void;
 };
@@ -69,12 +73,15 @@ export type IdleRunner = {
 const createRunner = (userId: string): IdleRunner => {
   const key = storageKey(userId);
   const listeners = new Set<() => void>();
-  let state = deserialize(readStorage(key));
+  const eventListeners = new Set<(events: GameEvent[], spanMs: number) => void>();
+  const stored = readStorage(key);
+  let state = deserialize(stored);
+  const wiped = !state && isOldSave(stored);
   let log: LogEntry[] = [];
   let logId = 0;
   let offline: OfflineReport | undefined;
   let recent: GameEvent[] = [];
-  let view: IdleView = { state, log, recent, tick: 0 };
+  let view: IdleView = { state, log, recent, tick: 0, wiped };
   let carry = 0;
   let lastTick = Date.now();
   let lastSave = Date.now();
@@ -82,7 +89,7 @@ const createRunner = (userId: string): IdleRunner => {
   let stopped = false;
 
   const publish = () => {
-    view = { state, log, offline, recent, tick: view.tick + 1 };
+    view = { state, log, offline, recent, tick: view.tick + 1, wiped: wiped && !state };
     listeners.forEach((l) => l());
   };
 
@@ -93,7 +100,7 @@ const createRunner = (userId: string): IdleRunner => {
   };
 
   // Blow by blow would push everything else out, so hits only reach `recent`.
-  const NOISE = new Set<GameEvent['t']>(['hit', 'dodge', 'heal']);
+  const NOISE = new Set<GameEvent['t']>(['hit', 'dodge', 'heal', 'pet', 'thorns']);
   const pushLog = (events: GameEvent[]) => {
     recent = events;
     const kept = events.filter((e) => !NOISE.has(e.t));
@@ -116,7 +123,9 @@ const createRunner = (userId: string): IdleRunner => {
       recent = [];
       carry = 0;
     } else {
-      pushLog(advance(state, gap));
+      const events = advance(state, gap);
+      pushLog(events);
+      if (events.length > 0) eventListeners.forEach((l) => l(events, gap));
       carry = gap % STEP_MS;
     }
     state.lastSeen = now;
@@ -150,7 +159,7 @@ const createRunner = (userId: string): IdleRunner => {
       state.lastSeen = Date.now();
       save();
     }
-    view = { state, log, offline, recent, tick: 1 };
+    view = { state, log, offline, recent, tick: 1, wiped };
     schedule();
   }
 
@@ -192,6 +201,12 @@ const createRunner = (userId: string): IdleRunner => {
       state = next;
       save();
       publish();
+    },
+    onEvents: (listener) => {
+      eventListeners.add(listener);
+      return () => {
+        eventListeners.delete(listener);
+      };
     },
     dismissOffline: () => {
       offline = undefined;
