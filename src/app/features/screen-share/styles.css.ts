@@ -17,8 +17,16 @@ export const Controls = style({
   padding: `${config.space.S200} ${config.space.S400} 0`,
 });
 
+// On a phone the name, mute, slider and Stop watching don't fit on one line: the controls wrap
+// under the name instead of squeezing it to nothing.
 export const Row = style({
   minHeight: toRem(36),
+  flexWrap: 'wrap',
+  rowGap: config.space.S100,
+});
+
+export const Name = style({
+  minWidth: toRem(120),
 });
 
 export const Slider = style({

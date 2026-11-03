@@ -17,7 +17,7 @@ export function WatchControls({ callEmbed }: { callEmbed: CallEmbed }) {
     <Box className={css.Controls} direction="Column" gap="100">
       {watched.map((share) => (
         <Box key={share.id} className={css.Row} alignItems="Center" gap="300">
-          <Box grow="Yes">
+          <Box className={css.Name} grow="Yes">
             <Text size="T300" truncate>
               {share.name}
             </Text>
