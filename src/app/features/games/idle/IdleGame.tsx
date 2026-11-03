@@ -31,6 +31,7 @@ import { formatBig, formatDuration } from './format';
 import { className, specName } from './labels';
 import { newCount } from './itemView';
 import { useIdleGame } from './useIdleGame';
+import { CloudView } from './runner';
 import { ClassPicker } from './ClassPicker';
 import { BattleView } from './BattleView';
 import { HeroView } from './HeroView';
@@ -76,6 +77,20 @@ const errorText = (e: ActionError): string => {
   }
 };
 
+const cloudPill = (cloud: CloudView): { icon: string; text: string } | undefined => {
+  switch (cloud.status) {
+    case 'saved':
+      return { icon: '☁️', text: tr('games.idle.cloud.saved', 'Saved') };
+    case 'saving':
+    case 'loading':
+      return { icon: '☁️', text: tr('games.idle.cloud.saving', 'Saving…') };
+    case 'error':
+      return { icon: '⚠️', text: tr('games.idle.cloud.error', 'Offline: saved on this device') };
+    default:
+      return undefined;
+  }
+};
+
 type IdleGameProps = {
   userId: string;
   defaultName: string;
@@ -88,7 +103,8 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
   const [error, setError] = useState<string>();
   const [forgeItem, setForgeItem] = useState<string>();
   const [confirmAbandon, setConfirmAbandon] = useState(false);
-  const { state, offline } = view;
+  const { state, offline, cloud } = view;
+  const pill = cloudPill(cloud);
 
   const run = (action: (s: GameState) => ActionResult) => {
     const result = runner.dispatch(action);
@@ -124,6 +140,18 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
       </div>
       {state && (
         <div className={css.Row}>
+          {pill && (
+            <span
+              className={css.Pill}
+              title={tr(
+                'games.idle.cloud.hint',
+                'Your hero is saved on the server and follows you to other devices.'
+              )}
+              style={{ fontWeight: 600, color: cloud.status === 'error' ? '#ffb4ad' : undefined }}
+            >
+              {pill.icon} <span className={css.Mini}>{pill.text}</span>
+            </span>
+          )}
           <span className={css.Pill} title={tr('games.idle.gold', 'Gold')}>
             🪙 <span className={css.GoldText}>{formatBig(state.gold)}</span>
           </span>
@@ -220,6 +248,27 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
             </span>
           )}
         </div>
+
+        {cloud.status === 'elsewhere' && (
+          <div className={css.Banner}>
+            <span style={{ fontSize: 26 }}>📱</span>
+            <div className={css.Grow}>
+              <div className={css.Strong}>
+                {tr('games.idle.cloud.elsewhere_title', 'Your hero is playing on another device')}
+                {cloud.device && ` (${cloud.device})`}
+              </div>
+              <div className={css.Muted}>
+                {tr(
+                  'games.idle.cloud.elsewhere_text',
+                  'It’s paused here so the two don’t overwrite each other. Play here to bring it over with everything it did there.'
+                )}
+              </div>
+            </div>
+            <button type="button" className={css.Button} onClick={runner.playHere}>
+              {tr('games.idle.cloud.play_here', 'Play here')}
+            </button>
+          </div>
+        )}
 
         {offline && (
           <div className={css.Banner}>

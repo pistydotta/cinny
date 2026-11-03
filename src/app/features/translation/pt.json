@@ -1310,7 +1310,16 @@
         "recent": "Mais novos"
       },
       "altar_title": "Altar das Cinzas",
-      "rebirth_preview": "Na fase {{stage}} rende {{ashes}} cinzas"
+      "rebirth_preview": "Na fase {{stage}} rende {{ashes}} cinzas",
+      "cloud": {
+        "saved": "Salvo",
+        "saving": "Salvando…",
+        "error": "Sem conexão: salvo neste aparelho",
+        "hint": "Seu herói fica salvo no servidor e vai junto para outros aparelhos.",
+        "elsewhere_title": "Seu herói está jogando em outro aparelho",
+        "elsewhere_text": "Aqui ele fica pausado para um não sobrescrever o outro. Jogue aqui para trazer ele com tudo o que fez lá.",
+        "play_here": "Jogar aqui"
+      }
     }
   },
   "music_bot": {
