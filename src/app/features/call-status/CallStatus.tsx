@@ -14,6 +14,7 @@ import { CallEmbed } from '../../plugins/call/CallEmbed';
 import { useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallSpeakers } from '../../hooks/useCallSpeakers';
 import { MemberSpeaking } from './MemberSpeaking';
+import { ShareAutoWatch } from '../screen-share/ShareAutoWatch';
 
 type CallStatusProps = {
   callEmbed: CallEmbed;
@@ -39,6 +40,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       alignItems={compact ? undefined : 'Center'}
       direction={compact ? 'Column' : 'Row'}
     >
+      <ShareAutoWatch callEmbed={callEmbed} />
       <Box grow="Yes" alignItems="Center" gap="200">
         {memberVisible ? (
           <Box shrink="No">

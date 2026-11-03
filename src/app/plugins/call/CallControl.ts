@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import { CallControlState } from './CallControlState';
 import { ElementMediaStateDetail, ElementMediaStatePayload, ElementWidgetActions } from './types';
 import { addsAudio } from '../../../element-call/addsAudio';
+import type { ShareStore } from '../../../element-call/shareState';
 
 export enum CallControlEvent {
   StateUpdate = 'state_update',
@@ -13,7 +14,7 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private call: ClientWidgetApi;
 
-  private iframe: HTMLIFrameElement;
+  public readonly iframe: HTMLIFrameElement;
 
   private bodyMutationObserver: MutationObserver;
 
@@ -25,6 +26,11 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private get document(): Document | undefined {
     return this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
+  }
+
+  // Set by blazeroom-screenshare.js inside the call page, which shares our origin.
+  public get shares(): ShareStore | undefined {
+    return (this.iframe.contentWindow as { blazeroomShares?: ShareStore } | null)?.blazeroomShares;
   }
 
   private get screenshareButton(): HTMLElement | undefined {
