@@ -376,7 +376,14 @@
     "stop_watching": "Parar de assistir",
     "volume": "Volume da live",
     "mute": "Mutar live",
-    "unmute": "Ativar som da live"
+    "unmute": "Ativar som da live",
+    "you_are_live": "Você está ao vivo",
+    "your_screen": "Sua tela",
+    "pc_sound_on": "Som do PC: ligado",
+    "pc_sound_off": "Som do PC: desligado",
+    "no_sound": "Sem som",
+    "stop": "Parar",
+    "badge": "Ao vivo"
   },
   "profile_description": {
     "title": "Descrição",

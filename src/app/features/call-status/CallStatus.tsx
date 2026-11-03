@@ -15,6 +15,7 @@ import { useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallSpeakers } from '../../hooks/useCallSpeakers';
 import { MemberSpeaking } from './MemberSpeaking';
 import { ShareAutoWatch } from '../screen-share/ShareAutoWatch';
+import { LiveBadge } from '../screen-share/LiveBadge';
 
 type CallStatusProps = {
   callEmbed: CallEmbed;
@@ -49,6 +50,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
         ) : (
           <Spinner variant="Secondary" size="200" />
         )}
+        <LiveBadge callEmbed={callEmbed} />
         <Box grow="Yes" alignItems="Center" gap="Inherit">
           {!compact && (
             <>

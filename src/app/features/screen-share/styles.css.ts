@@ -42,3 +42,12 @@ const thumb = {
 
 globalStyle(`${Slider}::-webkit-slider-thumb`, thumb);
 globalStyle(`${Slider}::-moz-range-thumb`, thumb);
+
+export const Preview = style({
+  width: toRem(72),
+  height: toRem(40),
+  flexShrink: 0,
+  objectFit: 'contain',
+  borderRadius: config.radii.R300,
+  backgroundColor: color.Background.Container,
+});
