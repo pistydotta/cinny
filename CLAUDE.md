@@ -14,9 +14,10 @@ tags it `blazeroom-vN` (the next number) and opens the PR in blazeroom that bump
 `#blazeroom-vN` in `docker-compose.yml`, closing older deploy PRs still open. Merging that
 PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
-- The checks (`test`, `build`, `typecheck`) run on PRs only, in parallel; the merge runs
-  only `release`. A branch rule on `blazeroom` requires those three checks to pass before
-  merging, so a red PR can't ship. Don't push straight to `blazeroom`: nothing would check it.
+- One job, `check` (lint, types, tests, build), runs on PRs only; the merge runs only
+  `release`. Keep it one job: GitHub warned the account about the Actions volume when each
+  PR ran three. A branch rule on `blazeroom` requires `check` to pass before merging, so a
+  red PR can't ship. Don't push straight to `blazeroom`: nothing would check it.
 
 - It needs the `BLAZEROOM_TOKEN` Actions secret on this fork: a fine-grained token with
   access to `pistydotta/blazeroom` only, with Contents and Pull requests set to read and
@@ -28,7 +29,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `games`, `pinned-chats`, `screen-share`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `pinned-chats`, `games`, `screen-share`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -37,6 +38,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   none: it shows the view the API sends and posts the player's action. The credits wallet
   (`games/credits`) is the API's too. `games/legacy` only cleans up the old Matrix-room tables and
   can go once people have opened the app.
+- `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser and saves in
+  localStorage. `engine/` is plain, deterministic TS (seeded rng in the save, time passed in), so a
+  server can replay fights later for PvP; classes, items and zones are data there. `runner.ts` keeps it
+  playing on every screen once `GamesTab` sees a save.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):
@@ -98,5 +103,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 - A MatrixRTC session's `memberships` starts empty and fills in a moment later, with only the
   session's own `MembershipsChanged` to say so: after a reload the manager's `SessionStarted` doesn't
   fire. Use `useCallMembers`, or `roomsInCallAtom` for all rooms.
+- The music bot (`features/music-bot`) isn't in the call: the blazeroom API fetches each song with
+  yt-dlp and keeps each room's queue, and the app of everyone in that room's call plays the file in
+  sync (`MusicBotPlayer`, mounted beside the call). So it needs no LiveKit or E2EE, and nobody hears
+  it through someone else's microphone. `/play`, `/skip` and `/stop` in the chat call the API; they
+  send nothing to the room.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

@@ -29,6 +29,30 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     ],
   },
   {
+    id: '2026-11-idle-rpg',
+    items: () => [
+      {
+        title: tr('whats_new.idle_title', 'New game: Ember Chronicles'),
+        body: tr(
+          'whats_new.idle_body',
+          'An idle RPG in the Games tab. Pick one of 10 classes, collect gear, arrange your backpack and climb stages, even with the app on another screen. There is an arena for duels too.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-music-bot',
+    items: () => [
+      {
+        title: tr('whats_new.music_bot_title', 'A music bot in calls'),
+        body: tr(
+          'whats_new.music_bot_body',
+          "In a call, paste a YouTube, Spotify, SoundCloud or other link (or just the song's name) in the bot's bar, or type /play in the room's chat. Everyone in the call listens together, each at their own volume."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-always-joined-pins',
     items: () => [
       {

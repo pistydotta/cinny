@@ -12,6 +12,7 @@ import { FeatureCheck } from './FeatureCheck';
 import { createRouter } from './Router';
 import { ScreenSizeProvider, useScreenSize } from '../hooks/useScreenSize';
 import { useCompositionEndTracking } from '../hooks/useComposingCheck';
+import { AppBackground } from '../features/app-background/AppBackground';
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ function App() {
               </ClientConfigLoader>
             </FeatureCheck>
           </ScreenSizeProvider>
+          <AppBackground />
         </OverlayContainerProvider>
       </PopOutContainerProvider>
     </TooltipContainerProvider>

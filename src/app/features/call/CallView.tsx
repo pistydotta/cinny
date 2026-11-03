@@ -18,6 +18,7 @@ import { webRTCSupported } from '../../utils/rtc';
 import { LiveCards } from '../screen-share/LiveCards';
 import { WatchControls } from '../screen-share/WatchControls';
 import { ShareBar } from '../screen-share/ShareBar';
+import { MusicBotBar } from '../music-bot/MusicBotBar';
 
 function LivekitServerMissingMessage() {
   return (
@@ -138,6 +139,7 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
       <Box grow="Yes" ref={containerRef} />
       {callEmbed && joined && <WatchControls callEmbed={callEmbed} />}
       {callEmbed && joined && <ShareBar callEmbed={callEmbed} />}
+      {callEmbed && joined && <MusicBotBar />}
       {callEmbed && joined && <CallControls callEmbed={callEmbed} />}
     </Box>
   );
