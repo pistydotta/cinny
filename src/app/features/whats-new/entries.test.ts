@@ -38,6 +38,25 @@ describe('shownItems', () => {
     expect(shownItems(withApp, true).map((i) => i.title)).toEqual(['b']);
     expect(shownItems(withApp, false).map((i) => i.title)).toEqual(['app', 'b']);
   });
+
+  it('shows at most 5 items, newest first', () => {
+    const many = (id: string): WhatsNewEntry => ({
+      id,
+      items: () => [1, 2, 3].map((n) => ({ title: `${id}${n}`, body: '' })),
+    });
+    expect(shownItems([many('c'), many('b'), many('a')], false).map((i) => i.title)).toEqual([
+      'c1',
+      'c2',
+      'c3',
+      'b1',
+      'b2',
+    ]);
+  });
+
+  it("hidden items don't take a place", () => {
+    const list = [entry('app', true), ...'abcdef'.split('').map((id) => entry(id))];
+    expect(shownItems(list, true).map((i) => i.title)).toEqual(['a', 'b', 'c', 'd', 'e']);
+  });
 });
 
 describe('WHATS_NEW', () => {

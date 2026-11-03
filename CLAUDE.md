@@ -28,7 +28,7 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `games`, `pinned-chats`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `games`, `pinned-chats`, `screen-share`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -43,6 +43,12 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   the eslint and prettier lists, and the tsc grep for files that don't import the SDK.
 
 ## Traps already hit
+
+- `src/element-call/patchElementCall.js` holds minified text from the pinned Element Call, so
+  upgrading that package fails the build until the replacements are redone. The patch filters
+  Element Call's share list (`j` in the call view model) through `window.blazeroomShares`, which
+  `blazeroom-screenshare.js` sets. Subscriptions decide what a client downloads (`setSubscribed`):
+  `adaptiveStream` alone didn't stop the download, and LiveKit's `attach` skips a volume of 0.
 
 - `npx tsc --noEmit` prints many TS2614 errors from upstream (`matrix-js-sdk` imports).
   They're upstream noise; CI only fails on errors in our own SDK-free files. Check that
