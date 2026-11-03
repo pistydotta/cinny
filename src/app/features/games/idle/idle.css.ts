@@ -61,7 +61,7 @@ export const Subtitle = style({
   color: MUTED,
 });
 
-export const Grow = style({ flexGrow: 1, minWidth: 0 });
+export const Grow = style({ flex: '1 1 160px', minWidth: 0 });
 
 export const Pill = style({
   display: 'inline-flex',
@@ -184,6 +184,16 @@ export const Columns = style({
   alignItems: 'start',
 });
 
+export const BattleColumns = style({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 3fr) minmax(280px, 2fr)',
+  gap: 16,
+  alignItems: 'start',
+  '@media': {
+    '(max-width: 820px)': { gridTemplateColumns: 'minmax(0, 1fr)' },
+  },
+});
+
 export const Row = style({
   display: 'flex',
   alignItems: 'center',
@@ -264,6 +274,7 @@ export const StageLine = style({
 export const StageName = style({ fontSize: 17, fontWeight: 900 });
 
 export const Versus = style({
+  width: '100%',
   display: 'grid',
   gridTemplateColumns: '1fr auto 1fr',
   alignItems: 'center',
@@ -281,33 +292,89 @@ const bob = keyframes({
   '50%': { transform: 'translateY(-4px)' },
 });
 
-const hit = keyframes({
-  '0%': { transform: 'translateX(0)', filter: 'none' },
-  '30%': { transform: 'translateX(-4px)', filter: 'brightness(1.8)' },
-  '60%': { transform: 'translateX(3px)' },
-  '100%': { transform: 'translateX(0)', filter: 'none' },
-});
-
 export const FighterCard = style({
+  position: 'relative',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   gap: 6,
   padding: 12,
   borderRadius: 14,
-  background: 'rgba(0,0,0,0.3)',
+  background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 100%)',
   minWidth: 0,
   textAlign: 'center',
 });
 
+export const FxCanvas = style({
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+  zIndex: 2,
+});
+
+export const ArenaTop = style({ position: 'relative', zIndex: 3 });
+
+export const Stage = style({
+  position: 'relative',
+  zIndex: 1,
+  willChange: 'transform',
+  minHeight: 230,
+  display: 'flex',
+  alignItems: 'flex-end',
+});
+
+export const Ground = style({
+  position: 'absolute',
+  left: '-16px',
+  right: '-16px',
+  bottom: -18,
+  height: 70,
+  background: 'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.08), transparent 70%)',
+  pointerEvents: 'none',
+});
+
+export const Mini = style({ fontSize: 11, color: MUTED, fontVariantNumeric: 'tabular-nums' });
+
+const pulse = keyframes({
+  '0%, 100%': { boxShadow: '0 0 0 0 rgba(255,211,107,0.0)' },
+  '50%': { boxShadow: '0 0 22px 2px rgba(255,211,107,0.45)' },
+});
+
+export const DropBanner = style({
+  position: 'relative',
+  zIndex: 3,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 12px',
+  borderRadius: 12,
+  border: '2px solid',
+  background: 'rgba(0,0,0,0.55)',
+  animation: `${pulse} 1.2s ease-in-out infinite`,
+});
+
 export const FighterIcon = style({
-  fontSize: 46,
+  fontSize: 56,
   lineHeight: 1.1,
-  animation: `${bob} 2.4s ease-in-out infinite`,
+  display: 'inline-block',
+  filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))',
   selectors: {
-    '&[data-hit="true"]': { animation: `${hit} 220ms ease-out` },
-    '&[data-down="true"]': { opacity: 0.25, animation: 'none', filter: 'grayscale(1)' },
+    '&[data-down="true"]': { opacity: 0.25, filter: 'grayscale(1)' },
+    '&[data-boss="true"]': { fontSize: 76 },
   },
+});
+
+export const FighterBob = style({
+  display: 'inline-block',
+  animation: `${bob} 2.4s ease-in-out infinite`,
+});
+
+export const PetIcon = style({
+  position: 'absolute',
+  bottom: 2,
+  left: -6,
+  fontSize: 24,
+  animation: `${bob} 1.7s ease-in-out infinite`,
 });
 
 export const FighterName = style({
@@ -353,6 +420,7 @@ export const LogLine = style({
     '&[data-tone="bad"]': { color: '#ff8a80' },
     '&[data-tone="gold"]': { color: GOLD },
     '&[data-tone="loot"]': { fontWeight: 700 },
+    '&[data-tone="great"]': { fontWeight: 800, color: '#ffd36b' },
   },
 });
 
@@ -404,61 +472,6 @@ export const SlotBox = style({
 
 export const SlotIcon = style({ fontSize: 26, lineHeight: 1 });
 
-// Backpack
-
-export const Bag = style({
-  display: 'grid',
-  gap: 4,
-  padding: 8,
-  borderRadius: 14,
-  background:
-    'linear-gradient(180deg, rgba(120,72,30,0.45), rgba(70,40,18,0.55)), repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 12px)',
-  border: '2px solid rgba(160,100,45,0.6)',
-  maxWidth: 460,
-  width: '100%',
-});
-
-export const Cell = style({
-  aspectRatio: '1',
-  borderRadius: 8,
-  border: '1px solid rgba(0,0,0,0.35)',
-  background: 'rgba(0,0,0,0.22)',
-  padding: 0,
-  cursor: 'pointer',
-  selectors: {
-    '&[data-target="true"]': { background: 'rgba(245,200,75,0.18)' },
-  },
-});
-
-export const BagItem = style({
-  position: 'relative',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: 9,
-  border: '2px solid',
-  background: 'rgba(15,20,30,0.85)',
-  fontSize: 24,
-  cursor: 'pointer',
-  padding: 0,
-  zIndex: 1,
-  selectors: {
-    '&[aria-pressed="true"]': {
-      boxShadow: `0 0 0 3px ${GOLD}, 0 0 18px rgba(245,200,75,0.5)`,
-      zIndex: 2,
-    },
-  },
-});
-
-export const Linked = style({
-  position: 'absolute',
-  top: 2,
-  right: 4,
-  fontSize: 10,
-  fontWeight: 900,
-  color: GOLD,
-});
-
 export const ItemBox = style({
   display: 'flex',
   flexDirection: 'column',
@@ -476,11 +489,11 @@ export const ModLine = style({
   display: 'flex',
   justifyContent: 'space-between',
   gap: 8,
-  selectors: {
-    '&[data-diff="up"]': { color: '#8be28f' },
-    '&[data-diff="down"]': { color: '#ff8a80' },
-  },
+  fontVariantNumeric: 'tabular-nums',
 });
+
+export const Up = style({ color: '#8be28f', fontWeight: 800 });
+export const Down = style({ color: '#ff8a80', fontWeight: 800 });
 
 // Upgrades and arena
 
@@ -563,4 +576,282 @@ export const Banner = style({
   background: 'linear-gradient(135deg, rgba(245,200,75,0.18), rgba(245,200,75,0.04))',
   border: '1px solid rgba(245,200,75,0.35)',
   flexWrap: 'wrap',
+});
+
+// Inventory and item cards
+
+export const Chips = style({ display: 'flex', gap: 6, flexWrap: 'wrap' });
+
+export const Chip = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  height: 30,
+  padding: '0 10px',
+  borderRadius: 999,
+  border: `1px solid ${LINE}`,
+  background: 'rgba(255,255,255,0.04)',
+  color: MUTED,
+  fontSize: 13,
+  fontWeight: 700,
+  cursor: 'pointer',
+  selectors: {
+    '&[aria-pressed="true"]': {
+      background: 'rgba(245,200,75,0.18)',
+      color: GOLD,
+      borderColor: 'rgba(245,200,75,0.5)',
+    },
+  },
+});
+
+export const Select = style({
+  height: 30,
+  borderRadius: 9,
+  border: `1px solid ${LINE}`,
+  background: 'rgba(0,0,0,0.4)',
+  color: '#fff',
+  fontSize: 13,
+  padding: '0 8px',
+});
+
+export const ItemGrid = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))',
+  gap: 6,
+  maxHeight: 420,
+  overflowY: 'auto',
+  padding: 2,
+});
+
+export const ItemCard = style({
+  position: 'relative',
+  aspectRatio: '1',
+  borderRadius: 10,
+  border: '2px solid',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 28,
+  cursor: 'pointer',
+  padding: 0,
+  color: '#fff',
+  transition: 'transform 100ms',
+  selectors: {
+    '&:hover': { transform: 'translateY(-2px)' },
+    '&[aria-pressed="true"]': { boxShadow: `0 0 0 3px ${GOLD}, 0 0 16px rgba(245,200,75,0.5)` },
+  },
+});
+
+export const CardPlus = style({
+  position: 'absolute',
+  top: 2,
+  left: 4,
+  fontSize: 11,
+  fontWeight: 900,
+  color: '#ffe7a0',
+  textShadow: '0 1px 2px #000',
+});
+
+export const CardDelta = style({
+  position: 'absolute',
+  bottom: 1,
+  right: 3,
+  fontSize: 12,
+  fontWeight: 900,
+  textShadow: '0 1px 2px #000',
+});
+
+export const CardLock = style({ position: 'absolute', top: 1, right: 3, fontSize: 11 });
+
+export const CardNew = style({
+  position: 'absolute',
+  top: 4,
+  right: 4,
+  width: 8,
+  height: 8,
+  borderRadius: '50%',
+  background: '#ff5a4f',
+  boxShadow: '0 0 6px #ff5a4f',
+});
+
+export const Compare = style({
+  display: 'grid',
+  gridTemplateColumns: '1fr auto auto',
+  gap: '3px 10px',
+  fontSize: 13,
+  fontVariantNumeric: 'tabular-nums',
+  alignItems: 'baseline',
+});
+
+export const Divider = style({ height: 1, background: LINE, margin: '2px 0' });
+
+export const BigDelta = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 8,
+  padding: '8px 10px',
+  borderRadius: 10,
+  background: 'rgba(255,255,255,0.05)',
+  fontWeight: 800,
+  fontSize: 14,
+});
+
+export const Feed = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  maxHeight: 240,
+  overflowY: 'auto',
+});
+
+export const FeedRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '5px 8px',
+  borderRadius: 9,
+  fontSize: 13,
+  background: 'rgba(255,255,255,0.03)',
+  borderLeft: '3px solid',
+  selectors: {
+    '&[data-great="true"]': { background: 'rgba(245,200,75,0.1)' },
+    '&[data-gone="true"]': { opacity: 0.55 },
+  },
+});
+
+export const Badge = style({
+  fontSize: 10,
+  fontWeight: 900,
+  padding: '2px 6px',
+  borderRadius: 6,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  whiteSpace: 'nowrap',
+});
+
+// Forge
+
+export const ForgeAnvil = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 8,
+  padding: 16,
+  borderRadius: 16,
+  background: 'radial-gradient(ellipse at 50% 70%, rgba(255,120,40,0.25), rgba(0,0,0,0.3) 70%)',
+  textAlign: 'center',
+});
+
+const forgeHit = keyframes({
+  '0%': { transform: 'scale(1)', filter: 'brightness(1)' },
+  '30%': { transform: 'scale(1.25)', filter: 'brightness(2.2)' },
+  '100%': { transform: 'scale(1)', filter: 'brightness(1)' },
+});
+const forgeFail = keyframes({
+  '0%, 100%': { transform: 'translateX(0)' },
+  '20%': { transform: 'translateX(-8px)' },
+  '40%': { transform: 'translateX(8px)' },
+  '60%': { transform: 'translateX(-5px)' },
+  '80%': { transform: 'translateX(5px)' },
+});
+
+export const ForgeIcon = style({
+  fontSize: 64,
+  lineHeight: 1.1,
+  filter: 'drop-shadow(0 0 16px rgba(255,140,60,0.6))',
+  selectors: {
+    '&[data-result="success"]': { animation: `${forgeHit} 500ms ease-out` },
+    '&[data-result="downgrade"]': { animation: `${forgeFail} 450ms ease-out` },
+    '&[data-result="broken"]': { animation: `${forgeFail} 450ms ease-out`, opacity: 0.3 },
+  },
+});
+
+export const ChanceBar = style({
+  position: 'relative',
+  width: '100%',
+  height: 14,
+  borderRadius: 999,
+  background: 'rgba(255,255,255,0.08)',
+  overflow: 'hidden',
+});
+
+export const Warning = style({
+  padding: '8px 10px',
+  borderRadius: 10,
+  fontSize: 13,
+  fontWeight: 700,
+  background: 'rgba(255,90,79,0.15)',
+  border: '1px solid rgba(255,90,79,0.5)',
+  color: '#ffb4ad',
+});
+
+// Talents
+
+export const TalentCols = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  gap: 12,
+});
+
+export const TalentNode = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  width: '100%',
+  padding: '8px 10px',
+  borderRadius: 12,
+  border: `1px solid ${LINE}`,
+  background: 'rgba(0,0,0,0.3)',
+  color: '#fff',
+  textAlign: 'left',
+  cursor: 'pointer',
+  selectors: {
+    '&:disabled': { cursor: 'default', opacity: 0.45 },
+    '&[data-maxed="true"]': {
+      borderColor: 'rgba(245,200,75,0.6)',
+      background: 'rgba(245,200,75,0.08)',
+    },
+    '&[data-ranked="true"]': { borderColor: 'rgba(139,226,143,0.45)' },
+  },
+});
+
+export const TalentIcon = style({
+  width: 34,
+  height: 34,
+  borderRadius: 10,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 18,
+  background: 'rgba(255,255,255,0.06)',
+  flexShrink: 0,
+});
+
+export const RowLabel = style({
+  fontSize: 11,
+  fontWeight: 800,
+  color: MUTED,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginTop: 4,
+});
+
+// Rebirth
+
+export const RebirthHero = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+  padding: 16,
+  borderRadius: 16,
+  background:
+    'radial-gradient(ellipse at 50% 0%, rgba(255,110,40,0.3), rgba(60,10,10,0.4) 60%, rgba(0,0,0,0.3))',
+  border: '1px solid rgba(255,140,60,0.35)',
+});
+
+export const SpecGrid = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  gap: 10,
 });

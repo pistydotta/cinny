@@ -1,16 +1,27 @@
 import React, { FormEvent, useState } from 'react';
-import { CLASSES, getClass } from './engine/classes';
+import { CLASSES, SPEC_LEVEL, getClass } from './engine/classes';
 import { ClassId } from './engine/types';
-import { attrName, classDesc, className, effectText, roleName, skillName } from './labels';
+import {
+  attrName,
+  classDesc,
+  className,
+  effectText,
+  roleName,
+  skillName,
+  specDesc,
+  specName,
+} from './labels';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
 type ClassPickerProps = {
   defaultName: string;
   onStart: (name: string, classId: ClassId) => void;
+  /** The old save was dropped with the rework. */
+  wiped?: boolean;
 };
 
-export function ClassPicker({ defaultName, onStart }: ClassPickerProps) {
+export function ClassPicker({ defaultName, onStart, wiped }: ClassPickerProps) {
   const [picked, setPicked] = useState<ClassId>();
   const [name, setName] = useState(defaultName.slice(0, 24));
   const cls = picked ? getClass(picked) : undefined;
@@ -22,6 +33,17 @@ export function ClassPicker({ defaultName, onStart }: ClassPickerProps) {
 
   return (
     <div className={css.Panel}>
+      {wiped && (
+        <div className={css.Banner}>
+          <span style={{ fontSize: 26 }}>🔥</span>
+          <span className={css.Grow}>
+            {tr(
+              'games.idle.pick.wiped',
+              'Ember Chronicles was rebuilt: new classes with specializations, talents, a forge, rebirths and a bigger backpack. Heroes from the first test started over.'
+            )}
+          </span>
+        </div>
+      )}
       <h2 className={css.PanelTitle}>{tr('games.idle.pick.title', 'Choose your class')}</h2>
       <p className={css.Muted} style={{ margin: 0 }}>
         {tr(
@@ -63,6 +85,26 @@ export function ClassPicker({ defaultName, onStart }: ClassPickerProps) {
             {' · '}
             {tr('games.idle.cooldown', '{{sec}}s cooldown', { sec: cls.skill.cooldownMs / 1000 })}
           </span>
+          <span className={css.Mini}>
+            {tr('games.idle.pick.specs', 'At level {{level}} it becomes one of:', {
+              level: SPEC_LEVEL,
+            })}
+          </span>
+          <div className={css.SpecGrid}>
+            {cls.specs.map((sp) => (
+              <div key={sp.id} className={css.ListItem} style={{ padding: 8 }}>
+                <span className={css.ListIcon}>{sp.icon}</span>
+                <span className={css.Grow}>
+                  <span className={css.Strong} style={{ color: sp.color, fontSize: 14 }}>
+                    {specName(sp.id)}
+                  </span>
+                  <span className={css.Mini} style={{ display: 'block' }}>
+                    {specDesc(sp.id)}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
           <div className={css.Row}>
             <input
               className={css.Input}

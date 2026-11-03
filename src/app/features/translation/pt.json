@@ -287,7 +287,9 @@
     "poker_server_title": "Poker: créditos zerados e mesas privadas",
     "poker_server_body": "Os créditos de todo mundo recomeçaram em 5.000. As mesas agora são privadas: só entra quem você convida, por amigo ou por link. Crie uma na aba Jogos.",
     "idle_title": "Novo jogo: Crônicas da Brasa",
-    "idle_body": "Um RPG idle na aba Jogos. Escolha entre 10 classes, junte equipamentos, monte a mochila e suba de fase, mesmo com o app em outra tela. Tem arena para duelos também."
+    "idle_body": "Um RPG idle na aba Jogos. Escolha entre 10 classes, junte equipamentos, monte a mochila e suba de fase, mesmo com o app em outra tela. Tem arena para duelos também.",
+    "idle_rework_title": "Crônicas da Brasa, refeito",
+    "idle_rework_body": "Seis classes com duas especializações cada, árvore de talentos, forja até +12, renascimento com um altar de bônus eternos, uma mochila grande com categorias e comparação, e efeitos novos na batalha. Os heróis do primeiro teste recomeçam do zero."
   },
   "admin": {
     "deactivate": {
@@ -634,7 +636,7 @@
       "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
       "soon": "Em breve",
       "subtitle": "Jogue com seus créditos. O saldo é o mesmo em todos os jogos.",
-      "idle_meta": "RPG idle · 10 classes, saque, mochila e arena"
+      "idle_meta": "RPG idle · 6 classes e 12 especializações, forja, renascimento e arena"
     },
     "lobby": {
       "accept": "Aceitar",
@@ -747,24 +749,19 @@
       "abandon_confirm": "Isso apaga seu herói de vez. Tem certeza?",
       "abandon_no": "Manter meu herói",
       "abandon_yes": "Sim, começar de novo",
-      "add_point": "Colocar um ponto em {{attr}}",
       "advancing": "Avançando ▶",
       "farming": "Farmando ⟳",
       "farming_hint": "Farmando esta fase. Ligue Avançando quando estiver forte o bastante.",
       "arena": "Arena",
-      "arena_hint": "Duele com outros heróis. Por enquanto são rivais feitos no seu nível; em breve serão os heróis dos seus amigos.",
-      "attr_hint": "★ atributo principal: aumenta o dano. Vitalidade: vida. Agilidade: velocidade, crítico e esquiva. Força: armadura. Intelecto: habilidades.",
+      "arena_hint": "Duele com outros heróis. Por enquanto são rivais feitos no seu nível; depois vêm os heróis de outros jogadores, com ranking.",
+      "attr_hint": "Os atributos crescem a cada nível e com o equipamento. ★ atributo principal: aumenta o dano. Vitalidade: vida. Agilidade: velocidade, crítico e esquiva. Força: armadura. Intelecto: habilidades.",
       "attributes": "Atributos",
       "backpack": "Mochila",
-      "backpack_hint": "Toque num item e depois onde ele deve ficar. Amuletos só funcionam na mochila e ficam mais fortes encostados em amuletos do mesmo elemento.",
+      "backpack_hint": "▲ deixa o herói mais forte, ▼ mais fraco. Itens travados nunca são vendidos nem desmontados em lote. Com a mochila cheia, o que cair vira pedra de brasa.",
       "best_stage": "Melhor fase {{stage}}",
       "boss": "Chefe",
       "boss_stage": "Fase do chefe",
       "boss_timer": "Tempo restante: {{sec}}s",
-      "cell": "Espaço {{x}}, {{y}}",
-      "cells": "{{used}}/{{total}} espaços",
-      "charm_hint": "Funciona enquanto estiver na mochila. +25% para cada amuleto de {{element}} encostado.",
-      "charm_links": "Agora: +{{pct}}%",
       "collect": "Boa!",
       "cooldown": "recarga de {{sec}}s",
       "dps_line": "{{dmg}} de dano · {{speed}}/s",
@@ -774,7 +771,7 @@
       "duel_won": "Vitória contra {{name}}!",
       "equip": "Equipar",
       "equipment": "Equipamento",
-      "equipment_hint": "Toque num espaço para ver a peça. Equipamentos novos caem na mochila.",
+      "equipment_hint": "Toque numa peça para ver. Equipamentos novos vão para a mochila.",
       "equipped_now": "Equipado agora",
       "go_max": "Ir para a fase {{stage}}",
       "item_level": "Nível {{level}}",
@@ -785,16 +782,14 @@
       "lv": "Nv {{level}}",
       "maxed": "Máx",
       "no_duel": "Escolha um rival. O duelo é decidido pelos seus atributos e um pouco de sorte.",
-      "nothing_selected": "Escolha um item na mochila.",
+      "nothing_selected": "Escolha um item para comparar com o que você está usando.",
       "offline_levels": "+{{count}} níveis",
-      "offline_text": "{{kills}} inimigos derrotados · +{{gold}} de ouro · +{{xp}} XP · {{items}} itens",
+      "offline_text": "{{kills}} inimigos derrotados · +{{gold}} de ouro · +{{xp}} XP · {{items}} itens · +{{stones}} 🔶",
       "offline_title": "Enquanto você esteve fora ({{time}})",
-      "points": "{{count}} pontos para gastar",
       "power": "Poder {{power}}",
       "rating": "Pontuação {{rating}}",
       "record": "{{wins}}V · {{losses}}D",
       "respawn": "Levanta em {{sec}}s",
-      "rotate": "Girar",
       "searching": "Procurando uma luta…",
       "selected": "Item escolhido",
       "sell": "Vender",
@@ -811,21 +806,30 @@
         "title": "Escolha sua classe",
         "text": "Seu herói luta sozinho, até com o jogo fechado. Você escolhe o equipamento, os pontos e quando avançar.",
         "name": "Nome do herói",
-        "start": "Começar a jornada"
+        "start": "Começar a jornada",
+        "specs": "No nível {{level}} vira um destes:",
+        "wiped": "Crônicas da Brasa foi refeito: classes novas com especializações, talentos, forja, renascimento e uma mochila bem maior. Os heróis do primeiro teste recomeçaram."
       },
       "tab": {
         "battle": "Batalha",
         "hero": "Herói",
         "backpack": "Mochila",
         "upgrades": "Treino",
-        "arena": "Arena"
+        "arena": "Arena",
+        "talents": "Talentos",
+        "forge": "Forja",
+        "rebirth": "Renascer"
       },
       "error": {
         "bag_full": "Não tem espaço na mochila para isso.",
         "gold": "Ouro insuficiente.",
         "maxed": "Já está no nível máximo.",
         "points": "Sem pontos para gastar.",
-        "not_found": "Esse item não está mais aí."
+        "not_found": "Esse item não está mais aí.",
+        "locked": "Este item está travado. Destrave antes.",
+        "materials": "Materiais insuficientes.",
+        "nothing": "Nada para fazer aí.",
+        "too_early": "Ainda não."
       },
       "effect": {
         "strike": "Um golpe de {{pct}}% de dano",
@@ -835,7 +839,9 @@
         "dot": "{{pct}}% de dano ao longo de {{sec}}s",
         "buff": "{{mods}} por {{sec}}s",
         "stun": "Atordoa por {{sec}}s",
-        "drain": "Drena {{pct}}% de dano e cura {{heal}}% disso"
+        "drain": "Drena {{pct}}% de dano e cura {{heal}}% disso",
+        "always_crit": "(sempre crítico)",
+        "curse": "Inimigo {{mods}} por {{sec}}s"
       },
       "log": {
         "boss": "Luta contra o chefe: {{foe}}!",
@@ -843,53 +849,41 @@
         "skill_hero": "Você usa {{skill}}.",
         "skill_foe": "O inimigo usa {{skill}}.",
         "kill": "{{foe}} derrotado: +{{gold}} de ouro, +{{xp}} XP",
-        "loot": "Encontrou: {{item}} ({{rarity}})",
+        "loot": "Encontrou: {{item}}",
         "sold": "Mochila cheia: {{item}} vendido por {{gold}} de ouro",
-        "level": "Nível {{level}}! Você tem um ponto para gastar.",
+        "level": "Nível {{level}}! Um ponto de talento novo.",
         "stage": "Fase {{stage}}.",
         "death": "Você caiu. Voltando uma fase para ficar mais forte.",
-        "timeout": "O chefe aguentou mais que você. Voltando uma fase."
+        "timeout": "O chefe aguentou mais que você. Voltando uma fase.",
+        "loot_better": "Encontrou: {{item}} — melhor que o seu!",
+        "materials": "+{{stones}} pedras de brasa",
+        "materials_core": "+{{stones}} pedras de brasa e um núcleo de fogo",
+        "salvaged": "{{item}} desmontado em pedras"
       },
       "class": {
-        "guardian": {
-          "name": "Guardião",
-          "desc": "Uma muralha de aço. Ergue o escudo e aguenta tudo."
+        "warrior": {
+          "name": "Guerreiro",
+          "desc": "Aço e teimosia. Armadura pesada e um golpe largo."
         },
-        "berserker": {
-          "name": "Berserker",
-          "desc": "Fica mais furioso quanto mais a luta dura, e se cura batendo."
+        "archer": {
+          "name": "Arqueiro",
+          "desc": "Flechas rápidas e muitos críticos, com uma rajada na hora certa."
         },
-        "paladin": {
-          "name": "Paladino",
-          "desc": "Guerreiro sagrado que se cura no meio da luta e revida forte."
-        },
-        "ranger": {
-          "name": "Patrulheiro",
-          "desc": "Flechas rápidas, muitos críticos e uma rajada na hora certa."
-        },
-        "assassin": {
-          "name": "Assassino",
-          "desc": "Atordoa e ataca das sombras com críticos enormes."
+        "rogue": {
+          "name": "Ladino",
+          "desc": "Rápido, difícil de acertar, atordoa e ataca das sombras."
         },
         "mage": {
-          "name": "Arcanista",
-          "desc": "Lento no ataque, devastador com um meteoro."
+          "name": "Mago",
+          "desc": "Lento no ataque, devastador com magias."
         },
-        "necromancer": {
-          "name": "Necromante",
-          "desc": "Drena a vida dos inimigos e deixa uma maldição terminar o serviço."
+        "cleric": {
+          "name": "Clérigo",
+          "desc": "Se cura no meio da luta e aguenta qualquer um que bata mais devagar."
         },
-        "druid": {
-          "name": "Druida",
-          "desc": "A natureza cura e fortalece, para uma luta longa e firme."
-        },
-        "shaman": {
-          "name": "Xamã",
-          "desc": "Invoca raios que saltam e atordoam."
-        },
-        "monk": {
-          "name": "Monge",
-          "desc": "Os punhos mais rápidos que existem, e difícil de acertar."
+        "occultist": {
+          "name": "Ocultista",
+          "desc": "Drena a vida dos inimigos para manter a sua."
         }
       },
       "role": {
@@ -900,21 +894,32 @@
         "support": "Suporte"
       },
       "skill": {
+        "cleave": "Golpe Largo",
         "shield_wall": "Muralha de Escudos",
         "blood_rage": "Fúria Sangrenta",
-        "holy_light": "Luz Sagrada",
         "volley": "Rajada",
+        "deadeye": "Olho de Águia",
+        "pack_hunt": "Caçada da Matilha",
         "shadowstep": "Passo Sombrio",
+        "eviscerate": "Eviscerar",
+        "toxic_blades": "Lâminas Tóxicas",
+        "fireball": "Bola de Fogo",
         "meteor": "Meteoro",
-        "soul_drain": "Dreno de Alma",
+        "frost_nova": "Nova Congelante",
+        "holy_light": "Luz Sagrada",
+        "judgment": "Julgamento",
         "wild_growth": "Crescimento Selvagem",
-        "chain_lightning": "Corrente de Raios",
-        "hundred_fists": "Cem Punhos",
+        "soul_drain": "Dreno de Alma",
+        "bone_spear": "Lança de Osso",
+        "doom": "Perdição",
         "root_slam": "Raízes Esmagadoras",
         "eruption": "Erupção",
         "venom": "Veneno",
         "frost_breath": "Sopro Gélido",
-        "hellfire": "Fogo Infernal"
+        "hellfire": "Fogo Infernal",
+        "tidal_crush": "Esmagamento da Maré",
+        "thunderclap": "Trovão",
+        "unmaking": "Desfazer"
       },
       "attr": {
         "str": "Força",
@@ -938,7 +943,16 @@
         "maxHpPct": "Vida",
         "attackSpeedPct": "Velocidade de ataque",
         "goldFind": "Ouro encontrado",
-        "xpGain": "Experiência"
+        "xpGain": "Experiência",
+        "thorns": "Espinhos",
+        "execute": "Execução",
+        "rage": "Fúria",
+        "petPower": "Companheiro",
+        "armorPct": "Armadura",
+        "regenPct": "Regeneração",
+        "dropRate": "Itens encontrados",
+        "forgeChance": "Chance na forja",
+        "salvageYield": "Pedras ao desmontar"
       },
       "slot": {
         "weapon": "Arma",
@@ -948,22 +962,15 @@
         "hands": "Mãos",
         "feet": "Pés",
         "ring": "Anel",
-        "amulet": "Colar",
-        "charm": "Amuleto"
+        "amulet": "Colar"
       },
       "rarity": {
         "common": "Comum",
         "uncommon": "Incomum",
         "rare": "Raro",
         "epic": "Épico",
-        "legendary": "Lendário"
-      },
-      "element": {
-        "fire": "Fogo",
-        "frost": "Gelo",
-        "nature": "Natureza",
-        "shadow": "Sombra",
-        "holy": "Sagrado"
+        "legendary": "Lendário",
+        "mythic": "Mítico"
       },
       "item": {
         "sword": "Espada Longa",
@@ -984,19 +991,17 @@
         "gloves": "Luvas",
         "boots": "Botas",
         "ring": "Anel",
-        "amulet": "Colar",
-        "ember_rune": "Runa de Brasa",
-        "frost_shard": "Fragmento de Gelo",
-        "living_seed": "Semente Viva",
-        "void_sigil": "Selo do Vazio",
-        "saint_relic": "Relíquia Santa"
+        "amulet": "Colar"
       },
       "zone": {
         "whispering_woods": "Bosque dos Sussurros",
         "ash_mines": "Minas de Cinzas",
         "rot_marsh": "Pântano Podre",
         "frost_peaks": "Picos Gelados",
-        "infernal_citadel": "Cidadela Infernal"
+        "infernal_citadel": "Cidadela Infernal",
+        "sunken_temple": "Templo Submerso",
+        "storm_spire": "Torre da Tempestade",
+        "void_rift": "Fenda do Vazio"
       },
       "enemy": {
         "wolf": "Lobo",
@@ -1018,7 +1023,19 @@
         "imp": "Diabrete",
         "hellhound": "Cão Infernal",
         "death_knight": "Cavaleiro da Morte",
-        "archdemon": "Arquidemônio"
+        "archdemon": "Arquidemônio",
+        "naga": "Naga",
+        "crab": "Caranguejo Gigante",
+        "eel": "Enguia Elétrica",
+        "kraken": "Kraken",
+        "gargoyle": "Gárgula",
+        "storm_hawk": "Falcão da Tempestade",
+        "sparkling": "Faísca Viva",
+        "thunder_titan": "Titã do Trovão",
+        "voidling": "Cria do Vazio",
+        "mind_flayer": "Devorador de Mentes",
+        "star_eater": "Devorador de Estrelas",
+        "void_herald": "Arauto do Vazio"
       },
       "upgrade": {
         "might": {
@@ -1043,11 +1060,257 @@
         },
         "satchel": {
           "name": "Mochila maior",
-          "desc": "Mais uma fileira na mochila"
+          "desc": "Mais 20 espaços. Continua depois de renascer."
         }
       },
-      "sell_commons": "Vender comuns",
-      "sell_uncommons": "Vender comuns e incomuns"
+      "altar": {
+        "ember_might": {
+          "name": "Poder Eterno",
+          "desc": "+12% de dano por nível, além de todo o resto"
+        },
+        "ember_vigor": {
+          "name": "Vigor Eterno",
+          "desc": "+12% de vida por nível, além de todo o resto"
+        },
+        "ember_greed": {
+          "name": "Ganância Eterna",
+          "desc": "+20% de ouro por nível"
+        },
+        "ember_wisdom": {
+          "name": "Sabedoria Eterna",
+          "desc": "+20% de experiência por nível"
+        },
+        "ember_forge": {
+          "name": "Bigorna de Brasa",
+          "desc": "+15% de pedras ao desmontar e +0,5% de chance na forja por nível"
+        },
+        "talent_well": {
+          "name": "Poço de Talentos",
+          "desc": "+3 pontos de talento por nível"
+        },
+        "head_start": {
+          "name": "Largada",
+          "desc": "Cada jornada começa 10 fases à frente por nível"
+        },
+        "long_rest": {
+          "name": "Descanso Longo",
+          "desc": "+1 hora de tempo fora contada por nível"
+        }
+      },
+      "altar_hint": "Bônus que duram para sempre, em todos os renascimentos.",
+      "ashes": "{{count}} cinzas",
+      "ashes_title": "Cinzas eternas",
+      "auto_off": "Desligado",
+      "auto_salvage": "Desmontar ao cair",
+      "auto_up_to": "Até {{rarity}}",
+      "backpack_empty": "Vazia. O que os inimigos derrubam vem para cá.",
+      "bulk": "Limpar até",
+      "bulk_hint": "Limpar em lote e desmontar ao cair pulam melhorias, itens forjados e travados.",
+      "category_empty": "Nada nesta categoria.",
+      "combat_hint": "Talentos, forja e equipamento deixam o herói mais forte. Travou num chefe? Farme um pouco e volte.",
+      "cores": "Núcleos de fogo",
+      "cursed": "enfraquecido",
+      "drop_better": "Melhor que o seu equipado!",
+      "empty_slot": "Nada equipado nesse espaço: é tudo ganho.",
+      "equip_best": "Equipar os melhores ({{count}})",
+      "feed_better": "Melhor",
+      "feed_empty": "Nada encontrado ainda. Inimigos derrubam itens de vez em quando, chefes sempre.",
+      "feed_salvaged": "Desmontado",
+      "feed_title": "Achados recentes",
+      "forge": "Forja",
+      "forge_bag_empty": "Nenhum item incomum ou melhor na mochila.",
+      "forge_bonus": "atributos +{{from}} → +{{to}}",
+      "forge_break": "Perigo: se esta tentativa falhar, o item QUEBRA e some para sempre.",
+      "forge_breaks": "quebra se falhar",
+      "forge_broken": "A forja falhou e o item quebrou.",
+      "forge_chance": "Chance",
+      "forge_down": "Falhou e caiu para +{{plus}}. A próxima tentativa fica mais provável.",
+      "forge_fail_note": "Se falhar, o item cai para +{{plus}}.",
+      "forge_go": "Forjar para +{{plus}}",
+      "forge_hint": "Pedras de brasa e ouro deixam um item mais forte, até +12. Até +3 é seguro e barato. A partir de +4, uma falha volta um nível, e cada falha deixa a próxima tentativa mais provável. +11 e +12 são para os corajosos: chance mínima, e uma falha quebra o item.",
+      "forge_max": "Forja até +{{max}}",
+      "forge_maxed": "Este item está no limite (+{{max}} para a raridade dele).",
+      "forge_pick": "Escolha um item à esquerda. O equipamento vem primeiro.",
+      "forge_pity": "{{fails}} falhas seguidas: +{{pct}} de chance",
+      "forge_success": "Sucesso! Agora +{{plus}}.",
+      "forge_table": "Chances por nível",
+      "gold": "Ouro",
+      "if_equipped": "Se você equipar",
+      "lock": "Travar",
+      "unlock": "Destravar",
+      "materials_hint": "🔶 Pedras de brasa: de desmontar itens e de chefes. 🔥 Núcleos de fogo (a partir de +8): de chefes e de itens épicos ou melhores.",
+      "per_rank": "{{mods}} por ponto",
+      "power_short": "Poder",
+      "rebirth": "Renascer",
+      "rebirth_gain": "Renascer agora por {{ashes}} cinzas",
+      "rebirth_go": "Renascer",
+      "rebirth_hint": "Queime esta jornada para renascer mais forte. Você volta ao nível 1 e à fase {{start}}; talentos, ouro e treino recomeçam. Ficam: equipamento, forja, materiais, sua especialização e tudo do altar. Cada renascimento pede uma fase mais funda.",
+      "rebirth_more": "Quanto mais fundo, mais cinzas: passar do mínimo compensa.",
+      "rebirth_need": "Precisa da fase {{stage}}",
+      "rebirth_no": "Ainda não",
+      "rebirth_now": "Esta jornada: {{stage}}",
+      "rebirth_yes": "Sim, renascer",
+      "rebirths": "{{count}} renascimentos",
+      "row_locked": "Linha {{row}} · {{need}} pontos em {{branch}}",
+      "row_open": "Linha {{row}}",
+      "salvage_all": "Desmontar",
+      "salvage_for": "Desmontar: {{stones}} pedras",
+      "sell_all": "Vender",
+      "sell_for": "Vender: {{gold}}",
+      "sort": "Ordenar",
+      "spec_at": "Especialização no nível {{level}}",
+      "spec_confirm": "Virar {{spec}}",
+      "spec_hint": "Cada classe evolui de um de dois jeitos, com uma segunda habilidade e uma passiva nova. A escolha é para sempre e continua depois de renascer.",
+      "spec_passive": "Passiva: {{mods}}",
+      "spec_ready": "Escolha sua especialização",
+      "stones": "Pedras de brasa",
+      "talent_learn": "Colocar um ponto",
+      "talent_points": "{{count}} pontos",
+      "talent_reset": "Refazer (🪙 {{gold}})",
+      "talents": "Talentos",
+      "talents_hint": "Um ponto por nível. Linhas mais fundas abrem conforme você coloca pontos no galho. A última linha de cada galho não acaba nunca: a árvore leva vários renascimentos para encher. Os pontos voltam ao renascer.",
+      "to_forge": "Forjar",
+      "fx": {
+        "dodge": "Esquivou",
+        "level": "Nível {{level}}!"
+      },
+      "spec": {
+        "guardian": {
+          "name": "Guardião",
+          "desc": "Uma muralha: escudo erguido, e cada golpe recebido volta como espinhos."
+        },
+        "berserker": {
+          "name": "Berserker",
+          "desc": "Quanto mais perto da morte, mais forte bate. Se cura batendo."
+        },
+        "sniper": {
+          "name": "Atirador",
+          "desc": "Críticos enormes e um tiro que é sempre crítico."
+        },
+        "beastmaster": {
+          "name": "Mestre das Feras",
+          "desc": "Um lobo luta ao lado dele e a matilha rasga a armadura."
+        },
+        "assassin": {
+          "name": "Assassino",
+          "desc": "Acaba com inimigos feridos com dano enorme."
+        },
+        "venomblade": {
+          "name": "Lâmina Venenosa",
+          "desc": "Veneno que continua corroendo e enfraquece o inimigo."
+        },
+        "pyromancer": {
+          "name": "Piromante",
+          "desc": "Meteoros e fogo que continua queimando."
+        },
+        "cryomancer": {
+          "name": "Criomante",
+          "desc": "Congela o inimigo, deixa ele lento e se esconde atrás do gelo."
+        },
+        "paladin": {
+          "name": "Paladino",
+          "desc": "Armadura sagrada, espinhos e um julgamento que atordoa."
+        },
+        "druid": {
+          "name": "Druida",
+          "desc": "Regeneração forte, um ent aliado e a fúria da natureza."
+        },
+        "necromancer": {
+          "name": "Necromante",
+          "desc": "Um esqueleto que nunca para de bater, e lanças de osso."
+        },
+        "hexer": {
+          "name": "Feiticeiro",
+          "desc": "Maldições que enfraquecem o inimigo enquanto a perdição o consome."
+        }
+      },
+      "stat_hint": {
+        "thorns": "Parte de cada golpe que você recebe volta para quem bateu.",
+        "execute": "Mais dano contra inimigos com menos de 30% de vida.",
+        "rage": "Mais dano quanto menor a sua vida.",
+        "petPower": "Um companheiro ataca uma vez por segundo com essa parte do seu dano.",
+        "regenPct": "Parte da vida máxima curada a cada segundo."
+      },
+      "title_affix": {
+        "damage": "do Poder",
+        "maxHp": "do Urso",
+        "armor": "do Baluarte",
+        "str": "do Gigante",
+        "agi": "da Raposa",
+        "int": "do Sábio",
+        "vit": "do Carvalho",
+        "damagePct": "da Ruína",
+        "maxHpPct": "da Vida",
+        "attackSpeedPct": "da Pressa",
+        "critChance": "da Precisão",
+        "critDamage": "da Carnificina",
+        "dodge": "do Vento",
+        "lifesteal": "da Sanguessuga",
+        "skillPower": "da Feitiçaria",
+        "cooldownReduction": "do Tempo",
+        "regenPct": "da Renovação",
+        "thorns": "dos Espinhos",
+        "execute": "do Ceifador",
+        "goldFind": "da Ganância",
+        "xpGain": "da Sabedoria",
+        "dropRate": "do Buscador"
+      },
+      "branch": {
+        "fury": {
+          "name": "Fúria",
+          "desc": "Dano, críticos e habilidades"
+        },
+        "bulwark": {
+          "name": "Baluarte",
+          "desc": "Vida, armadura e resistência"
+        },
+        "fortune": {
+          "name": "Fortuna",
+          "desc": "Ouro, experiência, itens e a forja"
+        }
+      },
+      "talent": {
+        "sharpness": "Fio Afiado",
+        "precision": "Precisão",
+        "frenzy": "Frenesi",
+        "brutality": "Brutalidade",
+        "arcana": "Arcano",
+        "reaper": "Ceifador",
+        "bloodlust": "Sede de Sangue",
+        "carnage": "Carnificina",
+        "toughness": "Robustez",
+        "plating": "Blindagem",
+        "evasion": "Evasão",
+        "recovery": "Recuperação",
+        "spikes": "Espinhos",
+        "focus": "Foco",
+        "companion": "Companheiro Leal",
+        "endurance": "Resistência",
+        "greed": "Ganância",
+        "scholar": "Estudioso",
+        "scavenger": "Catador",
+        "salvager": "Desmontador",
+        "smith": "Ferreiro",
+        "veteran": "Veterano",
+        "hoarder": "Acumulador",
+        "prosperity": "Prosperidade"
+      },
+      "category": {
+        "all": "Todos",
+        "upgrades": "▲ Melhorias",
+        "new": "Novos",
+        "weapons": "Armas",
+        "armor": "Armaduras",
+        "jewelry": "Joias"
+      },
+      "sort_by": {
+        "power": "Melhor para você",
+        "rarity": "Raridade",
+        "level": "Nível",
+        "recent": "Mais novos"
+      },
+      "altar_title": "Altar das Cinzas",
+      "rebirth_preview": "Na fase {{stage}} rende {{ashes}} cinzas"
     }
   },
   "music_bot": {

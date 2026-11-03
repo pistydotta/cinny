@@ -1,36 +1,57 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Icon, Icons } from 'folds';
 import {
   ActionError,
   ActionResult,
-  allocate,
+  buyAltar,
   buyUpgrade,
+  bulkClear,
+  canRebirth,
+  chooseSpec,
   equip,
+  equipBest,
+  forge,
   goToStage,
-  move,
-  rotate,
+  learnTalent,
+  markSeen,
+  rebirth,
+  resetTalents,
+  salvage,
   sell,
-  sellUpTo,
   setAutoAdvance,
+  setAutoSalvage,
+  toggleLock,
   unequip,
 } from './engine/actions';
 import { fightRival } from './engine/arena';
-import { getClass } from './engine/classes';
-import { xpToNext } from './engine/progress';
+import { SPEC_LEVEL, getClass, looksOf } from './engine/classes';
+import { availableTalentPoints, xpToNext } from './engine/progress';
 import { GameState } from './engine/types';
 import { formatBig, formatDuration } from './format';
-import { className } from './labels';
+import { className, specName } from './labels';
+import { newCount } from './itemView';
 import { useIdleGame } from './useIdleGame';
 import { ClassPicker } from './ClassPicker';
 import { BattleView } from './BattleView';
 import { HeroView } from './HeroView';
-import { BackpackView } from './BackpackView';
+import { InventoryView } from './InventoryView';
+import { ForgeView } from './ForgeView';
+import { TalentsView } from './TalentsView';
 import { UpgradesView } from './UpgradesView';
+import { RebirthView } from './RebirthView';
 import { ArenaView } from './ArenaView';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
-type TabId = 'battle' | 'hero' | 'backpack' | 'upgrades' | 'arena';
+type TabId =
+  | 'battle'
+  | 'hero'
+  | 'talents'
+  | 'backpack'
+  | 'forge'
+  | 'upgrades'
+  | 'rebirth'
+  | 'arena';
 
 const errorText = (e: ActionError): string => {
   switch (e) {
@@ -38,10 +59,18 @@ const errorText = (e: ActionError): string => {
       return tr('games.idle.error.bag_full', 'There is no room in the backpack for that.');
     case 'not_enough_gold':
       return tr('games.idle.error.gold', 'Not enough gold.');
+    case 'not_enough_materials':
+      return tr('games.idle.error.materials', 'Not enough materials.');
     case 'maxed':
       return tr('games.idle.error.maxed', 'Already at the top level.');
     case 'no_points':
       return tr('games.idle.error.points', 'No points to spend.');
+    case 'locked':
+      return tr('games.idle.error.locked', 'This item is locked. Unlock it first.');
+    case 'too_early':
+      return tr('games.idle.error.too_early', 'Not yet.');
+    case 'nothing':
+      return tr('games.idle.error.nothing', 'Nothing to do there.');
     default:
       return tr('games.idle.error.not_found', 'That item isn’t there anymore.');
   }
@@ -57,12 +86,21 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
   const { runner, view } = useIdleGame(userId);
   const [tab, setTab] = useState<TabId>('battle');
   const [error, setError] = useState<string>();
+  const [forgeItem, setForgeItem] = useState<string>();
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const { state, offline } = view;
 
   const run = (action: (s: GameState) => ActionResult) => {
     const result = runner.dispatch(action);
     setError(result && !result.ok ? errorText(result.error) : undefined);
+  };
+  const onSeen = useCallback(() => {
+    runner.dispatch(markSeen);
+  }, [runner]);
+  const openForge = (id: string) => {
+    setForgeItem(id);
+    setTab('forge');
+    setError(undefined);
   };
 
   const header = (
@@ -85,9 +123,22 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
         </p>
       </div>
       {state && (
-        <span className={css.Pill}>
-          🪙 <span className={css.GoldText}>{formatBig(state.gold)}</span>
-        </span>
+        <div className={css.Row}>
+          <span className={css.Pill} title={tr('games.idle.gold', 'Gold')}>
+            🪙 <span className={css.GoldText}>{formatBig(state.gold)}</span>
+          </span>
+          <span className={css.Pill} title={tr('games.idle.stones', 'Ember stones')}>
+            🔶 {formatBig(state.materials.stones)}
+          </span>
+          <span className={css.Pill} title={tr('games.idle.cores', 'Fire cores')}>
+            🔥 {state.materials.cores}
+          </span>
+          {state.prestige.ashesEarned > 0 && (
+            <span className={css.Pill} title={tr('games.idle.ashes_title', 'Eternal ashes')}>
+              ✴️ {state.prestige.ashes}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
@@ -97,23 +148,33 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
       <div className={css.Page}>
         <div className={css.Inner}>
           {header}
-          <ClassPicker defaultName={defaultName} onStart={runner.start} />
+          <ClassPicker defaultName={defaultName} onStart={runner.start} wiped={view.wiped} />
         </div>
       </div>
     );
   }
 
   const cls = getClass(state.hero.classId);
+  const look = looksOf(cls, state.hero.specId);
   const need = xpToNext(state.hero.level);
-  const tabs: { id: TabId; label: string; dot?: boolean }[] = [
+  const points = availableTalentPoints(state);
+  const fresh = newCount(state);
+  const tabs: { id: TabId; label: string; dot?: boolean; count?: number }[] = [
     { id: 'battle', label: `⚔️ ${tr('games.idle.tab.battle', 'Battle')}` },
     {
       id: 'hero',
       label: `🧙 ${tr('games.idle.tab.hero', 'Hero')}`,
-      dot: state.hero.freePoints > 0,
+      dot: !state.hero.specId && state.hero.level >= SPEC_LEVEL,
     },
-    { id: 'backpack', label: `🎒 ${tr('games.idle.tab.backpack', 'Backpack')}` },
+    { id: 'talents', label: `🌟 ${tr('games.idle.tab.talents', 'Talents')}`, count: points },
+    { id: 'backpack', label: `🎒 ${tr('games.idle.tab.backpack', 'Backpack')}`, count: fresh },
+    { id: 'forge', label: `⚒️ ${tr('games.idle.tab.forge', 'Forge')}` },
     { id: 'upgrades', label: `📈 ${tr('games.idle.tab.upgrades', 'Training')}` },
+    {
+      id: 'rebirth',
+      label: `🔥 ${tr('games.idle.tab.rebirth', 'Rebirth')}`,
+      dot: canRebirth(state),
+    },
     { id: 'arena', label: `🏆 ${tr('games.idle.tab.arena', 'Arena')}` },
   ];
 
@@ -123,14 +184,14 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
         {header}
 
         <div className={css.HeroBar}>
-          <span className={css.Portrait} style={{ background: `${cls.color}33` }}>
-            {cls.icon}
+          <span className={css.Portrait} style={{ background: `${look.color}33` }}>
+            {look.icon}
           </span>
           <div className={css.Grow}>
             <div className={css.HeroName}>
               {state.hero.name}{' '}
               <span className={css.Muted}>
-                · {className(cls.id)} ·{' '}
+                · {state.hero.specId ? specName(state.hero.specId) : className(cls.id)} ·{' '}
                 {tr('games.idle.lv', 'Lv {{level}}', { level: state.hero.level })}
               </span>
             </div>
@@ -153,6 +214,11 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
           <span className={css.Pill}>
             {tr('games.idle.best_stage', 'Best stage {{stage}}', { stage: state.maxStage })}
           </span>
+          {state.prestige.rebirths > 0 && (
+            <span className={css.Pill} style={{ color: '#ffb06b' }}>
+              🔥 {state.prestige.rebirths}
+            </span>
+          )}
         </div>
 
         {offline && (
@@ -167,12 +233,13 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
               <div className={css.Muted}>
                 {tr(
                   'games.idle.offline_text',
-                  '{{kills}} enemies defeated · +{{gold}} gold · +{{xp}} XP · {{items}} items',
+                  '{{kills}} enemies defeated · +{{gold}} gold · +{{xp}} XP · {{items}} items · +{{stones}} 🔶',
                   {
                     kills: formatBig(offline.kills),
                     gold: formatBig(offline.gold),
                     xp: formatBig(offline.xp),
-                    items: offline.items + offline.sold,
+                    items: offline.items,
+                    stones: formatBig(offline.stones),
                   }
                 )}
                 {offline.levels > 0 &&
@@ -202,6 +269,11 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
             >
               {t.label}
               {t.dot && <span className={css.Dot} />}
+              {!!t.count && (
+                <span className={css.Badge} style={{ background: '#ff5a4f', color: '#fff' }}>
+                  {t.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -210,7 +282,7 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
           <BattleView
             state={state}
             log={view.log}
-            recent={view.recent}
+            runner={runner}
             onAutoAdvance={(on) => run((s) => setAutoAdvance(s, on))}
             onGoToStage={(stage) => run((s) => goToStage(s, stage))}
           />
@@ -220,8 +292,9 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
             <HeroView
               state={state}
               error={error}
-              onAllocate={(a) => run((s) => allocate(s, a))}
               onUnequip={(slot) => run((s) => unequip(s, slot))}
+              onSpec={(id) => run((s) => chooseSpec(s, id))}
+              onForge={openForge}
             />
             <div className={css.Row}>
               {confirmAbandon ? (
@@ -260,19 +333,60 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
             </div>
           </>
         )}
+        {tab === 'talents' && (
+          <TalentsView
+            state={state}
+            error={error}
+            onLearn={(id) => run((s) => learnTalent(s, id))}
+            onReset={() => run(resetTalents)}
+          />
+        )}
         {tab === 'backpack' && (
-          <BackpackView
+          <InventoryView
             state={state}
             error={error}
             onEquip={(id) => run((s) => equip(s, id))}
+            onEquipBest={() => run(equipBest)}
             onSell={(id) => run((s) => sell(s, id))}
-            onSellUpTo={(r) => run((s) => sellUpTo(s, r))}
-            onMove={(id, x, y, rotated) => run((s) => move(s, id, x, y, rotated))}
-            onRotate={(id) => run((s) => rotate(s, id))}
+            onSalvage={(id) => run((s) => salvage(s, id))}
+            onLock={(id) => run((s) => toggleLock(s, id))}
+            onBulk={(r, how) => run((s) => bulkClear(s, r, how))}
+            onAutoSalvage={(r) => run((s) => setAutoSalvage(s, r))}
+            onForge={openForge}
+            onSeen={onSeen}
+          />
+        )}
+        {tab === 'forge' && (
+          <ForgeView
+            state={state}
+            error={error}
+            selected={forgeItem}
+            onSelect={(id) => {
+              setForgeItem(id);
+              setError(undefined);
+            }}
+            onForge={(id) => {
+              const result = forge(state, id);
+              if (!result.ok) {
+                setError(errorText(result.error));
+                return undefined;
+              }
+              setError(undefined);
+              runner.replace(result.state);
+              return { outcome: result.outcome, plus: result.plus };
+            }}
           />
         )}
         {tab === 'upgrades' && (
           <UpgradesView state={state} onBuy={(id) => run((s) => buyUpgrade(s, id))} />
+        )}
+        {tab === 'rebirth' && (
+          <RebirthView
+            state={state}
+            error={error}
+            onRebirth={() => run(rebirth)}
+            onBuy={(id) => run((s) => buyAltar(s, id))}
+          />
         )}
         {tab === 'arena' && (
           <ArenaView

@@ -40,8 +40,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   can go once people have opened the app.
 - `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser and saves in
   localStorage. `engine/` is plain, deterministic TS (seeded rng in the save, time passed in), so a
-  server can replay fights later for PvP; classes, items and zones are data there. `runner.ts` keeps it
-  playing on every screen once `GamesTab` sees a save.
+  server can replay fights later for PvP; classes (6, each with 2 specs), talents, items, the forge,
+  the rebirth altar and zones are data there. `runner.ts` keeps it playing on every screen once
+  `GamesTab` sees a save, and hands each tick's events to `fx/` (a canvas particle engine) without
+  going through React. Balance changes: play a few simulated hours with `advance` before shipping.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):

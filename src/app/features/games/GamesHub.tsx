@@ -111,7 +111,7 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
 
           <div className={css.GameCard} data-playable="true">
             <div className={css.IdleArt}>
-              {['🛡️', '🔮', '🏹', '🐉', '🗡️'].map((icon, i) => (
+              {['⚔️', '🔮', '🏹', '🐉', '🗡️'].map((icon, i) => (
                 <span
                   key={icon}
                   className={css.IdleArtIcon}
@@ -124,7 +124,10 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
             <div className={css.CardBody}>
               <span className={css.GameName}>{tr('games.idle.title', 'Ember Chronicles')}</span>
               <span className={css.GameMeta}>
-                {tr('games.hub.idle_meta', 'Idle RPG · 10 classes, loot, backpack and arena')}
+                {tr(
+                  'games.hub.idle_meta',
+                  'Idle RPG · 6 classes and 12 specializations, forge, rebirth and arena'
+                )}
               </span>
               <button type="button" className={css.PlayButton} onClick={onOpenIdle}>
                 {tr('games.hub.play', 'Play')}

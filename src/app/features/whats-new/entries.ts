@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-idle-rework',
+    items: () => [
+      {
+        title: tr('whats_new.idle_rework_title', 'Ember Chronicles, rebuilt'),
+        body: tr(
+          'whats_new.idle_rework_body',
+          'Six classes with two specializations each, a talent tree, a forge up to +12, rebirth with an altar of eternal bonuses, a big backpack with categories and comparisons, and new battle effects. Heroes from the first test start over.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-screen-share',
     items: () => [
       {
