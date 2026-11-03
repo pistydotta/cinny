@@ -2,6 +2,8 @@ import { ClientWidgetApi } from 'matrix-widget-api';
 import EventEmitter from 'events';
 import { CallControlState } from './CallControlState';
 import { ElementMediaStateDetail, ElementMediaStatePayload, ElementWidgetActions } from './types';
+import { addsAudio } from '../../../element-call/addsAudio';
+import type { ShareStore } from '../../../element-call/shareState';
 
 export enum CallControlEvent {
   StateUpdate = 'state_update',
@@ -12,16 +14,23 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private call: ClientWidgetApi;
 
-  private iframe: HTMLIFrameElement;
+  public readonly iframe: HTMLIFrameElement;
 
   private bodyMutationObserver: MutationObserver;
 
   private controlMutationObserver: MutationObserver;
 
+  private audioMutationObserver: MutationObserver;
+
   private mediaStatePromiseResolver: undefined | (() => void);
 
   private get document(): Document | undefined {
     return this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
+  }
+
+  // Set by blazeroom-screenshare.js inside the call page, which shares our origin.
+  public get shares(): ShareStore | undefined {
+    return (this.iframe.contentWindow as { blazeroomShares?: ShareStore } | null)?.blazeroomShares;
   }
 
   private get screenshareButton(): HTMLElement | undefined {
@@ -80,6 +89,10 @@ export class CallControl extends EventEmitter implements CallControlState {
 
     this.bodyMutationObserver = new MutationObserver(this.onBodyMutation.bind(this));
     this.controlMutationObserver = new MutationObserver(this.onControlMutation.bind(this));
+    // A share's audio element is created when it's watched, and must start deafened too.
+    this.audioMutationObserver = new MutationObserver((records) => {
+      if (addsAudio(records)) this.applySound();
+    });
   }
 
   public getState(): CallControlState {
@@ -122,6 +135,8 @@ export class CallControl extends EventEmitter implements CallControlState {
       childList: true,
       subtree: false, // only direct children of body
     });
+    this.audioMutationObserver.disconnect();
+    this.audioMutationObserver.observe(this.document.body, { childList: true, subtree: true });
     this.onBodyMutation();
   }
   
@@ -281,6 +296,7 @@ export class CallControl extends EventEmitter implements CallControlState {
   public dispose() {
     this.bodyMutationObserver.disconnect();
     this.controlMutationObserver.disconnect();
+    this.audioMutationObserver.disconnect();
   }
 
   private emitStateUpdate() {

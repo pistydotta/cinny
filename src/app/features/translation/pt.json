@@ -282,6 +282,8 @@
     "push_body": "Agora dá para receber avisos de mensagens mesmo com o blazeroom fechado. Cada aparelho liga por conta própria em Configurações > Notifications.",
     "poker_title": "Jogos: poker com os amigos",
     "poker_body": "Tem uma aba nova de Jogos na barra lateral. Cada um ganha 5.000 moedas para jogar Texas Hold’em com os amigos ou treinar contra bots.",
+    "screen_share_title": "Melhorias no compartilhamento de tela",
+    "screen_share_body": "Agora a live só abre para quem clicar em Assistir, com volume próprio, e quem compartilha vê que está ao vivo e pode desligar o som do PC.",
     "poker_server_title": "Poker: créditos zerados e mesas privadas",
     "poker_server_body": "Os créditos de todo mundo recomeçaram em 5.000. As mesas agora são privadas: só entra quem você convida, por amigo ou por link. Crie uma na aba Jogos.",
     "idle_title": "Novo jogo: Crônicas da Brasa",
@@ -373,6 +375,21 @@
     "undo_remove": "Desfazer remoção",
     "choose_server": "Escolher servidor",
     "heading": "Título"
+  },
+  "screen_share": {
+    "is_live": "{{name}} está ao vivo",
+    "watch": "Assistir",
+    "stop_watching": "Parar de assistir",
+    "volume": "Volume da live",
+    "mute": "Mutar live",
+    "unmute": "Ativar som da live",
+    "you_are_live": "Você está ao vivo",
+    "your_screen": "Sua tela",
+    "pc_sound_on": "Som do PC: ligado",
+    "pc_sound_off": "Som do PC: desligado",
+    "no_sound": "Sem som",
+    "stop": "Parar",
+    "badge": "Ao vivo"
   },
   "profile_description": {
     "title": "Descrição",

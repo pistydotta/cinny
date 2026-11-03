@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-screen-share',
+    items: () => [
+      {
+        title: tr('whats_new.screen_share_title', 'Screen share improvements'),
+        body: tr(
+          'whats_new.screen_share_body',
+          "Now a share only opens for whoever clicks Watch, with its own volume, and whoever shares can see they're live and turn off the PC sound."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-idle-rpg',
     items: () => [
       {
@@ -178,8 +190,8 @@ export const WHATS_NEW: WhatsNewEntry[] = [
   },
 ];
 
-// The card shows this many entries, so it stays short.
-export const MAX_SHOWN = 3;
+// The card shows this many items, so it stays short.
+export const MAX_SHOWN = 5;
 
 // The id of the newest entry this browser has seen.
 export const SEEN_KEY = 'blazeroom.whatsNewSeen';
@@ -187,12 +199,12 @@ export const SEEN_KEY = 'blazeroom.whatsNewSeen';
 const visible = (item: WhatsNewItem, inDesktopApp: boolean): boolean =>
   !(inDesktopApp && item.hideInDesktopApp);
 
-// The items the Novidades card shows, from the newest MAX_SHOWN entries.
+// The newest MAX_SHOWN items the Novidades card shows, leaving out the ones hidden here.
 export const shownItems = (entries: WhatsNewEntry[], inDesktopApp: boolean): WhatsNewItem[] =>
   entries
-    .slice(0, MAX_SHOWN)
     .flatMap((entry) => entry.items())
-    .filter((item) => visible(item, inDesktopApp));
+    .filter((item) => visible(item, inDesktopApp))
+    .slice(0, MAX_SHOWN);
 
 // Whether an entry newer than the last seen one has something to show here.
 export const hasUnseen = (

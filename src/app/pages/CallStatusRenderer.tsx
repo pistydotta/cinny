@@ -3,6 +3,7 @@ import { useCallEmbed } from '../hooks/useCallEmbed';
 import { CallStatus } from '../features/call-status';
 import { useSelectedRoom } from '../hooks/router/useSelectedRoom';
 import { ScreenSize, useScreenSizeContext } from '../hooks/useScreenSize';
+import { ShareAutoWatch } from '../features/screen-share/ShareAutoWatch';
 
 export function CallStatusRenderer() {
   const callEmbed = useCallEmbed();
@@ -12,7 +13,12 @@ export function CallStatusRenderer() {
 
   if (!callEmbed) return null;
 
-  if (screenSize === ScreenSize.Mobile && callEmbed.roomId === selectedRoom) return null;
+  const hidden = screenSize === ScreenSize.Mobile && callEmbed.roomId === selectedRoom;
 
-  return <CallStatus callEmbed={callEmbed} />;
+  return (
+    <>
+      <ShareAutoWatch callEmbed={callEmbed} />
+      {!hidden && <CallStatus callEmbed={callEmbed} />}
+    </>
+  );
 }

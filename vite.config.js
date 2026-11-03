@@ -10,24 +10,35 @@ import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'fs';
 import path from 'path';
 import buildConfig from './build.config';
+import { patchElementCall } from './src/element-call/patchElementCall';
 
 const noiseSuppressor = 'node_modules/@sapphi-red/web-noise-suppressor/dist';
+const elementCall = 'node_modules/@element-hq/element-call-embedded/dist';
 
 const copyFiles = {
   targets: [
     {
-      src: [
-        'node_modules/@element-hq/element-call-embedded/dist/assets',
-        'node_modules/@element-hq/element-call-embedded/dist/config.json',
-      ],
+      src: `${elementCall}/config.json`,
       dest: 'public/element-call',
     },
     {
-      // Loads our mic noise suppression before Element Call's own script.
-      src: 'node_modules/@element-hq/element-call-embedded/dist/index.html',
+      src: [`${elementCall}/assets/*`, `!${elementCall}/assets/index-*.js`],
+      dest: 'public/element-call/assets',
+    },
+    {
+      // Makes the call layout ask blazeroom-screenshare.js which screen shares to show.
+      src: `${elementCall}/assets/index-*.js`,
+      dest: 'public/element-call/assets',
+      transform: patchElementCall,
+    },
+    {
+      // Loads our mic noise suppression and share state before Element Call's own script.
+      src: `${elementCall}/index.html`,
       dest: 'public/element-call',
       transform: (content) => {
-        const script = '<script type="module" src="./blazeroom/blazeroom-noise.js"></script>';
+        const script = ['blazeroom-noise.js', 'blazeroom-screenshare.js']
+          .map((file) => `<script type="module" src="./blazeroom/${file}"></script>`)
+          .join('');
         const at = content.indexOf('<script type="module"');
         if (at === -1) throw new Error('Element Call index.html: module script not found');
         return content.slice(0, at) + script + content.slice(at);
@@ -36,6 +47,8 @@ const copyFiles = {
     ...[
       { src: 'src/element-call/blazeroom-noise.js' },
       { src: 'src/element-call/micFilter.js' },
+      { src: 'src/element-call/blazeroom-screenshare.js' },
+      { src: 'src/element-call/shareState.js' },
       { src: `${noiseSuppressor}/index.js`, rename: 'noise-suppressor.js' },
       { src: `${noiseSuppressor}/rnnoise/workletProcessor.js`, rename: 'rnnoiseWorklet.js' },
       { src: `${noiseSuppressor}/rnnoise.wasm` },
