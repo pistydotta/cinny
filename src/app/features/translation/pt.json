@@ -285,7 +285,9 @@
     "poker_server_title": "Poker: créditos zerados e mesas privadas",
     "poker_server_body": "Os créditos de todo mundo recomeçaram em 5.000. As mesas agora são privadas: só entra quem você convida, por amigo ou por link. Crie uma na aba Jogos.",
     "idle_title": "Novo jogo: Crônicas da Brasa",
-    "idle_body": "Um RPG idle na aba Jogos. Escolha entre 10 classes, junte equipamentos, monte a mochila e suba de fase, mesmo com o app em outra tela. Tem arena para duelos também."
+    "idle_body": "Um RPG idle na aba Jogos. Escolha entre 10 classes, junte equipamentos, monte a mochila e suba de fase, mesmo com o app em outra tela. Tem arena para duelos também.",
+    "idle_cloud_title": "Crônicas da Brasa em todo aparelho",
+    "idle_cloud_body": "Seu herói agora fica salvo na sua conta, não só no navegador. Abra o jogo em outro computador ou no celular e continue de onde parou."
   },
   "admin": {
     "deactivate": {
@@ -1030,7 +1032,12 @@
         }
       },
       "sell_commons": "Vender comuns",
-      "sell_uncommons": "Vender comuns e incomuns"
+      "sell_uncommons": "Vender comuns e incomuns",
+      "cloud_error_title": "Não deu para acessar o save da sua conta",
+      "cloud_error_playing": "Seu herói continua jogando e fica salvo neste navegador. Ele vai para a sua conta assim que a conexão voltar.",
+      "cloud_error_text": "Seu herói pode estar salvo lá. Tente de novo antes de criar um novo.",
+      "cloud_retry": "Tentar de novo",
+      "cloud_loading": "Procurando seu herói na sua conta…"
     }
   },
   "music_bot": {

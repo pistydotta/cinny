@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-idle-cloud-save',
+    items: () => [
+      {
+        title: tr('whats_new.idle_cloud_title', 'Ember Chronicles on every device'),
+        body: tr(
+          'whats_new.idle_cloud_body',
+          'Your hero is now saved in your account, not just in the browser. Open the game on another computer or on your phone and pick up where you left off.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-idle-rpg',
     items: () => [
       {

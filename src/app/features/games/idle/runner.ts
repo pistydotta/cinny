@@ -5,16 +5,20 @@ import { advance, newGame } from './engine/progress';
 import { hashSeed } from './engine/rng';
 import { deserialize, serialize } from './engine/save';
 import { ClassId, GameEvent, GameState } from './engine/types';
+import { SaveEnvelope, parseEnvelope, parseLocal, pickSave } from './cloudSync';
 
 // Keeps the game going while the app is open, on any screen: one runner per logged-in user,
 // living outside React. The sidebar starts it when a save exists (useIdleBackground), the game
 // screen subscribes to it. Ticks fast while someone watches and slowly otherwise; each tick
 // uses the real clock, so a throttled background tab or a sleeping laptop just catches up.
 //
-// Saved per browser in localStorage for now. Two tabs open on the same account each play and
-// the last one to save wins; a server-side save would fix that when the game goes online.
+// The save goes to the account (cloudSync.ts) so the hero follows the player to any device,
+// with a copy in localStorage to start at once. Two devices playing at the same time take
+// turns: each adopts the other's save when it arrives, so they share one hero.
 
 export type LogEntry = { id: number; event: GameEvent };
+
+export type CloudStatus = 'loading' | 'ready' | 'error';
 
 export type IdleView = {
   state?: GameState;
@@ -24,12 +28,29 @@ export type IdleView = {
   recent: GameEvent[];
   /** Changes on every update, since `state` is the same object stepped in place. */
   tick: number;
+  /** The account's save: still being fetched, in sync, or out of reach. */
+  cloud: CloudStatus;
+};
+
+/** Where the account's save lives. The app hands in Matrix account data (useIdleGame.ts). */
+export type CloudSave = {
+  /** The stored content, fresh from the server. */
+  load: () => Promise<unknown>;
+  save: (envelope: SaveEnvelope) => Promise<void>;
+  /** Content written by any device, this one included. */
+  watch: (onChange: (content: unknown) => void) => () => void;
 };
 
 const LOG_SIZE = 60;
 const FAST_MS = 200;
 const SLOW_MS = 1000;
 const SAVE_EVERY_MS = 10000;
+/** To the account: every minute while someone watches, every five otherwise. */
+const CLOUD_WATCHED_MS = 60000;
+const CLOUD_IDLE_MS = 5 * 60000;
+/** After a player's action, soon enough to survive switching devices right away. */
+const CLOUD_AFTER_ACTION_MS = 3000;
+const CLOUD_RETRY_MS = 30000;
 /** A gap this long counts as time away and gets a report. */
 const REPORT_AFTER_MS = 60000;
 
@@ -62,19 +83,31 @@ export type IdleRunner = {
   /** For actions that change the state and return more than that (the arena). */
   replace: (state: GameState) => void;
   dismissOffline: () => void;
+  retryCloud: () => void;
   abandon: () => void;
   stop: () => void;
 };
 
-const createRunner = (userId: string): IdleRunner => {
+const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+const createRunner = (userId: string, cloud: CloudSave): IdleRunner => {
   const key = storageKey(userId);
   const listeners = new Set<() => void>();
-  let state = deserialize(readStorage(key));
+  const writer = newId();
+  // The browser's copy as it was before this visit's catch-up moved it forward.
+  const atStart = parseLocal(readStorage(key));
+  let state = atStart?.save ? deserialize(atStart.save) : undefined;
+  let gameId = atStart?.gameId ?? newId();
+  let cloudStatus: CloudStatus = 'loading';
+  let cloudDueAt = Infinity;
+  let cloudBusy = false;
+  /** savedAt of the newest account save this device wrote or took. */
+  let cloudSeen = 0;
   let log: LogEntry[] = [];
   let logId = 0;
   let offline: OfflineReport | undefined;
   let recent: GameEvent[] = [];
-  let view: IdleView = { state, log, recent, tick: 0 };
+  let view: IdleView = { state, log, recent, tick: 0, cloud: cloudStatus };
   let carry = 0;
   let lastTick = Date.now();
   let lastSave = Date.now();
@@ -82,14 +115,50 @@ const createRunner = (userId: string): IdleRunner => {
   let stopped = false;
 
   const publish = () => {
-    view = { state, log, offline, recent, tick: view.tick + 1 };
+    view = { state, log, offline, recent, tick: view.tick + 1, cloud: cloudStatus };
     listeners.forEach((l) => l());
   };
 
+  const envelope = (): SaveEnvelope => ({
+    save: state ? serialize(state) : null,
+    gameId,
+    savedAt: state?.lastSeen ?? Date.now(),
+    writer,
+  });
+
   const save = () => {
-    if (!state) return;
     lastSave = Date.now();
-    writeStorage(key, serialize(state));
+    writeStorage(key, JSON.stringify(envelope()));
+  };
+
+  const pushCloud = () => {
+    if (cloudStatus !== 'ready') return;
+    if (cloudBusy) {
+      cloudDueAt = Math.min(cloudDueAt, Date.now() + CLOUD_AFTER_ACTION_MS);
+      return;
+    }
+    const sent = envelope();
+    cloudBusy = true;
+    cloudDueAt = Date.now() + (listeners.size > 0 ? CLOUD_WATCHED_MS : CLOUD_IDLE_MS);
+    cloud
+      .save(sent)
+      .then(() => {
+        cloudSeen = Math.max(cloudSeen, sent.savedAt);
+      })
+      .catch(() => {
+        cloudDueAt = Date.now() + CLOUD_RETRY_MS;
+      })
+      .finally(() => {
+        cloudBusy = false;
+      });
+  };
+
+  /** Something the player did: worth keeping on the account soon. */
+  const changed = () => {
+    if (state) state.lastSeen = Date.now();
+    save();
+    cloudDueAt = Math.min(cloudDueAt, Date.now() + CLOUD_AFTER_ACTION_MS);
+    publish();
   };
 
   // Blow by blow would push everything else out, so hits only reach `recent`.
@@ -121,13 +190,15 @@ const createRunner = (userId: string): IdleRunner => {
     }
     state.lastSeen = now;
     if (now - lastSave >= SAVE_EVERY_MS) save();
+    if (now >= cloudDueAt) pushCloud();
     publish();
   };
 
   const schedule = () => {
-    if (stopped || !state) return;
+    if (stopped || !state || timer !== undefined) return;
     timer = setTimeout(
       () => {
+        timer = undefined;
         step();
         schedule();
       },
@@ -136,23 +207,87 @@ const createRunner = (userId: string): IdleRunner => {
   };
 
   const onHide = () => {
-    if (document.visibilityState === 'hidden') save();
+    if (document.visibilityState !== 'hidden') return;
+    save();
+    if (state) pushCloud();
   };
-  window.addEventListener('pagehide', save);
+  const onPageHide = () => save();
+  window.addEventListener('pagehide', onPageHide);
   document.addEventListener('visibilitychange', onHide);
 
-  // Time since the last save, from when the app was closed.
-  if (state) {
+  /** Plays the time since a save was made, then runs it. */
+  const resume = (next: GameState) => {
+    state = next;
     const away = Date.now() - state.lastSeen;
     if (away > 0) {
       const report = catchUp(state, away);
       if (away >= REPORT_AFTER_MS) offline = report;
       state.lastSeen = Date.now();
-      save();
     }
-    view = { state, log, offline, recent, tick: 1 };
+    lastTick = Date.now();
+    carry = 0;
     schedule();
-  }
+  };
+
+  /** Takes the account's save over this device's. */
+  const adopt = (remote: SaveEnvelope) => {
+    const next = remote.save ? deserialize(remote.save) : undefined;
+    if (remote.save && !next) return;
+    cloudSeen = Math.max(cloudSeen, remote.savedAt);
+    gameId = remote.gameId;
+    log = [];
+    recent = [];
+    offline = undefined;
+    if (next) {
+      resume(next);
+    } else {
+      state = undefined;
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+    }
+    save();
+    publish();
+  };
+
+  let unwatch: (() => void) | undefined;
+  const connect = () => {
+    cloudStatus = 'loading';
+    publish();
+    cloud
+      .load()
+      .then((content) => {
+        if (stopped) return;
+        cloudStatus = 'ready';
+        const remote = parseEnvelope(content);
+        const choice = pickSave(atStart, remote);
+        if (choice === 'remote' && remote) adopt(remote);
+        else if (state) cloudDueAt = Date.now();
+        if (remote && choice !== 'local') cloudSeen = remote.savedAt;
+        unwatch?.();
+        unwatch = cloud.watch((changedContent) => {
+          const e = parseEnvelope(changedContent);
+          if (!e || e.writer === writer || e.savedAt <= cloudSeen) return;
+          // The same hero saved by another device: it's playing now, follow it. Another
+          // hero only replaces this one if it has been played longer.
+          if (e.gameId === gameId || pickSave(envelope(), e) === 'remote') adopt(e);
+        });
+        publish();
+      })
+      .catch(() => {
+        if (stopped) return;
+        // Never write to the account without having read it: that could bury a hero.
+        cloudStatus = 'error';
+        publish();
+        setTimeout(() => {
+          if (!stopped && cloudStatus === 'error') connect();
+        }, CLOUD_RETRY_MS);
+      });
+  };
+
+  // Time since the last save, from when the app was closed.
+  if (state) resume(state);
+  view = { state, log, offline, recent, tick: 1, cloud: cloudStatus };
+  connect();
 
   return {
     userId,
@@ -170,32 +305,33 @@ const createRunner = (userId: string): IdleRunner => {
     hasSave: () => state !== undefined,
     start: (name, classId) => {
       const now = Date.now();
+      gameId = newId();
       state = newGame(name, classId, hashSeed(`${userId}|${now}`), now);
       log = [];
       lastTick = now;
       carry = 0;
-      save();
-      publish();
-      if (timer === undefined) schedule();
+      changed();
+      schedule();
     },
     dispatch: (action) => {
       if (!state) return undefined;
       const result = action(state);
       if (result.ok) {
         state = result.state;
-        save();
-        publish();
+        changed();
       }
       return result;
     },
     replace: (next) => {
       state = next;
-      save();
-      publish();
+      changed();
     },
     dismissOffline: () => {
       offline = undefined;
       publish();
+    },
+    retryCloud: () => {
+      if (cloudStatus === 'error') connect();
     },
     abandon: () => {
       if (timer !== undefined) clearTimeout(timer);
@@ -203,14 +339,17 @@ const createRunner = (userId: string): IdleRunner => {
       state = undefined;
       log = [];
       offline = undefined;
-      writeStorage(key, null);
+      // Written as a deletion of this hero, so the other devices drop it too.
+      save();
+      pushCloud();
       publish();
     },
     stop: () => {
       stopped = true;
       if (timer !== undefined) clearTimeout(timer);
+      unwatch?.();
       save();
-      window.removeEventListener('pagehide', save);
+      window.removeEventListener('pagehide', onPageHide);
       document.removeEventListener('visibilitychange', onHide);
     },
   };
@@ -219,12 +358,13 @@ const createRunner = (userId: string): IdleRunner => {
 let current: IdleRunner | undefined;
 
 /** The runner for this user, made on first use. Logging in as someone else swaps it. */
-export const getIdleRunner = (userId: string): IdleRunner => {
+export const getIdleRunner = (userId: string, cloud: CloudSave): IdleRunner => {
   if (current?.userId !== userId) {
     current?.stop();
-    current = createRunner(userId);
+    current = createRunner(userId, cloud);
   }
   return current;
 };
 
-export const hasIdleSave = (userId: string): boolean => readStorage(storageKey(userId)) !== null;
+export const hasLocalIdleSave = (userId: string): boolean =>
+  !!parseLocal(readStorage(storageKey(userId)))?.save;

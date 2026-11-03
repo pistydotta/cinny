@@ -54,7 +54,7 @@ type IdleGameProps = {
 };
 
 export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
-  const { runner, view } = useIdleGame(userId);
+  const { runner, view } = useIdleGame();
   const [tab, setTab] = useState<TabId>('battle');
   const [error, setError] = useState<string>();
   const [confirmAbandon, setConfirmAbandon] = useState(false);
@@ -92,12 +92,48 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
     </div>
   );
 
+  const cloudError = (
+    <div className={css.Banner}>
+      <span style={{ fontSize: 26 }}>☁️</span>
+      <div className={css.Grow}>
+        <div className={css.Strong}>
+          {tr('games.idle.cloud_error_title', 'Couldn’t reach your account’s save')}
+        </div>
+        <div className={css.Muted}>
+          {state
+            ? tr(
+                'games.idle.cloud_error_playing',
+                'Your hero keeps playing and is saved in this browser. It goes to your account as soon as the connection is back.'
+              )
+            : tr(
+                'games.idle.cloud_error_text',
+                'Your hero may be saved there. Try again before starting a new one.'
+              )}
+        </div>
+      </div>
+      <button type="button" className={css.Button} onClick={runner.retryCloud}>
+        {tr('games.idle.cloud_retry', 'Try again')}
+      </button>
+    </div>
+  );
+
   if (!state) {
+    let body = <ClassPicker defaultName={defaultName} onStart={runner.start} />;
+    if (view.cloud === 'loading') {
+      body = (
+        <div className={css.Panel}>
+          <span className={css.Muted}>
+            {tr('games.idle.cloud_loading', 'Looking for your hero in your account…')}
+          </span>
+        </div>
+      );
+    }
+    if (view.cloud === 'error') body = cloudError;
     return (
       <div className={css.Page}>
         <div className={css.Inner}>
           {header}
-          <ClassPicker defaultName={defaultName} onStart={runner.start} />
+          {body}
         </div>
       </div>
     );
@@ -154,6 +190,8 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
             {tr('games.idle.best_stage', 'Best stage {{stage}}', { stage: state.maxStage })}
           </span>
         </div>
+
+        {view.cloud === 'error' && cloudError}
 
         {offline && (
           <div className={css.Banner}>
