@@ -51,8 +51,10 @@ export function WatchControls({ callEmbed }: { callEmbed: CallEmbed }) {
                 value={share.volume}
                 aria-label={tr('screen_share.volume', 'Share volume')}
                 onChange={(evt) => store.setVolume(share.id, Number(evt.currentTarget.value))}
-                onPointerUp={(evt) => saveVolume(localStorage, Number(evt.currentTarget.value))}
-                onKeyUp={(evt) => saveVolume(localStorage, Number(evt.currentTarget.value))}
+                onPointerUp={(evt) =>
+                  saveVolume(() => localStorage, Number(evt.currentTarget.value))
+                }
+                onKeyUp={(evt) => saveVolume(() => localStorage, Number(evt.currentTarget.value))}
               />
             </>
           )}

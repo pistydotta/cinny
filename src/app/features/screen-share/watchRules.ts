@@ -11,9 +11,10 @@ export const shouldAutoWatch = (memberUserIds: string[]): boolean | undefined =>
   return people === 2;
 };
 
-export const readSavedVolume = (storage: Pick<Storage, 'getItem'>): number => {
+// Storage comes as a getter: where it's blocked, even reading the `localStorage` global throws.
+export const readSavedVolume = (getStorage: () => Pick<Storage, 'getItem'>): number => {
   try {
-    const volume = Number(storage.getItem(VOLUME_KEY));
+    const volume = Number(getStorage().getItem(VOLUME_KEY));
     return volume > 0 && volume <= 1 ? volume : DEFAULT_VOLUME;
   } catch {
     return DEFAULT_VOLUME;
@@ -21,10 +22,10 @@ export const readSavedVolume = (storage: Pick<Storage, 'getItem'>): number => {
 };
 
 // 0 is a mute, not a preference: it would come back silent with no hint why.
-export const saveVolume = (storage: Pick<Storage, 'setItem'>, volume: number): void => {
+export const saveVolume = (getStorage: () => Pick<Storage, 'setItem'>, volume: number): void => {
   if (!(volume > 0 && volume <= 1)) return;
   try {
-    storage.setItem(VOLUME_KEY, String(volume));
+    getStorage().setItem(VOLUME_KEY, String(volume));
   } catch {
     // Storage blocked: the volume just isn't remembered.
   }

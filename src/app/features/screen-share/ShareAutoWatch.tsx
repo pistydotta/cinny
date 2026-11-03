@@ -18,7 +18,11 @@ export function ShareAutoWatch({ callEmbed }: { callEmbed: CallEmbed }) {
     if (watch === undefined) return;
     pending.forEach((share) => {
       store.markDecided(share.id);
-      if (watch) store.watch(share.id, readSavedVolume(localStorage));
+      if (watch)
+        store.watch(
+          share.id,
+          readSavedVolume(() => localStorage)
+        );
     });
   }, [store, remotes, callMembers]);
 

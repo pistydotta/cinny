@@ -26,7 +26,12 @@ export function LiveCards({ callEmbed }: { callEmbed: CallEmbed }) {
             size="300"
             variant="Primary"
             radii="300"
-            onClick={() => store.watch(share.id, readSavedVolume(localStorage))}
+            onClick={() =>
+              store.watch(
+                share.id,
+                readSavedVolume(() => localStorage)
+              )
+            }
           >
             <Text size="B300">{tr('screen_share.watch', 'Watch')}</Text>
           </Button>

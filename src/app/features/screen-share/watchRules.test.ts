@@ -44,32 +44,40 @@ describe('shouldAutoWatch', () => {
 
 describe('saved volume', () => {
   it('starts at 50%', () => {
-    expect(readSavedVolume(memoryStorage())).toBe(DEFAULT_VOLUME);
+    expect(readSavedVolume(() => memoryStorage())).toBe(DEFAULT_VOLUME);
     expect(DEFAULT_VOLUME).toBe(0.5);
   });
 
   it('reads back a saved volume', () => {
     const storage = memoryStorage();
-    saveVolume(storage, 0.3);
-    expect(readSavedVolume(storage)).toBe(0.3);
+    saveVolume(() => storage, 0.3);
+    expect(readSavedVolume(() => storage)).toBe(0.3);
   });
 
   it('ignores a broken value', () => {
     const storage = memoryStorage();
     storage.data.set('blazeroom.screenShareVolume', 'abc');
-    expect(readSavedVolume(storage)).toBe(0.5);
+    expect(readSavedVolume(() => storage)).toBe(0.5);
     storage.data.set('blazeroom.screenShareVolume', '7');
-    expect(readSavedVolume(storage)).toBe(0.5);
+    expect(readSavedVolume(() => storage)).toBe(0.5);
   });
 
   it("doesn't save 0", () => {
     const storage = memoryStorage();
-    saveVolume(storage, 0);
+    saveVolume(() => storage, 0);
     expect(storage.data.size).toBe(0);
   });
 
   it('survives storage that throws', () => {
-    expect(readSavedVolume({ getItem: throwing })).toBe(0.5);
-    expect(() => saveVolume({ setItem: throwing }, 0.3)).not.toThrow();
+    expect(readSavedVolume(() => ({ getItem: throwing }))).toBe(0.5);
+    expect(() => saveVolume(() => ({ setItem: throwing }), 0.3)).not.toThrow();
+  });
+
+  it('survives the storage global itself throwing', () => {
+    const blocked = () => {
+      throw new Error('SecurityError');
+    };
+    expect(readSavedVolume(blocked)).toBe(0.5);
+    expect(() => saveVolume(blocked, 0.3)).not.toThrow();
   });
 });
