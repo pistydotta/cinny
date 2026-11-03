@@ -29,8 +29,12 @@ describe('shouldAutoWatch', () => {
     expect(shouldAutoWatch(['@a', '@a', '@b'])).toBe(true);
   });
 
-  it("doesn't open for one person on two devices", () => {
-    expect(shouldAutoWatch(['@a', '@a'])).toBe(false);
+  it('waits with one person', () => {
+    expect(shouldAutoWatch(['@a'])).toBeUndefined();
+  });
+
+  it('waits for one person on two devices', () => {
+    expect(shouldAutoWatch(['@a', '@a'])).toBeUndefined();
   });
 
   it("doesn't open with three", () => {

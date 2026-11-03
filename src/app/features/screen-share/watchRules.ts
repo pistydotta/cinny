@@ -3,10 +3,12 @@ export const DEFAULT_VOLUME = 0.5;
 const VOLUME_KEY = 'blazeroom.screenShareVolume';
 
 // Two people in the call means the one watching is the only possible viewer, so the share opens
-// by itself. Several devices of one person count once. undefined: nobody is in the call yet, wait.
+// by itself. Several devices of one person count once. undefined: fewer than two people listed,
+// wait. A remote share means at least two are there, so a shorter list is still loading.
 export const shouldAutoWatch = (memberUserIds: string[]): boolean | undefined => {
-  if (memberUserIds.length === 0) return undefined;
-  return new Set(memberUserIds).size === 2;
+  const people = new Set(memberUserIds).size;
+  if (people < 2) return undefined;
+  return people === 2;
 };
 
 export const readSavedVolume = (storage: Pick<Storage, 'getItem'>): number => {
