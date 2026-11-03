@@ -114,7 +114,8 @@ export const createShareStore = () => {
   const applySubscriptions = (e) => {
     if (!e.vm || !e.participant) return;
     subscribeTo(e.participant, VIDEO_SOURCE, e.watching);
-    subscribeTo(e.participant, SOUND_SOURCE, e.watching && !e.muted);
+    // Not at volume 0 either: LiveKit's attach skips a volume of 0, so the element would play at 1.
+    subscribeTo(e.participant, SOUND_SOURCE, e.watching && !e.muted && e.volume > 0);
   };
 
   const unbindParticipant = (e) => {
@@ -228,7 +229,8 @@ export const createShareStore = () => {
       });
 
       if (localVm) sawLocalVm = true;
-      else if (sawLocalVm) clearLocal();
+      // The view model also goes away for a moment in a reconnect, with the share still live.
+      else if (sawLocalVm && localVideo?.readyState === 'ended') clearLocal();
 
       return vms.filter((vm) => !vm.local && entries.get(vm.id)?.watching);
     } finally {

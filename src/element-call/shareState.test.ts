@@ -37,8 +37,19 @@ type FakeVm = ReturnType<typeof fakeVm>;
 const asVms = (vms: FakeVm[]) =>
   vms as unknown as Parameters<ReturnType<typeof createShareStore>['layoutShares']>[0];
 
-const fakeTrack = (kind: string, label = '') =>
-  Object.assign(new EventTarget(), { kind, label, enabled: true });
+// As with a real track, stop() ends it without firing the 'ended' event.
+const fakeTrack = (kind: string, label = '') => {
+  const track = Object.assign(new EventTarget(), {
+    kind,
+    label,
+    enabled: true,
+    readyState: 'live',
+    stop: () => {
+      track.readyState = 'ended';
+    },
+  });
+  return track;
+};
 type FakeTrack = ReturnType<typeof fakeTrack>;
 
 const fakeStream = (tracks: FakeTrack[]) =>
@@ -153,6 +164,42 @@ describe('remote share downloads', () => {
     store.watch('a', 0.5);
     expect(video.isDesired).toBe(true);
     expect(sound.isDesired).toBe(false);
+  });
+
+  it('leaves the sound unsubscribed at volume 0, keeping the video', () => {
+    const store = createShareStore();
+    const { vm, video, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0);
+    expect(video.isDesired).toBe(true);
+    expect(sound.isDesired).toBe(false);
+  });
+
+  it('drops the sound when dragged to 0, and sets the volume first when raised', () => {
+    const store = createShareStore();
+    const { vm, sound } = fakeShare();
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0.5);
+    store.setVolume('a', 0);
+    expect(sound.isDesired).toBe(false);
+    sound.setSubscribed.mockClear();
+    vm.adjustPlaybackVolume.mockClear();
+    store.setVolume('a', 0.5);
+    expect(sound.isDesired).toBe(true);
+    expect(vm.adjustPlaybackVolume).toHaveBeenCalledWith(0.5);
+    expect(vm.adjustPlaybackVolume.mock.invocationCallOrder[0]).toBeLessThan(
+      sound.setSubscribed.mock.invocationCallOrder[0]
+    );
+  });
+
+  it('a late sound publication stays off at volume 0', () => {
+    const store = createShareStore();
+    const { vm, participant } = fakeShare('a', false);
+    store.layoutShares(asVms([vm]));
+    store.watch('a', 0);
+    const late = fakePublication();
+    participant.publish('screen_share_audio', late);
+    expect(late.isDesired).toBe(false);
   });
 
   it('only calls setSubscribed when the wish changes', () => {
@@ -577,12 +624,29 @@ describe('local share', () => {
     expect(store.getSnapshot().local?.name).toBe('Screen 2');
   });
 
-  it('clears the local share when its vm goes away without an ended event', () => {
+  it('clears the local share when its vm goes after the track was stopped', () => {
     const { store, video } = setup();
     const mine = fakeVm('me', { local: true });
     store.setLocalStream(fakeStream([video]));
     store.layoutShares(asVms([mine]));
     expect(store.getSnapshot().local).not.toBeNull();
+    video.stop();
+    store.layoutShares([]);
+    expect(store.getSnapshot().local).toBeNull();
+  });
+
+  it('keeps a live local share while its vm is gone for a reconnect', () => {
+    const { store, video, audio } = setup();
+    const mine = fakeVm('me', { local: true });
+    store.setLocalStream(fakeStream([video, audio]));
+    store.layoutShares(asVms([mine]));
+    store.layoutShares([]);
+    expect(store.getSnapshot().local).not.toBeNull();
+    store.layoutShares(asVms([fakeVm('me', { local: true })]));
+    store.setLocalSound(false);
+    expect(audio.enabled).toBe(false);
+    expect(store.getSnapshot().local?.soundOn).toBe(false);
+    video.stop();
     store.layoutShares([]);
     expect(store.getSnapshot().local).toBeNull();
   });
