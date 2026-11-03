@@ -38,8 +38,10 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   none: it shows the view the API sends and posts the player's action. The credits wallet
   (`games/credits`) is the API's too. `games/legacy` only cleans up the old Matrix-room tables and
   can go once people have opened the app.
-- `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser and saves in
-  localStorage. `engine/` is plain, deterministic TS (seeded rng in the save, time passed in), so a
+- `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser. It saves in
+  localStorage and on the API (`/api/idle/save`, `cloudSave.ts`): every write names the server revision
+  it was based on, and a conflict means another device is playing, so this one pauses until "Jogar
+  aqui". Without the API the game keeps working on localStorage alone. `engine/` is plain, deterministic TS (seeded rng in the save, time passed in), so a
   server can replay fights later for PvP; classes (6, each with 2 specs), talents, items, the forge,
   the rebirth altar and zones are data there. `runner.ts` keeps it playing on every screen once
   `GamesTab` sees a save, and hands each tick's events to `fx/` (a canvas particle engine) without
