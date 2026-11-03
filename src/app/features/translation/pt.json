@@ -370,6 +370,14 @@
     "choose_server": "Escolher servidor",
     "heading": "Título"
   },
+  "screen_share": {
+    "is_live": "{{name}} está ao vivo",
+    "watch": "Assistir",
+    "stop_watching": "Parar de assistir",
+    "volume": "Volume da live",
+    "mute": "Mutar live",
+    "unmute": "Ativar som da live"
+  },
   "profile_description": {
     "title": "Descrição",
     "placeholder": "Aparece no seu cartão de perfil",
