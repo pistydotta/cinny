@@ -1347,5 +1347,88 @@
     "command_play": "Bot de música: toca um link (YouTube, Spotify, SoundCloud...) ou o nome de uma música na chamada desta sala. Exemplo: /play lofi",
     "command_skip": "Bot de música: pula a música que está tocando",
     "command_stop": "Bot de música: para a música e limpa a fila"
+  },
+  "poker_controls": {
+    "close": "Fechar",
+    "history": "Histórico da mesa (fichas)",
+    "amount": {
+      "chips": "Fichas",
+      "units": "Unidade das apostas",
+      "bb_value": "1 BB = {{chips}} fichas",
+      "input": "Aposta total em {{unit}}",
+      "total": "Total nesta rodada: {{chips}} fichas"
+    },
+    "queue": {
+      "fold": "Desistir na minha vez",
+      "check_fold": "Passar / desistir",
+      "check": "Só passar",
+      "call": "Pagar até {{amount}}",
+      "fold_now": "Desistir agora",
+      "fold_now_hint": "Abandonar esta mão imediatamente. Não é possível desfazer.",
+      "hint": "Acontece uma vez, na sua vez. Desmarque para cancelar. Pagar nunca ultrapassa o limite escolhido; uma nova rodada ou desconexão limpa a seleção."
+    },
+    "audio": {
+      "title": "Sons do poker",
+      "hint": "Sons opcionais neste navegador. O volume das chamadas e músicas não muda.",
+      "sounds": "Ativar sons do poker",
+      "turn": "Sua vez de jogar",
+      "cards": "Cartas distribuídas",
+      "actions": "Apostas, passar e desistir",
+      "wins": "Você ganha um pote",
+      "volume": "Volume do poker",
+      "test": "Testar som"
+    },
+    "guide": {
+      "title": "Ranking das mãos de poker",
+      "open": "Abrir ranking das mãos",
+      "rank": "#{{rank}} de 10 tipos de mão",
+      "explanation": "#1 é o tipo de mão mais forte. Este não é seu lugar na mesa: as cartas dos adversários estão escondidas. No mesmo tipo, as cartas mais altas e os desempates decidem; as mesmas cinco melhores cartas empatam.",
+      "uses": "Melhores cinco: {{hole}} cartas suas + {{board}} cartas da mesa.",
+      "preflop": "Suas cartas fechadas. A mão final usa as cinco melhores entre sete cartas.",
+      "royal_flush": {
+        "title": "Royal flush",
+        "description": "A, K, Q, J e 10 do mesmo naipe."
+      },
+      "straight_flush": {
+        "title": "Straight flush",
+        "description": "Cinco cartas seguidas do mesmo naipe."
+      },
+      "quads": {
+        "title": "Quadra",
+        "description": "Quatro cartas do mesmo valor."
+      },
+      "full_house": {
+        "title": "Full house",
+        "description": "Uma trinca e um par."
+      },
+      "flush": {
+        "title": "Flush",
+        "description": "Cinco cartas do mesmo naipe."
+      },
+      "straight": {
+        "title": "Sequência",
+        "description": "Cinco valores seguidos. O ás pode ser alto ou baixo."
+      },
+      "trips": {
+        "title": "Trinca",
+        "description": "Três cartas do mesmo valor."
+      },
+      "two_pair": {
+        "title": "Dois pares",
+        "description": "Dois pares de valores diferentes."
+      },
+      "pair": {
+        "title": "Um par",
+        "description": "Duas cartas do mesmo valor."
+      },
+      "high_card": {
+        "title": "Carta alta",
+        "description": "Sem combinação formada; comparam-se as cartas mais altas."
+      }
+    },
+    "news": {
+      "title": "Poker mais fácil de acompanhar",
+      "body": "Sons e volume opcionais, ações antecipadas e desistência imediata, apostas em fichas ou BB, e um guia visual das suas cinco melhores cartas e do ranking das mãos."
+    }
   }
 }

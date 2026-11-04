@@ -139,6 +139,7 @@ export type TableView = {
   street: 'preflop' | 'flop' | 'turn' | 'river';
   board: Card[];
   pot: number;
+  currentBet?: number;
   buttonSeat: number | null;
   sbSeat: number | null;
   bbSeat: number | null;
@@ -150,6 +151,9 @@ export type TableView = {
   legal: ViewLegal | null;
   /** The viewer's best hand from their cards and the board; null without cards. */
   myHand: HandName | null;
+  /** Best five cards, using only the viewer's cards and public board; empty before the flop. */
+  myHandCards?: Card[];
+  canFoldNow?: boolean;
   pendingChips: number;
   players: ViewPlayer[];
 };

@@ -1,8 +1,10 @@
 import React, { CSSProperties, ReactNode, useMemo } from 'react';
 import { tr } from '../../../translation/tr';
-import { Card, formatChips, HandName, LastAction, TableView, ViewPlayer } from '../types';
+import { Card, HandName, LastAction, TableView, ViewPlayer } from '../types';
 import { handText } from '../logText';
 import { TurnTimer } from '../turnTimer';
+import { AmountUnit } from '../controls/preferences';
+import { formatAmount } from '../controls/amounts';
 
 import { PlayingCard } from './PlayingCard';
 import { ChipStack } from './Chips';
@@ -14,8 +16,8 @@ const sameCard = (a: Card, b: Card) => a.rank === b.rank && a.suit === b.suit;
 const RING_RADIUS = 48;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
-const actionLabel = (action: LastAction): string => {
-  const amount = action.amount !== undefined ? ` ${formatChips(action.amount)}` : '';
+const actionLabel = (action: LastAction, format: (chips: number) => string): string => {
+  const amount = action.amount !== undefined ? ` ${format(action.amount)}` : '';
   switch (action.type) {
     case 'sb':
       return `SB${amount}`;
@@ -108,6 +110,7 @@ type PokerTableProps = {
   layout: TableLayout;
   /** Shown in the felt when nobody is seated yet. */
   emptyLabel?: string;
+  unit?: AmountUnit;
 };
 
 export function PokerTable({
@@ -119,7 +122,9 @@ export function PokerTable({
   seatOffset = 0,
   onSeatClick,
   resolveAvatar,
+  unit = 'chips',
 }: PokerTableProps) {
+  const amount = (chips: number) => formatAmount(chips, unit, view.bigBlind);
   const layoutSpec = LAYOUTS[layout];
   // Rotate the table so `seatOffset` sits at the bottom.
   const spec = {
@@ -145,6 +150,8 @@ export function PokerTable({
     return (mainWinner && result.hands[mainWinner]?.cards) || [];
   }, [showdown, result]);
   const isWinningCard = (card: Card) => winningCards.some((c) => sameCard(c, card));
+  const isMyBestCard = (card: Card) => (view.myHandCards ?? []).some((c) => sameCard(c, card));
+  const showMyBest = !showdown && !!heroId && (view.myHandCards?.length ?? 0) === 5;
 
   // Deal order starts left of the button; used to stagger the deal animation.
   const dealOrder = useMemo(() => {
@@ -167,7 +174,7 @@ export function PokerTable({
     if (result.byFold) {
       banner = highlighted('games.result.takes_pot', '{{name}} takes the pot of {{chips}}', {
         name: names[0] ?? '',
-        chips: formatChips(total),
+        chips: amount(total),
       });
     } else if (mainPot.winnerIds.length > 1) {
       banner = highlighted('games.result.split', 'Split pot · {{hand}}', {
@@ -197,7 +204,7 @@ export function PokerTable({
       <div className={css.Pot} data-empty={totalPot <= 0}>
         <ChipStack amount={Math.max(totalPot, 1)} max={4} />
         <span className={css.PotLabel}>{tr('games.table.pot', 'Pot')}</span>
-        <span className={css.PotAmount}>{formatChips(totalPot)}</span>
+        <span className={css.PotAmount}>{amount(totalPot)}</span>
       </div>
 
       {/* Board */}
@@ -213,7 +220,9 @@ export function PokerTable({
                   faceUp
                   anim="flip"
                   delayMs={i < 3 ? i * 140 : 0}
-                  highlight={showdown && isWinningCard(card)}
+                  highlight={
+                    (showdown && isWinningCard(card)) || (showMyBest && isMyBestCard(card))
+                  }
                   dim={showdown && winningCards.length > 0 && !isWinningCard(card)}
                 />
               )}
@@ -270,7 +279,7 @@ export function PokerTable({
             }
           >
             <ChipStack amount={p.streetBet} />
-            <span className={css.BetAmount}>{formatChips(p.streetBet)}</span>
+            <span className={css.BetAmount}>{amount(p.streetBet)}</span>
           </div>
         );
       })}
@@ -278,7 +287,7 @@ export function PokerTable({
       {/* Winnings sliding from the pot to the winners */}
       {showResult &&
         result &&
-        Object.entries(result.payouts).map(([id, amount]) => {
+        Object.entries(result.payouts).map(([id, payout]) => {
           const winner = view.players.find((p) => p.id === id);
           if (!winner) return null;
           const to = offset(spec.pot, spec.seats[winner.seat]);
@@ -288,7 +297,7 @@ export function PokerTable({
               className={css.WinnerPile}
               style={{ '--to-x': to.x, '--to-y': to.y } as CSSProperties}
             >
-              <ChipStack amount={amount} max={6} />
+              <ChipStack amount={payout} max={6} />
             </div>
           );
         })}
@@ -338,7 +347,11 @@ export function PokerTable({
                     faceUp={faceUp}
                     anim="deal"
                     delayMs={(i * dealOrder.length + Math.max(orderIndex, 0)) * 90}
-                    highlight={showdown && winnerIds.has(p.id) && !!card && isWinningCard(card)}
+                    highlight={
+                      !!card &&
+                      ((showdown && winnerIds.has(p.id) && isWinningCard(card)) ||
+                        (showMyBest && isHero && isMyBestCard(card)))
+                    }
                     dim={(isHero && folded) || (showdown && !winnerIds.has(p.id))}
                     style={
                       {
@@ -375,7 +388,7 @@ export function PokerTable({
             <div className={css.Plate}>
               {badge && !away && (
                 <div className={css.ActionBadge} data-kind={badge.type}>
-                  {actionLabel(badge)}
+                  {actionLabel(badge, amount)}
                 </div>
               )}
               {away && (
@@ -386,7 +399,7 @@ export function PokerTable({
               <div className={css.PlateName}>
                 {isHero ? tr('games.table.you', '{{name}} (you)', { name: p.name }) : p.name}
               </div>
-              <div className={css.PlateStack}>{formatChips(p.stack)}</div>
+              <div className={css.PlateStack}>{amount(p.stack)}</div>
               {shown && (
                 <div className={css.HandName} data-winner={!!won}>
                   {handText(shown.name)}
@@ -395,7 +408,7 @@ export function PokerTable({
             </div>
             {!!won && (
               <div key={`won-${view.handNumber}`} className={css.WinAmount}>
-                +{formatChips(won)}
+                +{amount(won)}
               </div>
             )}
           </div>

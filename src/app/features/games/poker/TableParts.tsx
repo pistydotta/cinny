@@ -55,7 +55,9 @@ export function HistoryDrawer({ log }: HistoryDrawerProps) {
 
   return (
     <div className={css.Drawer}>
-      <div className={css.DrawerHeader}>{tr('games.table.history', 'Table history')}</div>
+      <div className={css.DrawerHeader}>
+        {tr('poker_controls.history', 'Table history (chips)')}
+      </div>
       <div className={css.DrawerList}>
         {history.map((entry) =>
           entry.key === 'hand' ? (

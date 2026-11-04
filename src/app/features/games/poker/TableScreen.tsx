@@ -21,6 +21,11 @@ import { formatChips, PokerAction } from './types';
 import { useTable } from './useTable';
 import * as css from './pokerPage.css';
 import { tr } from '../../translation/tr';
+import { PokerPreferences, readPreferences, savePreferences } from './controls/preferences';
+import { formatAmount } from './controls/amounts';
+import { makePreAction, PreAction, PreActionKind, takePreAction } from './controls/preActions';
+import { usePokerSounds } from './controls/usePokerSounds';
+import { PokerSettings } from './controls/PokerSettings';
 
 type TableScreenProps = {
   tableId: string;
@@ -57,6 +62,23 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   const [confirmClose, setConfirmClose] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string>();
+  const [preferences, setPreferences] = useState(readPreferences);
+  const [showSounds, setShowSounds] = useState(false);
+  const [preAction, setPreAction] = useState<PreAction | null>(null);
+  const queued = useRef<PreAction | null>(null);
+  const [actionPending, setActionPending] = useState(false);
+  const pending = useRef(false);
+  const pokerAudio = usePokerSounds(view, userId, connected, preferences);
+  const changeQueue = useCallback((next: PreAction | null) => {
+    queued.current = next;
+    setPreAction(next);
+  }, []);
+  useEffect(() => {
+    savePreferences(preferences);
+  }, [preferences]);
+  useEffect(() => {
+    changeQueue(null);
+  }, [tableId, changeQueue]);
   const areaRef = useRef<HTMLDivElement>(null);
   const inFlight = useRef(createInFlight()).current;
 
@@ -99,22 +121,25 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   );
 
   // Runs what the person asked for and shows the server's refusal, if any.
-  const run = async <T,>(
-    key: string,
-    task: () => Promise<T>,
-    refresh = false
-  ): Promise<{ ok: boolean; value?: T }> => {
-    setError(undefined);
-    try {
-      const { skipped, value } = await inFlight(key, task);
-      if (skipped) return { ok: false };
-      if (refresh) refreshCredits();
-      return { ok: true, value };
-    } catch (e) {
-      setError(errorText(e instanceof ApiError ? e.code : 'unknown'));
-      return { ok: false };
-    }
-  };
+  const run = useCallback(
+    async <T,>(
+      key: string,
+      task: () => Promise<T>,
+      refresh = false
+    ): Promise<{ ok: boolean; value?: T }> => {
+      setError(undefined);
+      try {
+        const { skipped, value } = await inFlight(key, task);
+        if (skipped) return { ok: false };
+        if (refresh) refreshCredits();
+        return { ok: true, value };
+      } catch (e) {
+        setError(errorText(e instanceof ApiError ? e.code : 'unknown'));
+        return { ok: false };
+      }
+    },
+    [inFlight, refreshCredits]
+  );
 
   // A refusal belongs to the moment it happened; a new turn or hand makes it stale.
   const handNumber = view?.handNumber;
@@ -133,6 +158,62 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
     if (wasSeated.current && !seated) refreshCredits();
     wasSeated.current = seated;
   }, [seated, refreshCredits]);
+
+  const sendAction = useCallback(
+    async (action: PokerAction) => {
+      changeQueue(null);
+      const legal = view?.legal;
+      if (!legal || !connected || pending.current) return;
+      pending.current = true;
+      setActionPending(true);
+      try {
+        await run(`act:${legal.hand}:${legal.seq}`, () =>
+          api.act(tableId, legal.hand, legal.seq, action)
+        );
+      } finally {
+        pending.current = false;
+        setActionPending(false);
+      }
+    },
+    [view, connected, api, tableId, run, changeQueue]
+  );
+
+  useEffect(() => {
+    const queue = queued.current;
+    if (!queue) return;
+    if (!view) {
+      changeQueue(null);
+      return;
+    }
+    const action = takePreAction(queued, view, me, connected);
+    if (!queued.current) changeQueue(null);
+    // Consume synchronously before sending so stream rerenders/StrictMode cannot replay it.
+    if (action) sendAction(action);
+  }, [view, me, connected, preAction, sendAction, changeQueue]);
+
+  const queueAction = (kind?: PreActionKind) => {
+    changeQueue(
+      kind && view && me && connected && !pending.current ? makePreAction(view, me, kind) : null
+    );
+  };
+
+  const foldNow = async () => {
+    changeQueue(null);
+    if (!view?.canFoldNow || !connected || pending.current) return;
+    pending.current = true;
+    setActionPending(true);
+    try {
+      await run(`fold:${view.handNumber}`, () => api.foldNow(tableId, view.handNumber));
+    } finally {
+      pending.current = false;
+      setActionPending(false);
+    }
+  };
+
+  const updatePreferences = (next: PokerPreferences) => {
+    setPreferences(next);
+    pokerAudio.unlock(next);
+  };
 
   if (notFound) {
     return (
@@ -196,7 +277,11 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   }
 
   return (
-    <div className={css.Page}>
+    <div
+      className={css.Page}
+      onPointerDownCapture={() => pokerAudio.unlock()}
+      onKeyDownCapture={() => pokerAudio.unlock()}
+    >
       <div className={css.TopBar}>
         <button
           type="button"
@@ -219,7 +304,11 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
             <span className={css.WalletMuted}>
               ·{' '}
               {tr('games.wallet.at_table', '{{chips}} at the table', {
-                chips: formatChips(me.stack + (view?.pendingChips ?? 0)),
+                chips: formatAmount(
+                  me.stack + (view?.pendingChips ?? 0),
+                  preferences.unit,
+                  view?.bigBlind ?? 1
+                ),
               })}
             </span>
           )}
@@ -245,6 +334,18 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
             </button>
           </>
         )}
+        <button
+          type="button"
+          className={css.IconButton}
+          onClick={() => {
+            changeQueue(null);
+            setShowSounds(true);
+          }}
+          aria-label={tr('poker_controls.audio.title', 'Poker sounds')}
+          aria-pressed={preferences.sounds}
+        >
+          <Icon size="200" src={Icons.VolumeHigh} />
+        </button>
         <button
           type="button"
           className={css.IconButton}
@@ -295,6 +396,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
               seatOffset={me?.seat ?? 0}
               onSeatClick={me ? undefined : setPickedSeat}
               resolveAvatar={resolveAvatar}
+              unit={preferences.unit}
               emptyLabel={tr('games.shared.pick_seat', 'Pick a seat to sit down')}
             />
           </div>
@@ -369,13 +471,22 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
         <ActionBar
           view={view}
           hero={me}
-          onAction={(action: PokerAction) => {
-            const { legal } = view;
-            if (legal)
-              run(`act:${legal.hand}:${legal.seq}`, () =>
-                api.act(tableId, legal.hand, legal.seq, action)
-              );
-          }}
+          connected={connected}
+          pending={actionPending}
+          unit={preferences.unit}
+          onUnit={(unit) => updatePreferences({ ...preferences, unit })}
+          queue={preAction}
+          onQueue={queueAction}
+          onFoldNow={foldNow}
+          onAction={sendAction}
+        />
+      )}
+      {showSounds && (
+        <PokerSettings
+          preferences={preferences}
+          onChange={updatePreferences}
+          onPreview={pokerAudio.preview}
+          onClose={() => setShowSounds(false)}
         />
       )}
     </div>

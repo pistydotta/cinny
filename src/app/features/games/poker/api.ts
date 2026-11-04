@@ -65,6 +65,7 @@ export const createPokerApi = (getToken: () => string | null, options: PokerApiO
     back: (id: string) => play(`${table(id)}/back`),
     act: (id: string, hand: number, seq: number, action: PokerAction) =>
       play(`${table(id)}/act`, { hand, seq, action }),
+    foldNow: (id: string, hand: number) => play(`${table(id)}/fold`, { hand }),
   };
 };
 

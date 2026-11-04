@@ -26,7 +26,7 @@ export const TopBar = style({
   gap: 12,
   padding: '10px 16px',
   '@media': {
-    'screen and (max-width: 600px)': { gap: 8, padding: '10px 12px' },
+    'screen and (max-width: 600px)': { gap: 6, padding: '8px 12px', flexWrap: 'wrap' },
   },
   flexShrink: 0,
   borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -39,6 +39,7 @@ export const TopTitle = style({
   flexDirection: 'column',
   minWidth: 0,
   flexGrow: 1,
+  '@media': { 'screen and (max-width: 600px)': { minWidth: 100 } },
 });
 
 export const TitleText = style({
@@ -159,6 +160,16 @@ export const Overlay = style({
   background: 'rgba(3,6,10,0.55)',
   backdropFilter: 'blur(3px)',
 });
+
+export const PokerModalOverlay = style([
+  Overlay,
+  {
+    position: 'fixed',
+    zIndex: 2000,
+    color: '#fff',
+    fontFamily: 'InterVariable, Inter, system-ui, sans-serif',
+  },
+]);
 
 export const Dialog = style({
   width: 'min(440px, 100%)',
@@ -318,6 +329,8 @@ export const ActionBar = style({
   padding: '12px 16px 16px',
   borderTop: '1px solid rgba(255,255,255,0.06)',
   background: 'linear-gradient(180deg, rgba(8,12,18,0.7), rgba(5,8,12,0.95))',
+  maxHeight: '52%',
+  overflowY: 'auto',
   '@media': {
     'screen and (max-width: 760px)': {
       flexDirection: 'column',
@@ -333,6 +346,73 @@ export const HandInfo = style({
   flexDirection: 'column',
   gap: 4,
   minWidth: 0,
+  flex: '1 1 260px',
+  '@media': { 'screen and (max-width: 760px)': { flex: '0 0 auto' } },
+});
+
+export const HandPreview = style({ display: 'flex', flexDirection: 'column', gap: 5 });
+export const GuideCards = style({
+  display: 'flex',
+  gap: 4,
+  flexWrap: 'wrap',
+  vars: { '--card-w': '29px' },
+});
+export const GuideNote = style({
+  margin: '4px 0',
+  color: 'rgba(255,255,255,0.65)',
+  fontSize: 11,
+  lineHeight: 1.5,
+});
+export const RankBadge = style({
+  color: GOLD,
+  background: 'rgba(245,200,75,0.12)',
+  border: '1px solid rgba(245,200,75,0.3)',
+  borderRadius: 8,
+  padding: '5px 8px',
+  cursor: 'pointer',
+  fontSize: 11,
+  fontWeight: 700,
+});
+export const HandLadder = style({
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'grid',
+  gap: 8,
+});
+export const HandLadderRow = style({
+  display: 'grid',
+  gridTemplateColumns: '26px 1fr',
+  gap: 8,
+  padding: 10,
+  borderRadius: 10,
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid transparent',
+  selectors: {
+    '&[aria-current="true"]': { borderColor: GOLD, background: 'rgba(245,200,75,0.12)' },
+  },
+});
+export const PreActions = style({
+  display: 'flex',
+  gap: 6,
+  flexWrap: 'wrap',
+  alignItems: 'center',
+});
+export const QueueOption = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '6px 9px',
+  borderRadius: 8,
+  background: 'rgba(255,255,255,0.05)',
+  fontSize: 12,
+  border: '1px solid rgba(255,255,255,0.12)',
+});
+export const UnitSwitch = style({
+  display: 'flex',
+  gap: 4,
+  alignItems: 'center',
+  flexWrap: 'wrap',
 });
 
 export const Status = style({
