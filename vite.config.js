@@ -119,11 +119,11 @@ export default defineConfig({
     port: 8080,
     host: true,
     proxy: {
-      '/api': { target: 'https://blazeroom.com.br', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:3000', changeOrigin: true },
     },
     fs: {
-      // Allow serving files from one level up to the project root
-      allow: ['..'],
+      // Do not expose the private monorepo's parent directory to the dev server.
+      allow: [path.resolve()],
     },
   },
   plugins: [

@@ -1,2 +1,12 @@
 node_modules/
 .git/
+.github/
+.husky/
+dist/
+.env*
+**/.env*
+**/*.key
+**/*.pem
+**/*.keystore
+**/google-services.json
+**/*firebase-adminsdk*.json

@@ -4,6 +4,7 @@ import { Page, PageContent } from '../../components/page';
 import { WhatsNewCard } from '../whats-new/WhatsNewCard';
 import { tr } from '../translation/tr';
 import { WelcomeCard } from './WelcomeCard';
+import { sourceUrl } from '../source/sourceUrl';
 import { AppsCard } from './AppsCard';
 import { JokeLine } from './JokeLine';
 import { MobileBackHeader } from './MobileBackHeader';
@@ -40,11 +41,7 @@ export function HomeOverview() {
                 Cinny v4.12.8
               </a>
               {' · '}
-              <a
-                href="https://github.com/pistydotta/cinny"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
+              <a href={sourceUrl} target="_blank" rel="noreferrer noopener">
                 {tr('welcome.source_code', 'Source code')}
               </a>
             </Text>

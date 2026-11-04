@@ -1,3 +1,13 @@
+# Blazeroom web
+
+This is a modified Cinny, hard-forked into the blazeroom monorepo on 2026-11-04.
+See [SOURCE.md](SOURCE.md) for source/license/build instructions and
+[UPSTREAM.md](UPSTREAM.md) for original history and attribution. The public
+`source` branch mirrors deployed client source; it is not the development branch.
+
+The original upstream README follows. Its release/deployment links describe
+upstream Cinny rather than this hard fork.
+
 # Cinny
 <p>
     <a href="https://github.com/ajbura/cinny/releases">

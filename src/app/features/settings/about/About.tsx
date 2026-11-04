@@ -7,6 +7,7 @@ import { SettingTile } from '../../../components/setting-tile';
 import CinnySVG from '../../../../../public/res/svg/cinny.svg';
 import { clearCacheAndReload } from '../../../../client/initMatrix';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { sourceUrl } from '../../source/sourceUrl';
 
 type AboutProps = {
   requestClose: () => void;
@@ -54,7 +55,7 @@ export function About({ requestClose }: AboutProps) {
                   <Box gap="200" wrap="Wrap">
                     <Button
                       as="a"
-                      href="https://github.com/cinnyapp/cinny"
+                      href={sourceUrl}
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Secondary"

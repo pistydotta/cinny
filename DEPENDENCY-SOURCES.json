@@ -1,0 +1,20 @@
+{
+  "note": "Preferred-source references for directly embedded prebuilt components; retain with the lockfile and notices.",
+  "components": [
+    {
+      "package": "@element-hq/element-call-embedded",
+      "version": "0.20.1",
+      "source": "https://github.com/element-hq/element-call/tree/2d74c48151d9edc01c65a22a91478aac81bf24d0"
+    },
+    {
+      "package": "@sapphi-red/web-noise-suppressor",
+      "version": "0.4.1",
+      "source": "https://github.com/sapphi-red/web-noise-suppressor/tree/1e168964f8e99835c43dd8fb81fde9f273e5699b"
+    },
+    {
+      "package": "@shiguredo/rnnoise-wasm",
+      "version": "2022.2.0",
+      "source": "https://github.com/shiguredo/rnnoise-wasm/tree/9a9a1f60b16277734c7e0092c56d67ea60c65b66"
+    }
+  ]
+}

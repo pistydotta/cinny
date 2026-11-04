@@ -1,29 +1,14 @@
-# Cinny, blazeroom fork
+# Blazeroom web (Cinny hard fork)
 
-This is the `blazeroom` branch of `github.com/pistydotta/cinny`: the web app of blazeroom,
-a private Discord-style chat. The server, the API, the deploy and the team rules live in
-`github.com/pistydotta/blazeroom`; read its `CLAUDE.md` first. In short: two owners work
-through their own Claude sessions, work goes through a branch and a PR to `blazeroom`, and
-a person merges.
+This directory is the client source in the private monorepo. Read the root
+`CLAUDE.md` when working there. All agents must respect its no-merge, no-production
+and no-secret-file rules. Work on a feature branch/PR in the monorepo, never on
+the public mirror to ship changes. PRs run no checks.
 
-## Shipping a change
-
-The site builds Cinny from a tag, not from the branch. After a PR is merged into
-`blazeroom`, the `release` job in [blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml)
-tags it `blazeroom-vN` (the next number) and opens the PR in blazeroom that bumps
-`#blazeroom-vN` in `docker-compose.yml`, closing older deploy PRs still open. Merging that
-PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
-
-- One job, `check` (lint, types, tests, build), runs on PRs only; the merge runs only
-  `release`. Keep it one job: GitHub warned the account about the Actions volume when each
-  PR ran three. A branch rule on `blazeroom` requires `check` to pass before merging, so a
-  red PR can't ship. Don't push straight to `blazeroom`: nothing would check it.
-
-- It needs the `BLAZEROOM_TOKEN` Actions secret on this fork: a fine-grained token with
-  access to `pistydotta/blazeroom` only, with Contents and Pull requests set to read and
-  write. Without it the tag is still made and the job warns; open the PR by hand.
-- The fork's default branch is `blazeroom`. `dev` is upstream's branch, kept untouched as
-  a reference; don't open PRs to it.
+The public source mirror contains only this tree and public history; deployment
+publishes sanitized snapshots with immutable `web-<tree-sha>` tags before building.
+Do not restore the old release/deploy-PR workflow or local git hooks. See
+`SOURCE.md` and `UPSTREAM.md` for public build instructions and attribution.
 
 ## Our code
 
@@ -48,8 +33,8 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   going through React. Balance changes: play a few simulated hours with `advance` before shipping.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
-- New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):
-  the eslint and prettier lists, and the tsc grep for files that don't import the SDK.
+- Scoped lint/format/type checks live in `scripts/check.sh`; run `npm run check:blazeroom`.
+  Run `npm run build` too. These checks run only on deployment, never PR events.
 
 ## Traps already hit
 
