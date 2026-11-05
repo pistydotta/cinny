@@ -23,7 +23,6 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoom } from '../../hooks/useRoom';
 import { tr } from '../translation/tr';
-import { MusicBotBar } from '../music-bot/MusicBotBar';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -105,7 +104,6 @@ export function RoomView({ eventId }: { eventId?: string }) {
         <RoomViewTyping room={room} />
       </Box>
       <Box shrink="No" direction="Column">
-        <MusicBotBar key={roomId} chat canPost={canMessage} />
         <div style={{ padding: `0 ${config.space.S400}` }}>
           {tombstoneEvent ? (
             <RoomTombstone

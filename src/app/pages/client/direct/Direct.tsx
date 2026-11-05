@@ -209,7 +209,7 @@ export function Direct() {
   );
 
   return (
-    <PageNav>
+    <PageNav music>
       <DirectHeader />
       {noRoomToDisplay ? (
         <DirectEmpty />

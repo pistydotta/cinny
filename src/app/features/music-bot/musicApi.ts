@@ -62,7 +62,10 @@ export const createMusicApi = (
       signal: AbortSignal.timeout(init?.method === 'GET' ? 10_000 : 60_000),
     })
   );
-  const room = (roomId: string) => `/api/music/rooms/${encodeURIComponent(roomId)}`;
+  const room = (roomId: string) =>
+    roomId === 'personal'
+      ? '/api/music/personal'
+      : `/api/music/rooms/${encodeURIComponent(roomId)}`;
   const json = async (path: string, method: string, body?: unknown): Promise<MusicView> =>
     (await (await request(path, method, body)).json()) as MusicView;
   const change = async (roomId: string, path: string, method: string, body?: unknown) => {

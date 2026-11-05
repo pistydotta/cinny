@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "vite",
+    "start:local": "vite --config vite.local.config.js --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "npm run check:eslint && npm run check:prettier",

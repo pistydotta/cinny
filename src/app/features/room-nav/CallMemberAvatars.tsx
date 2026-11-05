@@ -21,13 +21,13 @@ function CallMemberRow({ room, userId }: { room: Room; userId: string }) {
 
   return (
     <li style={{ minWidth: 0 }}>
-      <CallMemberPopout room={room} userId={userId} name={name}>
+      <CallMemberPopout room={room} userId={userId}>
         {(open, opened) => (
           <Box
             as="button"
             type="button"
             onClick={open}
-            aria-haspopup="dialog"
+            aria-haspopup="menu"
             aria-expanded={opened}
             alignItems="Center"
             gap="200"

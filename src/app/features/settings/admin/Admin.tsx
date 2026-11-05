@@ -27,6 +27,7 @@ import { useToast } from '../../../components/toast';
 import { useAdminApi } from '../../admin/useAdminApi';
 import { UsersList } from './UsersList';
 import { FeedbackList } from './FeedbackList';
+import { Webhooks } from './Webhooks';
 import {
   AdminRole,
   MIN_PASSWORD_LENGTH,
@@ -255,6 +256,7 @@ export function Admin({ requestClose, role }: AdminProps) {
         <Scroll hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="100">
+              {role.superadmin && <Webhooks />}
               <Text size="L400">Accounts</Text>
               <SequenceCard
                 className={SequenceCardStyle}

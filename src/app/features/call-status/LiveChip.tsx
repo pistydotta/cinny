@@ -26,7 +26,6 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { UserAvatar } from '../../components/user-avatar';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { getMouseEventCords } from '../../utils/dom';
 
 type LiveChipProps = {
   room: Room;
@@ -87,15 +86,17 @@ export function LiveChip({ count, room, members }: LiveChipProps) {
                         variant="Surface"
                         radii="300"
                         style={{ paddingLeft: config.space.S200 }}
-                        onClick={(evt) =>
+                        onClick={(evt: React.MouseEvent<HTMLButtonElement>) => {
+                          setCords(undefined);
                           openUserProfile(
                             room.roomId,
                             undefined,
                             userId,
-                            getMouseEventCords(evt.nativeEvent),
-                            'Right'
-                          )
-                        }
+                            evt.currentTarget.getBoundingClientRect(),
+                            'Right',
+                            true
+                          );
+                        }}
                         before={
                           <Avatar size="200" radii="400">
                             <UserAvatar

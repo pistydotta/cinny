@@ -7,10 +7,8 @@ import { expectedPosition, formatTime } from './musicSync';
 import { PlaybackStatus, requestMusicPlayback } from './musicAudio';
 import * as css from './musicBot.css';
 
-const QUEUE_PREVIEW = 3;
-
 type Props = {
-  chat: boolean;
+  audience?: React.ReactNode;
   canPost: boolean;
   snapshot?: MusicSnapshot;
   listening: boolean;
@@ -27,10 +25,10 @@ type Props = {
   remove: (id: string) => Promise<void>;
 };
 
-/** Presentational controls: only MusicBotPlayer, mounted with the joined call, creates audio. */
+/** Controls share the single background player. */
 export function MusicPanel(props: Props) {
   const {
-    chat,
+    audience,
     canPost,
     snapshot,
     listening,
@@ -46,10 +44,11 @@ export function MusicPanel(props: Props) {
     control,
     remove,
   } = props;
-  const [expanded, setExpanded] = useState(!chat);
+  const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState('');
   const [showQueue, setShowQueue] = useState(false);
   const panelId = useId();
+  const inputId = useId();
   const volumeId = useId();
   const np = snapshot?.view?.nowPlaying;
   const queue = snapshot?.view?.queue ?? [];
@@ -90,29 +89,9 @@ export function MusicPanel(props: Props) {
     if (!text || pending || !canPost) return;
     if (await add(text)) setQuery((current) => (current.trim() === text ? '' : current));
   };
-  const shownQueue = showQueue ? queue : queue.slice(0, QUEUE_PREVIEW);
-  const subtitle = np
-    ? tr('music_bot.requested_by', 'added by {{name}}', { name: nameOf(np.requestedBy) })
-    : tr('music_bot.invite', 'Pick a song for the voice call');
-  // With nothing playing or going wrong, a small chip is enough; the full bar is for a live queue.
-  const idle = !np && queue.length === 0 && !pending && !error && connected;
-  if (idle && !expanded)
-    return (
-      <section className={css.ChipRow} aria-label={tr('music_bot.heading', 'Music')}>
-        <button
-          className={css.Chip}
-          type="button"
-          aria-expanded={false}
-          title={subtitle}
-          onClick={() => setExpanded(true)}
-        >
-          <Icon size="50" src={Icons.Headphone} />
-          {tr('music_bot.heading', 'Music')}
-        </button>
-      </section>
-    );
   return (
-    <section className={np ? css.BarActive : css.Bar} aria-label={tr('music_bot.heading', 'Music')}>
+    <section className={css.Bar} aria-label={tr('music_bot.heading', 'Music')}>
+      {audience}
       <button
         className={css.Toggle}
         type="button"
@@ -124,17 +103,70 @@ export function MusicPanel(props: Props) {
           <Icon size="100" src={Icons.Headphone} />
         </span>
         <span className={css.Summary}>
-          <span className={css.SummaryTitle}>
-            {np ? np.title : tr('music_bot.heading', 'Music')}
+          <span className={css.Eyebrow}>
+            {tr('music_bot.heading', 'Music')} · {status}
           </span>
-          <span className={css.Eyebrow}>{np || !connected || pending ? status : subtitle}</span>
+          <span className={css.SummaryTitle}>
+            {np?.title ?? tr('music_bot.pick_song', 'Pick a song')}
+          </span>
         </span>
-        {queue.length > 0 && <span className={css.Count}>+{queue.length}</span>}
+        <span className={css.Count}>{queue.length + (np ? 1 : 0)}</span>
         <Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />
       </button>
+      <div className={css.Toolbar}>
+        <Box shrink="No" alignItems="Center" gap="100">
+          <TipIconButton
+            size="400"
+            radii="Pill"
+            variant="Primary"
+            label={np?.paused ? tr('music_bot.resume', 'Resume') : tr('music_bot.pause', 'Pause')}
+            disabled={!connected || busy || !np?.audio}
+            onClick={() => {
+              requestMusicPlayback();
+              control(np?.paused ? 'resume' : 'pause');
+            }}
+          >
+            <Icon size="100" src={np?.paused ? Icons.Play : Icons.Pause} />
+          </TipIconButton>
+          <TipIconButton
+            size="400"
+            radii="Pill"
+            label={tr('music_bot.skip', 'Skip')}
+            disabled={!connected || busy || !np}
+            onClick={() => control('skip')}
+          >
+            <Icon size="100" src={Icons.ArrowGoRight} />
+          </TipIconButton>
+          <TipIconButton
+            size="400"
+            radii="Pill"
+            label={tr('music_bot.stop', 'Stop and clear the queue')}
+            disabled={!connected || busy || !np}
+            onClick={() => control('stop')}
+          >
+            <Icon size="100" src={Icons.Cross} />
+          </TipIconButton>
+        </Box>
+        <label className={css.VolumeLabel} htmlFor={volumeId}>
+          <Icon size="50" src={Icons.VolumeHigh} />
+          <input
+            id={volumeId}
+            className={css.Volume}
+            style={{ '--music-volume': `${volume * 100}%` } as React.CSSProperties}
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            aria-label={tr('music_bot.volume', 'Music volume')}
+          />
+          <span className={css.VolumeValue}>{Math.round(volume * 100)}%</span>
+        </label>
+      </div>
       {expanded && (
         <div id={panelId} className={css.Panel}>
-          {np && (
+          {np ? (
             <div className={css.NowPlaying}>
               {np.thumbnail ? (
                 <img className={css.Cover} src={np.thumbnail} alt="" referrerPolicy="no-referrer" />
@@ -153,81 +185,36 @@ export function MusicPanel(props: Props) {
                   {np.title}
                 </a>
                 <Text size="T200" priority="300">
-                  {subtitle}
+                  {tr('music_bot.requested_by', 'added by {{name}}', {
+                    name: nameOf(np.requestedBy),
+                  })}
                 </Text>
                 {np.audio ? (
-                  <div className={css.ProgressRow}>
-                    <span className={css.Timing}>{formatTime(position)}</span>
+                  <>
                     <progress
                       className={css.Progress}
                       value={position}
                       max={np.duration ?? Math.max(position, 1)}
                       aria-label={tr('music_bot.progress', 'Song progress')}
                     />
-                    <span className={css.Timing}>{formatTime(np.duration)}</span>
-                  </div>
+                    <span className={css.Timing}>
+                      {formatTime(position)} / {formatTime(np.duration)}
+                    </span>
+                  </>
                 ) : (
                   <Text size="T200">{tr('music_bot.loading', 'Getting the song...')}</Text>
                 )}
               </div>
-              <div className={css.Controls}>
-                <Box alignItems="Center" gap="100">
-                  <TipIconButton
-                    size="300"
-                    radii="Pill"
-                    variant="Primary"
-                    label={
-                      np.paused ? tr('music_bot.resume', 'Resume') : tr('music_bot.pause', 'Pause')
-                    }
-                    disabled={!connected || busy || !np.audio}
-                    onClick={() => {
-                      requestMusicPlayback();
-                      control(np.paused ? 'resume' : 'pause');
-                    }}
-                  >
-                    <Icon size="100" src={np.paused ? Icons.Play : Icons.Pause} />
-                  </TipIconButton>
-                  <TipIconButton
-                    size="300"
-                    radii="Pill"
-                    label={tr('music_bot.skip', 'Skip')}
-                    disabled={!connected || busy}
-                    onClick={() => control('skip')}
-                  >
-                    <Icon size="100" src={Icons.ArrowGoRight} />
-                  </TipIconButton>
-                  <TipIconButton
-                    size="300"
-                    radii="Pill"
-                    label={tr('music_bot.stop', 'Stop and clear the queue')}
-                    disabled={!connected || busy}
-                    onClick={() => control('stop')}
-                  >
-                    <Icon size="100" src={Icons.Cross} />
-                  </TipIconButton>
-                </Box>
-                <label
-                  className={css.VolumeLabel}
-                  htmlFor={volumeId}
-                  title={tr(
-                    'music_bot.volume_tip',
-                    'Your music volume. Only you hear this change.'
-                  )}
-                >
-                  <Icon size="50" src={volume === 0 ? Icons.VolumeMute : Icons.VolumeHigh} />
-                  <input
-                    id={volumeId}
-                    className={css.Volume}
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={volume}
-                    onChange={(e) => setVolume(Number(e.target.value))}
-                    aria-label={tr('music_bot.volume', 'Music volume')}
-                  />
-                </label>
-              </div>
+            </div>
+          ) : (
+            <div className={css.Empty}>
+              <Text size="T300">{tr('music_bot.empty', 'The queue is yours')}</Text>
+              <Text size="T200" priority="300">
+                {tr(
+                  'music_bot.empty_hint',
+                  'Add a link or song name below, or type /play in chat.'
+                )}
+              </Text>
             </div>
           )}
           {listening &&
@@ -250,72 +237,80 @@ export function MusicPanel(props: Props) {
                 </button>
               </div>
             )}
-          {(!listening || deafened || (np && volume === 0)) && <p className={css.Hint}>{hint}</p>}
-          <form className={css.InputRow} onSubmit={submit}>
-            <input
-              className={css.Search}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={tr(
-                'music_bot.search_sources',
-                'Song name or a YouTube, SoundCloud or Spotify link'
+          {(!listening || deafened || volume === 0) && <p className={css.Hint}>{hint}</p>}
+          <form className={css.AddForm} onSubmit={submit}>
+            <label className={css.InputLabel} htmlFor={inputId}>
+              {tr('music_bot.add_label', 'Add to the queue')}
+            </label>
+            <div className={css.InputRow}>
+              <input
+                id={inputId}
+                className={css.Search}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={tr('music_bot.search_placeholder', 'Song name or music link')}
+                maxLength={500}
+                disabled={pending || !canPost}
+              />
+              <button
+                className={css.PrimaryButton}
+                type="submit"
+                disabled={pending || !canPost || !query.trim()}
+              >
+                {addLabel}
+              </button>
+            </div>
+            <p className={css.Hint}>
+              {tr(
+                'music_bot.sources_hint',
+                'YouTube · SoundCloud · Spotify links search for a matching song on YouTube.'
               )}
-              aria-label={tr('music_bot.add_label', 'Add to the queue')}
-              maxLength={500}
-              disabled={pending || !canPost}
-            />
-            <button
-              className={css.PrimaryButton}
-              type="submit"
-              disabled={pending || !canPost || !query.trim()}
-            >
-              {addLabel}
-            </button>
+            </p>
           </form>
           {error && (
             <div className={css.Error} role="alert">
               {error}
             </div>
           )}
-          {queue.length > 0 && (
-            <div className={css.QueueBlock}>
-              <span className={css.QueueHeading}>
-                {tr('music_bot.up_next', 'Up next · {{count}}', { count: queue.length })}
-              </span>
-              <ol id={`${panelId}-queue`} className={css.Queue}>
-                {shownQueue.map((track, index) => (
-                  <li className={css.QueueItem} key={track.id}>
-                    <span className={css.QueueNumber}>{index + 1}</span>
-                    <span className={css.QueueTitle}>{track.title}</span>
-                    <span className={css.QueueMeta}>
-                      {formatTime(track.duration)} · {nameOf(track.requestedBy)}
-                    </span>
-                    <TipIconButton
-                      size="300"
-                      radii="Pill"
-                      label={tr('music_bot.remove', 'Remove from queue')}
-                      disabled={busy || !connected}
-                      onClick={() => remove(track.id)}
-                    >
-                      <Icon size="50" src={Icons.Cross} />
-                    </TipIconButton>
-                  </li>
-                ))}
-              </ol>
-              {queue.length > QUEUE_PREVIEW && (
-                <button
-                  className={css.QueueToggle}
-                  type="button"
-                  aria-expanded={showQueue}
-                  aria-controls={`${panelId}-queue`}
-                  onClick={() => setShowQueue((value) => !value)}
-                >
-                  {showQueue
-                    ? tr('music_bot.show_less', 'Show less')
-                    : tr('music_bot.show_all', 'Show all ({{count}})', { count: queue.length })}
-                </button>
+          <button
+            className={css.QueueToggle}
+            type="button"
+            aria-expanded={showQueue}
+            aria-controls={`${panelId}-queue`}
+            onClick={() => setShowQueue((value) => !value)}
+          >
+            <Icon size="50" src={Icons.OrderList} />
+            {tr('music_bot.up_next', 'Up next · {{count}}', { count: queue.length })}
+            <Icon size="50" src={showQueue ? Icons.ChevronTop : Icons.ChevronBottom} />
+          </button>
+          {showQueue && (
+            <ol id={`${panelId}-queue`} className={css.Queue}>
+              {queue.length === 0 && (
+                <li className={css.Hint}>
+                  {tr('music_bot.queue_empty', 'No tracks waiting. Add the next one.')}
+                </li>
               )}
-            </div>
+              {queue.map((track, index) => (
+                <li className={css.QueueItem} key={track.id}>
+                  <span className={css.QueueNumber}>{index + 1}</span>
+                  <div className={css.TrackInfo}>
+                    <span className={css.QueueTitle}>{track.title}</span>
+                    <Text size="T200" priority="300">
+                      {formatTime(track.duration)} · {nameOf(track.requestedBy)}
+                    </Text>
+                  </div>
+                  <TipIconButton
+                    size="300"
+                    radii="Pill"
+                    label={tr('music_bot.remove', 'Remove from queue')}
+                    disabled={busy || !connected}
+                    onClick={() => remove(track.id)}
+                  >
+                    <Icon size="50" src={Icons.Cross} />
+                  </TipIconButton>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
       )}

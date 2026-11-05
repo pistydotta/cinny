@@ -7,6 +7,8 @@ import { UserRoomProfileState } from '../state/userRoomProfile';
 import { useAllJoinedRoomsSet, useGetRoom } from '../hooks/useGetRoom';
 import { stopPropagation } from '../utils/keyboard';
 import { SpaceProvider } from '../hooks/useSpace';
+import { VoiceMemberPopover } from '../features/call/VoiceMemberPopover';
+import { VoiceMemberMenu } from '../features/call/VoiceMemberMenu';
 import { RoomProvider } from '../hooks/useRoom';
 
 function UserRoomProfileContextMenu({ state }: { state: UserRoomProfileState }) {
@@ -19,6 +21,14 @@ function UserRoomProfileContextMenu({ state }: { state: UserRoomProfileState }) 
   const close = useCloseUserRoomProfile();
 
   if (!room) return null;
+  if (state.compact)
+    return (
+      <VoiceMemberPopover anchor={cords} position={position ?? 'Right'} onClose={close}>
+        <RoomProvider value={room}>
+          <VoiceMemberMenu userId={userId} onClose={close} />
+        </RoomProvider>
+      </VoiceMemberPopover>
+    );
 
   return (
     <PopOut

@@ -18,7 +18,7 @@ import {
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -301,10 +301,17 @@ export function RoomNavItem({
   const callMembers = useCallMembers(callSession);
   const startCall = useSwitchCall(direct);
   const callEmbed = useCallEmbed();
+  const setChat = useSetAtom(callChatAtom);
   const callPref = useAtomValue(useCallPreferencesAtom());
   const autoDiscoveryInfo = useAutoDiscoveryInfo();
 
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
+    // Reading unread messages takes priority over the second-click call shortcut.
+    if (unread) {
+      setChat(true);
+      return;
+    }
+
     const powerLevelsEvent = getStateEvent(room, StateEvent.RoomPowerLevels);
     const powerLevels = getPowersLevelFromMatrixEvent(powerLevelsEvent);
     const creators = getRoomCreatorsForRoomId(mx, room.roomId);

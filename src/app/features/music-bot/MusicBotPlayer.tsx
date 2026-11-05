@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
-import { musicPlaybackAtom, musicSoundAtom, musicVolumeAtom } from './musicState';
+import { musicPlaybackAtom, musicSoundAtom, musicVolumeAtom, musicTargetAtom } from './musicState';
 import { useRoomMusic } from './useRoomMusic';
 import { createMusicAudio, onMusicPlaybackRequest } from './musicAudio';
 
-function MusicSync({ callEmbed }: { callEmbed: CallEmbed }) {
-  const { roomId } = callEmbed;
-  const { sound } = useCallControlState(callEmbed.control);
+function MusicSync({ roomId, sound }: { roomId: string; sound: boolean }) {
   const volume = useAtomValue(musicVolumeAtom);
   const setPlayback = useSetAtom(musicPlaybackAtom);
   const setSound = useSetAtom(musicSoundAtom);
@@ -51,8 +49,15 @@ function MusicSync({ callEmbed }: { callEmbed: CallEmbed }) {
   return null;
 }
 
-/** One audio element for the joined voice call; chat controls never create another player. */
+function CallMusic({ callEmbed, roomId }: { callEmbed: CallEmbed; roomId: string }) {
+  const { sound } = useCallControlState(callEmbed.control);
+  return <MusicSync key={roomId} roomId={roomId} sound={sound} />;
+}
+
+/** Exactly one player, for either the private queue or the explicitly selected voice room. */
 export function MusicBotPlayer({ callEmbed, joined }: { callEmbed?: CallEmbed; joined: boolean }) {
-  if (!callEmbed || !joined) return null;
-  return <MusicSync key={callEmbed.roomId} callEmbed={callEmbed} />;
+  const target = useAtomValue(musicTargetAtom);
+  const roomId = joined ? target : 'personal';
+  if (callEmbed && joined) return <CallMusic callEmbed={callEmbed} roomId={roomId} />;
+  return <MusicSync key={roomId} roomId={roomId} sound />;
 }

@@ -9,7 +9,6 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { StackedAvatar } from '../../components/stacked-avatar';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { getMouseEventCords } from '../../utils/dom';
 import * as css from './styles.css';
 
 type MemberGlanceProps = {
@@ -51,8 +50,9 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
                 room.roomId,
                 undefined,
                 userId,
-                getMouseEventCords(evt.nativeEvent),
-                'Top'
+                evt.currentTarget.getBoundingClientRect(),
+                'Top',
+                true
               )
             }
           >

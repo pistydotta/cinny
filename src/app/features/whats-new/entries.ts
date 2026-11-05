@@ -17,6 +17,30 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-superadmin-webhooks',
+    items: () => [
+      {
+        title: tr('webhooks.news_title', 'Incoming webhooks'),
+        body: tr(
+          'webhooks.news_body',
+          'Superadmins can create webhook URLs in Admin to send text and links from external tools into a server chat.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-private-music-dock',
+    items: () => [
+      {
+        title: tr('music_bot.scope_news_title', 'Music in your corner'),
+        body: tr(
+          'music_bot.scope_news_body',
+          'The player is at the bottom of the sidebar. Listen privately or share with your current call. Joining or switching rooms never shares your music automatically.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-call-member-card',
     items: () => [
       {

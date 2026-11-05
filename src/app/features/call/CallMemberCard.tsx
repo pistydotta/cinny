@@ -9,7 +9,6 @@ import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { useRoom } from '../../hooks/useRoom';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { UserAvatar } from '../../components/user-avatar';
-import { getMouseEventCords } from '../../utils/dom';
 import * as css from './styles.css';
 
 type CallMemberCardProps = {
@@ -45,8 +44,9 @@ export function CallMemberCard({ member }: CallMemberCardProps) {
           room.roomId,
           undefined,
           userId,
-          getMouseEventCords(evt.nativeEvent),
-          'Right'
+          evt.currentTarget.getBoundingClientRect(),
+          'Right',
+          true
         )
       }
     >

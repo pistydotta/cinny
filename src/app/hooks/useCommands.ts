@@ -180,7 +180,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
   const commands: CommandRecord = useMemo(
     () => ({
-      ...musicCommands(mx, room),
+      ...musicCommands(mx),
       [Command.Me]: {
         name: Command.Me,
         description: 'Send action message',

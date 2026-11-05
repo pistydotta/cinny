@@ -4,34 +4,11 @@ import { color } from 'folds';
 export const Bar = style({
   flexShrink: 0,
   minWidth: 0,
-  margin: '8px 12px',
-  maxWidth: 720,
-  borderRadius: 14,
+  margin: '4px 8px 8px',
+  borderRadius: 10,
   border: `1px solid ${color.Surface.ContainerLine}`,
   background: color.Background.Container,
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
   overflow: 'hidden',
-});
-export const BarActive = style([Bar, { borderColor: color.Primary.ContainerLine }]);
-export const ChipRow = style({ flexShrink: 0, display: 'flex', margin: '6px 12px' });
-export const Chip = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  padding: '4px 10px',
-  font: 'inherit',
-  fontSize: 12,
-  fontWeight: 600,
-  cursor: 'pointer',
-  borderRadius: 999,
-  border: `1px solid ${color.Surface.ContainerLine}`,
-  color: color.Surface.OnContainer,
-  background: color.Surface.Container,
-  boxShadow: '0 1px 6px rgba(0, 0, 0, 0.3)',
-  selectors: {
-    '&:hover': { background: color.Surface.ContainerHover },
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 2 },
-  },
 });
 const button = {
   font: 'inherit',
@@ -51,7 +28,7 @@ export const Toggle = style([
     gap: 10,
     width: '100%',
     textAlign: 'left',
-    padding: '10px 12px',
+    padding: '8px 10px',
     background: 'transparent',
   },
 ]);
@@ -59,8 +36,8 @@ export const BrandIcon = style({
   display: 'grid',
   placeItems: 'center',
   flexShrink: 0,
-  width: 34,
-  height: 34,
+  width: 28,
+  height: 28,
   borderRadius: 10,
   color: color.Primary.Main,
   background: color.Primary.Container,
@@ -75,8 +52,7 @@ export const Summary = style({
 export const Eyebrow = style({
   fontSize: 11,
   fontWeight: 600,
-  color: color.Background.OnContainer,
-  opacity: 0.85,
+  color: color.Surface.OnContainer,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
@@ -98,30 +74,16 @@ export const Count = style({
 export const Panel = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: 12,
+  gap: 8,
   padding: '4px 12px 12px',
-  maxHeight: 'min(440px, 45vh)',
+  maxHeight: 'min(320px, 38vh)',
   overflowY: 'auto',
   overscrollBehavior: 'contain',
 });
-export const NowPlaying = style({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 12,
-  alignItems: 'center',
-  paddingTop: 4,
-});
-export const Controls = style({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  gap: 6,
-  flexShrink: 0,
-});
-export const ProgressRow = style({ display: 'flex', alignItems: 'center', gap: 8 });
+export const NowPlaying = style({ display: 'flex', gap: 12, alignItems: 'center', paddingTop: 8 });
 export const Cover = style({
-  width: 60,
-  height: 60,
+  width: 36,
+  height: 36,
   borderRadius: 10,
   objectFit: 'cover',
   flexShrink: 0,
@@ -153,8 +115,7 @@ export const TitleLink = style({
 export const Progress = style({
   appearance: 'none',
   display: 'block',
-  flex: 1,
-  minWidth: 0,
+  width: '100%',
   height: 4,
   border: 0,
   borderRadius: 3,
@@ -171,14 +132,78 @@ export const Timing = style({
   fontVariantNumeric: 'tabular-nums',
   color: color.Surface.OnContainer,
 });
+export const Empty = style({ display: 'flex', flexDirection: 'column', gap: 5, padding: '8px 0' });
+export const Toolbar = style({
+  padding: '0 8px 8px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'nowrap',
+  gap: 6,
+});
 export const VolumeLabel = style({
   display: 'flex',
   alignItems: 'center',
-  gap: 5,
+  flex: 1,
+  minWidth: 0,
+  maxWidth: 100,
+  gap: 4,
   fontSize: 10,
   color: color.Surface.OnContainer,
 });
-export const Volume = style({ width: 72, accentColor: color.Primary.Main });
+export const Volume = style({
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  width: 0,
+  minWidth: 16,
+  flex: 1,
+  height: 24,
+  padding: 0,
+  margin: 0,
+  border: 0,
+  background: 'transparent',
+  cursor: 'pointer',
+  selectors: {
+    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 3 },
+    '&::-webkit-slider-runnable-track': {
+      height: 4,
+      borderRadius: 4,
+      background: `linear-gradient(to right, ${color.Primary.Main} var(--music-volume), ${color.Surface.ContainerActive} var(--music-volume))`,
+    },
+    '&::-webkit-slider-thumb': {
+      appearance: 'none',
+      WebkitAppearance: 'none',
+      width: 12,
+      height: 12,
+      marginTop: -4,
+      border: 0,
+      borderRadius: '50%',
+      background: color.Primary.Main,
+    },
+    '&::-moz-range-track': {
+      height: 4,
+      borderRadius: 4,
+      background: color.Surface.ContainerActive,
+    },
+    '&::-moz-range-progress': {
+      height: 4,
+      borderRadius: 4,
+      background: color.Primary.Main,
+    },
+    '&::-moz-range-thumb': {
+      width: 12,
+      height: 12,
+      border: 0,
+      borderRadius: '50%',
+      background: color.Primary.Main,
+    },
+  },
+});
+export const VolumeValue = style({
+  flexShrink: 0,
+  minWidth: 28,
+  fontVariantNumeric: 'tabular-nums',
+});
 export const Notice = style({
   display: 'flex',
   flexWrap: 'wrap',
@@ -194,12 +219,14 @@ export const Hint = style({
   margin: 0,
   color: color.Surface.OnContainer,
 });
+export const AddForm = style({ display: 'flex', flexDirection: 'column', gap: 6 });
+export const InputLabel = style({ fontSize: 11, fontWeight: 600 });
 export const InputRow = style({ display: 'flex', gap: 6, minWidth: 0 });
 export const Search = style({
   width: '100%',
   minWidth: 0,
   flex: 1,
-  padding: '10px 12px',
+  padding: '8px 10px',
   borderRadius: 8,
   font: 'inherit',
   fontSize: 13,
@@ -231,26 +258,16 @@ export const Error = style({
   color: color.Critical.OnContainer,
   overflowWrap: 'anywhere',
 });
-export const QueueBlock = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 2,
-  paddingTop: 8,
-  borderTop: `1px solid ${color.Surface.ContainerLine}`,
-});
-export const QueueHeading = style({
-  fontSize: 11,
-  fontWeight: 600,
-  color: color.Surface.OnContainer,
-});
 export const QueueToggle = style([
   button,
   {
-    alignSelf: 'flex-start',
-    padding: '4px 0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '8px 0',
     fontSize: 12,
-    color: color.Primary.Main,
     background: 'transparent',
+    borderTop: `1px solid ${color.Surface.ContainerLine}`,
   },
 ]);
 export const Queue = style({
@@ -261,22 +278,44 @@ export const Queue = style({
   flexDirection: 'column',
   gap: 4,
 });
-export const QueueItem = style({ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0' });
+export const QueueItem = style({ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' });
 export const QueueNumber = style({
   width: 18,
   fontSize: 11,
   color: color.Surface.OnContainer,
 });
-export const QueueMeta = style({
-  fontSize: 11,
-  flexShrink: 0,
-  color: color.Surface.OnContainer,
-});
 export const QueueTitle = style({
-  flex: 1,
-  minWidth: 0,
   fontSize: 12,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
 });
+
+export const Scope = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+  padding: '10px',
+  background: color.Primary.Container,
+  borderBottom: `1px solid ${color.Surface.ContainerLine}`,
+});
+export const ScopeShared = style({
+  background: color.Success.Container,
+  color: color.Success.OnContainer,
+});
+export const ScopeStatus = style({ display: 'flex', alignItems: 'center', gap: 8 });
+export const ScopeInfo = style({ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 });
+export const ScopeTitle = style({ fontSize: 12, lineHeight: 1.4, overflowWrap: 'anywhere' });
+export const ScopeHint = style({ fontSize: 10, lineHeight: 1.5, opacity: 0.8 });
+export const ScopeButton = style([
+  button,
+  {
+    background: color.Surface.Container,
+    color: color.Surface.OnContainer,
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '7px 10px',
+    borderRadius: 6,
+    textAlign: 'center',
+  },
+]);

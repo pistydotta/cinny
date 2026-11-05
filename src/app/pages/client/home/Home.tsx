@@ -248,7 +248,7 @@ export function Home() {
   );
 
   return (
-    <PageNav>
+    <PageNav music>
       <HomeHeader />
       {noRoomToDisplay ? (
         <HomeEmpty />

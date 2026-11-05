@@ -7,6 +7,7 @@ export type UserRoomProfileState = {
   spaceId?: string;
   cords: RectCords;
   position?: Position;
+  compact?: boolean;
 };
 
 export const userRoomProfileAtom = atom<UserRoomProfileState | undefined>(undefined);

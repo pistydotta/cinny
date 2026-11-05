@@ -25,14 +25,15 @@ type OpenCallback = (
   spaceId: string | undefined,
   userId: string,
   cords: RectCords,
-  position?: Position
+  position?: Position,
+  compact?: boolean
 ) => void;
 export const useOpenUserRoomProfile = (): OpenCallback => {
   const setUserRoomProfile = useSetAtom(userRoomProfileAtom);
 
   const open: OpenCallback = useCallback(
-    (roomId, spaceId, userId, cords, position) => {
-      setUserRoomProfile({ roomId, spaceId, userId, cords, position });
+    (roomId, spaceId, userId, cords, position, compact) => {
+      setUserRoomProfile({ roomId, spaceId, userId, cords, position, compact });
     },
     [setUserRoomProfile]
   );

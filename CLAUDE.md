@@ -105,16 +105,14 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 - A MatrixRTC session's `memberships` starts empty and fills in a moment later, with only the
   session's own `MembershipsChanged` to say so: after a reload the manager's `SessionStarted` doesn't
   fire. Use `useCallMembers`, or `roomsInCallAtom` for all rooms.
-- The music bot (`features/music-bot`) isn't in the call: the blazeroom API fetches each song with
-  yt-dlp and keeps each room's queue, and the app of everyone in that room's call plays the file in
-  sync (`MusicBotPlayer`, mounted beside the call). So it needs no LiveKit or E2EE, and nobody hears
-  it through someone else's microphone. `/play`, `/skip` and `/stop` call the API and post a
-  confirmation as the requester; the chat's Music panel controls the same queue. Only joined
-  call listeners keep the queue alive, not chat observers. See `../docs/music.md`.
-- Clicking someone under a voice room opens `features/call-member-card`: profile, kick (power
-  from `useRoomCreators` too) and a mute/volume saved per user in this browser. The call page
-  applies it through `blazeroomVoices` (`src/element-call/voiceVolume.js`), which the patched
-  bundle asks for each remote microphone's volume. No boost past 100%: Element Call plays
-  through audio elements, not Web Audio.
+- The music bot (`features/music-bot`) plays API-downloaded audio locally through one
+  `MusicBotPlayer`. The sidebar card defaults to an authenticated private queue.
+  Sharing explicitly selects the current call's room queue and copies the current
+  private song; changing calls never carries sharing. Slash commands use that same
+  destination; private requests never post chat notices. See `../docs/music.md`.
+- Compact voice controls use a pointer-transparent PopOut root and a clickable menu;
+  a normal folds PopOut creates a full-screen layer that blocks background clicks.
+  Per-person volume and mute reuse the saved `call-member-card/voices` preferences
+  and pinned `voiceVolume.js` bridge. Keep its bundle guard when upgrading Element Call.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

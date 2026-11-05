@@ -3,6 +3,7 @@ import { Box, Header, Line, Scroll, Text, as } from 'folds';
 import classNames from 'classnames';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import * as css from './style.css';
+import { MusicBotBar } from '../../features/music-bot/MusicBotBar';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 
 type PageRootProps = {
@@ -27,7 +28,11 @@ export function PageRoot({ nav, children }: PageRootProps) {
 type ClientDrawerLayoutProps = {
   children: ReactNode;
 };
-export function PageNav({ size, children }: ClientDrawerLayoutProps & css.PageNavVariants) {
+export function PageNav({
+  size,
+  children,
+  music = false,
+}: ClientDrawerLayoutProps & css.PageNavVariants & { music?: boolean }) {
   const screenSize = useScreenSizeContext();
   const isMobile = screenSize === ScreenSize.Mobile;
 
@@ -39,6 +44,7 @@ export function PageNav({ size, children }: ClientDrawerLayoutProps & css.PageNa
     >
       <Box grow="Yes" direction="Column">
         {children}
+        {music && <MusicBotBar />}
       </Box>
     </Box>
   );
