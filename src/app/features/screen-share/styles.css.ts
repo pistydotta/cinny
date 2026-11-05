@@ -1,4 +1,5 @@
 import { globalStyle, style } from '@vanilla-extract/css';
+import { recipe } from '@vanilla-extract/recipes';
 import { color, config, toRem } from 'folds';
 
 export const Cards = style({
@@ -86,25 +87,44 @@ export const Preview = style({
   borderRadius: config.radii.R300,
   backgroundColor: color.Background.Container,
 });
-export const FloatingCall = style({
-  position: 'fixed',
-  right: 16,
-  bottom: 100,
-  width: 'min(360px, calc(100vw - 32px))',
-  borderRadius: 12,
-  border: `1px solid ${color.SurfaceVariant.ContainerLine}`,
-  background: color.Surface.Container,
-  color: color.Surface.OnContainer,
-  boxShadow: '0 12px 40px #0008',
-  zIndex: 50,
-  overflow: 'hidden',
+export const FloatingCall = recipe({
+  base: {
+    position: 'fixed',
+    right: 16,
+    bottom: 100,
+    borderRadius: 12,
+    border: `1px solid ${color.SurfaceVariant.ContainerLine}`,
+    background: color.Surface.Container,
+    color: color.Surface.OnContainer,
+    boxShadow: '0 12px 40px #0008',
+    zIndex: 50,
+    overflow: 'hidden',
+  },
+  variants: {
+    watching: {
+      true: { width: 'min(400px, calc(100vw - 32px))' },
+      false: { width: 'min(200px, calc(100vw - 32px))' },
+    },
+  },
 });
+// Icons sit over the stage so the compact box is only the call's avatar and name.
 export const FloatingHeader = style({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
   display: 'flex',
   justifyContent: 'space-between',
-  padding: 8,
-  gap: 8,
+  padding: 6,
+  zIndex: 1,
+  pointerEvents: 'none',
 });
-export const FloatingStage = style({ width: '100%', aspectRatio: '16 / 9' });
+globalStyle(`${FloatingHeader} > *`, { pointerEvents: 'auto' });
+export const FloatingStage = recipe({
+  base: { width: '100%' },
+  variants: {
+    watching: { true: { aspectRatio: '16 / 9' }, false: { height: toRem(140) } },
+  },
+});
 export const FloatingControls = style({ maxHeight: 'min(220px, 30vh)', overflowY: 'auto' });
 export const OwnerVolume = style({ display: 'flex', flexDirection: 'column', gap: 4 });
