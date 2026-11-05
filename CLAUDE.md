@@ -46,6 +46,11 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 
 ## Traps already hit
 
+- Screen-share cards sit beside the call stage; the floating viewer reuses the same
+  iframe. Placement must use viewport coordinates and inactive call rooms must not
+  reposition it. Owner PC volume changes outgoing capture gain; viewer volume stays
+  local. See `../docs/screen-sharing-ui.md` before changing these controls.
+
 - `src/element-call/patchElementCall.js` holds minified text from the pinned Element Call, so
   upgrading that package fails the build until the replacements are redone. The patch filters
   Element Call's share list (`j` in the call view model) through `window.blazeroomShares`, which

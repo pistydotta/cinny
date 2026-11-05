@@ -9,6 +9,9 @@ import * as css from './gamesHub.css';
 import { tr } from '../translation/tr';
 import { GameKind } from './table-games/types';
 import { gameName } from './table-games/text';
+import trucoArt from './art/truco.webp';
+import fodinhaArt from './art/fodinha.webp';
+import chessArt from './art/chess.webp';
 
 const ROYAL: Card[] = [
   { rank: 10, suit: 's' },
@@ -121,7 +124,12 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onOpenTableGame, onBack }: G
 
             {(['truco', 'fodinha'] as const).map((kind) => (
               <div key={kind} className={css.GameCard} data-playable="true">
-                <div className={css.SoonArt}>{kind === 'truco' ? '♣ ♥' : '🃏'}</div>
+                <img
+                  className={css.GameArtwork}
+                  src={kind === 'truco' ? trucoArt : fodinhaArt}
+                  alt=""
+                  loading="lazy"
+                />
                 <div className={css.CardBody}>
                   <span className={css.GameName}>{gameName(kind)}</span>
                   <span className={css.GameMeta}>
@@ -154,7 +162,7 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onOpenTableGame, onBack }: G
           </h2>
           <div className={css.Grid}>
             <div className={css.GameCard} data-playable="true">
-              <div className={css.SoonArt}>♞ ♟ ♜</div>
+              <img className={css.GameArtwork} src={chessArt} alt="" loading="lazy" />
               <div className={css.CardBody}>
                 <span className={css.GameName}>{gameName('chess')}</span>
                 <span className={css.GameMeta}>

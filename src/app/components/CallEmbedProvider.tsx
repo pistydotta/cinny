@@ -58,6 +58,7 @@ import { webRTCSupported } from '../utils/rtc';
 import { CallRejoin } from '../features/call-rejoin/CallRejoin';
 import { MusicBotPlayer } from '../features/music-bot/MusicBotPlayer';
 import { useSwitchCall } from '../features/call-switch/useSwitchCall';
+import { FloatingCall, floatingCallHiddenAtom } from '../features/screen-share/FloatingCall';
 
 type IncomingCallInfo = {
   room: Room;
@@ -375,6 +376,9 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
   const callEmbed = useAtomValue(callEmbedAtom);
   const callEmbedRef = useRef<HTMLDivElement>(null);
   const joined = useCallJoined(callEmbed);
+  const floatingHidden = useAtomValue(floatingCallHiddenAtom);
+  const resetFloating = useSetAtom(floatingCallHiddenAtom);
+  useEffect(() => resetFloating(false), [callEmbed, resetFloating]);
 
   const selectedRoom = useSelectedRoom();
   const chat = useAtomValue(callChatAtom);
@@ -383,6 +387,7 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
   const chatOnlyView = chat && screenSize !== ScreenSize.Desktop;
 
   const callVisible = callEmbed && selectedRoom === callEmbed.roomId && joined && !chatOnlyView;
+  const floating = callEmbed && joined && !callVisible && !floatingHidden;
 
   return (
     <CallEmbedContextProvider value={callEmbed}>
@@ -392,11 +397,13 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
         <CallRejoin callEmbed={callEmbed} joined={joined} />
         <MusicBotPlayer callEmbed={callEmbed} joined={joined} />
         {children}
+        {floating && <FloatingCall key={callEmbed.roomId} callEmbed={callEmbed} />}
       </CallEmbedRefContextProvider>
       <div
         data-call-embed-container
         style={{
-          visibility: callVisible ? undefined : 'hidden',
+          visibility: callVisible || floating ? undefined : 'hidden',
+          zIndex: floating ? 51 : undefined,
           position: 'fixed',
           top: 0,
           left: 0,

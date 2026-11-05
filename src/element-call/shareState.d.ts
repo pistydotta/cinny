@@ -16,6 +16,7 @@ export type LocalShare = {
   name: string;
   hasSound: boolean;
   soundOn: boolean;
+  volume?: number;
   videoTrack: MediaStreamTrack;
 };
 
@@ -65,9 +66,14 @@ export type ShareStore = {
   markDecided: (id: string) => void;
   setLocalStream: (stream: MediaStream) => void;
   setLocalSound: (on: boolean) => void;
+  setLocalVolume: (value: number) => void;
 };
 
 export function createShareStore(): ShareStore;
+export function createCaptureVolume(
+  stream: MediaStream,
+  Context?: typeof AudioContext
+): Promise<{ setVolume: (value: number) => void; dispose: () => void } | undefined>;
 
 export function wrapGetDisplayMedia(
   mediaDevices: Pick<MediaDevices, 'getDisplayMedia'>,

@@ -15,15 +15,16 @@ export function LiveCards({ callEmbed }: { callEmbed: CallEmbed }) {
   return (
     <Box className={css.Cards} direction="Column" gap="200">
       {waiting.map((share) => (
-        <Box key={share.id} className={css.Card} alignItems="Center" gap="300">
-          <Icon size="200" src={Icons.ScreenShare} />
-          <Box grow="Yes">
+        <Box key={share.id} className={css.Card} direction="Column" alignItems="Center" gap="300">
+          <Icon size="400" src={Icons.ScreenShare} />
+          <Box className={css.LiveName}>
             <Text size="T300" truncate>
               {tr('screen_share.is_live', '{{name}} is live', { name: share.name })}
             </Text>
           </Box>
           <Button
-            size="300"
+            className={css.WatchButton}
+            size="400"
             variant="Primary"
             radii="300"
             onClick={() =>
@@ -33,7 +34,8 @@ export function LiveCards({ callEmbed }: { callEmbed: CallEmbed }) {
               )
             }
           >
-            <Text size="B300">{tr('screen_share.watch', 'Watch')}</Text>
+            <Icon size="200" src={Icons.Play} />
+            <Text size="B400">{tr('screen_share.watch_screen', 'Watch screen')}</Text>
           </Button>
         </Box>
       ))}

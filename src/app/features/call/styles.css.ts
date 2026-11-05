@@ -26,3 +26,9 @@ export const CallControlContainer = style({
 export const PrescreenMessage = style({
   padding: config.space.S200,
 });
+export const CallStage = style({
+  display: 'flex',
+  minHeight: 0,
+  position: 'relative',
+  '@media': { 'screen and (max-width: 700px)': { flexDirection: 'column' } },
+});

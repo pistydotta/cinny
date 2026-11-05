@@ -29,8 +29,8 @@ export function ShareBar({ callEmbed }: { callEmbed: CallEmbed }) {
   const label = readableShareLabel(local.name) ?? tr('screen_share.your_screen', 'Your screen');
 
   return (
-    <Box className={css.Cards} direction="Column">
-      <Box className={css.Card} alignItems="Center" gap="300">
+    <Box className={css.Controls} direction="Column">
+      <Box className={css.Row} alignItems="Center" gap="300">
         <video ref={videoRef} className={css.Preview} autoPlay playsInline muted />
         <Box grow="Yes" direction="Column">
           <Text size="L400">{tr('screen_share.you_are_live', 'You are live')}</Text>
@@ -64,6 +64,23 @@ export function ShareBar({ callEmbed }: { callEmbed: CallEmbed }) {
           <Text size="T200" priority="300">
             {tr('screen_share.no_sound', 'No sound')}
           </Text>
+        )}
+        {local.hasSound && local.volume !== undefined && (
+          <label className={css.OwnerVolume} htmlFor="shared-pc-volume">
+            <Text size="T200">
+              {tr('screen_share.pc_volume', 'Shared PC volume')} {Math.round(local.volume * 100)}%
+            </Text>
+            <input
+              id="shared-pc-volume"
+              className={css.Slider}
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={local.volume}
+              onChange={(e) => store.setLocalVolume(Number(e.target.value))}
+            />
+          </label>
         )}
         <Button
           size="300"

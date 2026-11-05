@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-screen-share-watch',
+    items: () => [
+      {
+        title: tr('screen_share.watch_news_title', 'Screen sharing stays with you'),
+        body: tr(
+          'screen_share.watch_news_body',
+          'Screen-share cards sit beside the participants. A floating viewer follows you while browsing and can be hidden to the bottom bar. Sharers can adjust outgoing PC audio, and the sidebar expands to participant names and audio controls.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-truco-fodinha-chess',
     items: () => [
       {

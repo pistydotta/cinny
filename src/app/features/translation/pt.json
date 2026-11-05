@@ -489,7 +489,19 @@
     "pc_sound_off": "Som do PC: desligado",
     "no_sound": "Sem som",
     "stop": "Parar",
-    "badge": "Ao vivo"
+    "badge": "Ao vivo",
+    "watch_screen": "Assistir à tela",
+    "watch_news_title": "Compartilhamento de tela sempre por perto",
+    "watch_news_body": "As telas disponíveis aparecem em cartões ao lado dos participantes. Ao navegar, a chamada fica em um visualizador flutuante que pode ser ocultado na barra inferior. Quem compartilha também pode ajustar o volume do áudio do PC enviado.",
+    "floating": "Visualizador flutuante da chamada",
+    "return_call": "Voltar à chamada",
+    "hide_viewer": "Ocultar visualizador",
+    "show_viewer": "Mostrar visualizador",
+    "pc_volume": "Volume do PC compartilhado",
+    "mute_call": "Silenciar áudio da chamada",
+    "unmute_call": "Ativar áudio da chamada",
+    "members": "Participantes da chamada ({{count}})",
+    "people": "{{count}} pessoas · nomes e áudio"
   },
   "profile_description": {
     "title": "Descrição",

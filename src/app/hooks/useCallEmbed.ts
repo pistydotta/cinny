@@ -120,19 +120,23 @@ export const useCallThemeSync = (embed: CallEmbed) => {
   }, [theme.kind, embed]);
 };
 
-export const useCallEmbedPlacementSync = (containerViewRef: RefObject<HTMLDivElement>): void => {
+export const useCallEmbedPlacementSync = (
+  containerViewRef: RefObject<HTMLDivElement>,
+  enabled = true
+): void => {
   const callEmbedRef = useCallEmbedRef();
 
   const syncCallEmbedPlacement = useCallback(() => {
     const embedEl = callEmbedRef.current;
     const container = containerViewRef.current;
-    if (!embedEl || !container) return;
+    if (!enabled || !embedEl || !container) return;
 
-    embedEl.style.top = `${container.offsetTop}px`;
-    embedEl.style.left = `${container.offsetLeft}px`;
+    const rect = container.getBoundingClientRect();
+    embedEl.style.top = `${rect.top}px`;
+    embedEl.style.left = `${rect.left}px`;
     embedEl.style.width = `${container.clientWidth}px`;
     embedEl.style.height = `${container.clientHeight}px`;
-  }, [callEmbedRef, containerViewRef]);
+  }, [callEmbedRef, containerViewRef, enabled]);
 
   useResizeObserver(
     syncCallEmbedPlacement,

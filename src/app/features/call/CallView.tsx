@@ -135,8 +135,10 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
 
   return (
     <Box grow="Yes" direction="Column">
-      {callEmbed && joined && <LiveCards callEmbed={callEmbed} />}
-      <Box grow="Yes" ref={containerRef} />
+      <Box grow="Yes" className={css.CallStage}>
+        <Box grow="Yes" ref={containerRef} />
+        {callEmbed && joined && <LiveCards callEmbed={callEmbed} />}
+      </Box>
       {callEmbed && joined && <WatchControls callEmbed={callEmbed} />}
       {callEmbed && joined && <ShareBar callEmbed={callEmbed} />}
       {callEmbed && joined && <MusicBotBar key={callEmbed.roomId} />}
@@ -148,12 +150,12 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
 export function CallView() {
   const room = useRoom();
   const callContainerRef = useRef<HTMLDivElement>(null);
-  useCallEmbedPlacementSync(callContainerRef);
 
   const callEmbed = useCallEmbed();
   const callJoined = useCallJoined(callEmbed);
 
   const currentJoined = callEmbed?.roomId === room.roomId && callJoined;
+  useCallEmbedPlacementSync(callContainerRef, currentJoined);
 
   return (
     <Box

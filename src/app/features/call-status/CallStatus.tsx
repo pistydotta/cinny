@@ -1,6 +1,10 @@
 import React from 'react';
-import { Box, Spinner } from 'folds';
+import { Box, Button, Spinner, Text } from 'folds';
+import { useAtom } from 'jotai';
 import classNames from 'classnames';
+import { floatingCallHiddenAtom } from '../screen-share/FloatingCall';
+import { tr } from '../translation/tr';
+import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { LiveChip } from './LiveChip';
 import * as css from './styles.css';
 import { CallRoomName } from './CallRoomName';
@@ -20,6 +24,8 @@ type CallStatusProps = {
   callEmbed: CallEmbed;
 };
 export function CallStatus({ callEmbed }: CallStatusProps) {
+  const [viewerHidden, setViewerHidden] = useAtom(floatingCallHiddenAtom);
+  const selectedRoom = useSelectedRoom();
   const { room } = callEmbed;
 
   const callSession = useCallSession(room);
@@ -71,6 +77,15 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       </Box>
       {memberVisible && !compact && <StatusDivider />}
       <Box shrink="No" alignItems="Center" gap="Inherit">
+        {callJoined && selectedRoom !== callEmbed.roomId && (
+          <Button size="300" onClick={() => setViewerHidden(!viewerHidden)}>
+            <Text size="B300">
+              {viewerHidden
+                ? tr('screen_share.show_viewer', 'Show viewer')
+                : tr('screen_share.hide_viewer', 'Hide viewer')}
+            </Text>
+          </Button>
+        )}
         {compact && (
           <Box grow="Yes">
             <CallRoomName room={room} />

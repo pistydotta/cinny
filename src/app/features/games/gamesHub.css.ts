@@ -244,3 +244,11 @@ export const WalletTopUp = style([
     padding: '0 18px',
   },
 ]);
+
+export const GameArtwork = style({
+  width: '100%',
+  height: 170,
+  objectFit: 'cover',
+  display: 'block',
+  flexShrink: 0,
+});

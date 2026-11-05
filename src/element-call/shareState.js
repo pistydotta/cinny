@@ -46,6 +46,7 @@ const sameLocal = (a, b) =>
     a.name === b.name &&
     a.hasSound === b.hasSound &&
     a.soundOn === b.soundOn &&
+    a.volume === b.volume &&
     a.videoTrack === b.videoTrack);
 
 const sameSnapshot = (a, b) =>
@@ -67,6 +68,8 @@ export const createShareStore = () => {
   let localStream = null;
   let localVideo = null;
   let localAudio = null;
+  let localMixer = null;
+  let localVolume = 1;
   let localEnded = null;
   let sawLocalVm = false;
 
@@ -79,6 +82,7 @@ export const createShareStore = () => {
           name: localVideo.label,
           hasSound: !!localAudio,
           soundOn: !!localAudio && localAudio.enabled,
+          volume: localMixer ? localVolume : undefined,
           videoTrack: localVideo,
         }
       : null,
@@ -172,6 +176,9 @@ export const createShareStore = () => {
   };
 
   const clearLocal = () => {
+    localMixer?.dispose();
+    localMixer = null;
+    localVolume = 1;
     if (localVideo && localEnded) localVideo.removeEventListener('ended', localEnded);
     localStream = null;
     localVideo = null;
@@ -304,8 +311,9 @@ export const createShareStore = () => {
         e.decided = true;
       }),
 
-    setLocalStream: (stream) => {
+    setLocalStream: (stream, mixer) => {
       clearLocal();
+      localMixer = mixer ?? null;
       localStream = stream;
       [localVideo] = stream.getVideoTracks();
       [localAudio] = stream.getAudioTracks();
@@ -325,18 +333,69 @@ export const createShareStore = () => {
       localAudio.enabled = on;
       refresh();
     },
+    setLocalVolume: (value) => {
+      if (!localMixer || !Number.isFinite(value)) return;
+      localVolume = Math.max(0, Math.min(1, value));
+      localMixer.setVolume(localVolume);
+      refresh();
+    },
   };
 };
 
+// Only the captured system/tab audio passes through this graph, never the microphone.
+// No connection to context.destination: the sharer must not hear an echo locally.
+export async function createCaptureVolume(stream, Context = globalThis.AudioContext) {
+  const [audio] = stream.getAudioTracks();
+  if (!audio || !Context) return undefined;
+  let context;
+  try {
+    context = new Context();
+    let resumeTimer;
+    try {
+      await Promise.race([
+        context.resume(),
+        new Promise((resolve, reject) => {
+          resumeTimer = setTimeout(() => reject(new Error('Audio context suspended')), 1000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(resumeTimer);
+    }
+    const source = context.createMediaStreamSource(new MediaStream([audio]));
+    const gain = context.createGain();
+    const destination = context.createMediaStreamDestination();
+    source.connect(gain);
+    gain.connect(destination);
+    const [output] = destination.stream.getAudioTracks();
+    if (!output) throw new Error('No captured audio output');
+    stream.removeTrack(audio);
+    stream.addTrack(output);
+    return {
+      setVolume: (value) => gain.gain.setValueAtTime(value, context.currentTime),
+      dispose: () => {
+        source.disconnect();
+        gain.disconnect();
+        audio.stop();
+        output.stop();
+        context.close().catch(() => undefined);
+      },
+    };
+  } catch {
+    context?.close().catch(() => undefined);
+    return undefined;
+  }
+}
+
 // Replaces mediaDevices.getDisplayMedia so the store learns about the person's own share. The
-// stream goes back untouched; if the picker is cancelled the error reaches Element Call as is.
+// Video stays untouched; optional audio gain is applied before publication. Picker errors propagate.
 export const wrapGetDisplayMedia = (mediaDevices, store) => {
   const getDisplayMedia = mediaDevices.getDisplayMedia.bind(mediaDevices);
 
   // eslint-disable-next-line no-param-reassign
   mediaDevices.getDisplayMedia = async (constraints) => {
     const stream = await getDisplayMedia(constraints);
-    store.setLocalStream(stream);
+    const mixer = await createCaptureVolume(stream);
+    store.setLocalStream(stream, mixer);
     return stream;
   };
 };
