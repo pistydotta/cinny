@@ -98,7 +98,8 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 - The music bot (`features/music-bot`) isn't in the call: the blazeroom API fetches each song with
   yt-dlp and keeps each room's queue, and the app of everyone in that room's call plays the file in
   sync (`MusicBotPlayer`, mounted beside the call). So it needs no LiveKit or E2EE, and nobody hears
-  it through someone else's microphone. `/play`, `/skip` and `/stop` in the chat call the API; they
-  send nothing to the room.
+  it through someone else's microphone. `/play`, `/skip` and `/stop` call the API and post a
+  confirmation as the requester; the chat's Music panel controls the same queue. Only joined
+  call listeners keep the queue alive, not chat observers. See `../docs/music.md`.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

@@ -1,16 +1,11 @@
 import { atom } from 'jotai';
-import type { MusicView } from './musicApi';
+import type { PlaybackStatus } from './musicAudio';
 import { parseVolume, VOLUME_KEY } from './musicSync';
 
-export type MusicSnapshot = {
-  roomId: string;
-  view: MusicView;
-  /** performance.now() when the server's answer arrived. */
-  receivedAt: number;
-};
-
-/** The music of the call this app is in, kept by MusicBotPlayer. */
-export const musicSnapshotAtom = atom<MusicSnapshot | undefined>(undefined);
+export const musicPlaybackAtom = atom<{ roomId: string; status: PlaybackStatus } | undefined>(
+  undefined
+);
+export const musicSoundAtom = atom(true);
 
 const savedVolume = (): string | null => {
   try {

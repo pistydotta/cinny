@@ -23,6 +23,7 @@ export type MusicView = {
   version: number;
   nowPlaying: NowPlaying | null;
   queue: MusicTrack[];
+  lastError?: { id: string; title: string; code: string };
 };
 
 type Listener = (roomId: string, view: MusicView) => void;
@@ -55,7 +56,12 @@ export const createMusicApi = (
   fetchImpl?: typeof fetch,
   publish: Listener = (roomId, view) => listeners.forEach((l) => l(roomId, view))
 ) => {
-  const request = createApiRequest(getToken, fetchImpl);
+  const request = createApiRequest(getToken, (input, init) =>
+    (fetchImpl ?? fetch)(input, {
+      ...init,
+      signal: AbortSignal.timeout(init?.method === 'GET' ? 10_000 : 60_000),
+    })
+  );
   const room = (roomId: string) => `/api/music/rooms/${encodeURIComponent(roomId)}`;
   const json = async (path: string, method: string, body?: unknown): Promise<MusicView> =>
     (await (await request(path, method, body)).json()) as MusicView;
@@ -66,7 +72,8 @@ export const createMusicApi = (
   };
 
   return {
-    get: (roomId: string) => json(room(roomId), 'GET'),
+    get: (roomId: string, listening = true) =>
+      json(`${room(roomId)}${listening ? '' : '?observe=1'}`, 'GET'),
     /** A link (YouTube, SoundCloud, Spotify...) or words to search for. */
     add: (roomId: string, query: string) =>
       change(roomId, '/queue', 'POST', { query }) as Promise<MusicView & { added: MusicTrack[] }>,

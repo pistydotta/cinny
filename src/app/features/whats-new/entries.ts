@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-music-chat',
+    items: () => [
+      {
+        title: tr('music_bot.news_title', 'Music from chat'),
+        body: tr(
+          'music_bot.news_body',
+          'Request music with /play or the controls in the call’s chat. See the queue, pause, skip and adjust your volume. Download failures and blocked audio now show an explanation.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-card-game-credits',
     items: () => [
       {

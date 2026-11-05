@@ -8,6 +8,13 @@ const fakeFetch = (status = 200, body: unknown = VIEW) =>
   vi.fn(async () => new Response(JSON.stringify(body), { status }));
 
 describe('createMusicApi', () => {
+  it('lets chat observe without keeping an unattended call queue alive', async () => {
+    const fetchImpl = fakeFetch();
+    const api = createMusicApi(() => 'tok', fetchImpl);
+    await api.get('!r:x', false);
+    const calls = fetchImpl.mock.calls as unknown as [string, RequestInit][];
+    expect(calls[0][0]).toBe('/api/music/rooms/!r%3Ax?observe=1');
+  });
   it('asks for the room with the token, without publishing', async () => {
     const fetchImpl = fakeFetch();
     const publish = vi.fn();

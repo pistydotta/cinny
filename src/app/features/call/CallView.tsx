@@ -139,7 +139,7 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
       <Box grow="Yes" ref={containerRef} />
       {callEmbed && joined && <WatchControls callEmbed={callEmbed} />}
       {callEmbed && joined && <ShareBar callEmbed={callEmbed} />}
-      {callEmbed && joined && <MusicBotBar />}
+      {callEmbed && joined && <MusicBotBar key={callEmbed.roomId} />}
       {callEmbed && joined && <CallControls callEmbed={callEmbed} />}
     </Box>
   );

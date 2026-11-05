@@ -52,6 +52,16 @@ export const musicErrorText = (e: unknown): string => {
       return tr('music_bot.error_nothing_playing', 'Nothing is playing.');
     case 'fetch_failed':
       return tr('music_bot.error_fetch', 'Could not get that song. Try another link.');
+    case 'source_blocked':
+      return tr(
+        'music_bot.error_source_blocked',
+        'The music provider blocked this server. Try another source or ask an owner to check the music service.'
+      );
+    case 'chat_failed':
+      return tr(
+        'music_bot.error_chat',
+        'Music updated, but its confirmation could not be posted in chat. Do not add it again.'
+      );
     case 'music_unavailable':
       return tr('music_bot.error_unavailable', 'The music bot is not available on the server.');
     case 'network':
