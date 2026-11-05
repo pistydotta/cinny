@@ -9,8 +9,21 @@ import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { uniqueCallUserIds } from './callMembers';
 import { CallMemberPopout } from '../call-member-card/CallMemberPopout';
+import { useCallAudioReports } from '../call-member-card/callAudioStatus';
+import { userAudioStatus } from '../call-member-card/audioStatus';
+import { tr } from '../translation/tr';
 
-function CallMemberRow({ room, userId }: { room: Room; userId: string }) {
+function CallMemberRow({
+  room,
+  userId,
+  muted,
+  deafened,
+}: {
+  room: Room;
+  userId: string;
+  muted: boolean;
+  deafened: boolean;
+}) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
@@ -53,6 +66,26 @@ function CallMemberRow({ room, userId }: { room: Room; userId: string }) {
             <Text size="T300" priority="300" truncate title={name}>
               {name}
             </Text>
+            <Box gap="100" shrink="No" style={{ marginLeft: 'auto', opacity: 0.65 }}>
+              {muted && (
+                <span
+                  role="img"
+                  aria-label={tr('call_status.muted', 'Microphone muted')}
+                  title={tr('call_status.muted', 'Microphone muted')}
+                >
+                  <Icon size="50" src={Icons.MicMute} />
+                </span>
+              )}
+              {deafened && (
+                <span
+                  role="img"
+                  aria-label={tr('call_status.deafened', 'Call audio off')}
+                  title={tr('call_status.deafened', 'Call audio off')}
+                >
+                  <Icon size="50" src={Icons.HeadphoneMute} />
+                </span>
+              )}
+            </Box>
           </Box>
         )}
       </CallMemberPopout>
@@ -63,6 +96,7 @@ function CallMemberRow({ room, userId }: { room: Room; userId: string }) {
 // Discord-style: who's in the voice room, one row per person under its name.
 // Clicking someone opens a card with their profile and my volume for them.
 export function CallMemberAvatars({ room, members }: { room: Room; members: CallMembership[] }) {
+  const { reports, liveMuted } = useCallAudioReports(room, members);
   const userIds = uniqueCallUserIds(members);
   if (userIds.length === 0) return null;
 
@@ -78,7 +112,13 @@ export function CallMemberAvatars({ room, members }: { room: Room; members: Call
       }}
     >
       {userIds.map((userId) => (
-        <CallMemberRow key={userId} room={room} userId={userId} />
+        <CallMemberRow
+          key={userId}
+          room={room}
+          userId={userId}
+          {...userAudioStatus(reports, members, userId)}
+          muted={liveMuted.get(userId) ?? userAudioStatus(reports, members, userId).muted}
+        />
       ))}
     </Box>
   );

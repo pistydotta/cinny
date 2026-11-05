@@ -17,6 +17,30 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-voice-audio-status',
+    items: () => [
+      {
+        title: tr('call_status.news_title', 'Call status at a glance'),
+        body: tr(
+          'call_status.news_body',
+          'Muted microphones and call audio off now show beside voice-room members. Click someone for cleaner controls and a compact volume slider.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-owner-room-controls',
+    items: () => [
+      {
+        title: tr('room_delete.news_title', 'Server room controls'),
+        body: tr(
+          'room_delete.news_body',
+          'Server owners can delete rooms for everyone with confirmation. When creating a room, turn encryption off if you need webhooks.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-superadmin-webhooks',
     items: () => [
       {

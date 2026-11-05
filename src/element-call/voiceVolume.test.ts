@@ -12,6 +12,23 @@ const storageWith = (value: string) => ({
 });
 
 describe('voice volume', () => {
+  it('reads actual microphone state without confusing local listening mute, missing peers, or multiple devices', () => {
+    const store = createVoiceStore(storageWith(JSON.stringify({ '@a:x': { muted: true } })));
+    const slot = {};
+    const second = {};
+    const participant = { isMicrophoneEnabled: true };
+    expect(store.microphoneMuted('@a:x')).toBeUndefined();
+    store.observeParticipant('@a:x', slot, participant);
+    expect(store.microphoneMuted('@a:x')).toBe(false);
+    participant.isMicrophoneEnabled = false;
+    expect(store.microphoneMuted('@a:x')).toBe(true);
+    store.observeParticipant('@a:x', second, { isMicrophoneEnabled: true });
+    expect(store.microphoneMuted('@a:x')).toBe(false);
+    store.observeParticipant('@a:x', second, null);
+    expect(store.microphoneMuted('@a:x')).toBe(true);
+    store.observeParticipant('@a:x', slot, null);
+    expect(store.microphoneMuted('@a:x')).toBeUndefined();
+  });
   it('defaults to full volume, unmuted', () => {
     expect(playbackVolume({}, '@a:x', 0.8)).toBe(0.8);
   });

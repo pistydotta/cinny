@@ -88,6 +88,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
 
   const [type, setType] = useState(defaultType ?? CreateRoomType.TextRoom);
   const [onlyPicked, setOnlyPicked] = useState(false);
+  const [encryption, setEncryption] = useState(true);
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
 
   const members = useMemo(
@@ -124,7 +125,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
           access: onlyPicked ? CreateRoomAccess.Private : CreateRoomAccess.Restricted,
           name,
           topic,
-          encryption: true,
+          encryption,
           knock: false,
           allowFederation: false,
         });
@@ -132,7 +133,7 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
         await Promise.allSettled(onlyPicked ? [...picked].map((id) => mx.invite(roomId, id)) : []);
         return roomId;
       },
-      [mx, roomVersion, type, space, onlyPicked, picked]
+      [mx, roomVersion, type, space, onlyPicked, picked, encryption]
     )
   );
   const loading = createState.status === AsyncStatus.Loading;
@@ -207,6 +208,28 @@ export function SpaceRoomForm({ space, defaultType, onCreate }: SpaceRoomFormPro
           onClick={() => setOnlyPicked(true)}
           disabled={loading}
         />
+      </Box>
+      <Box direction="Column" gap="100">
+        <Box as="label" gap="200" alignItems="Center" style={{ cursor: 'pointer' }}>
+          <Checkbox
+            checked={encryption}
+            onClick={() => setEncryption(!encryption)}
+            disabled={loading}
+            aria-label={tr('create_room.encryption', 'End-to-end encryption')}
+          />
+          <Text>{tr('create_room.encryption', 'End-to-end encryption')}</Text>
+        </Box>
+        <Text size="T300" priority="300">
+          {encryption
+            ? tr(
+                'create_room.encrypted_hint',
+                'Only members can read messages. Webhooks require an unencrypted room.'
+              )
+            : tr(
+                'create_room.unencrypted_hint',
+                'Suitable for bots and integrations. Messages are not end-to-end encrypted. Existing server and member access rules still apply.'
+              )}
+        </Text>
       </Box>
       {onlyPicked && (
         <Box direction="Column" gap="100">

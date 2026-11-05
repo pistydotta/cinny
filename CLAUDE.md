@@ -114,5 +114,9 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   a normal folds PopOut creates a full-screen layer that blocks background clicks.
   Per-person volume and mute reuse the saved `call-member-card/voices` preferences
   and pinned `voiceVolume.js` bridge. Keep its bundle guard when upgrading Element Call.
+  Sidebar audio status uses actual LiveKit microphone state in that bridge and
+  expiring, session-scoped Matrix to-device reports for mute/deafen status outside
+  the active call. Reports never enter chat history; old clients cannot report
+  whether their call audio is off. See `../docs/call-audio-status.md`.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

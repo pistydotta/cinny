@@ -6,6 +6,12 @@ export function readVoices(storage: Pick<Storage, 'getItem'> | undefined): Voice
 export function voiceFor(voices: Voices, userId: string): Voice;
 export function playbackVolume(voices: Voices, userId: string, base: number): number;
 export type VoiceStore = {
+  observeParticipant: (
+    userId: string,
+    slot: object,
+    participant: { isMicrophoneEnabled: boolean } | null | undefined
+  ) => void;
+  microphoneMuted: (userId: string) => boolean | undefined;
   changes: { subscribe: (observer: unknown) => { unsubscribe: () => void } };
   get: (userId: string) => Voice;
   volumeFor: (userId: string, base: number) => number;

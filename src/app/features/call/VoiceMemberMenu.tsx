@@ -1,6 +1,6 @@
 import { useAtomValue } from 'jotai';
-import React, { useId, useState } from 'react';
-import { Box, Icon, Icons, Text, config } from 'folds';
+import React, { CSSProperties, useId, useState } from 'react';
+import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
 import { callEmbedAtom } from '../../state/callEmbed';
 import { useRoom } from '../../hooks/useRoom';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -11,7 +11,10 @@ import { usePowerLevels } from '../../hooks/usePowerLevels';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
-import { getMemberDisplayName } from '../../utils/room';
+import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
+import { UserAvatar } from '../../components/user-avatar';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { mxcUrlToHttp } from '../../utils/matrix';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
 import type { CallEmbed } from '../../plugins/call';
@@ -50,22 +53,23 @@ function VoiceAudio({ call, userId }: { call: CallEmbed; userId: string }) {
         </TipIconButton>
       </Box>
     );
+  const volume = voice.muted ? 0 : Math.round(voice.volume * 100);
   return (
-    <Box alignItems="Center" gap="200">
-      <TipIconButton
-        size="300"
-        label={
-          voice.muted
-            ? tr('call_member.unmute', 'Unmute for me')
-            : tr('call_member.mute', 'Mute for me')
-        }
-        aria-pressed={voice.muted}
-        onClick={() => saveVoice({ ...voice, muted: !voice.muted })}
-      >
-        <Icon size="100" src={voice.muted ? Icons.VolumeMute : Icons.VolumeHigh} />
-      </TipIconButton>
-      <label htmlFor={volumeId} className={css.Volume}>
-        <span>{tr('voice_member.volume', 'User volume')}</span>
+    <div className={css.Volume}>
+      <label htmlFor={volumeId}>{tr('voice_member.volume_for_you', 'Volume for you')}</label>
+      <Box alignItems="Center" gap="200">
+        <TipIconButton
+          size="300"
+          label={
+            voice.muted
+              ? tr('call_member.unmute', 'Unmute for me')
+              : tr('call_member.mute', 'Mute for me')
+          }
+          aria-pressed={voice.muted}
+          onClick={() => saveVoice({ ...voice, muted: !voice.muted })}
+        >
+          <Icon size="100" src={voice.muted ? Icons.VolumeMute : Icons.VolumeHigh} />
+        </TipIconButton>
         <input
           id={volumeId}
           className={css.Slider}
@@ -74,12 +78,16 @@ function VoiceAudio({ call, userId }: { call: CallEmbed; userId: string }) {
           max="1"
           step="0.05"
           value={voice.volume}
+          aria-valuetext={`${volume}%`}
+          style={{ '--voice-volume': `${volume}%` } as CSSProperties}
           disabled={voice.muted}
           onChange={(event) => saveVoice({ ...voice, volume: Number(event.target.value) })}
         />
-        <span>{voice.muted ? 0 : Math.round(voice.volume * 100)}%</span>
-      </label>
-    </Box>
+        <output htmlFor={volumeId} className={css.VolumeValue}>
+          {volume}%
+        </output>
+      </Box>
+    </div>
   );
 }
 
@@ -87,6 +95,11 @@ export function VoiceMemberMenu({ userId, onClose }: { userId: string; onClose: 
   const mx = useMatrixClient();
   const openProfile = useOpenUserRoomProfile();
   const room = useRoom();
+  const useAuthentication = useMediaAuthentication();
+  const avatarMxc = getMemberAvatarMxc(room, userId);
+  const avatarUrl = avatarMxc
+    ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 48, 48) ?? undefined
+    : undefined;
   const call = useAtomValue(callEmbedAtom);
   const joined = useCallJoined(call);
   const powers = usePowerLevels(room);
@@ -100,9 +113,22 @@ export function VoiceMemberMenu({ userId, onClose }: { userId: string; onClose: 
   return (
     <Box direction="Column" gap="200" style={{ padding: config.space.S300 }}>
       <Box alignItems="Center" gap="200">
-        <Text size="L400" truncate style={{ flex: 1 }}>
-          {getMemberDisplayName(room, userId) ?? userId}
-        </Text>
+        <Avatar size="200" radii="Pill">
+          <UserAvatar
+            userId={userId}
+            src={avatarUrl}
+            alt=""
+            renderFallback={() => <Icon src={Icons.User} size="100" />}
+          />
+        </Avatar>
+        <Box direction="Column" grow="Yes" style={{ minWidth: 0 }}>
+          <Text size="L400" truncate>
+            {getMemberDisplayName(room, userId) ?? userId}
+          </Text>
+          <Text size="T200" priority="300">
+            {tr('voice_member.call_controls', 'Call controls')}
+          </Text>
+        </Box>
         <TipIconButton
           size="300"
           label={tr('call_member.profile', 'View profile')}
@@ -144,6 +170,7 @@ export function VoiceMemberMenu({ userId, onClose }: { userId: string; onClose: 
             }
           }}
         >
+          <Icon src={Icons.ArrowGoLeft} size="50" />
           {tr('voice_member.kick', 'Kick from room')}
         </button>
       )}

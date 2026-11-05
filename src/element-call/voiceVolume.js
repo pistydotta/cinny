@@ -34,6 +34,7 @@ export function createVoiceStore(storage) {
   let voices = readVoices(storage);
   let revision = 0;
   const observers = new Set();
+  const participants = new Map();
   // Same RxJS interop as the share store's `changes`: emits once on subscribe.
   const changes = {
     subscribe(observer) {
@@ -48,6 +49,21 @@ export function createVoiceStore(storage) {
 
   return {
     changes,
+    // Keep actual LiveKit participants so mute icons also work with older clients.
+    // A slot can become null during reconnects; never infer mute from a missing track.
+    observeParticipant(userId, slot, participant) {
+      const slots = participants.get(userId) ?? new Map();
+      if (participant) slots.set(slot, participant);
+      else slots.delete(slot);
+      if (slots.size) participants.set(userId, slots);
+      else participants.delete(userId);
+    },
+    microphoneMuted(userId) {
+      const active = [...(participants.get(userId)?.values() ?? [])];
+      if (!active.length || active.some((p) => typeof p.isMicrophoneEnabled !== 'boolean'))
+        return undefined;
+      return active.every((p) => !p.isMicrophoneEnabled);
+    },
     get: (userId) => voiceFor(voices, userId),
     volumeFor: (userId, base) => playbackVolume(voices, userId, base),
     // Called by Cinny after it saved, and on load in case another tab changed something.

@@ -75,6 +75,7 @@ import { useCallEmbed } from '../../hooks/useCallEmbed';
 import { useSwitchCall } from '../call-switch/useSwitchCall';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
+import { DeleteRoomMenuItem } from '../space-rooms/DeleteRoomMenuItem';
 
 type RoomMenuProps = {
   room: Room;
@@ -262,6 +263,11 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           </Box>
         </>
       )}
+      <DeleteRoomMenuItem
+        spaceId={parentSpace?.roomId}
+        roomId={room.roomId}
+        requestClose={requestClose}
+      />
     </Menu>
   );
 });

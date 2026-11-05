@@ -59,6 +59,7 @@ import { CallRejoin } from '../features/call-rejoin/CallRejoin';
 import { MusicBotPlayer } from '../features/music-bot/MusicBotPlayer';
 import { useSwitchCall } from '../features/call-switch/useSwitchCall';
 import { FloatingCall, floatingCallHiddenAtom } from '../features/screen-share/FloatingCall';
+import { useBroadcastCallAudio } from '../features/call-member-card/callAudioStatus';
 
 type IncomingCallInfo = {
   room: Room;
@@ -355,9 +356,26 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
 }
 
 function CallUtils({ embed }: { embed: CallEmbed }) {
+  const mx = useMatrixClient();
   const setCallEmbed = useSetAtom(callEmbedAtom);
 
+  useEffect(() => {
+    const handleMembership = (room: Room) => {
+      if (room.roomId === embed.roomId && room.getMyMembership() !== 'join') {
+        // A deleted channel (or a kick) must also stop its microphone and media.
+        setCallEmbed(undefined);
+      }
+    };
+    mx.on(RoomEvent.MyMembership, handleMembership);
+    const room = mx.getRoom(embed.roomId);
+    if (room) handleMembership(room);
+    return () => {
+      mx.removeListener(RoomEvent.MyMembership, handleMembership);
+    };
+  }, [mx, embed, setCallEmbed]);
+
   useCallMemberSoundSync(embed);
+  useBroadcastCallAudio(embed);
   useCallThemeSync(embed);
   useCallHangupEvent(
     embed,

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Menu, PopOut, Position, RectCords, toRem } from 'folds';
+import { Card } from './voiceMember.css';
 
 export function VoiceMemberPopover({
   anchor,
@@ -42,9 +43,10 @@ export function VoiceMemberPopover({
       style={{ pointerEvents: 'none' }}
       content={
         <Menu
+          className={Card}
           ref={menuRef}
           style={{
-            width: toRem(240),
+            width: toRem(264),
             maxWidth: 'calc(100vw - 16px)',
             maxHeight: '70vh',
             overflowY: 'auto',

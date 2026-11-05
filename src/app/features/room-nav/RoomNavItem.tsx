@@ -68,6 +68,7 @@ import { StateEvent } from '../../../types/matrix/room';
 import { webRTCSupported } from '../../utils/rtc';
 import { tr } from '../translation/tr';
 import { TipIconButton } from '../tooltips/TipIconButton';
+import { DeleteRoomMenuItem } from '../space-rooms/DeleteRoomMenuItem';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -194,6 +195,13 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             </Text>
           </MenuItem>
         </Box>
+        {!direct && (
+          <DeleteRoomMenuItem
+            spaceId={space?.roomId}
+            roomId={room.roomId}
+            requestClose={requestClose}
+          />
+        )}
         {!isAlwaysJoinedRoom(mx, room.roomId) && (
           <>
             <Line variant="Surface" size="300" />

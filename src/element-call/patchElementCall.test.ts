@@ -9,6 +9,7 @@ describe('patchElementCall', () => {
     const patched = patchElementCall(`before;${original}mid;${voice}after`);
     expect(patched).toContain('blazeroomShares');
     expect(patched).toContain('blazeroomVoices?.volumeFor(n.userId,t)');
+    expect(patched).toContain('blazeroomVoices?.observeParticipant?.(n.userId,n,e)');
     expect(patched).not.toContain(original);
     expect(patched).not.toContain(voice);
     expect(patched.startsWith('before;')).toBe(true);

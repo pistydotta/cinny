@@ -32,6 +32,7 @@ import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
+import { DeleteRoomMenuItem } from '../space-rooms/DeleteRoomMenuItem';
 
 type HierarchyItemWithParent = HierarchyItem & {
   parentId: string;
@@ -331,6 +332,13 @@ export function HierarchyItemMenu({
                   <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
                     <SuggestMenuItem item={item} requestClose={handleRequestClose} />
                     <RemoveMenuItem item={item} requestClose={handleRequestClose} />
+                    {!('space' in item) && (
+                      <DeleteRoomMenuItem
+                        spaceId={item.parentId}
+                        roomId={item.roomId}
+                        requestClose={handleRequestClose}
+                      />
+                    )}
                   </Box>
                 )}
               </Menu>

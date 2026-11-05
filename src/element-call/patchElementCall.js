@@ -9,7 +9,7 @@ const PATCHED =
 // sidebar's per-person mute and volume apply on top of Element Call's own. IJ is combineLatest.
 const VOICE_ORIGINAL = 'sink$:e.behavior(n.participant$.pipe(W(e=>t=>e?.setVolume(t))))';
 const VOICE_PATCHED =
-  'sink$:e.behavior(IJ([n.participant$,window.blazeroomVoices?.changes??PJ(0)]).pipe(W(([e])=>t=>e?.setVolume(window.blazeroomVoices?.volumeFor(n.userId,t)??t))))';
+  'sink$:e.behavior(IJ([n.participant$,window.blazeroomVoices?.changes??PJ(0)]).pipe(W(([e])=>{window.blazeroomVoices?.observeParticipant?.(n.userId,n,e);return t=>e?.setVolume(window.blazeroomVoices?.volumeFor(n.userId,t)??t)})))';
 
 const replaceOnce = (source, original, patched, what) => {
   const at = source.indexOf(original);

@@ -24,7 +24,7 @@ export default mergeConfig(base, {
       transform(code, id) {
         // The isolated test server uses a .test Matrix ID without public DNS.
         if (id.endsWith('/pages/client/AutoDiscovery.tsx'))
-          return code.replace('server ?? userId', 'baseUrl');
+          return code.replace('server ?? userId', 'window.location.origin');
         return undefined;
       },
       configureServer(server) {
@@ -71,18 +71,29 @@ export default mergeConfig(base, {
             ).pipe(res);
             return;
           }
+          const localOrigin =
+            req.headers.host === 'localhost:8082' ? 'http://localhost:8082' : origin;
           const configs = {
+            '/public/element-call/config.json': {
+              ...JSON.parse(
+                fs.readFileSync(
+                  path.resolve('node_modules/@element-hq/element-call-embedded/dist/config.json'),
+                  'utf8'
+                )
+              ),
+              livekit: { livekit_service_url: `${localOrigin}/local-sfu` },
+            },
             '/config.json': {
               defaultHomeserver: 0,
-              homeserverList: [origin],
+              homeserverList: [localOrigin],
               allowCustomHomeservers: false,
               hashRouter: { enabled: false, basename: '/' },
               featuredCommunities: { openAsDefault: false, spaces: [], rooms: [], servers: [] },
             },
             '/.well-known/matrix/client': {
-              'm.homeserver': { base_url: origin },
+              'm.homeserver': { base_url: localOrigin },
               'org.matrix.msc4143.rtc_foci': [
-                { type: 'livekit', livekit_service_url: `${origin}/local-sfu` },
+                { type: 'livekit', livekit_service_url: `${localOrigin}/local-sfu` },
               ],
             },
           };
