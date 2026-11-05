@@ -5,6 +5,7 @@ export const Bar = style({
   flexShrink: 0,
   minWidth: 0,
   margin: '8px 12px',
+  maxWidth: 720,
   borderRadius: 14,
   border: `1px solid ${color.Surface.ContainerLine}`,
   background: color.Background.Container,
@@ -80,7 +81,21 @@ export const Panel = style({
   overflowY: 'auto',
   overscrollBehavior: 'contain',
 });
-export const NowPlaying = style({ display: 'flex', gap: 12, alignItems: 'center', paddingTop: 8 });
+export const NowPlaying = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 12,
+  alignItems: 'center',
+  paddingTop: 4,
+});
+export const Controls = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-end',
+  gap: 6,
+  flexShrink: 0,
+});
+export const ProgressRow = style({ display: 'flex', alignItems: 'center', gap: 8 });
 export const Cover = style({
   width: 60,
   height: 60,
@@ -115,7 +130,8 @@ export const TitleLink = style({
 export const Progress = style({
   appearance: 'none',
   display: 'block',
-  width: '100%',
+  flex: 1,
+  minWidth: 0,
   height: 4,
   border: 0,
   borderRadius: 3,
@@ -132,14 +148,6 @@ export const Timing = style({
   fontVariantNumeric: 'tabular-nums',
   color: color.Surface.OnContainer,
 });
-export const Empty = style({ display: 'flex', flexDirection: 'column', gap: 5, padding: '8px 0' });
-export const Toolbar = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  flexWrap: 'wrap',
-  gap: 8,
-});
 export const VolumeLabel = style({
   display: 'flex',
   alignItems: 'center',
@@ -148,7 +156,6 @@ export const VolumeLabel = style({
   color: color.Surface.OnContainer,
 });
 export const Volume = style({ width: 72, accentColor: color.Primary.Main });
-export const VolumeValue = style({ minWidth: 28, fontVariantNumeric: 'tabular-nums' });
 export const Notice = style({
   display: 'flex',
   flexWrap: 'wrap',
@@ -164,8 +171,6 @@ export const Hint = style({
   margin: 0,
   color: color.Surface.OnContainer,
 });
-export const AddForm = style({ display: 'flex', flexDirection: 'column', gap: 6 });
-export const InputLabel = style({ fontSize: 11, fontWeight: 600 });
 export const InputRow = style({ display: 'flex', gap: 6, minWidth: 0 });
 export const Search = style({
   width: '100%',
@@ -203,16 +208,26 @@ export const Error = style({
   color: color.Critical.OnContainer,
   overflowWrap: 'anywhere',
 });
+export const QueueBlock = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  paddingTop: 8,
+  borderTop: `1px solid ${color.Surface.ContainerLine}`,
+});
+export const QueueHeading = style({
+  fontSize: 11,
+  fontWeight: 600,
+  color: color.Surface.OnContainer,
+});
 export const QueueToggle = style([
   button,
   {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '8px 0',
+    alignSelf: 'flex-start',
+    padding: '4px 0',
     fontSize: 12,
+    color: color.Primary.Main,
     background: 'transparent',
-    borderTop: `1px solid ${color.Surface.ContainerLine}`,
   },
 ]);
 export const Queue = style({
@@ -223,13 +238,20 @@ export const Queue = style({
   flexDirection: 'column',
   gap: 4,
 });
-export const QueueItem = style({ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' });
+export const QueueItem = style({ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0' });
 export const QueueNumber = style({
   width: 18,
   fontSize: 11,
   color: color.Surface.OnContainer,
 });
+export const QueueMeta = style({
+  fontSize: 11,
+  flexShrink: 0,
+  color: color.Surface.OnContainer,
+});
 export const QueueTitle = style({
+  flex: 1,
+  minWidth: 0,
   fontSize: 12,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
