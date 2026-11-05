@@ -34,6 +34,11 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   the rebirth altar and zones are data there. `runner.ts` keeps it playing on every screen once
   `GamesTab` sees a save, and hands each tick's events to `fx/` (a canvas particle engine) without
   going through React. Balance changes: play a few simulated hours with `advance` before shipping.
+- `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
+  free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
+  alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but
+  cannot move. Poll snapshots use `revision`; actions use the separate gameplay `version`,
+  so spectator comments don't invalidate moves. See `../docs/table-games.md` for rules.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - Scoped lint/format/type checks live in `scripts/check.sh`; run `npm run check:blazeroom`.

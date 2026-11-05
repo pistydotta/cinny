@@ -91,6 +91,9 @@ export const GAMES_POKER_PRACTICE_PATH = `/games/${_POKER_PATH}practice/`;
 export const GAMES_POKER_TABLE_PATH = `/games/${_POKER_PATH}table/:tableId/`;
 export const GAMES_POKER_JOIN_PATH = `/games/${_POKER_PATH}join/:token/`;
 export const GAMES_IDLE_PATH = '/games/idle/';
+export const GAMES_TRUCO_PATH = '/games/truco/';
+export const GAMES_FODINHA_PATH = '/games/fodinha/';
+export const GAMES_CHESS_PATH = '/games/chess/';
 
 export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';

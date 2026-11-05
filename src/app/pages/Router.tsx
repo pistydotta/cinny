@@ -40,6 +40,9 @@ import {
   GAMES_POKER_JOIN_PATH,
   GAMES_POKER_TABLE_PATH,
   GAMES_IDLE_PATH,
+  GAMES_TRUCO_PATH,
+  GAMES_FODINHA_PATH,
+  GAMES_CHESS_PATH,
 } from './paths';
 import {
   getAppPathFromHref,
@@ -92,6 +95,7 @@ import {
   PokerTablePage,
 } from './client/games';
 import { CreateSpaceModalRenderer } from '../features/create-space';
+import { TableGamesPage } from '../features/games/table-games/TableGamesPage';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
 import { getMxIdServer } from '../utils/matrix';
@@ -314,6 +318,21 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route path={GAMES_POKER_TABLE_PATH} element={<PokerTablePage />} />
         <Route path={GAMES_POKER_JOIN_PATH} element={<PokerJoinPage />} />
         <Route path={GAMES_IDLE_PATH} element={<IdleGamePage />} />
+        <Route path={GAMES_TRUCO_PATH} element={<TableGamesPage key="truco" kind="truco" />} />
+        <Route
+          path={`${GAMES_TRUCO_PATH}table/:tableId/`}
+          element={<TableGamesPage key="truco-table" kind="truco" />}
+        />
+        <Route path={GAMES_FODINHA_PATH} element={<TableGamesPage key="fodinha" kind="fodinha" />} />
+        <Route
+          path={`${GAMES_FODINHA_PATH}table/:tableId/`}
+          element={<TableGamesPage key="fodinha-table" kind="fodinha" />}
+        />
+        <Route path={GAMES_CHESS_PATH} element={<TableGamesPage key="chess" kind="chess" />} />
+        <Route
+          path={`${GAMES_CHESS_PATH}table/:tableId/`}
+          element={<TableGamesPage key="chess-table" kind="chess" />}
+        />
         <Route
           path={INBOX_PATH}
           element={

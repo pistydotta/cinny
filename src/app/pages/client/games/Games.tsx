@@ -11,6 +11,7 @@ import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import {
   getGamesPath,
   getGamesIdlePath,
+  getGamesTableGamePath,
   getGamesPokerPath,
   getGamesPokerPracticePath,
   getGamesPokerTablePath,
@@ -26,6 +27,7 @@ export function GamesHubPage() {
     <GamesHub
       onOpenPoker={() => navigate(getGamesPokerPath())}
       onOpenIdle={() => navigate(getGamesIdlePath())}
+      onOpenTableGame={(kind) => navigate(getGamesTableGamePath(kind))}
       onBack={screenSize === ScreenSize.Mobile ? () => navigate(getHomePath()) : undefined}
     />
   );

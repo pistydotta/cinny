@@ -173,6 +173,8 @@ export const getCreatePath = (): string => CREATE_PATH;
 export const getGamesPath = (): string => GAMES_PATH;
 export const getGamesPokerPath = (): string => GAMES_POKER_PATH;
 export const getGamesIdlePath = (): string => GAMES_IDLE_PATH;
+export const getGamesTableGamePath = (kind: 'truco' | 'fodinha' | 'chess', tableId?: string): string =>
+  `/games/${kind}/${tableId ? `table/${encodeURIComponent(tableId)}/` : ''}`;
 export const getGamesPokerPracticePath = (): string => GAMES_POKER_PRACTICE_PATH;
 export const getGamesPokerTablePath = (tableId: string): string =>
   generatePath(GAMES_POKER_TABLE_PATH, { tableId: encodeURIComponent(tableId) });

@@ -7,6 +7,8 @@ import { TopUpButton } from './credits/TopUpButton';
 import { useCredits } from './credits/useCredits';
 import * as css from './gamesHub.css';
 import { tr } from '../translation/tr';
+import { GameKind } from './table-games/types';
+import { gameName } from './table-games/text';
 
 const ROYAL: Card[] = [
   { rank: 10, suit: 's' },
@@ -19,10 +21,11 @@ const ROYAL: Card[] = [
 type GamesHubProps = {
   onOpenPoker: () => void;
   onOpenIdle: () => void;
+  onOpenTableGame: (kind: GameKind) => void;
   onBack?: () => void;
 };
 
-export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
+export function GamesHub({ onOpenPoker, onOpenIdle, onOpenTableGame, onBack }: GamesHubProps) {
   const { balance, atTables, refresh, topUp } = useCredits();
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
                 <span className={css.WalletHint}>
                   {tr(
                     'games.wallet.at_tables_hint',
-                    '{{coins}} coins are at a table and come back when you leave it.',
+                    '{{coins}} coins are reserved at card-game tables. Stakes are settled when the game ends.',
                     { coins: formatChips(atTables) }
                   )}
                 </span>
@@ -116,17 +119,56 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
               </div>
             </div>
 
-            <div className={css.GameCard}>
-              <div className={css.SoonArt}>?</div>
+            {(['truco', 'fodinha'] as const).map((kind) => (
+              <div key={kind} className={css.GameCard} data-playable="true">
+                <div className={css.SoonArt}>{kind === 'truco' ? '♣ ♥' : '🃏'}</div>
+                <div className={css.CardBody}>
+                  <span className={css.GameName}>{gameName(kind)}</span>
+                  <span className={css.GameMeta}>
+                    {kind === 'truco'
+                      ? tr(
+                          'table_games.truco_meta',
+                          'Paulista · 4 players in pairs · fixed table stake'
+                        )
+                      : tr(
+                          'table_games.fodinha_meta',
+                          'Predictions and elimination · 3–6 players · fixed table stake'
+                        )}
+                  </span>
+                  <button
+                    type="button"
+                    className={css.PlayButton}
+                    onClick={() => onOpenTableGame(kind)}
+                  >
+                    {tr('games.hub.play', 'Play')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={css.GameSection} aria-labelledby="board-games-heading">
+          <h2 id="board-games-heading" className={css.SectionTitle}>
+            {tr('table_games.board_games', 'Board games')}
+          </h2>
+          <div className={css.Grid}>
+            <div className={css.GameCard} data-playable="true">
+              <div className={css.SoonArt}>♞ ♟ ♜</div>
               <div className={css.CardBody}>
-                <span className={css.GameName}>
-                  {tr('games.hub.more_cards', 'More card games')}
-                </span>
+                <span className={css.GameName}>{gameName('chess')}</span>
                 <span className={css.GameMeta}>
-                  {tr('games.hub.more_cards_meta', 'New card games will share these credits.')}
+                  {tr(
+                    'table_games.chess_meta',
+                    'Free · 2 players · watch and comment on live tables'
+                  )}
                 </span>
-                <button type="button" className={css.PlayButton} disabled>
-                  {tr('games.hub.soon', 'Coming soon')}
+                <button
+                  type="button"
+                  className={css.PlayButton}
+                  onClick={() => onOpenTableGame('chess')}
+                >
+                  {tr('games.hub.play', 'Play')}
                 </button>
               </div>
             </div>

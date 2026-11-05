@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-truco-fodinha-chess',
+    items: () => [
+      {
+        title: tr('table_games.news_title', 'Truco, Fodinha and chess'),
+        body: tr(
+          'table_games.news_body',
+          'Create Truco and elimination Fodinha tables with a fixed stake from your card-game wallet. Chess has its own free section, with live tables you can watch and comment on.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-music-chat',
     items: () => [
       {
