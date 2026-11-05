@@ -21,7 +21,10 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   Touch upstream files only to plug them in, with as few lines as you can.
 - Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes
   none: it shows the view the API sends and posts the player's action. The credits wallet
-  (`games/credits`) is the API's too. `games/legacy` only cleans up the old Matrix-room tables and
+  (`games/credits`) is the API's too, shared only between card games. The Games hub shows
+  card games and idle RPGs in separate sections with direct game buttons, and the wallet
+  belongs inside the card-games section. Idle gold stays in the hero's save, with no credit
+  transfers. `games/legacy` only cleans up the old Matrix-room tables and
   can go once people have opened the app.
 - `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser. It saves in
   localStorage and on the API (`/api/idle/save`, `cloudSave.ts`): every write names the server revision

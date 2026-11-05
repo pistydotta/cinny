@@ -109,6 +109,12 @@ export const WalletHint = style({
   color: 'rgba(255,255,255,0.55)',
 });
 
+export const GameSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 16,
+});
+
 export const SectionTitle = style({
   margin: 0,
   fontSize: 18,
@@ -117,7 +123,7 @@ export const SectionTitle = style({
 
 export const Grid = style({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))',
   gap: 16,
 });
 

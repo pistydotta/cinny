@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-card-game-credits',
+    items: () => [
+      {
+        title: tr('game_categories_news.title', 'Card games and idle RPG, separated'),
+        body: tr(
+          'game_categories_news.body',
+          'The Games tab now separates card games from the idle RPG, with direct access to each game. Credits are shared only between card games; Ember Chronicles keeps its own gold.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-poker-controls',
     items: () => [
       {

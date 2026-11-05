@@ -474,6 +474,10 @@
     "blocked": "As notificações estão bloqueadas nas configurações do navegador.",
     "failed": "Não foi possível mudar isso. Tente de novo."
   },
+  "game_categories_news": {
+    "title": "Jogos de cartas e RPG idle separados",
+    "body": "A aba Jogos agora separa os jogos de cartas do RPG idle, com acesso direto a cada jogo. Os créditos são compartilhados apenas entre os jogos de cartas; Crônicas da Brasa continua com seu próprio ouro."
+  },
   "games": {
     "rank": {
       "2": "Dois",
@@ -629,13 +633,16 @@
       "network": "Não foi possível falar com o servidor. Confira sua conexão."
     },
     "hub": {
-      "more": "Mais jogos",
-      "more_meta": "Novos jogos vão usar a mesma carteira.",
-      "pick": "Escolha um jogo",
+      "card_games": "Jogos de cartas",
+      "card_credits": "Os créditos são compartilhados apenas entre os jogos de cartas.",
+      "more_cards": "Mais jogos de cartas",
+      "more_cards_meta": "Novos jogos de cartas vão compartilhar estes créditos.",
+      "idle_games": "RPG idle",
+      "idle_currency": "Seu herói ganha ouro neste jogo. Ele é separado dos créditos dos jogos de cartas.",
       "play": "Jogar",
       "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
       "soon": "Em breve",
-      "subtitle": "Jogue com seus créditos. O saldo é o mesmo em todos os jogos.",
+      "subtitle": "Escolha um jogo e comece a jogar.",
       "idle_meta": "RPG idle · 6 classes e 12 especializações, forja, renascimento e arena"
     },
     "lobby": {
@@ -727,6 +734,7 @@
       "reconnecting": "Conexão perdida. Reconectando…"
     },
     "wallet": {
+      "card_games": "Carteira dos jogos de cartas",
       "at_table": "{{chips}} na mesa",
       "at_tables_hint": "{{coins}} créditos estão em uma mesa e voltam quando você sair dela.",
       "coins": "{{coins}} créditos",
