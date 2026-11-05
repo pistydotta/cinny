@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-call-member-card',
+    items: () => [
+      {
+        title: tr('call_member.news_title', 'Volume per person in calls'),
+        body: tr(
+          'call_member.news_body',
+          'Click someone under a voice room to mute them or change their volume just for you, or open their profile.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-screen-share-watch',
     items: () => [
       {

@@ -16,7 +16,7 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   `src/app/features/friends`, `invites`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
   `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `pinned-chats`, `games`, `screen-share`
   (with `pages/client/games`),
-  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `room-nav/CallMemberAvatars.tsx` and
+  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
 - Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes
@@ -111,5 +111,10 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   it through someone else's microphone. `/play`, `/skip` and `/stop` call the API and post a
   confirmation as the requester; the chat's Music panel controls the same queue. Only joined
   call listeners keep the queue alive, not chat observers. See `../docs/music.md`.
+- Clicking someone under a voice room opens `features/call-member-card`: profile, kick (power
+  from `useRoomCreators` too) and a mute/volume saved per user in this browser. The call page
+  applies it through `blazeroomVoices` (`src/element-call/voiceVolume.js`), which the patched
+  bundle asks for each remote microphone's volume. No boost past 100%: Element Call plays
+  through audio elements, not Web Audio.
 - Home and Direct messages are one sidebar tab: the Direct tab is hidden, the Home page lists
   DMs (`features/home-direct`), and the `/direct` routes show the Home nav.

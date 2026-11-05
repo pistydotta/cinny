@@ -1584,5 +1584,17 @@
       "title": "Poker mais fácil de acompanhar",
       "body": "Sons e volume opcionais, ações antecipadas e desistência imediata, apostas em fichas ou BB, e um guia visual das suas cinco melhores cartas e do ranking das mãos."
     }
+  },
+  "call_member": {
+    "kick": "Expulsar da sala",
+    "kick_confirm": "Expulsar {{name}} desta sala?",
+    "kick_yes": "Expulsar",
+    "cancel": "Cancelar",
+    "mute": "Silenciar para mim",
+    "unmute": "Reativar som para mim",
+    "volume": "Volume para mim",
+    "profile": "Abrir perfil",
+    "news_title": "Volume por pessoa nas chamadas",
+    "news_body": "Clique em alguém embaixo de uma sala de voz para silenciar ou mudar o volume só para você, ou abrir o perfil."
   }
 }

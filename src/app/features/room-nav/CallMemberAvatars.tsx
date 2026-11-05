@@ -8,6 +8,7 @@ import { UserAvatar } from '../../components/user-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { uniqueCallUserIds } from './callMembers';
+import { CallMemberPopout } from '../call-member-card/CallMemberPopout';
 
 function CallMemberRow({ room, userId }: { room: Room; userId: string }) {
   const mx = useMatrixClient();
@@ -19,24 +20,48 @@ function CallMemberRow({ room, userId }: { room: Room; userId: string }) {
     : undefined;
 
   return (
-    <Box as="li" alignItems="Center" gap="200" style={{ minWidth: 0 }}>
-      <Avatar size="200" radii="Pill">
-        <UserAvatar
-          userId={userId}
-          src={avatarUrl}
-          alt=""
-          renderFallback={() => <Icon size="50" src={Icons.User} filled />}
-        />
-      </Avatar>
-      <Text size="T300" priority="300" truncate title={name}>
-        {name}
-      </Text>
-    </Box>
+    <li style={{ minWidth: 0 }}>
+      <CallMemberPopout room={room} userId={userId} name={name}>
+        {(open, opened) => (
+          <Box
+            as="button"
+            type="button"
+            onClick={open}
+            aria-haspopup="dialog"
+            aria-expanded={opened}
+            alignItems="Center"
+            gap="200"
+            style={{
+              width: '100%',
+              minWidth: 0,
+              padding: 0,
+              border: 'none',
+              background: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <Avatar size="200" radii="Pill">
+              <UserAvatar
+                userId={userId}
+                src={avatarUrl}
+                alt=""
+                renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+              />
+            </Avatar>
+            <Text size="T300" priority="300" truncate title={name}>
+              {name}
+            </Text>
+          </Box>
+        )}
+      </CallMemberPopout>
+    </li>
   );
 }
 
 // Discord-style: who's in the voice room, one row per person under its name.
-// Listening controls live in the call bar, not here.
+// Clicking someone opens a card with their profile and my volume for them.
 export function CallMemberAvatars({ room, members }: { room: Room; members: CallMembership[] }) {
   const userIds = uniqueCallUserIds(members);
   if (userIds.length === 0) return null;

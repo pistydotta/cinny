@@ -1,6 +1,7 @@
 // Loaded by Element Call's index.html before its own script (see vite.config.js): publishes the
 // share state on window, where the patched bundle and Cinny find it.
 import { createShareStore, wrapGetDisplayMedia } from './shareState.js';
+import { createVoiceStore } from './voiceVolume.js';
 
 const store = createShareStore();
 const { layoutShares } = store;
@@ -26,3 +27,12 @@ hideVolumeMenu.textContent =
   '[class*="_bottomRightButtons_"] > button[aria-haspopup] { display: none !important; }';
 (document.head ?? document.documentElement).appendChild(hideVolumeMenu);
 window.blazeroomShares = store;
+
+// Per-person mute and volume from the sidebar; the patched bundle reads it (voiceVolume.js).
+let storage;
+try {
+  storage = window.localStorage;
+} catch {
+  storage = undefined;
+}
+window.blazeroomVoices = createVoiceStore(storage);
