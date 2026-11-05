@@ -1593,8 +1593,16 @@
     "mute": "Silenciar para mim",
     "unmute": "Reativar som para mim",
     "volume": "Volume para mim",
-    "profile": "Abrir perfil",
+    "profile": "Ver perfil",
     "news_title": "Volume por pessoa nas chamadas",
-    "news_body": "Clique em alguém embaixo de uma sala de voz para silenciar ou mudar o volume só para você, ou abrir o perfil."
+    "news_body": "Clique em alguém embaixo de uma sala de voz para silenciar ou mudar o volume só para você, ou abrir o perfil.",
+    "mic_off": "Microfone desligado",
+    "deafened": "Áudio desligado",
+    "sharing": "Compartilhando a tela",
+    "mic_mute": "Silenciar meu microfone",
+    "mic_unmute": "Ativar meu microfone",
+    "deafen": "Desligar o áudio da chamada",
+    "undeafen": "Ligar o áudio da chamada",
+    "audio_settings": "Configurações de áudio"
   }
 }

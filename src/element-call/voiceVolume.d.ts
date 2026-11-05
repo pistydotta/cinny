@@ -1,4 +1,5 @@
 export const VOICE_STORAGE_KEY: string;
+export const MUTED_VOLUME: number;
 export type Voice = { volume: number; muted: boolean };
 export type Voices = Record<string, Partial<Voice>>;
 export function readVoices(storage: Pick<Storage, 'getItem'> | undefined): Voices;

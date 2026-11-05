@@ -20,9 +20,14 @@ export const voiceFor = (voices, userId) => {
   return { volume: clamp(saved?.volume ?? 1), muted: saved?.muted === true };
 };
 
+// LiveKit re-applies a saved volume to a new audio element only when it's truthy, so a mute
+// saved before the track arrives would play at full volume. Muted is near-silent, never 0.
+export const MUTED_VOLUME = 0.0001;
+
 export const playbackVolume = (voices, userId, base) => {
   const { volume, muted } = voiceFor(voices, userId);
-  return muted ? 0 : clamp(base * volume);
+  const value = muted ? 0 : clamp(base * volume);
+  return value === 0 ? MUTED_VOLUME : value;
 };
 
 export function createVoiceStore(storage) {

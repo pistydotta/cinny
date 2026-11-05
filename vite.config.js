@@ -49,6 +49,7 @@ const copyFiles = {
       { src: 'src/element-call/micFilter.js' },
       { src: 'src/element-call/blazeroom-screenshare.js' },
       { src: 'src/element-call/shareState.js' },
+      { src: 'src/element-call/voiceVolume.js' },
       { src: `${noiseSuppressor}/index.js`, rename: 'noise-suppressor.js' },
       { src: `${noiseSuppressor}/rnnoise/workletProcessor.js`, rename: 'rnnoiseWorklet.js' },
       { src: `${noiseSuppressor}/rnnoise.wasm` },
