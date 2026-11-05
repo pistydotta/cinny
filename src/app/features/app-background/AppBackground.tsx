@@ -1,4 +1,5 @@
 import React, { CSSProperties } from 'react';
+import { useAppBackgroundEnabled } from './backgroundSetting';
 
 const wallpaperUrl = new URL('./wallpaper.webp', import.meta.url).href;
 
@@ -19,5 +20,7 @@ const style: CSSProperties = {
 };
 
 export function AppBackground() {
+  const enabled = useAppBackgroundEnabled();
+  if (!enabled) return null;
   return <div aria-hidden style={style} />;
 }

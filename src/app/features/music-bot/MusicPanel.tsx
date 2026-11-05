@@ -94,8 +94,25 @@ export function MusicPanel(props: Props) {
   const subtitle = np
     ? tr('music_bot.requested_by', 'added by {{name}}', { name: nameOf(np.requestedBy) })
     : tr('music_bot.invite', 'Pick a song for the voice call');
+  // With nothing playing or going wrong, a small chip is enough; the full bar is for a live queue.
+  const idle = !np && queue.length === 0 && !pending && !error && connected;
+  if (idle && !expanded)
+    return (
+      <section className={css.ChipRow} aria-label={tr('music_bot.heading', 'Music')}>
+        <button
+          className={css.Chip}
+          type="button"
+          aria-expanded={false}
+          title={subtitle}
+          onClick={() => setExpanded(true)}
+        >
+          <Icon size="50" src={Icons.Headphone} />
+          {tr('music_bot.heading', 'Music')}
+        </button>
+      </section>
+    );
   return (
-    <section className={css.Bar} aria-label={tr('music_bot.heading', 'Music')}>
+    <section className={np ? css.BarActive : css.Bar} aria-label={tr('music_bot.heading', 'Music')}>
       <button
         className={css.Toggle}
         type="button"

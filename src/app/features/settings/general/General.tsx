@@ -34,6 +34,7 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';
 import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
+import { AppBackgroundSetting } from '../../../features/app-background/AppBackgroundSetting';
 import { KeySymbol } from '../../../utils/key-symbol';
 import { isMacOS } from '../../../utils/user-agent';
 import {
@@ -348,6 +349,10 @@ function Appearance() {
           title="Twitter Emoji"
           after={<Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />}
         />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <AppBackgroundSetting />
       </SequenceCard>
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">

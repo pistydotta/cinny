@@ -9,7 +9,29 @@ export const Bar = style({
   borderRadius: 14,
   border: `1px solid ${color.Surface.ContainerLine}`,
   background: color.Background.Container,
+  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
   overflow: 'hidden',
+});
+export const BarActive = style([Bar, { borderColor: color.Primary.ContainerLine }]);
+export const ChipRow = style({ flexShrink: 0, display: 'flex', margin: '6px 12px' });
+export const Chip = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '4px 10px',
+  font: 'inherit',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+  borderRadius: 999,
+  border: `1px solid ${color.Surface.ContainerLine}`,
+  color: color.Surface.OnContainer,
+  background: color.Surface.Container,
+  boxShadow: '0 1px 6px rgba(0, 0, 0, 0.3)',
+  selectors: {
+    '&:hover': { background: color.Surface.ContainerHover },
+    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 2 },
+  },
 });
 const button = {
   font: 'inherit',
@@ -53,7 +75,8 @@ export const Summary = style({
 export const Eyebrow = style({
   fontSize: 11,
   fontWeight: 600,
-  color: color.Surface.OnContainer,
+  color: color.Background.OnContainer,
+  opacity: 0.85,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
