@@ -27,6 +27,8 @@ export type GameTable = {
   deadline: number | null;
   round?: number;
   handSize: number;
+  // Fodinha: the one-card round, where you see every card but your own.
+  blind?: boolean;
   scores?: number[];
   vira?: TableCard;
   value?: number;
@@ -37,6 +39,7 @@ export type GameTable = {
   pending?: { team: number; value: number };
   trick?: { seat: number; card: TableCard }[];
   lastTrick?: { seat: number; card: TableCard }[];
+  lastWinner?: number | null;
   winners?: number[];
   result?: string;
   comments: { id: string; userId: string; text: string; at: number }[];

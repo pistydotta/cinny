@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-fodinha-table',
+    items: () => [
+      {
+        title: tr('whats_new.fodinha_table_title', 'Fodinha has a real table'),
+        body: tr(
+          'whats_new.fodinha_table_body',
+          'Fodinha now plays on an oval table like poker, with new rules: the Truco deck with vira and manilha, suits breaking ties, the one-card round on your forehead, and rounds that go up to the most cards possible and back down. Running out of time now plays for you instead of knocking you out.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-floating-call-drag',
     items: () => [
       {

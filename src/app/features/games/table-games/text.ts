@@ -45,7 +45,7 @@ export const rulesText = (kind: GameKind) => {
   if (kind === 'fodinha')
     return tr(
       'table_games.fodinha_rules',
-      'Elimination variant · 3–6 players, 54 cards including two jokers. A is lowest, then 2–10, J, Q, K, joker. No obligation to follow suit. Predict how many tricks you will win before playing. A tie for the highest rank wins no trick; the player after the first tied player leads next. Lose the absolute difference between prediction and tricks won as penalties. More than 5 accumulated penalties eliminates you at the end of a round. If everyone crosses the limit, the lowest total survives; tied lowest players play on. Deal sizes cycle from 1 to 7. The last survivor wins the pot.'
+      'Elimination variant · 2–6 players, the 40-card Truco deck (no 8, 9, 10 or jokers). A vira is turned face up each round; the rank above it is the manilha and beats everything. Other cards rank 3 > 2 > A > K > J > Q > 7 > 6 > 5 > 4. Suits break every tie: clubs > hearts > spades > diamonds. No obligation to follow suit. Before playing, everyone bets how many tricks they will win; the last to bet may make the total match the number of cards. The one-card round is played on the forehead: you see everyone’s card but yours. Rounds go up one card at a time to the most the deck allows (19 with 2 players, 13 with 3, 9 with 4, 7 with 5, 6 with 6), then back down to 1, and up again. Lose the difference between your bet and your tricks as penalties. More than 5 accumulated penalties eliminates you at the end of a round. If everyone crosses the limit, the lowest total survives; tied lowest players play on. The last survivor wins the pot.'
     );
   return tr(
     'table_games.chess_rules',

@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { friendAvatarUrl, friendDisplayName } from '../../friends/userDisplay';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
 import { useCredits } from '../credits/useCredits';
 import { createTableGamesApi } from './api';
 import { ChessBoard } from './ChessBoard';
+import { FodinhaTable } from './FodinhaTable';
 import { cardText, gameError, gameName, phaseText, rulesText, shortName } from './text';
 import { GameKind, GameTable, TableSummary } from './types';
 import * as css from './tableGames.css';
@@ -20,7 +23,7 @@ function Rules({ kind }: { kind: GameKind }) {
         <p className={css.Muted}>
           {tr(
             'table_games.timeout_rules',
-            'Players have 2 minutes per turn or round advance. A timeout forfeits the match in Truco or eliminates the player in Fodinha. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
+            'Players have 2 minutes per turn. A timeout forfeits the match in Truco; in Fodinha it bets 0 or plays your first card for you. A finished round moves on by itself after 2 minutes. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
           )}
         </p>
       )}
@@ -32,6 +35,7 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
   const mx = useMatrixClient();
   const navigate = useNavigate();
   const { tableId } = useParams();
+  const useAuthentication = useMediaAuthentication();
   const api = useMemo(() => createTableGamesApi(() => mx.getAccessToken()), [mx]);
   const { balance, refresh } = useCredits();
   const [tables, setTables] = useState<TableSummary[]>([]);
@@ -191,7 +195,7 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
                       value={capacity}
                       onChange={(e) => setCapacity(Number(e.target.value))}
                     >
-                      {[3, 4, 5, 6].map((n) => (
+                      {[2, 3, 4, 5, 6].map((n) => (
                         <option key={n}>{n}</option>
                       ))}
                     </select>
@@ -271,51 +275,53 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
                 {tr('table_games.spectating', 'You are watching this table.')}
               </p>
             )}
-            <div className={css.Players}>
-              {table.players.map((p, i) => (
-                <div
-                  key={p.userId}
-                  className={css.Seat}
-                  data-turn={
-                    table.phase !== 'finished' && table.phase !== 'waiting' && i === table.turn
-                  }
-                  data-out={p.eliminated}
-                >
-                  <strong>
-                    {i + 1}. {shortName(p.userId)}
-                  </strong>
-                  {kind === 'truco' && (
-                    <p>{tr('table_games.team', 'Team {{team}}', { team: (i % 2) + 1 })}</p>
-                  )}
-                  {kind === 'chess' && (
-                    <p>
-                      {i === 0
-                        ? tr('table_games.white', 'White')
-                        : tr('table_games.black', 'Black')}
-                    </p>
-                  )}
-                  {kind === 'fodinha' && (
-                    <p>
-                      {tr(
-                        'table_games.penalties',
-                        'Penalties: {{penalties}} · prediction: {{prediction}} · won: {{won}}',
-                        { penalties: p.penalties, prediction: p.prediction ?? '—', won: p.won ?? 0 }
-                      )}
-                    </p>
-                  )}
-                  {p.eliminated && <p>{tr('table_games.eliminated', 'Eliminated')}</p>}
-                  {kind !== 'chess' && (
-                    <p className={css.Muted}>
-                      {tr('table_games.cards_left', '{{count}} cards', { count: p.cardCount })}
-                    </p>
-                  )}
-                  {kind === 'truco' &&
-                    table.phase === 'eleven' &&
-                    i !== table.mySeat &&
-                    p.cards && <p>{p.cards.map(cardText).join(' ')}</p>}
-                </div>
-              ))}
-            </div>
+            {kind === 'fodinha' && (
+              <FodinhaTable
+                table={table}
+                busy={busy}
+                onAct={act}
+                nameOf={(id) => friendDisplayName(mx, id)}
+                avatarOf={(id) => friendAvatarUrl(mx, id, useAuthentication)}
+              />
+            )}
+            {kind !== 'fodinha' && (
+              <div className={css.Players}>
+                {table.players.map((p, i) => (
+                  <div
+                    key={p.userId}
+                    className={css.Seat}
+                    data-turn={
+                      table.phase !== 'finished' && table.phase !== 'waiting' && i === table.turn
+                    }
+                    data-out={p.eliminated}
+                  >
+                    <strong>
+                      {i + 1}. {shortName(p.userId)}
+                    </strong>
+                    {kind === 'truco' && (
+                      <p>{tr('table_games.team', 'Team {{team}}', { team: (i % 2) + 1 })}</p>
+                    )}
+                    {kind === 'chess' && (
+                      <p>
+                        {i === 0
+                          ? tr('table_games.white', 'White')
+                          : tr('table_games.black', 'Black')}
+                      </p>
+                    )}
+                    {p.eliminated && <p>{tr('table_games.eliminated', 'Eliminated')}</p>}
+                    {kind !== 'chess' && (
+                      <p className={css.Muted}>
+                        {tr('table_games.cards_left', '{{count}} cards', { count: p.cardCount })}
+                      </p>
+                    )}
+                    {kind === 'truco' &&
+                      table.phase === 'eleven' &&
+                      i !== table.mySeat &&
+                      p.cards && <p>{p.cards.map(cardText).join(' ')}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
             {table.phase === 'waiting' && (
               <div className={css.Panel}>
                 <p className={css.Muted}>
@@ -385,7 +391,7 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
                 )}
               </div>
             )}
-            {kind !== 'chess' && table.phase !== 'waiting' && (
+            {kind === 'truco' && table.phase !== 'waiting' && (
               <>
                 <div className={css.Table}>
                   {table.vira && (
@@ -417,22 +423,6 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
                 </div>
                 {me && !me.eliminated && table.phase !== 'finished' && (
                   <div className={css.Panel}>
-                    {table.phase === 'predict' && myTurn && (
-                      <div className={css.Row}>
-                        <span>{tr('table_games.predict', 'How many tricks will you win?')}</span>
-                        {Array.from({ length: table.handSize + 1 }, (_, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            className={css.Button}
-                            disabled={busy}
-                            onClick={() => act({ type: 'predict', value: i })}
-                          >
-                            {i}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                     {me.cardCount > 0 && (
                       <>
                         <p>
