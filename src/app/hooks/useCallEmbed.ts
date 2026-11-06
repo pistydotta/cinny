@@ -123,7 +123,7 @@ export const useCallThemeSync = (embed: CallEmbed) => {
 export const useCallEmbedPlacementSync = (
   containerViewRef: RefObject<HTMLDivElement>,
   enabled = true
-): void => {
+): (() => void) => {
   const callEmbedRef = useCallEmbedRef();
 
   const syncCallEmbedPlacement = useCallback(() => {
@@ -142,4 +142,5 @@ export const useCallEmbedPlacementSync = (
     syncCallEmbedPlacement,
     useCallback(() => containerViewRef.current, [containerViewRef])
   );
+  return syncCallEmbedPlacement;
 };

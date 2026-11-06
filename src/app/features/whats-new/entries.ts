@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-floating-call-drag',
+    items: () => [
+      {
+        title: tr('whats_new.floating_call_title', 'Move the call window'),
+        body: tr(
+          'whats_new.floating_call_body',
+          'The small call window that shows up outside the call can now be dragged by its top bar to anywhere on the screen, and it stays there. Double-click the bar to put it back in the corner, or close it with the X.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-voice-audio-status',
     items: () => [
       {

@@ -374,6 +374,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "floating_call_title": "Mova a janelinha da chamada",
+    "floating_call_body": "A janelinha da chamada que aparece fora da sala agora pode ser arrastada pela barra de cima para qualquer canto da tela, e fica onde você deixar. Dois cliques na barra voltam ela pro canto, e o X fecha.",
     "music_bot_title": "Bot de música nas chamadas",
     "music_bot_body": "Numa chamada, cole um link do YouTube, Spotify, SoundCloud e outros (ou só o nome da música) na barra do bot, ou digite /play no chat da sala. Todo mundo na chamada ouve junto, cada um no seu volume.",
     "always_joined_title": "Salas públicas sempre à mão",
@@ -515,6 +517,7 @@
     "floating": "Visualizador flutuante da chamada",
     "return_call": "Voltar à chamada",
     "hide_viewer": "Ocultar visualizador",
+    "drag_hint": "Arraste para mover. Dois cliques voltam ao canto.",
     "show_viewer": "Mostrar visualizador",
     "pc_volume": "Volume do PC compartilhado",
     "mute_call": "Silenciar áudio da chamada",

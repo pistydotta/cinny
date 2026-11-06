@@ -107,19 +107,25 @@ export const FloatingCall = recipe({
     },
   },
 });
-// Icons sit over the stage so the compact box is only the call's avatar and name.
-export const FloatingHeader = style({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  display: 'flex',
-  justifyContent: 'space-between',
-  padding: 6,
-  zIndex: 1,
-  pointerEvents: 'none',
+// A bar of its own above the stage: the call iframe sits on top of the box, so anything
+// drawn over the stage would be hidden under it. The bar is also the drag handle.
+export const FloatingHeader = recipe({
+  base: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 2,
+    background: color.SurfaceVariant.Container,
+    borderBottom: `1px solid ${color.SurfaceVariant.ContainerLine}`,
+    cursor: 'grab',
+    touchAction: 'none',
+    userSelect: 'none',
+  },
+  variants: {
+    dragging: { true: { cursor: 'grabbing' }, false: {} },
+  },
 });
-globalStyle(`${FloatingHeader} > *`, { pointerEvents: 'auto' });
+export const FloatingGrip = style({ opacity: 0.6, pointerEvents: 'none' });
 export const FloatingStage = recipe({
   base: { width: '100%' },
   variants: {
