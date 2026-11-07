@@ -90,6 +90,7 @@ type RegisterUIAFlowProps = {
   registerEmailState: AsyncState<RequestEmailTokenResponse, MatrixError>;
   registerEmail: RequestEmailTokenCallback;
   onRegister: (registerReqData: RegisterRequest) => void;
+  onTokenRetry: (token: string) => void;
 };
 function RegisterUIAFlow({
   formData,
@@ -98,6 +99,7 @@ function RegisterUIAFlow({
   registerEmailState,
   registerEmail,
   onRegister,
+  onTokenRetry,
 }: RegisterUIAFlowProps) {
   const completed = useUIACompleted(authData);
   const { getStageToComplete } = useUIAFlow(authData, flow);
@@ -106,6 +108,11 @@ function RegisterUIAFlow({
 
   const handleAuthDict = useCallback(
     (authDict: AuthDict) => {
+      // A token typed after the link's was refused replaces it, so a refused retry shows what
+      // the person typed and not the link's token again.
+      if (authDict.type === AuthType.RegistrationToken && typeof authDict.token === 'string') {
+        onTokenRetry(authDict.token);
+      }
       const { password, username } = formData;
       onRegister({
         auth: authDict,
@@ -114,7 +121,7 @@ function RegisterUIAFlow({
         initial_device_display_name: 'blazeroom Web',
       });
     },
-    [onRegister, formData]
+    [onRegister, onTokenRetry, formData]
   );
 
   const handleCancel = useCallback(() => {
@@ -208,6 +215,11 @@ export function PasswordRegisterForm({
     registerState.status === AsyncStatus.Error ? registerState.error : undefined;
 
   useRegisterComplete(customRegisterResp);
+
+  const handleTokenRetry = useCallback(
+    (token: string) => setFormData((data) => data && { ...data, token }),
+    []
+  );
 
   const missingInvite =
     !defaultRegisterToken && requiredStageInFlows(uiaFlows, AuthType.RegistrationToken);
@@ -399,6 +411,7 @@ export function PasswordRegisterForm({
             registerEmail={registerEmail}
             registerEmailState={registerEmailState}
             onRegister={handleRegister}
+            onTokenRetry={handleTokenRetry}
           />
         )}
       {registerState.status === AsyncStatus.Loading && (
