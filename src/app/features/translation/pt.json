@@ -497,7 +497,9 @@
     "poker_invites_title": "Convites melhores no poker",
     "poker_invites_body": "Ao convidar para uma mesa dá para procurar pelo nome, marcar todos de uma vez ou só quem está na sua call, e ver quem já está na mesa ou já foi convidado. O dono pode deixar a mesa pública, para qualquer um entrar pelo lobby, e liberar convites para qualquer pessoa do servidor.",
     "table_bots_title": "Truco e Fodinha com bots",
-    "table_bots_body": "As mesas de Truco e Fodinha foram redesenhadas: a tela é só a mesa, com a vira no meio, cada carta na frente de quem jogou e o placar em tentos. Convide amigos pela mesa ou complete os lugares vazios com bots."
+    "table_bots_body": "As mesas de Truco e Fodinha foram redesenhadas: a tela é só a mesa, com a vira no meio, cada carta na frente de quem jogou e o placar em tentos. Convide amigos pela mesa ou complete os lugares vazios com bots.",
+    "fodinha_oval_title": "Fodinha de volta à mesa oval",
+    "fodinha_oval_body": "O Fodinha voltou a ser jogado na mesa oval, como no poker, com as apostas e as penalidades em cada lugar. Bots e convites continuam: convide pela mesa ou complete os lugares vazios com bots."
   },
   "admin": {
     "deactivate": {

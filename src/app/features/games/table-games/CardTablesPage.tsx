@@ -8,6 +8,7 @@ import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
 import { useCredits } from '../credits/useCredits';
 import { createTableGamesApi } from './api';
+import { FodinhaScreen } from './FodinhaScreen';
 import { SeatsSheet } from './SeatsSheet';
 import { TentosTable } from './TentosTable';
 import { botName, isBotId } from './tentosView';
@@ -194,6 +195,35 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
         </main>
       );
     const act = (action: Record<string, unknown>) => run(() => api.act(table, action));
+    const sheetView = sheet && (
+      <SeatsSheet
+        table={table}
+        busy={busy}
+        isOwner={table.ownerId === myId}
+        onAct={act}
+        onClose={() => setSheet(false)}
+        nameOf={nameOf}
+        seatsOnly={kind === 'fodinha'}
+      />
+    );
+    if (kind === 'fodinha')
+      return (
+        <>
+          <FodinhaScreen
+            table={table}
+            busy={busy}
+            error={error}
+            isOwner={table.ownerId === myId}
+            onAct={act}
+            onJoin={() => run(() => api.join(table.id))}
+            onBack={toLobby}
+            onOpenSheet={() => setSheet(true)}
+            nameOf={nameOf}
+            avatarOf={avatarOf}
+          />
+          {sheetView}
+        </>
+      );
     return (
       <main className={css.Screen}>
         <TentosTable
@@ -216,16 +246,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
             {error}
           </div>
         )}
-        {sheet && (
-          <SeatsSheet
-            table={table}
-            busy={busy}
-            isOwner={table.ownerId === myId}
-            onAct={act}
-            onClose={() => setSheet(false)}
-            nameOf={nameOf}
-          />
-        )}
+        {sheetView}
       </main>
     );
   }

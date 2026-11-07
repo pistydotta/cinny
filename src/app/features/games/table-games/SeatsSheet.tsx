@@ -14,10 +14,20 @@ type SeatsSheetProps = {
   onAct: (action: Record<string, unknown>) => void;
   onClose: () => void;
   nameOf: (userId: string) => string;
+  /** Fodinha keeps rules, cancel and resign on its page: the sheet only holds seats and invites. */
+  seatsOnly?: boolean;
 };
 
 /** Everything that isn't the game: seats, bots, invitations, rules and leaving. */
-export function SeatsSheet({ table, busy, isOwner, onAct, onClose, nameOf }: SeatsSheetProps) {
+export function SeatsSheet({
+  table,
+  busy,
+  isOwner,
+  onAct,
+  onClose,
+  nameOf,
+  seatsOnly,
+}: SeatsSheetProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -162,61 +172,65 @@ export function SeatsSheet({ table, busy, isOwner, onAct, onClose, nameOf }: Sea
           </>
         )}
 
-        <details>
-          <summary>{tr('table_games.rules', 'Table rules')}</summary>
-          <p className={css.Muted}>{rulesText(table.kind)}</p>
-          <p className={css.Muted}>
-            {tr(
-              'table_games.timeout_rules',
-              'Players have 2 minutes per turn. A timeout forfeits the match in Truco; in Fodinha it bets 0 or plays your first card for you. A finished round moves on by itself after 2 minutes. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
-            )}
-          </p>
-        </details>
+        {!seatsOnly && (
+          <>
+            <details>
+              <summary>{tr('table_games.rules', 'Table rules')}</summary>
+              <p className={css.Muted}>{rulesText(table.kind)}</p>
+              <p className={css.Muted}>
+                {tr(
+                  'table_games.timeout_rules',
+                  'Players have 2 minutes per turn. A timeout forfeits the match in Truco; in Fodinha it bets 0 or plays your first card for you. A finished round moves on by itself after 2 minutes. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
+                )}
+              </p>
+            </details>
 
-        <div style={{ marginTop: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {waiting && isOwner && (
-            <button
-              type="button"
-              className={css.Pill}
-              disabled={busy}
-              onClick={() => onAct({ type: 'cancel' })}
-            >
-              {tr('table_games.cancel', 'Cancel table and refund stakes')}
-            </button>
-          )}
-          {live &&
-            me &&
-            !me.eliminated &&
-            (confirm ? (
-              <>
-                <span className={css.Muted}>
-                  {tr(
-                    'table_games.resign_confirm',
-                    'Forfeit this game? Your stake will not be refunded.'
-                  )}
-                </span>
+            <div style={{ marginTop: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {waiting && isOwner && (
                 <button
                   type="button"
                   className={css.Pill}
                   disabled={busy}
-                  onClick={() => {
-                    setConfirm(false);
-                    onAct({ type: 'resign' });
-                    onClose();
-                  }}
+                  onClick={() => onAct({ type: 'cancel' })}
                 >
-                  {tr('table_games.resign_yes', 'Yes, resign')}
+                  {tr('table_games.cancel', 'Cancel table and refund stakes')}
                 </button>
-                <button type="button" className={css.Pill} onClick={() => setConfirm(false)}>
-                  {tr('table_games.keep_playing', 'Keep playing')}
-                </button>
-              </>
-            ) : (
-              <button type="button" className={css.Pill} onClick={() => setConfirm(true)}>
-                {tr('table_games.resign', 'Resign')}
-              </button>
-            ))}
-        </div>
+              )}
+              {live &&
+                me &&
+                !me.eliminated &&
+                (confirm ? (
+                  <>
+                    <span className={css.Muted}>
+                      {tr(
+                        'table_games.resign_confirm',
+                        'Forfeit this game? Your stake will not be refunded.'
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      className={css.Pill}
+                      disabled={busy}
+                      onClick={() => {
+                        setConfirm(false);
+                        onAct({ type: 'resign' });
+                        onClose();
+                      }}
+                    >
+                      {tr('table_games.resign_yes', 'Yes, resign')}
+                    </button>
+                    <button type="button" className={css.Pill} onClick={() => setConfirm(false)}>
+                      {tr('table_games.keep_playing', 'Keep playing')}
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className={css.Pill} onClick={() => setConfirm(true)}>
+                    {tr('table_games.resign', 'Resign')}
+                  </button>
+                ))}
+            </div>
+          </>
+        )}
       </aside>
     </div>
   );

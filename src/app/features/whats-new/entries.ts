@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-fodinha-oval-table',
+    items: () => [
+      {
+        title: tr('whats_new.fodinha_oval_title', 'Fodinha back on the oval table'),
+        body: tr(
+          'whats_new.fodinha_oval_body',
+          'Fodinha is played on the oval table again, like poker, with the bets and penalties on each seat. Bots and invitations stay: invite from the table or fill the empty seats with bots.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-truco-fodinha-bots',
     items: () => [
       {
