@@ -40,6 +40,10 @@ export type GameTable = {
   trick?: { seat: number; card: TableCard }[];
   lastTrick?: { seat: number; card: TableCard }[];
   lastWinner?: number | null;
+  // Truco: the pair that took the last hand (null: three ties) and the points it scored.
+  handWinner?: number | null;
+  handPoints?: number;
+  invited?: string[];
   winners?: number[];
   result?: string;
   comments: { id: string; userId: string; text: string; at: number }[];
@@ -51,4 +55,4 @@ export type GameTable = {
 export type TableSummary = Pick<
   GameTable,
   'id' | 'name' | 'kind' | 'stake' | 'capacity' | 'phase'
-> & { players: string[] };
+> & { players: string[]; invited?: string[] };

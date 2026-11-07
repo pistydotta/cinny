@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { friendAvatarUrl, friendDisplayName } from '../../friends/userDisplay';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
 import { useCredits } from '../credits/useCredits';
 import { createTableGamesApi } from './api';
 import { ChessBoard } from './ChessBoard';
-import { FodinhaTable } from './FodinhaTable';
+import { CardTablesPage } from './CardTablesPage';
 import { cardText, gameError, gameName, phaseText, rulesText, shortName } from './text';
 import { GameKind, GameTable, TableSummary } from './types';
 import * as css from './tableGames.css';
@@ -31,11 +29,10 @@ function Rules({ kind }: { kind: GameKind }) {
   );
 }
 
-export function TableGamesPage({ kind }: { kind: GameKind }) {
+function BoardTablesPage({ kind }: { kind: GameKind }) {
   const mx = useMatrixClient();
   const navigate = useNavigate();
   const { tableId } = useParams();
-  const useAuthentication = useMediaAuthentication();
   const api = useMemo(() => createTableGamesApi(() => mx.getAccessToken()), [mx]);
   const { balance, refresh } = useCredits();
   const [tables, setTables] = useState<TableSummary[]>([]);
@@ -47,7 +44,6 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
   const [stake, setStake] = useState(100);
   const [capacity, setCapacity] = useState(4);
   const [comment, setComment] = useState('');
-  const [covered, setCovered] = useState(false);
   const [confirmResign, setConfirmResign] = useState(false);
 
   const load = useCallback(async () => {
@@ -104,12 +100,6 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
   };
   const me = table && table.players[table.mySeat];
   const myTurn = table?.mySeat === table?.turn && table?.mySeat !== -1;
-  const response =
-    table?.kind === 'truco' &&
-    table.mySeat >= 0 &&
-    (table.phase === 'eleven'
-      ? table.mySeat % 2 === table.decisionTeam
-      : table.phase === 'respond' && table.mySeat % 2 !== table.pending?.team);
 
   let resultText = '';
   if (table?.result === 'cancelled')
@@ -275,15 +265,6 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
                 {tr('table_games.spectating', 'You are watching this table.')}
               </p>
             )}
-            {kind === 'fodinha' && (
-              <FodinhaTable
-                table={table}
-                busy={busy}
-                onAct={act}
-                nameOf={(id) => friendDisplayName(mx, id)}
-                avatarOf={(id) => friendAvatarUrl(mx, id, useAuthentication)}
-              />
-            )}
             {kind !== 'fodinha' && (
               <div className={css.Players}>
                 {table.players.map((p, i) => (
@@ -390,160 +371,6 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
                   </p>
                 )}
               </div>
-            )}
-            {kind === 'truco' && table.phase !== 'waiting' && (
-              <>
-                <div className={css.Table}>
-                  {table.vira && (
-                    <p>
-                      {tr('table_games.vira', 'Vira')}: <strong>{cardText(table.vira)}</strong> ·{' '}
-                      {tr('table_games.hand_value', 'Hand value: {{value}} points', {
-                        value: table.value ?? 1,
-                      })}
-                    </p>
-                  )}
-                  {table.iron && (
-                    <p>{tr('table_games.iron', 'Iron hand: play your cards blind.')}</p>
-                  )}
-                  <p>
-                    {table.trick?.length
-                      ? tr('table_games.current_trick', 'Current trick')
-                      : tr('table_games.last_trick', 'Previous trick')}
-                  </p>
-                  <div className={css.Row}>
-                    {(table.trick?.length ? table.trick : table.lastTrick)?.map((p) => (
-                      <div key={p.seat}>
-                        <span>{shortName(table.players[p.seat].userId)}</span>
-                        <div className={css.Card} data-red={['d', 'h', 'r'].includes(p.card.suit)}>
-                          {cardText(p.card)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {me && !me.eliminated && table.phase !== 'finished' && (
-                  <div className={css.Panel}>
-                    {me.cardCount > 0 && (
-                      <>
-                        <p>
-                          {myTurn
-                            ? tr('table_games.your_turn', 'Your turn')
-                            : tr('table_games.wait_turn', 'Waiting for another player…')}
-                        </p>
-                        <div className={css.Row}>
-                          {Array.from({ length: me.cardCount }, (_, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              className={css.Card}
-                              data-red={['h', 'd', 'r'].includes(me.cards?.[i]?.suit ?? '')}
-                              disabled={busy || !myTurn || table.phase !== 'play'}
-                              aria-label={
-                                table.iron
-                                  ? tr('table_games.blind_card', 'Play face-down card {{card}}', {
-                                      card: i + 1,
-                                    })
-                                  : cardText(me.cards?.[i])
-                              }
-                              onClick={() =>
-                                act({
-                                  type: 'play',
-                                  card: i,
-                                  covered: covered && !!table.lastTrick?.length && !table.iron,
-                                })
-                              }
-                            >
-                              {table.iron ? '🂠' : cardText(me.cards?.[i])}
-                            </button>
-                          ))}
-                          {kind === 'truco' && table.phase === 'play' && (
-                            <button
-                              type="button"
-                              className={css.Button}
-                              disabled={
-                                busy ||
-                                !myTurn ||
-                                table.eleven ||
-                                table.value === 12 ||
-                                table.lastRaise === table.mySeat % 2
-                              }
-                              onClick={() => act({ type: 'raise' })}
-                            >
-                              {tr('table_games.raise', 'Raise hand to {{value}}', {
-                                value: table.value === 1 ? 3 : (table.value ?? 0) + 3,
-                              })}
-                            </button>
-                          )}
-                        </div>
-                        {kind === 'truco' &&
-                          table.phase === 'play' &&
-                          !!table.lastTrick?.length &&
-                          !table.iron && (
-                            <label htmlFor="covered-card">
-                              <input
-                                id="covered-card"
-                                type="checkbox"
-                                checked={covered}
-                                onChange={(e) => setCovered(e.target.checked)}
-                              />
-                              {tr('table_games.covered', 'Play covered (no strength)')}
-                            </label>
-                          )}
-                      </>
-                    )}
-                    {response && (
-                      <div className={css.Row}>
-                        {table.pending && (
-                          <p>
-                            {tr('table_games.proposed', 'Requested hand value: {{value}}', {
-                              value: table.pending.value,
-                            })}
-                          </p>
-                        )}
-                        <button
-                          type="button"
-                          className={css.Button}
-                          disabled={busy}
-                          onClick={() => act({ type: 'accept' })}
-                        >
-                          {tr('table_games.accept', 'Accept / play')}
-                        </button>
-                        <button
-                          type="button"
-                          className={css.Button}
-                          disabled={busy}
-                          onClick={() => act({ type: 'decline' })}
-                        >
-                          {tr('table_games.run', 'Run')}
-                        </button>
-                        {table.phase === 'respond' && (table.pending?.value ?? 12) < 12 && (
-                          <button
-                            type="button"
-                            className={css.Button}
-                            disabled={busy}
-                            onClick={() => act({ type: 'raise' })}
-                          >
-                            {tr('table_games.reraise', 'Raise again')}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {table.phase === 'round_end' && (
-                      <button
-                        type="button"
-                        className={css.Button}
-                        disabled={busy}
-                        onClick={() => {
-                          setCovered(false);
-                          act({ type: 'next' });
-                        }}
-                      >
-                        {tr('table_games.next', 'Next round')}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </>
             )}
             {kind === 'chess' && (
               <div className={css.ChessLayout}>
@@ -662,4 +489,8 @@ export function TableGamesPage({ kind }: { kind: GameKind }) {
       </div>
     </main>
   );
+}
+
+export function TableGamesPage({ kind }: { kind: GameKind }) {
+  return kind === 'chess' ? <BoardTablesPage kind={kind} /> : <CardTablesPage kind={kind} />;
 }
