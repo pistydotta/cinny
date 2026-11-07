@@ -430,7 +430,9 @@
     "idle_title": "Novo jogo: Crônicas da Brasa",
     "idle_body": "Um RPG idle na aba Jogos. Escolha entre 10 classes, junte equipamentos, monte a mochila e suba de fase, mesmo com o app em outra tela. Tem arena para duelos também.",
     "idle_rework_title": "Crônicas da Brasa, refeito",
-    "idle_rework_body": "Seis classes com duas especializações cada, árvore de talentos, forja até +12, renascimento com um altar de bônus eternos, uma mochila grande com categorias e comparação, e efeitos novos na batalha. Os heróis do primeiro teste recomeçam do zero."
+    "idle_rework_body": "Seis classes com duas especializações cada, árvore de talentos, forja até +12, renascimento com um altar de bônus eternos, uma mochila grande com categorias e comparação, e efeitos novos na batalha. Os heróis do primeiro teste recomeçam do zero.",
+    "poker_invites_title": "Convites melhores no poker",
+    "poker_invites_body": "Ao convidar para uma mesa dá para procurar pelo nome, marcar todos de uma vez ou só quem está na sua call, e ver quem já está na mesa ou já foi convidado. O dono pode deixar a mesa pública, para qualquer um entrar pelo lobby, e liberar convites para qualquer pessoa do servidor."
   },
   "admin": {
     "deactivate": {
@@ -829,7 +831,10 @@
       "resume": "Continuar",
       "leave_title": "Sair da mesa?",
       "leave_text": "Você recebe suas fichas de volta e a mesa some da sua lista. Só volta com um novo convite.",
-      "create_text": "O servidor distribui as cartas, então ninguém vê as de ninguém. Você pode fechar a mesa quando quiser."
+      "create_text": "O servidor distribui as cartas, então ninguém vê as de ninguém. Você pode fechar a mesa quando quiser.",
+      "public_tables": "Mesas públicas",
+      "owner": "de {{name}}",
+      "join": "Entrar"
     },
     "nav": {
       "games": "Jogos"
@@ -1482,6 +1487,28 @@
         "elsewhere_text": "Aqui ele fica pausado para um não sobrescrever o outro. Jogue aqui para trazer ele com tudo o que fez lá.",
         "play_here": "Jogar aqui"
       }
+    },
+    "invite": {
+      "filter_all": "Todos",
+      "filter_call": "Na minha call",
+      "filter_friends": "Amigos",
+      "at_table": "Na mesa",
+      "already_invited": "Convidado",
+      "no_call": "Você não está numa chamada de voz.",
+      "no_match": "Ninguém encontrado com esse nome.",
+      "nobody": "Ninguém para convidar. Procure pelo nome.",
+      "no_friends": "Nenhum amigo aqui. O dono pode liberar convites para todos.",
+      "search": "Procurar pelo nome",
+      "unselect_all": "Desmarcar todos",
+      "select_all": "Marcar todos ({{count}})",
+      "in_call": "na call",
+      "send": "Convidar {{count}}"
+    },
+    "access": {
+      "public": "Mesa pública",
+      "public_hint": "Aparece no lobby de todo mundo e qualquer um pode entrar.",
+      "anyone": "Convidar qualquer pessoa",
+      "anyone_hint": "Quem está na mesa pode convidar qualquer pessoa do servidor, não só amigos."
     }
   },
   "music_bot": {
@@ -1577,7 +1604,8 @@
       "call": "Pagar até {{amount}}",
       "fold_now": "Desistir agora",
       "fold_now_hint": "Abandonar esta mão imediatamente. Não é possível desfazer.",
-      "hint": "Acontece uma vez, na sua vez. Desmarque para cancelar. Pagar nunca ultrapassa o limite escolhido; uma nova rodada ou desconexão limpa a seleção."
+      "hint": "Acontece uma vez, na sua vez. Desmarque para cancelar. Pagar nunca ultrapassa o limite escolhido; uma nova rodada ou desconexão limpa a seleção.",
+      "fold_short": "Desistir"
     },
     "audio": {
       "title": "Sons do poker",
@@ -1636,11 +1664,19 @@
       "high_card": {
         "title": "Carta alta",
         "description": "Sem combinação formada; comparam-se as cartas mais altas."
-      }
+      },
+      "link": "Ranking das mãos",
+      "type_rank": "tipo #{{rank}}"
     },
     "news": {
       "title": "Poker mais fácil de acompanhar",
       "body": "Sons e volume opcionais, ações antecipadas e desistência imediata, apostas em fichas ou BB, e um guia visual das suas cinco melhores cartas e do ranking das mãos."
+    },
+    "bar": {
+      "to_call": "{{amount}} para pagar",
+      "no_bet": "Nenhuma aposta para pagar",
+      "deciding": "decidindo",
+      "on_my_turn": "Na minha vez"
     }
   },
   "call_member": {

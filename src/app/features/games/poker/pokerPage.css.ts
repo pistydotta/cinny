@@ -320,37 +320,6 @@ export const Note = style({
 
 /* ---------- Action bar ---------- */
 
-export const ActionBar = style({
-  flexShrink: 0,
-  display: 'flex',
-  alignItems: 'flex-end',
-  justifyContent: 'space-between',
-  gap: 16,
-  padding: '12px 16px 16px',
-  borderTop: '1px solid rgba(255,255,255,0.06)',
-  background: 'linear-gradient(180deg, rgba(8,12,18,0.7), rgba(5,8,12,0.95))',
-  maxHeight: '52%',
-  overflowY: 'auto',
-  '@media': {
-    'screen and (max-width: 760px)': {
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      gap: 10,
-      padding: '10px 12px 12px',
-    },
-  },
-});
-
-export const HandInfo = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 4,
-  minWidth: 0,
-  flex: '1 1 260px',
-  '@media': { 'screen and (max-width: 760px)': { flex: '0 0 auto' } },
-});
-
-export const HandPreview = style({ display: 'flex', flexDirection: 'column', gap: 5 });
 export const GuideCards = style({
   display: 'flex',
   gap: 4,
@@ -362,16 +331,6 @@ export const GuideNote = style({
   color: 'rgba(255,255,255,0.65)',
   fontSize: 11,
   lineHeight: 1.5,
-});
-export const RankBadge = style({
-  color: GOLD,
-  background: 'rgba(245,200,75,0.12)',
-  border: '1px solid rgba(245,200,75,0.3)',
-  borderRadius: 8,
-  padding: '5px 8px',
-  cursor: 'pointer',
-  fontSize: 11,
-  fontWeight: 700,
 });
 export const HandLadder = style({
   listStyle: 'none',
@@ -392,153 +351,6 @@ export const HandLadderRow = style({
     '&[aria-current="true"]': { borderColor: GOLD, background: 'rgba(245,200,75,0.12)' },
   },
 });
-export const PreActions = style({
-  display: 'flex',
-  gap: 6,
-  flexWrap: 'wrap',
-  alignItems: 'center',
-});
-export const QueueOption = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  padding: '6px 9px',
-  borderRadius: 8,
-  background: 'rgba(255,255,255,0.05)',
-  fontSize: 12,
-  border: '1px solid rgba(255,255,255,0.12)',
-});
-export const UnitSwitch = style({
-  display: 'flex',
-  gap: 4,
-  alignItems: 'center',
-  flexWrap: 'wrap',
-});
-
-export const Status = style({
-  fontSize: 15,
-  fontWeight: 700,
-  selectors: {
-    '&[data-tone="turn"]': { color: GOLD },
-    '&[data-tone="win"]': { color: '#7dffa8' },
-    '&[data-tone="lose"]': { color: 'rgba(255,255,255,0.6)' },
-  },
-});
-
-export const HandStrength = style({
-  fontSize: 13,
-  color: 'rgba(255,255,255,0.6)',
-});
-
-export const HandStrengthValue = style({
-  color: '#fff',
-  fontWeight: 700,
-});
-
-export const Controls = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 10,
-  alignItems: 'stretch',
-  width: 'min(560px, 100%)',
-});
-
-export const RaiseRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  flexWrap: 'wrap',
-});
-
-export const Preset = style({
-  textAlign: 'center',
-  height: 30,
-  padding: '0 10px',
-  borderRadius: 8,
-  border: '1px solid rgba(255,255,255,0.10)',
-  background: 'rgba(255,255,255,0.05)',
-  color: 'rgba(255,255,255,0.85)',
-  fontSize: 12,
-  fontWeight: 700,
-  cursor: 'pointer',
-  selectors: {
-    '&:hover': { background: 'rgba(255,255,255,0.1)' },
-  },
-});
-
-export const RaiseSlider = style({
-  flexGrow: 1,
-  minWidth: 120,
-  accentColor: GOLD,
-});
-
-export const AmountInput = style({
-  width: 92,
-  height: 30,
-  borderRadius: 8,
-  border: '1px solid rgba(255,255,255,0.14)',
-  background: 'rgba(0,0,0,0.35)',
-  color: '#fff',
-  fontSize: 14,
-  fontWeight: 700,
-  textAlign: 'right',
-  padding: '0 8px',
-  fontVariantNumeric: 'tabular-nums',
-});
-
-export const Buttons = style({
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1.25fr',
-  gap: 8,
-});
-
-const actionButton = style({
-  height: 52,
-  borderRadius: 12,
-  border: 'none',
-  color: '#fff',
-  fontSize: 15,
-  fontWeight: 800,
-  cursor: 'pointer',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  lineHeight: 1.15,
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 14px rgba(0,0,0,0.35)',
-  transition: 'transform 80ms, filter 150ms, opacity 150ms',
-  selectors: {
-    '&:hover:not(:disabled)': { filter: 'brightness(1.1)' },
-    '&:active:not(:disabled)': { transform: 'translateY(1px)' },
-    '&:disabled': { opacity: 0.35, cursor: 'default', boxShadow: 'none' },
-  },
-});
-
-export const FoldButton = style([
-  actionButton,
-  { background: 'linear-gradient(180deg, #4a4f5a, #343841)' },
-]);
-
-export const CallButton = style([
-  actionButton,
-  { background: 'linear-gradient(180deg, #2c8ef0, #1b65c0)' },
-]);
-
-export const RaiseButton = style([
-  actionButton,
-  {
-    background: `linear-gradient(180deg, #ffd96a, ${GOLD} 50%, #d9a520)`,
-    color: '#2a1d00',
-  },
-]);
-
-export const ButtonSub = style({
-  fontSize: 12,
-  fontWeight: 700,
-  opacity: 0.85,
-  fontVariantNumeric: 'tabular-nums',
-});
-
 /* ---------- History drawer ---------- */
 
 export const Drawer = style({
@@ -769,7 +581,7 @@ const sliderBase = {
   outline: 'none',
 } as const;
 
-globalStyle(`${Range}, ${RaiseSlider}`, sliderBase);
+globalStyle(`${Range}`, sliderBase);
 
 const thumb = {
   appearance: 'none',
@@ -783,8 +595,8 @@ const thumb = {
   cursor: 'pointer',
 } as const;
 
-globalStyle(`${Range}::-webkit-slider-thumb, ${RaiseSlider}::-webkit-slider-thumb`, thumb);
-globalStyle(`${Range}::-moz-range-thumb, ${RaiseSlider}::-moz-range-thumb`, thumb);
+globalStyle(`${Range}::-webkit-slider-thumb`, thumb);
+globalStyle(`${Range}::-moz-range-thumb`, thumb);
 
 export const RowActions = style({
   display: 'flex',

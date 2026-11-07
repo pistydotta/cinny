@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-poker-invites',
+    items: () => [
+      {
+        title: tr('whats_new.poker_invites_title', 'Better poker invites'),
+        body: tr(
+          'whats_new.poker_invites_body',
+          'When inviting to a table you can search by name, select everyone at once or just who is in your call, and see who is already at the table or invited. The owner can make the table public, so anyone can join from the lobby, and let members invite anyone on the server.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-fodinha-table',
     items: () => [
       {

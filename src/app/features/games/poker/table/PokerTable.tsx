@@ -13,8 +13,8 @@ import * as css from './pokerTable.css';
 
 const SEATS = [0, 1, 2, 3, 4, 5];
 const sameCard = (a: Card, b: Card) => a.rank === b.rank && a.suit === b.suit;
-const RING_RADIUS = 48;
-const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
+export const RING_RADIUS = 48;
+export const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 const actionLabel = (action: LastAction, format: (chips: number) => string): string => {
   const amount = action.amount !== undefined ? ` ${format(action.amount)}` : '';
@@ -75,7 +75,7 @@ type PlayerAvatarProps = {
   resolveAvatar?: (url: string) => string | undefined;
 };
 
-function PlayerAvatar({ player, resolveAvatar }: PlayerAvatarProps) {
+export function PlayerAvatar({ player, resolveAvatar }: PlayerAvatarProps) {
   const hue = nameHue(player.name);
   const src =
     player.avatarUrl && (resolveAvatar ? resolveAvatar(player.avatarUrl) : player.avatarUrl);

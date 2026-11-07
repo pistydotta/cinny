@@ -3,7 +3,6 @@ import { Icon, Icons } from 'folds';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { friendDisplayName } from '../../friends/userDisplay';
-import { useFriends } from '../../friends/useFriends';
 import { TopUpButton } from '../credits/TopUpButton';
 import { useCredits } from '../credits/useCredits';
 import { createPokerApi } from './api';
@@ -11,8 +10,12 @@ import { errorText } from './errorText';
 import { CloseDialog, LeaveDialog } from './TableDialogs';
 import { formatChips, LobbyTable } from './types';
 import { useLobby } from './useLobby';
+import { AccessFields, InvitePicker, TableAccess } from './InvitePicker';
+import type { TableStatus } from './inviteCandidates';
 import * as css from './pokerPage.css';
 import { tr } from '../../translation/tr';
+
+const NO_STATUS: ReadonlyMap<string, TableStatus> = new Map();
 
 const BLIND_LEVELS = [
   { smallBlind: 10, bigBlind: 20 },
@@ -20,26 +23,21 @@ const BLIND_LEVELS = [
   { smallBlind: 50, bigBlind: 100 },
 ];
 
-type NewTable = { name: string; smallBlind: number; invite: string[] };
+type NewTable = { name: string; smallBlind: number; invite: string[] } & TableAccess;
 
 type CreateTableDialogProps = {
   defaultName: string;
-  friends: { userId: string; name: string }[];
   onCreate: (table: NewTable) => Promise<void>;
   onCancel: () => void;
 };
 
-function CreateTableDialog({ defaultName, friends, onCreate, onCancel }: CreateTableDialogProps) {
+function CreateTableDialog({ defaultName, onCreate, onCancel }: CreateTableDialogProps) {
   const [name, setName] = useState(defaultName);
   const [level, setLevel] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
+  const [access, setAccess] = useState<TableAccess>({ isPublic: false, inviteAnyone: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-
-  const toggle = (userId: string) =>
-    setSelected((list) =>
-      list.includes(userId) ? list.filter((id) => id !== userId) : [...list, userId]
-    );
 
   const handleSubmit = async (evt: FormEvent) => {
     evt.preventDefault();
@@ -50,6 +48,7 @@ function CreateTableDialog({ defaultName, friends, onCreate, onCancel }: CreateT
         name: name.trim() || defaultName,
         smallBlind: BLIND_LEVELS[level].smallBlind,
         invite: selected,
+        ...access,
       });
     } catch (e) {
       setError(errorText(e instanceof ApiError ? e.code : 'unknown'));
@@ -110,40 +109,18 @@ function CreateTableDialog({ defaultName, friends, onCreate, onCancel }: CreateT
         </div>
       </div>
 
+      <AccessFields value={access} onChange={setAccess} />
+
       <div className={css.Field}>
         <div className={css.FieldHeader}>
           <span>{tr('games.lobby.invite', 'Invite friends')}</span>
-          <span className={css.Muted}>
-            {tr('games.lobby.selected', '{{count}} selected', { count: selected.length })}
-          </span>
         </div>
-        {friends.length > 0 ? (
-          <div className={css.ContactList}>
-            {friends.map((friend) => (
-              <label
-                key={friend.userId}
-                className={css.CheckRow}
-                htmlFor={`invite-${friend.userId}`}
-              >
-                <input
-                  id={`invite-${friend.userId}`}
-                  className={css.CheckInput}
-                  type="checkbox"
-                  checked={selected.includes(friend.userId)}
-                  onChange={() => toggle(friend.userId)}
-                />
-                <span>{friend.name}</span>
-              </label>
-            ))}
-          </div>
-        ) : (
-          <p className={css.Note}>
-            {tr(
-              'games.lobby.no_friends',
-              'You have no friends to invite yet. Create the table and share its link instead.'
-            )}
-          </p>
-        )}
+        <InvitePicker
+          everyone={access.inviteAnyone}
+          status={NO_STATUS}
+          selected={selected}
+          onChange={setSelected}
+        />
       </div>
 
       {error && <p className={css.ErrorText}>{error}</p>}
@@ -170,7 +147,6 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
   const api = useMemo(() => createPokerApi(() => mx.getAccessToken()), [mx]);
   const { list, refresh: refreshLobby } = useLobby();
   const { balance, atTables, refresh: refreshCredits, topUp } = useCredits();
-  const { lists } = useFriends();
   const [creating, setCreating] = useState(false);
   const [confirm, setConfirm] = useState<Confirm>();
   const [busyId, setBusyId] = useState<string>();
@@ -191,18 +167,10 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
     lastChipsKey.current = chipsKey;
   }, [chipsKey, refreshCredits]);
 
-  const friends = useMemo(
-    () =>
-      (lists?.friends ?? []).map((f) => ({
-        userId: f.userId,
-        name: friendDisplayName(mx, f.userId),
-      })),
-    [mx, lists]
-  );
-
   // Practice has its own card below, so it is not a row here.
   const tables = (list?.tables ?? []).filter((t) => t.id !== list?.practiceId);
   const invites = list?.invites ?? [];
+  const publicTables = list?.publicTables ?? [];
 
   const refreshAll = () => Promise.all([refreshLobby(), refreshCredits()]);
 
@@ -224,6 +192,13 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
   const accept = (table: LobbyTable) =>
     run(table.id, async () => {
       await api.accept(table.id);
+      await refreshAll();
+      onOpenTable(table.id);
+    });
+
+  const joinPublic = (table: LobbyTable) =>
+    run(table.id, async () => {
+      await api.joinPublic(table.id);
       await refreshAll();
       onOpenTable(table.id);
     });
@@ -250,8 +225,8 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
     if (ok) setConfirm(undefined);
   };
 
-  const create = async ({ name, smallBlind, invite }: NewTable) => {
-    const id = await api.create({ name, smallBlind, invite });
+  const create = async (input: NewTable) => {
+    const id = await api.create(input);
     await refreshAll();
     setCreating(false);
     onOpenTable(id);
@@ -397,6 +372,50 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
             </div>
           )}
 
+          {publicTables.length > 0 && (
+            <>
+              <h2 className={css.SectionTitle}>
+                {tr('games.lobby.public_tables', 'Public tables')}
+              </h2>
+              <div className={css.TableList}>
+                {publicTables.map((table) => (
+                  <div key={table.id} className={css.TableRow}>
+                    <div className={css.TableIcon}>♠</div>
+                    <div className={css.TableInfo}>
+                      <span className={css.TableName}>{table.name}</span>
+                      <span className={css.TableMeta}>
+                        {[
+                          tr('games.lobby.owner', 'by {{name}}', {
+                            name: friendDisplayName(mx, table.ownerId),
+                          }),
+                          tr('games.table.blinds', 'Blinds {{small}}/{{big}}', {
+                            small: table.smallBlind,
+                            big: table.bigBlind,
+                          }),
+                          tr('games.lobby.members', '{{count}} in the room', {
+                            count: table.memberCount,
+                          }),
+                        ].join(' · ')}
+                      </span>
+                    </div>
+                    <div className={css.RowActions}>
+                      <button
+                        type="button"
+                        className={css.SmallButton}
+                        disabled={busyId === table.id}
+                        onClick={() => joinPublic(table)}
+                      >
+                        {busyId === table.id
+                          ? tr('games.lobby.joining', 'Joining…')
+                          : tr('games.lobby.join', 'Join')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           <h2 className={css.SectionTitle}>{tr('games.lobby.practice', 'Practice')}</h2>
           <div className={css.PracticeCard}>
             <div className={css.TableIcon} style={{ background: '#1b65c0' }}>
@@ -425,7 +444,6 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
             defaultName={tr('games.lobby.default_table_name', "{{name}}'s table", {
               name: friendDisplayName(mx, myId),
             })}
-            friends={friends}
             onCreate={create}
             onCancel={() => setCreating(false)}
           />

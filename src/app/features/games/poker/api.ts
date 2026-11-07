@@ -1,5 +1,5 @@
 import { ApiError, createApiRequest } from '../../../utils/blazeroomApi';
-import type { LobbyList, PlayReply, PokerAction, TableView } from './types';
+import type { LobbyList, PlayReply, PokerAction, TableMember, TableView } from './types';
 
 type PokerApiOptions = {
   fetchImpl?: typeof fetch;
@@ -23,7 +23,13 @@ export const createPokerApi = (getToken: () => string | null, options: PokerApiO
   return {
     list: () => json<LobbyList>('/api/poker/tables', 'GET'),
     get: (id: string) => json<TableView>(table(id), 'GET'),
-    async create(input: { name: string; smallBlind: number; invite: string[] }): Promise<string> {
+    async create(input: {
+      name: string;
+      smallBlind: number;
+      invite: string[];
+      isPublic: boolean;
+      inviteAnyone: boolean;
+    }): Promise<string> {
       return (await json<{ id: string }>('/api/poker/tables', 'POST', input)).id;
     },
     async close(id: string): Promise<void> {
@@ -43,6 +49,18 @@ export const createPokerApi = (getToken: () => string | null, options: PokerApiO
     },
     async invite(id: string, userId: string): Promise<void> {
       await request(`${table(id)}/invites`, 'POST', { userId });
+    },
+    /** Skips whoever is already in or invited; answers who was invited now. */
+    async inviteMany(id: string, userIds: string[]): Promise<string[]> {
+      return (await json<{ invited: string[] }>(`${table(id)}/invites`, 'POST', { userIds }))
+        .invited;
+    },
+    members: async (id: string) =>
+      (await json<{ members: TableMember[] }>(`${table(id)}/members`, 'GET')).members,
+    settings: (id: string, access: { isPublic: boolean; inviteAnyone: boolean }) =>
+      json<{ isPublic: boolean; inviteAnyone: boolean }>(table(id), 'PATCH', access),
+    async joinPublic(id: string): Promise<string> {
+      return (await json<{ id: string }>(`${table(id)}/join`, 'POST')).id;
     },
     async inviteLink(id: string, rotate = false): Promise<string> {
       const body = rotate ? { rotate: true } : {};

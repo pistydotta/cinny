@@ -32,6 +32,8 @@ const table = (overrides: Partial<TableView> = {}): TableView => ({
   kind: 'friends',
   ownerId: 'me',
   isOwner: true,
+  isPublic: false,
+  inviteAnyone: false,
   smallBlind: 10,
   bigBlind: 20,
   minBuyIn: 400,

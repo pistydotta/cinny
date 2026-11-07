@@ -1,17 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon, Icons } from 'folds';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { mxcUrlToHttp } from '../../../utils/matrix';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPokerJoinPath } from '../../../pages/pathUtils';
-import { useFriends } from '../../friends/useFriends';
-import { friendDisplayName } from '../../friends/userDisplay';
 import { useCredits } from '../credits/useCredits';
 import { PokerTable } from './table/PokerTable';
 import { TableLayout } from './table/layout';
 import { ActionBar } from './ActionBar';
 import { HistoryDrawer } from './TableParts';
+import type { TableAccess } from './InvitePicker';
 import { AwayDialog, CloseDialog, InviteDialog, RebuyDialog, SeatDialog } from './TableDialogs';
 import { errorText } from './errorText';
 import { createInFlight } from './inFlight';
@@ -53,7 +52,6 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   const userId = mx.getUserId() ?? '';
   const { view, connected, closed, notFound, api } = useTable(tableId);
   const { balance, refresh: refreshCredits, topUp } = useCredits();
-  const { lists } = useFriends();
 
   const [layout, setLayout] = useState<TableLayout>('landscape');
   const [pickedSeat, setPickedSeat] = useState<number>();
@@ -111,13 +109,15 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
     [mx, useAuthentication]
   );
 
-  const friends = useMemo(
-    () =>
-      (lists?.friends ?? []).map((f) => ({
-        userId: f.userId,
-        name: friendDisplayName(mx, f.userId),
-      })),
-    [mx, lists]
+  // The stream doesn't carry setting changes, so the owner's latest choice wins until a reload.
+  const [accessOverride, setAccessOverride] = useState<TableAccess>();
+  const access: TableAccess = accessOverride ?? {
+    isPublic: view?.isPublic ?? false,
+    inviteAnyone: view?.inviteAnyone ?? false,
+  };
+  const loadInviteStatus = useCallback(
+    async () => new Map((await api.members(tableId)).map((m) => [m.userId, m.status] as const)),
+    [api, tableId]
   );
 
   // Runs what the person asked for and shows the server's refusal, if any.
@@ -450,8 +450,13 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
 
         {showInvite && (
           <InviteDialog
-            friends={friends}
-            onInvite={(id) => api.invite(tableId, id)}
+            access={access}
+            canChangeAccess={view?.isOwner ?? false}
+            loadStatus={loadInviteStatus}
+            onInvite={async (userIds) => {
+              await api.inviteMany(tableId, userIds);
+            }}
+            onAccess={async (next) => setAccessOverride(await api.settings(tableId, next))}
             onDone={() => setShowInvite(false)}
           />
         )}
@@ -479,6 +484,8 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           onQueue={queueAction}
           onFoldNow={foldNow}
           onAction={sendAction}
+          turnTimer={turnTimerFor(view, Date.now())}
+          resolveAvatar={resolveAvatar}
         />
       )}
       {showSounds && (

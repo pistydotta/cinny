@@ -128,6 +128,10 @@ export type TableView = {
   kind: 'friends' | 'practice';
   ownerId: string;
   isOwner: boolean;
+  /** In everyone's lobby, anyone may join. */
+  isPublic: boolean;
+  /** Members may invite any account, not only their friends. */
+  inviteAnyone: boolean;
   smallBlind: number;
   bigBlind: number;
   minBuyIn: number;
@@ -168,8 +172,12 @@ export type LobbyTable = {
   myChips: number;
 };
 
+export type TableMember = { userId: string; status: 'member' | 'invited' };
+
 export type LobbyList = {
   tables: LobbyTable[];
+  /** Public tables I'm not in yet. */
+  publicTables: LobbyTable[];
   invites: (LobbyTable & { invitedBy: string })[];
   practiceId: string | null;
 };

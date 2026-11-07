@@ -1,6 +1,8 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { BuyInField } from './TableParts';
+import { AccessFields, InvitePicker, TableAccess } from './InvitePicker';
+import type { TableStatus } from './inviteCandidates';
 import { errorText } from './errorText';
 import { defaultBuyIn } from './buyIn';
 import { formatChips } from './types';
@@ -237,54 +239,76 @@ export function LeaveDialog({
   );
 }
 
-export type InviteFriend = { userId: string; name: string };
-
 type InviteDialogProps = {
-  friends: InviteFriend[];
-  onInvite: (userId: string) => Promise<void>;
+  access: TableAccess;
+  /** Only the owner changes who may come in. */
+  canChangeAccess: boolean;
+  loadStatus: () => Promise<ReadonlyMap<string, TableStatus>>;
+  onInvite: (userIds: string[]) => Promise<void>;
+  onAccess: (access: TableAccess) => Promise<void>;
   onDone: () => void;
 };
 
-export function InviteDialog({ friends, onInvite, onDone }: InviteDialogProps) {
-  const [invited, setInvited] = useState<string[]>([]);
+export function InviteDialog({
+  access,
+  canChangeAccess,
+  loadStatus,
+  onInvite,
+  onAccess,
+  onDone,
+}: InviteDialogProps) {
+  const [status, setStatus] = useState<ReadonlyMap<string, TableStatus>>(new Map());
+  const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
-  const invite = async (userId: string) => {
+  useEffect(() => {
+    loadStatus().then(setStatus, () => undefined);
+  }, [loadStatus]);
+
+  const task = async (fn: () => Promise<void>) => {
+    setBusy(true);
     setError(undefined);
     try {
-      await onInvite(userId);
-      setInvited((list) => [...list, userId]);
+      await fn();
     } catch (e) {
       setError(errorText(e instanceof ApiError ? e.code : 'unknown'));
+    } finally {
+      setBusy(false);
     }
   };
 
+  const invite = () =>
+    task(async () => {
+      await onInvite(selected);
+      setSelected([]);
+      setStatus(await loadStatus());
+    });
+
   return (
     <DialogFrame title={tr('games.table.invite_title', 'Invite friends')}>
-      {friends.length === 0 ? (
-        <p className={css.DialogText}>
-          {tr('games.table.invite_no_friends', 'You have no friends to invite yet.')}
-        </p>
-      ) : (
-        <div className={css.ContactList}>
-          {friends.map((friend) => (
-            <div key={friend.userId} className={css.CheckRow}>
-              <span>{friend.name}</span>
-              <button
-                type="button"
-                className={css.SmallButton}
-                disabled={invited.includes(friend.userId)}
-                onClick={() => invite(friend.userId)}
-              >
-                {invited.includes(friend.userId)
-                  ? tr('games.table.invited', 'Invited')
-                  : tr('games.table.invite', 'Invite')}
-              </button>
-            </div>
-          ))}
-        </div>
+      {canChangeAccess && (
+        <AccessFields
+          value={access}
+          disabled={busy}
+          onChange={(next) => task(() => onAccess(next))}
+        />
       )}
+      <InvitePicker
+        everyone={access.inviteAnyone}
+        status={status}
+        selected={selected}
+        onChange={setSelected}
+      />
       {error && <p className={css.ErrorText}>{error}</p>}
+      <button
+        type="button"
+        className={css.PrimaryButton}
+        disabled={busy || selected.length === 0}
+        onClick={invite}
+      >
+        {tr('games.invite.send', 'Invite {{count}}', { count: selected.length })}
+      </button>
       <button type="button" className={css.SecondaryButton} onClick={onDone}>
         {tr('games.table.done', 'Done')}
       </button>
