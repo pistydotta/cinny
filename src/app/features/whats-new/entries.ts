@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-room-codes',
+    items: () => [
+      {
+        title: tr('whats_new.room_codes_title', 'Invite codes and finding anyone'),
+        body: tr(
+          'whats_new.room_codes_body',
+          'The invite dialog for rooms and spaces was redesigned and now finds anyone on blazeroom by name, not only friends. You can also make a link or a four-digit code: whoever has it joins through "Join with code" on Home.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-fodinha-oval-table',
     items: () => [
       {
@@ -72,6 +84,18 @@ export const WHATS_NEW: WhatsNewEntry[] = [
         body: tr(
           'whats_new.floating_call_body',
           'The small call window that shows up outside the call can now be dragged by its top bar to anywhere on the screen, and it stays there. Double-click the bar to put it back in the corner, or close it with the X.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-live-watch-toolbar',
+    items: () => [
+      {
+        title: tr('screen_share.controls_news_title', 'Live controls together'),
+        body: tr(
+          'screen_share.controls_news_body',
+          'Live volume and the red stop-watching icon now sit in the call toolbar. Available streams have a cleaner card and watch button.'
         ),
       },
     ],

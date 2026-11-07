@@ -72,6 +72,7 @@ import {
   HomeOverviewNavItem,
 } from '../../../features/home-overview/HomeOverviewNavItem';
 import { CoffeeNavItem } from '../../../features/coffee/CoffeeNavItem';
+import { JoinByCodeNavItem } from '../../../features/room-invite/JoinByCodePage';
 import { TipIconButton } from '../../../features/tooltips/TipIconButton';
 
 type HomeMenuProps = {
@@ -312,6 +313,7 @@ export function Home() {
                   </>
                 )}
               </UseStateProvider>
+              <JoinByCodeNavItem />
               <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
                 <NavLink to={getHomeSearchPath()}>
                   <NavItemContent>

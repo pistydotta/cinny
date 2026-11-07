@@ -30,6 +30,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
+import { WatchControls } from '../screen-share/WatchControls';
 
 type CallControlsProps = {
   callEmbed: CallEmbed;
@@ -97,7 +98,7 @@ export function CallControls({ callEmbed }: CallControlsProps) {
         gap="400"
         radii="500"
         alignItems="Center"
-        justifyContent="SpaceBetween"
+        justifyContent="Center"
       >
         <Box alignItems="Center" gap="Inherit" grow="Yes" direction={compact ? 'Column' : 'Row'}>
           <Box shrink="No" alignItems="Inherit" justifyContent="Inherit" gap="200">
@@ -202,6 +203,7 @@ export function CallControls({ callEmbed }: CallControlsProps) {
             </Button>
           </Box>
         </Box>
+        <WatchControls callEmbed={callEmbed} />
       </SequenceCard>
     </Box>
   );

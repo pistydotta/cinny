@@ -10,6 +10,7 @@ import { ContainerColor } from '../../../styles/ContainerColor.css';
 import {
   encodeSearchParamValueArray,
   getCreatePath,
+  getHomeJoinPath,
   getSpacePath,
   withSearchParam,
 } from '../../pathUtils';
@@ -94,6 +95,26 @@ export function CreateTab() {
                         <Text size="H6">{tr('nav.join_with_address', 'Join with Address')}</Text>
                         <Text size="T300" priority="300">
                           {tr('nav.join_space_desc', 'Become a part of existing community.')}
+                        </Text>
+                      </SettingTile>
+                    </SequenceCard>
+                    <SequenceCard
+                      style={{ padding: config.space.S300 }}
+                      variant="Surface"
+                      direction="Column"
+                      gap="100"
+                      radii="0"
+                      as="button"
+                      type="button"
+                      onClick={() => {
+                        navigate(getHomeJoinPath());
+                        setMenuCords(undefined);
+                      }}
+                    >
+                      <SettingTile before={<Icon size="400" src={Icons.Hash} />}>
+                        <Text size="H6">{tr('room_codes.join_nav', 'Join with code')}</Text>
+                        <Text size="T300" priority="300">
+                          {tr('room_codes.join_desc', 'Use the four-digit code a friend gave you.')}
                         </Text>
                       </SettingTile>
                     </SequenceCard>

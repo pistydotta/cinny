@@ -9,6 +9,7 @@ describe('patchElementCall', () => {
   it("patches the layout's share list and each person's volume", () => {
     const patched = patchElementCall(`before;${original}mid;${voice}mid;${expand}after`);
     expect(patched).toContain('blazeroomShares');
+    expect(patched).toContain('blazeroomShares?.pipHidden?.()?void 0:t');
     expect(patched).toContain('blazeroomVoices?.volumeFor(n.userId,t)');
     expect(patched).toContain('blazeroomVoices?.observeParticipant?.(n.userId,n,e)');
     expect(patched).not.toContain(original);

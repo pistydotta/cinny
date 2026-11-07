@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Icon, Icons, Text } from 'folds';
+import { Box, Icon, Icons, Text } from 'folds';
 import { CallEmbed } from '../../plugins/call/CallEmbed';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
@@ -14,10 +14,10 @@ export function WatchControls({ callEmbed }: { callEmbed: CallEmbed }) {
   if (!store || watched.length === 0) return null;
 
   return (
-    <Box className={css.Controls} direction="Column" gap="100">
+    <Box className={css.WatchControls} direction="Column" gap="200">
       {watched.map((share) => (
-        <Box key={share.id} className={css.Row} alignItems="Center" gap="300">
-          <Box className={css.Name} grow="Yes">
+        <Box key={share.id} className={css.WatchRow} alignItems="Center" gap="200">
+          <Box className={css.Name}>
             <Text size="T300" truncate>
               {share.name}
             </Text>
@@ -58,15 +58,16 @@ export function WatchControls({ callEmbed }: { callEmbed: CallEmbed }) {
               />
             </>
           )}
-          <Button
-            size="300"
-            variant="Secondary"
-            fill="Soft"
+          <TipIconButton
+            label={tr('screen_share.stop_watching', 'Stop watching')}
+            size="400"
+            variant="Critical"
+            fill="Solid"
             radii="300"
             onClick={() => store.unwatch(share.id)}
           >
-            <Text size="B300">{tr('screen_share.stop_watching', 'Stop watching')}</Text>
-          </Button>
+            <Icon size="400" src={Icons.EyeBlind} />
+          </TipIconButton>
         </Box>
       ))}
     </Box>

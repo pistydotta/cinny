@@ -100,6 +100,7 @@ import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
 import { getMxIdServer } from '../utils/matrix';
 import { CallStatusRenderer } from './CallStatusRenderer';
+import { JoinByCodePage } from '../features/room-invite/JoinByCodePage';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
 
 // blazeroom: Explore opens our server's open spaces and rooms; there's no Featured page.
@@ -210,7 +211,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         >
           {mobile ? null : <Route index element={<WelcomePage />} />}
           <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
-          <Route path={_JOIN_PATH} element={<p>join</p>} />
+          <Route path={_JOIN_PATH} element={<JoinByCodePage />} />
           <Route path={_SEARCH_PATH} element={<HomeSearch />} />
           <Route path={_FEEDBACK_PATH} element={<FeedbackPage />} />
           <Route path={_COFFEE_PATH} element={<CoffeePage />} />

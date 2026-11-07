@@ -65,6 +65,9 @@ export const createShareStore = () => {
   const observers = new Set();
   let revision = 0;
 
+  // Set while the call shows in Cinny's floating viewer, which only has room for the share.
+  let pipHidden = false;
+
   let localStream = null;
   let localVideo = null;
   let localAudio = null;
@@ -284,6 +287,13 @@ export const createShareStore = () => {
     },
     changes,
     layoutShares,
+
+    pipHidden: () => pipHidden,
+    setPipHidden: (hidden) => {
+      if (pipHidden === hidden) return;
+      pipHidden = hidden;
+      emitChange();
+    },
 
     watch: (id, volume) => {
       update(id, (e) => {

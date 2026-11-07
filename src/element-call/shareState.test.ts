@@ -512,6 +512,20 @@ describe('changes', () => {
     expect(next).toHaveBeenCalledTimes(3);
   });
 
+  it('emits when the small picture is hidden or shown, not when it stays the same', () => {
+    const store = createShareStore();
+    const next = vi.fn();
+    store.changes.subscribe(next);
+    expect(store.pipHidden()).toBe(false);
+    store.setPipHidden(true);
+    store.setPipHidden(true);
+    expect(store.pipHidden()).toBe(true);
+    expect(next).toHaveBeenCalledTimes(2);
+    store.setPipHidden(false);
+    expect(store.pipHidden()).toBe(false);
+    expect(next).toHaveBeenCalledTimes(3);
+  });
+
   it('accepts an observer object or a plain function, and returns { unsubscribe }', () => {
     const store = createShareStore();
     store.layoutShares(asVms([fakeVm('a')]));

@@ -13,40 +13,57 @@ export const Cards = style({
 export const Card = style({
   padding: config.space.S300,
   backgroundColor: color.SurfaceVariant.Container,
-  border: `${config.borderWidth.B300} solid ${color.Primary.Main}`,
-  borderLeftWidth: toRem(4),
+  border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   borderRadius: config.radii.R400,
-  flexWrap: 'wrap',
-  rowGap: config.space.S300,
-  minHeight: toRem(180),
-  justifyContent: 'center',
-  backgroundImage: 'radial-gradient(ellipse at top, rgba(153, 121, 255, 0.22), transparent)',
+  overflow: 'hidden',
+});
+
+export const CompactCards = style({ padding: config.space.S200, minWidth: 0 });
+
+export const CompactCard = style({
+  minWidth: 0,
+  padding: `${config.space.S100} ${config.space.S100} ${config.space.S100} ${config.space.S200}`,
+  backgroundColor: color.SurfaceVariant.Container,
+  borderRadius: config.radii.R300,
 });
 
 export const LiveName = style({ minWidth: 0, maxWidth: '100%' });
 
+export const LivePreview = style({
+  width: '100%',
+  aspectRatio: '16 / 9',
+  position: 'relative',
+  borderRadius: config.radii.R300,
+  backgroundColor: color.Background.Container,
+  color: color.SurfaceVariant.OnContainer,
+});
+
+export const LiveBadge = style({
+  position: 'absolute',
+  top: config.space.S200,
+  right: config.space.S200,
+});
+
 export const WatchButton = style({
   minHeight: toRem(44),
+  width: '100%',
   flexShrink: 0,
   gap: config.space.S200,
-  backgroundColor: '#f5c84b',
-  color: '#211900',
-  border: '2px solid #f5c84b',
-  boxShadow: '0 0 0 3px rgba(245, 200, 75, 0.18)',
-  selectors: {
-    '&:hover': { backgroundColor: '#ffdc79', color: '#211900' },
-    '&:active': { backgroundColor: '#e7b72f', color: '#211900' },
-    '&:focus-visible': { outline: '3px solid currentColor', outlineOffset: 4 },
-  },
-  '@media': { 'screen and (max-width: 480px)': { width: '100%' } },
+});
+
+export const WatchControls = style({ minWidth: 0, maxWidth: '100%' });
+
+export const WatchRow = style({
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  rowGap: config.space.S200,
 });
 
 export const Controls = style({
   padding: `${config.space.S200} ${config.space.S400} 0`,
 });
 
-// On a phone the name, mute, slider and Stop watching don't fit on one line: the controls wrap
-// under the name instead of squeezing it to nothing.
+// The owner's capture controls wrap on phones instead of squeezing the preview and name.
 export const Row = style({
   minHeight: toRem(36),
   flexWrap: 'wrap',
@@ -54,7 +71,8 @@ export const Row = style({
 });
 
 export const Name = style({
-  minWidth: toRem(120),
+  minWidth: 0,
+  maxWidth: toRem(100),
 });
 
 export const Slider = style({
@@ -132,5 +150,9 @@ export const FloatingStage = recipe({
     watching: { true: { aspectRatio: '16 / 9' }, false: { height: toRem(140) } },
   },
 });
-export const FloatingControls = style({ maxHeight: 'min(220px, 30vh)', overflowY: 'auto' });
+export const FloatingControls = style({
+  maxHeight: 'min(220px, 30vh)',
+  overflowY: 'auto',
+});
+globalStyle(`${FloatingControls} > ${WatchControls}`, { padding: config.space.S200 });
 export const OwnerVolume = style({ display: 'flex', flexDirection: 'column', gap: 4 });

@@ -12,6 +12,13 @@ export const resolveInviteUserId = (input: string, homeserver: string): string |
   return localpart && isUserId(userId) ? userId : undefined;
 };
 
+// Synapse accepts invites for local usernames nobody registered, so the dialog looks the
+// profile up first. Only "not found" means missing: any other error lets the invite try.
+export const isMissingUserError = (e: unknown): boolean => {
+  const err = e as { errcode?: string; httpStatus?: number } | undefined;
+  return err?.errcode === 'M_NOT_FOUND' || err?.httpStatus === 404;
+};
+
 // Search term for the suggestions: the name without "@" or the server.
 export const inviteSearchTerm = (input: string): string => {
   const value = input.trim();

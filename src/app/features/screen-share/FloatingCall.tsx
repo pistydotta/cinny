@@ -29,7 +29,7 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
   const box = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const embedRef = useCallEmbedRef();
-  const { remotes } = useShares(callEmbed.control);
+  const { store, remotes } = useShares(callEmbed.control);
   const watching = remotes.some((share) => share.watching);
   const syncEmbed = useCallEmbedPlacementSync(stage);
   const hide = useSetAtom(floatingCallHiddenAtom);
@@ -110,6 +110,21 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
     setPos(undefined);
   };
 
+  const { roomId } = callEmbed;
+
+  // The box only has room for the share, so the sharer's small picture over it goes away. The
+  // iframe sits over the stage and takes its clicks, so a double click is heard in the call page.
+  useEffect(() => {
+    if (!store) return undefined;
+    store.setPipHidden(true);
+    const callDocument = callEmbed.control.iframe.contentDocument;
+    const openCall = () => navigateRoom(roomId);
+    callDocument?.addEventListener('dblclick', openCall);
+    return () => {
+      store.setPipHidden(false);
+      callDocument?.removeEventListener('dblclick', openCall);
+    };
+  }, [store, callEmbed, roomId, navigateRoom]);
   return (
     <aside
       ref={box}
@@ -132,7 +147,7 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
           fill="None"
           size="300"
           radii="300"
-          onClick={() => navigateRoom(callEmbed.roomId)}
+          onClick={() => navigateRoom(roomId)}
         >
           <Icon size="100" src={Icons.ArrowGoLeft} />
         </TipIconButton>
@@ -148,9 +163,13 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
           <Icon size="100" src={Icons.Cross} />
         </TipIconButton>
       </div>
-      <div ref={stage} className={css.FloatingStage({ watching })} />
+      <div
+        ref={stage}
+        className={css.FloatingStage({ watching })}
+        onDoubleClick={() => navigateRoom(roomId)}
+      />
       <div className={css.FloatingControls}>
-        <LiveCards callEmbed={callEmbed} />
+        <LiveCards callEmbed={callEmbed} compact />
         <WatchControls callEmbed={callEmbed} />
       </div>
     </aside>

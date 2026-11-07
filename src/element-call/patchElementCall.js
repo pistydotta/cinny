@@ -1,9 +1,10 @@
 // The layout reads screen shares from this list, so it goes through blazeroomShares and only
-// sees the ones being watched. The names are the bundle's own minified ones: IJ is combineLatest,
-// W is map and PJ is of. Without the script, every share shows as it does upstream.
+// sees the ones being watched. The small picture of the speaker over a share (pip$, ce) goes away
+// while blazeroomShares.pipHidden() says so. The names are the bundle's own minified ones: IJ is
+// combineLatest, W is map and PJ is of. Without the script, every share shows as it does upstream.
 const ORIGINAL = 'j.pipe(ZJ(e=>e.length>0?PJ({spotlight:e,pip$:ce}):';
 const PATCHED =
-  'IJ([j,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([e])=>window.blazeroomShares?.layoutShares(e)??e),ZJ(e=>e.length>0?PJ({spotlight:e,pip$:ce}):';
+  'IJ([j,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([e])=>window.blazeroomShares?.layoutShares(e)??e),ZJ(e=>e.length>0?PJ({spotlight:e,pip$:IJ([ce,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([t])=>window.blazeroomShares?.pipHidden?.()?void 0:t))}):';
 
 // Each remote person's microphone volume goes through blazeroomVoices (voiceVolume.js), so the
 // sidebar's per-person mute and volume apply on top of Element Call's own. IJ is combineLatest.

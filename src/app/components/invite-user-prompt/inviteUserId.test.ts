@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inviteSearchTerm, resolveInviteUserId } from './inviteUserId';
+import { inviteSearchTerm, isMissingUserError, resolveInviteUserId } from './inviteUserId';
 
 const HS = 'blazeroom.com.br';
 
@@ -18,6 +18,19 @@ describe('resolveInviteUserId', () => {
     expect(resolveInviteUserId('@', HS)).toBeUndefined();
     expect(resolveInviteUserId('ana:', HS)).toBeUndefined();
     expect(resolveInviteUserId('two words', HS)).toBeUndefined();
+  });
+});
+
+describe('isMissingUserError', () => {
+  it('treats a not-found profile as a missing user', () => {
+    expect(isMissingUserError({ errcode: 'M_NOT_FOUND', httpStatus: 404 })).toBe(true);
+    expect(isMissingUserError({ httpStatus: 404 })).toBe(true);
+  });
+
+  it('lets other failures through', () => {
+    expect(isMissingUserError({ errcode: 'M_FORBIDDEN', httpStatus: 403 })).toBe(false);
+    expect(isMissingUserError(new Error('network'))).toBe(false);
+    expect(isMissingUserError(undefined)).toBe(false);
   });
 });
 

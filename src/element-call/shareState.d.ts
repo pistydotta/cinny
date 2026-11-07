@@ -59,6 +59,8 @@ export type ShareStore = {
   subscribe: (listener: () => void) => () => void;
   changes: ShareChanges;
   layoutShares: (vms: ShareVm[]) => ShareVm[];
+  pipHidden: () => boolean;
+  setPipHidden: (hidden: boolean) => void;
   watch: (id: string, volume: number) => void;
   unwatch: (id: string) => void;
   setVolume: (id: string, volume: number) => void;

@@ -1,4 +1,5 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
+import { Icon, IconSrc, Icons } from 'folds';
 import { formatChips, PokerAction, TableView, ViewPlayer } from './types';
 import { AmountUnit } from './controls/preferences';
 import { amountInput, clampRaise, formatAmount, inputChips, potRaise } from './controls/amounts';
@@ -57,7 +58,7 @@ type UnitSwitchProps = {
 function UnitSwitch({ unit, onUnit, bigBlind, framed }: UnitSwitchProps) {
   return (
     <div
-      className={framed ? bar.Amount : bar.Units}
+      className={framed ? bar.Units : bar.UnitsInline}
       role="group"
       aria-label={tr('poker_controls.amount.units', 'Betting units')}
       title={tr('poker_controls.amount.bb_value', '1 BB = {{chips}} chips', {
@@ -76,6 +77,15 @@ function UnitSwitch({ unit, onUnit, bigBlind, framed }: UnitSwitchProps) {
         </button>
       ))}
     </div>
+  );
+}
+
+function ButtonContent({ icon, children }: { icon: IconSrc; children: React.ReactNode }) {
+  return (
+    <>
+      <Icon className={bar.ButtonIcon} size="200" src={icon} />
+      <span className={bar.ButtonLabel}>{children}</span>
+    </>
   );
 }
 
@@ -128,7 +138,6 @@ export function ActionBar({
   const actor = myTurn ? hero : acting;
   const timer = turnTimer && actor && turnTimer.seat === actor.seat ? turnTimer : undefined;
   const seconds = useSecondsLeft(view.turnDeadline, !!timer);
-  const timeText = seconds !== undefined ? ` · ${seconds}s` : '';
 
   let title = '';
   let sub = '';
@@ -156,12 +165,12 @@ export function ActionBar({
   } else if (legal) {
     title = tr('games.status.your_turn', 'Your turn');
     sub =
-      (legal.toCall > 0
+      legal.toCall > 0
         ? tr('poker_controls.bar.to_call', '{{amount}} to call', { amount: amount(legal.toCall) })
-        : tr('poker_controls.bar.no_bet', 'No bet to call')) + timeText;
+        : tr('poker_controls.bar.no_bet', 'No bet to call');
   } else if (view.phase === 'betting' && acting) {
     title = acting.name;
-    sub = tr('poker_controls.bar.deciding', 'deciding') + timeText;
+    sub = tr('poker_controls.bar.deciding', 'deciding');
     if (hero?.status === 'folded')
       sub += ` · ${tr('games.status.you_folded', 'You folded this hand')}`;
     if (hero?.status === 'allin') sub += ` · ${tr('games.status.you_allin', 'You are all-in')}`;
@@ -230,7 +239,17 @@ export function ActionBar({
           <div className={bar.Name} data-tone={tone}>
             {title || ' '}
           </div>
-          {sub && <div className={bar.Sub}>{sub}</div>}
+          {(sub || seconds !== undefined) && (
+            <div className={bar.Sub}>
+              {seconds !== undefined && (
+                <span className={bar.Timer} data-urgent={seconds <= 5}>
+                  <Icon size="50" src={Icons.Clock} />
+                  {seconds}s
+                </span>
+              )}
+              {sub && <span>{sub}</span>}
+            </div>
+          )}
           {hero?.leaving && (
             <div className={bar.Sub}>
               {tr('games.status.leaving', 'You will leave the table when this hand ends')}
@@ -281,7 +300,7 @@ export function ActionBar({
                 disabled={disabled || (kind === 'check' && cost > 0)}
                 onClick={() => onQueue(on ? undefined : kind)}
               >
-                {on ? '✓ ' : ''}
+                {on && <Icon size="50" src={Icons.Check} />}
                 {labels[kind]}
               </button>
             );
@@ -315,19 +334,25 @@ export function ActionBar({
       )}
 
       {legal && canSize && (
-        <div className={bar.Row}>
-          {presets.map((preset) => (
-            <button
-              key={preset.key}
-              type="button"
-              className={bar.Preset}
-              aria-pressed={preset.to === effectiveRaise}
-              disabled={disabled}
-              onClick={() => pickRaise(preset.to)}
-            >
-              {preset.label}
-            </button>
-          ))}
+        <div className={bar.Sizing}>
+          <div
+            className={bar.Presets}
+            role="group"
+            aria-label={tr('games.action.raise_amount', 'Raise amount')}
+          >
+            {presets.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                className={bar.Preset}
+                aria-pressed={preset.to === effectiveRaise}
+                disabled={disabled}
+                onClick={() => pickRaise(preset.to)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
           <input
             className={bar.Slider}
             type="range"
@@ -374,7 +399,7 @@ export function ActionBar({
             disabled={disabled}
             onClick={() => onAction({ type: 'fold' })}
           >
-            {tr('games.action.fold', 'Fold')}
+            <ButtonContent icon={Icons.Cross}>{tr('games.action.fold', 'Fold')}</ButtonContent>
           </button>
           <button
             type="button"
@@ -382,13 +407,15 @@ export function ActionBar({
             disabled={disabled}
             onClick={() => onAction(legal.canCheck ? { type: 'check' } : { type: 'call' })}
           >
-            {legal.canCheck ? tr('games.action.check', 'Check') : tr('games.action.call', 'Call')}
-            {legal.canCall &&
-              ` ${amount(legal.callAmount)}${
-                legal.callAmount >= (hero?.stack ?? 0)
-                  ? ` · ${tr('games.action.allin', 'All-in')}`
-                  : ''
-              }`}
+            <ButtonContent icon={legal.canCheck ? Icons.Check : Icons.ArrowRight}>
+              {legal.canCheck ? tr('games.action.check', 'Check') : tr('games.action.call', 'Call')}
+              {legal.canCall &&
+                ` ${amount(legal.callAmount)}${
+                  legal.callAmount >= (hero?.stack ?? 0)
+                    ? ` · ${tr('games.action.allin', 'All-in')}`
+                    : ''
+                }`}
+            </ButtonContent>
           </button>
           <button
             type="button"
@@ -396,11 +423,13 @@ export function ActionBar({
             disabled={!legal.canRaise || disabled}
             onClick={() => onAction({ type: 'raise', amount: effectiveRaise })}
           >
-            {raiseLabel}
-            {legal.canRaise &&
-              ` ${legal.isBet || isAllIn ? '' : `${tr('games.action.raise_to', 'to')} `}${amount(
-                effectiveRaise
-              )}`}
+            <ButtonContent icon={isAllIn ? Icons.ArrowDropTop : Icons.ArrowTop}>
+              {raiseLabel}
+              {legal.canRaise &&
+                ` ${legal.isBet || isAllIn ? '' : `${tr('games.action.raise_to', 'to')} `}${amount(
+                  effectiveRaise
+                )}`}
+            </ButtonContent>
           </button>
         </div>
       )}

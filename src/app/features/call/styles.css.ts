@@ -9,6 +9,10 @@ export const CallViewContent = style({
 
 export const ControlCard = style({
   padding: config.space.S300,
+  maxWidth: '100%',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  rowGap: config.space.S300,
 });
 
 export const ControlDivider = style({
@@ -20,7 +24,8 @@ export const CallMemberCard = style({
 });
 
 export const CallControlContainer = style({
-  padding: config.space.S400,
+  padding: config.space.S300,
+  flexShrink: 0,
 });
 
 export const PrescreenMessage = style({
