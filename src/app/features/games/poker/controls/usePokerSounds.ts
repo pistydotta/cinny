@@ -2,15 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { TableView } from '../types';
 import type { PokerPreferences } from './preferences';
 import { enabledSound, PokerSound, soundEvents } from './soundEvents';
-
-const NOTES: Record<PokerSound, number[]> = {
-  turn: [660, 880],
-  deal: [260],
-  chips: [1100, 1500],
-  fold: [190],
-  check: [460],
-  win: [523, 659, 784],
-};
+import { playPokerSound } from './synth';
 
 export function usePokerSounds(
   view: TableView | undefined,
@@ -50,24 +42,7 @@ export function usePokerSounds(
       !enabledSound(event, settings.current)
     )
       return;
-    NOTES[event].forEach((frequency, i) => {
-      const start = context.currentTime + i * 0.075;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = event === 'deal' || event === 'fold' ? 'triangle' : 'sine';
-      oscillator.frequency.setValueAtTime(frequency, start);
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.12, start + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.09);
-      oscillator.connect(gain);
-      gain.connect(master.current as GainNode);
-      oscillator.start(start);
-      oscillator.stop(start + 0.1);
-      oscillator.onended = () => {
-        oscillator.disconnect();
-        gain.disconnect();
-      };
-    });
+    playPokerSound(context, master.current, event);
   }, []);
 
   useEffect(() => {

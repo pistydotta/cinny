@@ -158,6 +158,8 @@ export type TableView = {
   /** Best five cards, using only the viewer's cards and public board; empty before the flop. */
   myHandCards?: Card[];
   canFoldNow?: boolean;
+  /** The viewer lost the showdown and mucked; they may still show their cards. */
+  canShowCards?: boolean;
   pendingChips: number;
   players: ViewPlayer[];
 };

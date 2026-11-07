@@ -779,6 +779,7 @@
       "raise": "{{name}} aumentou para {{chips}}",
       "uncalled": "{{chips}} não pagos voltam para {{name}}",
       "shows": "{{name}} mostra {{hand}}",
+      "mucks": "{{name}} não mostrou as cartas",
       "won": "{{name}} ganhou {{chips}}",
       "won_no_show": "{{name}} ganhou {{chips}} sem mostrar as cartas"
     },
@@ -797,6 +798,8 @@
       "waiting_players": "Aguardando mais jogadores para começar…"
     },
     "action": {
+      "show_cards": "Mostrar minhas cartas",
+      "show_cards_hint": "Suas cartas ficam escondidas, a menos que você as mostre",
       "raise": "Aumentar",
       "allin": "All-in",
       "bet": "Apostar",
@@ -933,6 +936,8 @@
       "sit_title": "Sentar no lugar {{seat}}"
     },
     "table": {
+      "your_turn": "Sua vez",
+      "playing": "Jogando",
       "blinds": "Blinds {{small}}/{{big}}",
       "card": "{{rank}} de {{suit}}",
       "empty": "vazio",

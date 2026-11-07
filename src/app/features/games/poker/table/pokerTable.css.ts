@@ -228,6 +228,8 @@ export const Seat = style({
     },
     '&[data-folded="true"]': { opacity: 0.55, filter: 'saturate(0.4)' },
     '&[data-out="true"]': { opacity: 0.35 },
+    // The seat whose turn it is grows a little and sits above its neighbours.
+    '&[data-turn="true"]': { transform: 'translate(-50%, -50%) scale(1.1)', zIndex: 5 },
   },
 });
 
@@ -361,6 +363,30 @@ export const Plate = style({
   lineHeight: 1.2,
   selectors: {
     '[data-layout="portrait"] &': { minWidth: '21cqmin', padding: '0.6cqmin 2cqmin 0.8cqmin' },
+    '[data-turn="true"] &': {
+      background: 'linear-gradient(180deg, rgba(72,56,14,0.97), rgba(36,28,8,0.97))',
+      boxShadow: `0 0 0 0.3cqmin ${GOLD}, 0 0 2.4cqmin 0.3cqmin rgba(245,200,75,0.45)`,
+    },
+  },
+});
+
+export const TurnTag = style({
+  position: 'absolute',
+  left: '50%',
+  bottom: '100%',
+  transform: 'translate(-50%, -0.4cqmin)',
+  padding: '0.2cqmin 1.2cqmin',
+  borderRadius: '99cqmin',
+  background: GOLD,
+  color: '#2a1f04',
+  fontSize: '1.4cqmin',
+  fontWeight: 800,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+  animation: `${turnPulse} 1.6s ease-in-out infinite`,
+  selectors: {
+    '[data-layout="portrait"] &': { fontSize: '2.2cqmin' },
   },
 });
 

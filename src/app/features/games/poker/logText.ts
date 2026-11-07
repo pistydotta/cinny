@@ -94,6 +94,7 @@ const LOG_EN: Record<string, string> = {
   raise: '{{name}} raises to {{chips}}',
   uncalled: 'Uncalled {{chips}} returned to {{name}}',
   shows: '{{name}} shows {{hand}}',
+  mucks: '{{name}} mucks',
   won: '{{name}} wins {{chips}}',
   won_no_show: '{{name}} wins {{chips}} without showing',
 };

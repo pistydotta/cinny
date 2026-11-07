@@ -20,6 +20,7 @@ type ActionBarProps = {
   queue: PreAction | null;
   onQueue: (kind?: PreActionKind) => void;
   onFoldNow: () => void;
+  onShowCards: () => void;
   turnTimer?: TurnTimer;
   resolveAvatar?: (url: string) => string | undefined;
 };
@@ -89,6 +90,7 @@ export function ActionBar({
   queue,
   onQueue,
   onFoldNow,
+  onShowCards,
   turnTimer,
   resolveAvatar,
 }: ActionBarProps) {
@@ -235,6 +237,20 @@ export function ActionBar({
             </div>
           )}
         </div>
+        {view.canShowCards && (
+          <button
+            type="button"
+            className={bar.Chip}
+            disabled={disabled}
+            onClick={onShowCards}
+            title={tr(
+              'games.action.show_cards_hint',
+              'Your cards stay hidden unless you show them'
+            )}
+          >
+            {tr('games.action.show_cards', 'Show my cards')}
+          </button>
+        )}
         {hero && <HandGuide view={view} hero={hero} />}
         {!canSize && <UnitSwitch unit={unit} onUnit={switchUnit} bigBlind={view.bigBlind} framed />}
       </div>

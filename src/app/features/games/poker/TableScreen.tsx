@@ -210,6 +210,11 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
     }
   };
 
+  const showCards = async () => {
+    if (!view?.canShowCards || !connected || pending.current) return;
+    await run(`show:${view.handNumber}`, () => api.showCards(tableId, view.handNumber));
+  };
+
   const updatePreferences = (next: PokerPreferences) => {
     setPreferences(next);
     pokerAudio.unlock(next);
@@ -483,6 +488,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           queue={preAction}
           onQueue={queueAction}
           onFoldNow={foldNow}
+          onShowCards={showCards}
           onAction={sendAction}
           turnTimer={turnTimerFor(view, Date.now())}
           resolveAvatar={resolveAvatar}

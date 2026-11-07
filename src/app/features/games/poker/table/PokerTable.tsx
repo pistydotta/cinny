@@ -309,7 +309,9 @@ export function PokerTable({
         const fromDealer = offset(seatPos, spec.center);
         const inHand = p.status !== 'sitting-out';
         const folded = p.status === 'folded';
-        const reveal = revealCards && (p.status === 'active' || p.status === 'allin');
+        // Losers who mucked at showdown come without cards and stay face down.
+        const reveal =
+          revealCards && (p.status === 'active' || p.status === 'allin') && p.holeCards.length > 0;
         const faceUp = isHero || reveal;
         const myTurn = phase === 'betting' && view.actingSeat === p.seat;
         const timer = myTurn && turnTimer?.seat === p.seat ? turnTimer : undefined;
@@ -334,6 +336,7 @@ export function PokerTable({
             data-hero={isHero}
             data-folded={folded && !showResult}
             data-out={p.status === 'sitting-out'}
+            data-turn={myTurn}
             style={pct(seatPos)}
           >
             {showCards && (
@@ -363,7 +366,7 @@ export function PokerTable({
                 ))}
               </div>
             )}
-            <div className={css.AvatarWrap} data-turn={myTurn && !timer} data-winner={!!won}>
+            <div className={css.AvatarWrap} data-turn={myTurn} data-winner={!!won}>
               <PlayerAvatar player={p} resolveAvatar={resolveAvatar} />
               {timer && (
                 <svg className={css.TimerRing} viewBox="0 0 100 100" aria-hidden>
@@ -386,6 +389,13 @@ export function PokerTable({
               )}
             </div>
             <div className={css.Plate}>
+              {myTurn && (
+                <div className={css.TurnTag}>
+                  {isHero
+                    ? tr('games.table.your_turn', 'Your turn')
+                    : tr('games.table.playing', 'Playing')}
+                </div>
+              )}
               {badge && !away && (
                 <div className={css.ActionBadge} data-kind={badge.type}>
                   {actionLabel(badge, amount)}
