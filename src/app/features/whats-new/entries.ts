@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-floating-room-card',
+    items: () => [
+      {
+        title: tr('screen_share.room_card_news_title', 'A clearer call card'),
+        body: tr(
+          'screen_share.room_card_news_body',
+          "Outside the call's room, the floating card shows the room, who is in it (ringed green while they talk) and a Go button. Minimize it and a green dot pulses on the room's speaker next to the call buttons: click there to bring the card back, or the room's name to go there; its waves move when someone talks."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-truco-rounds',
     items: () => [
       {

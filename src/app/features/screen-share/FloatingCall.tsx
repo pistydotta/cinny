@@ -15,6 +15,7 @@ import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
 import { LiveCards } from './LiveCards';
 import { WatchControls } from './WatchControls';
+import { RoomCard } from './RoomPill';
 import { useShares } from './useShares';
 import { clampPos, FloatingPos, loadPos, savePos } from './floatingPosition';
 import * as css from './styles.css';
@@ -111,6 +112,21 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
   };
 
   const { roomId } = callEmbed;
+  const openCall = () => navigateRoom(roomId);
+  const dragHint = tr('screen_share.drag_hint', 'Drag to move. Double-click to put it back.');
+  // Watching or not, hiding folds the box into the same chip, so it looks the same.
+  const hideButton = (
+    <TipIconButton
+      label={tr('screen_share.minimize', 'Minimize to the call bar')}
+      variant="Surface"
+      fill="None"
+      size="300"
+      radii="300"
+      onClick={() => hide(true)}
+    >
+      <Icon size="100" src={Icons.ChevronBottom} />
+    </TipIconButton>
+  );
 
   // The box only has room for the share, so the sharer's small picture over it goes away. The
   // iframe sits over the stage and takes its clicks, so a double click is heard in the call page.
@@ -118,11 +134,11 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
     if (!store) return undefined;
     store.setPipHidden(true);
     const callDocument = callEmbed.control.iframe.contentDocument;
-    const openCall = () => navigateRoom(roomId);
-    callDocument?.addEventListener('dblclick', openCall);
+    const openFromCall = () => navigateRoom(roomId);
+    callDocument?.addEventListener('dblclick', openFromCall);
     return () => {
       store.setPipHidden(false);
-      callDocument?.removeEventListener('dblclick', openCall);
+      callDocument?.removeEventListener('dblclick', openFromCall);
     };
   }, [store, callEmbed, roomId, navigateRoom]);
   return (
@@ -132,42 +148,44 @@ export function FloatingCall({ callEmbed }: { callEmbed: CallEmbed }) {
       style={pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' } : undefined}
       aria-label={tr('screen_share.floating', 'Floating call viewer')}
     >
-      <div
-        className={css.FloatingHeader({ dragging })}
-        title={tr('screen_share.drag_hint', 'Drag to move. Double-click to put it back.')}
-        onPointerDown={handleDown}
-        onPointerMove={handleMove}
-        onPointerUp={handleUp}
-        onPointerCancel={handleUp}
-        onDoubleClick={resetPos}
-      >
-        <TipIconButton
-          label={tr('screen_share.return_call', 'Return to call')}
-          variant="Surface"
-          fill="None"
-          size="300"
-          radii="300"
-          onClick={() => navigateRoom(roomId)}
+      {watching ? (
+        <div
+          className={css.FloatingHeader({ dragging })}
+          title={dragHint}
+          onPointerDown={handleDown}
+          onPointerMove={handleMove}
+          onPointerUp={handleUp}
+          onPointerCancel={handleUp}
+          onDoubleClick={resetPos}
         >
-          <Icon size="100" src={Icons.ArrowGoLeft} />
-        </TipIconButton>
-        <Icon className={css.FloatingGrip} size="100" src={Icons.HorizontalDots} />
-        <TipIconButton
-          label={tr('screen_share.hide_viewer', 'Hide viewer')}
-          variant="Surface"
-          fill="None"
-          size="300"
-          radii="300"
-          onClick={() => hide(true)}
+          <TipIconButton
+            label={tr('screen_share.return_call', 'Return to call')}
+            variant="Surface"
+            fill="None"
+            size="300"
+            radii="300"
+            onClick={openCall}
+          >
+            <Icon size="100" src={Icons.ArrowGoLeft} />
+          </TipIconButton>
+          <Icon className={css.FloatingGrip} size="100" src={Icons.HorizontalDots} />
+          {hideButton}
+        </div>
+      ) : (
+        <div
+          className={css.RoomPill}
+          style={dragging ? { cursor: 'grabbing' } : undefined}
+          title={dragHint}
+          onPointerDown={handleDown}
+          onPointerMove={handleMove}
+          onPointerUp={handleUp}
+          onPointerCancel={handleUp}
+          onDoubleClick={resetPos}
         >
-          <Icon size="100" src={Icons.Cross} />
-        </TipIconButton>
-      </div>
-      <div
-        ref={stage}
-        className={css.FloatingStage({ watching })}
-        onDoubleClick={() => navigateRoom(roomId)}
-      />
+          <RoomCard callEmbed={callEmbed} onOpen={openCall} hideButton={hideButton} />
+        </div>
+      )}
+      <div ref={stage} className={css.FloatingStage({ watching })} onDoubleClick={openCall} />
       <div className={css.FloatingControls}>
         <LiveCards callEmbed={callEmbed} compact />
         <WatchControls callEmbed={callEmbed} />

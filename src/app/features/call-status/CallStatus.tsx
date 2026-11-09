@@ -1,13 +1,10 @@
 import React from 'react';
-import { Box, Button, Spinner, Text } from 'folds';
+import { Box, Spinner } from 'folds';
 import { useAtom } from 'jotai';
 import classNames from 'classnames';
 import { floatingCallHiddenAtom } from '../screen-share/FloatingCall';
-import { tr } from '../translation/tr';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
-import { LiveChip } from './LiveChip';
 import * as css from './styles.css';
-import { CallRoomName } from './CallRoomName';
 import { CallControl } from './CallControl';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
@@ -19,6 +16,7 @@ import { useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallSpeakers } from '../../hooks/useCallSpeakers';
 import { MemberSpeaking } from './MemberSpeaking';
 import { LiveBadge } from '../screen-share/LiveBadge';
+import { CallPresence } from './CallPresence';
 
 type CallStatusProps = {
   callEmbed: CallEmbed;
@@ -38,6 +36,17 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
 
   const memberVisible = callJoined && callMembers.length > 0;
 
+  const presence = (
+    <CallPresence
+      callEmbed={callEmbed}
+      viewer={
+        callJoined && selectedRoom !== callEmbed.roomId
+          ? { hidden: viewerHidden, onShow: () => setViewerHidden(false) }
+          : undefined
+      }
+    />
+  );
+
   return (
     <Box
       className={classNames(css.CallStatus, ContainerColor({ variant: 'Background' }))}
@@ -46,52 +55,30 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       alignItems={compact ? undefined : 'Center'}
       direction={compact ? 'Column' : 'Row'}
     >
-      <Box grow="Yes" alignItems="Center" gap="200">
-        {memberVisible ? (
-          <Box shrink="No">
-            <LiveChip count={callMembers.length} room={room} members={callMembers} />
-          </Box>
-        ) : (
-          <Spinner variant="Secondary" size="200" />
-        )}
+      {/* Who is in and who is talking on the left; the room pill sits with the call buttons,
+          right under where the floating card opens. */}
+      <Box grow="Yes" alignItems="Center" gap="200" style={{ minWidth: 0 }}>
+        {!memberVisible && <Spinner variant="Secondary" size="200" />}
         <LiveBadge callEmbed={callEmbed} />
-        <Box grow="Yes" alignItems="Center" gap="Inherit">
-          {!compact && (
-            <>
-              <CallRoomName room={room} />
-              {speakers.size > 0 && (
-                <>
-                  <StatusDivider />
-                  <span data-spacing-node />
-                  <MemberSpeaking room={room} speakers={speakers} />
-                </>
-              )}
-            </>
-          )}
-        </Box>
         {memberVisible && (
           <Box shrink="No">
             <MemberGlance room={room} members={callMembers} speakers={speakers} />
           </Box>
         )}
-      </Box>
-      {memberVisible && !compact && <StatusDivider />}
-      <Box shrink="No" alignItems="Center" gap="Inherit">
-        {callJoined && selectedRoom !== callEmbed.roomId && (
-          <Button size="300" onClick={() => setViewerHidden(!viewerHidden)}>
-            <Text size="B300">
-              {viewerHidden
-                ? tr('screen_share.show_viewer', 'Show viewer')
-                : tr('screen_share.hide_viewer', 'Hide viewer')}
-            </Text>
-          </Button>
-        )}
-        {compact && (
-          <Box grow="Yes">
-            <CallRoomName room={room} />
+        {!compact && speakers.size > 0 && (
+          <Box style={{ minWidth: 0 }}>
+            <MemberSpeaking room={room} speakers={speakers} />
           </Box>
         )}
-        <CallControl callJoined={callJoined} compact={compact} callEmbed={callEmbed} />
+      </Box>
+      <Box alignItems="Center" gap="300" style={{ minWidth: 0 }}>
+        <Box grow={compact ? 'Yes' : 'No'} style={{ minWidth: 0 }}>
+          {presence}
+        </Box>
+        {!compact && <StatusDivider />}
+        <Box shrink="No" alignItems="Center" gap="Inherit">
+          <CallControl callJoined={callJoined} compact={compact} callEmbed={callEmbed} />
+        </Box>
       </Box>
     </Box>
   );
