@@ -50,6 +50,7 @@ const sameLocal = (a, b) =>
     a.videoTrack === b.videoTrack);
 
 const sameSnapshot = (a, b) =>
+  a.peopleHidden === b.peopleHidden &&
   sameLocal(a.local, b.local) &&
   a.remotes.length === b.remotes.length &&
   a.remotes.every((r, i) => sameRemote(r, b.remotes[i]));
@@ -67,6 +68,9 @@ export const createShareStore = () => {
 
   // Set while the call shows in Cinny's floating viewer, which only has room for the share.
   let pipHidden = false;
+  // Set while someone watching a share chose to hide the people column beside it.
+  let peopleHidden = false;
+  const hidingPeople = () => peopleHidden && [...entries.values()].some((e) => e.vm && e.watching);
 
   let localStream = null;
   let localVideo = null;
@@ -76,10 +80,11 @@ export const createShareStore = () => {
   let localEnded = null;
   let sawLocalVm = false;
 
-  let snapshot = { local: null, remotes: [] };
+  let snapshot = { local: null, remotes: [], peopleHidden: false };
   let batching = false;
 
   const build = () => ({
+    peopleHidden: hidingPeople(),
     local: localVideo
       ? {
           name: localVideo.label,
@@ -288,7 +293,16 @@ export const createShareStore = () => {
     changes,
     layoutShares,
 
-    pipHidden: () => pipHidden,
+    // Hiding the people also hides the sharer's small picture over the share. It only counts
+    // while a share is watched: with nothing to watch the people are all there is.
+    pipHidden: () => pipHidden || hidingPeople(),
+    peopleHidden: hidingPeople,
+    setPeopleHidden: (hidden) => {
+      if (peopleHidden === hidden) return;
+      peopleHidden = hidden;
+      emitChange();
+      refresh();
+    },
     setPipHidden: (hidden) => {
       if (pipHidden === hidden) return;
       pipHidden = hidden;

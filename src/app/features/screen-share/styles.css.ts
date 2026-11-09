@@ -303,3 +303,54 @@ export const GoToRoom = style({
     '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 2 },
   },
 });
+
+// Controls over the watched share in the call room. A fixed strip as wide as the share, lined up
+// with its top edge; only the bar inside takes clicks, so the share stays clickable around it.
+// Above the call iframe, which has no z-index there.
+export const LiveOverlay = style({
+  position: 'fixed',
+  zIndex: 2,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-end',
+  gap: config.space.S100,
+  padding: config.space.S300,
+  pointerEvents: 'none',
+  opacity: 0,
+  transition: 'opacity 200ms ease-out',
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+  selectors: { '&:focus-within': { opacity: 1 } },
+});
+export const LiveOverlayShown = style({ opacity: 1 });
+
+// Always dark, whatever the theme: it sits on video, like the call's own name tags.
+export const LiveOverlayBar = style({
+  pointerEvents: 'auto',
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+  padding: config.space.S100,
+  borderRadius: config.radii.Pill,
+  backgroundColor: 'rgba(16, 18, 22, 0.78)',
+  backdropFilter: 'blur(8px)',
+  color: '#F2F4F7',
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
+});
+
+export const LiveOverlaySlider = style({
+  width: toRem(96),
+  backgroundColor: 'rgba(255, 255, 255, 0.28)',
+});
+
+export const LiveOverlayDivider = style({
+  width: 1,
+  height: toRem(18),
+  margin: `0 ${config.space.S100}`,
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+});
+
+// The bar's light icon buttons read on the dark glass in light themes too.
+export const LiveOverlayButton = style({
+  color: 'inherit',
+  selectors: { '&:hover, &[aria-pressed=true]': { backgroundColor: 'rgba(255, 255, 255, 0.14)' } },
+});

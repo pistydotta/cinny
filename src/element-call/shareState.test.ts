@@ -693,3 +693,36 @@ describe('wrapGetDisplayMedia', () => {
     expect(store.getSnapshot()).toBe(before);
   });
 });
+
+describe('hiding the people beside a share', () => {
+  it('only hides them, and the small picture, while a share is watched', () => {
+    const store = createShareStore();
+    const a = fakeVm('a');
+    store.layoutShares(asVms([a]));
+    store.setPeopleHidden(true);
+    expect(store.peopleHidden()).toBe(false);
+    expect(store.pipHidden()).toBe(false);
+    store.watch('a', 1);
+    expect(store.peopleHidden()).toBe(true);
+    expect(store.pipHidden()).toBe(true);
+    expect(store.getSnapshot().peopleHidden).toBe(true);
+    store.unwatch('a');
+    expect(store.getSnapshot().peopleHidden).toBe(false);
+  });
+
+  it('tells the layout and the listeners when it changes', () => {
+    const store = createShareStore();
+    const seen: number[] = [];
+    store.changes.subscribe((v: number) => seen.push(v));
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.layoutShares(asVms([fakeVm('a')]));
+    store.watch('a', 1);
+    const before = seen.length;
+    store.setPeopleHidden(true);
+    expect(seen.length).toBe(before + 1);
+    expect(listener).toHaveBeenCalled();
+    store.setPeopleHidden(true);
+    expect(seen.length).toBe(before + 1);
+  });
+});

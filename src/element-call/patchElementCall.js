@@ -12,11 +12,13 @@ const VOICE_ORIGINAL = 'sink$:e.behavior(n.participant$.pipe(W(e=>t=>e?.setVolum
 const VOICE_PATCHED =
   'sink$:e.behavior(IJ([n.participant$,window.blazeroomVoices?.changes??PJ(0)]).pipe(W(([e])=>{window.blazeroomVoices?.observeParticipant?.(n.userId,n,e);return t=>e?.setVolume(window.blazeroomVoices?.volumeFor(n.userId,t)??t)})))';
 
-// Expanding a share on a wide window swaps Element Call's spotlight-expanded layout (the share and
-// one small picture) for the edge-to-edge spotlight layout, so the others' cameras stay beside the
-// share. Te is spotlight-expanded, Ce spotlight-landscape and ye whether the share is expanded.
+// A watched share on a wide window always fills the room edge to edge, with the others' cameras
+// beside it (the screen script hides the expand button, which would do nothing). Hiding the people
+// (blazeroomShares.peopleHidden) switches to the share alone. Te is spotlight-expanded, Ce
+// spotlight-landscape, ye whether Element Call's expand is on (ignored), KJ distinctUntilChanged.
 const EXPAND_ORIGINAL = 'ye.pipe(ZJ(e=>e?Te(!1):Ce(!1)))';
-const EXPAND_PATCHED = 'ye.pipe(ZJ(e=>e?Ce(!0):Ce(!1)))';
+const EXPAND_PATCHED =
+  'IJ([ye,window.blazeroomShares?.changes??PJ(0)]).pipe(W(()=>!!window.blazeroomShares?.peopleHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0)))';
 
 const replaceOnce = (source, original, patched, what) => {
   const at = source.indexOf(original);

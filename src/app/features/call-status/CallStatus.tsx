@@ -55,19 +55,26 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       alignItems={compact ? undefined : 'Center'}
       direction={compact ? 'Column' : 'Row'}
     >
-      {/* Who is in and who is talking on the left; the room pill sits with the call buttons,
-          right under where the floating card opens. */}
-      <Box grow="Yes" alignItems="Center" gap="200" style={{ minWidth: 0 }}>
+      {/* Everything sits on the right, like Discord's voice panel: who is talking, the faces, then
+          the room pill right under where the floating card opens, then the call buttons. */}
+      {!compact && <Box grow="Yes" />}
+      <Box
+        grow={compact ? 'Yes' : 'No'}
+        justifyContent={compact ? undefined : 'End'}
+        alignItems="Center"
+        gap="200"
+        style={{ minWidth: 0 }}
+      >
+        {!compact && speakers.size > 0 && (
+          <Box style={{ minWidth: 0 }}>
+            <MemberSpeaking room={room} speakers={speakers} />
+          </Box>
+        )}
         {!memberVisible && <Spinner variant="Secondary" size="200" />}
         <LiveBadge callEmbed={callEmbed} />
         {memberVisible && (
           <Box shrink="No">
             <MemberGlance room={room} members={callMembers} speakers={speakers} />
-          </Box>
-        )}
-        {!compact && speakers.size > 0 && (
-          <Box style={{ minWidth: 0 }}>
-            <MemberSpeaking room={room} speakers={speakers} />
           </Box>
         )}
       </Box>

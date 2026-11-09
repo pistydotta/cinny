@@ -14,7 +14,7 @@ describe('patchElementCall', () => {
     expect(patched).toContain('blazeroomVoices?.observeParticipant?.(n.userId,n,e)');
     expect(patched).not.toContain(original);
     expect(patched).not.toContain(voice);
-    expect(patched).toContain('ye.pipe(ZJ(e=>e?Ce(!0):Ce(!1)))');
+    expect(patched).toContain('peopleHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0))');
     expect(patched.startsWith('before;')).toBe(true);
     expect(patched.endsWith('after')).toBe(true);
   });

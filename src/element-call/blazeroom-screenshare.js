@@ -21,10 +21,14 @@ if (navigator.mediaDevices?.getDisplayMedia) wrapGetDisplayMedia(navigator.media
 
 // Element Call's spotlight tile has its own share volume menu, which changes the volume behind the
 // store's back. Cinny's WatchControls are the only volume control, so hide it. Its trigger is the
-// only button in that corner that opens a popup (a menu on desktop, a drawer on phones).
+// only button in that corner that opens a popup (a menu on desktop, a drawer on phones). The
+// expand button goes too: a watched share is always expanded (patchElementCall.js). Fullscreen,
+// labelled "maximise", stays.
 const hideVolumeMenu = document.createElement('style');
 hideVolumeMenu.textContent =
-  '[class*="_bottomRightButtons_"] > button[aria-haspopup] { display: none !important; }';
+  '[class*="_bottomRightButtons_"] > button[aria-haspopup],' +
+  ' [class*="_bottomRightButtons_"] > button[class*="_expand_"]:not([aria-label="maximise"])' +
+  ' { display: none !important; }';
 (document.head ?? document.documentElement).appendChild(hideVolumeMenu);
 window.blazeroomShares = store;
 

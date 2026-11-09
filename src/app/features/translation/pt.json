@@ -664,6 +664,8 @@
     "is_live": "{{name}} está ao vivo",
     "watch": "Assistir",
     "stop_watching": "Parar de assistir",
+    "hide_people": "Ocultar pessoas",
+    "show_people": "Mostrar pessoas",
     "volume": "Volume da live",
     "mute": "Mutar live",
     "unmute": "Ativar som da live",

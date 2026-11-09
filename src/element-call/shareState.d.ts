@@ -20,7 +20,11 @@ export type LocalShare = {
   videoTrack: MediaStreamTrack;
 };
 
-export type ShareSnapshot = { local: LocalShare | null; remotes: RemoteShare[] };
+export type ShareSnapshot = {
+  local: LocalShare | null;
+  remotes: RemoteShare[];
+  peopleHidden: boolean;
+};
 
 // The parts of LiveKit's RemoteTrackPublication and RemoteParticipant that we use.
 export type SharePublication = {
@@ -61,6 +65,8 @@ export type ShareStore = {
   layoutShares: (vms: ShareVm[]) => ShareVm[];
   pipHidden: () => boolean;
   setPipHidden: (hidden: boolean) => void;
+  peopleHidden: () => boolean;
+  setPeopleHidden: (hidden: boolean) => void;
   watch: (id: string, volume: number) => void;
   unwatch: (id: string) => void;
   setVolume: (id: string, volume: number) => void;

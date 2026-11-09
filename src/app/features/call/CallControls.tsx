@@ -30,7 +30,6 @@ import { stopPropagation } from '../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
-import { WatchControls } from '../screen-share/WatchControls';
 
 type CallControlsProps = {
   callEmbed: CallEmbed;
@@ -203,7 +202,6 @@ export function CallControls({ callEmbed }: CallControlsProps) {
             </Button>
           </Box>
         </Box>
-        <WatchControls callEmbed={callEmbed} />
       </SequenceCard>
     </Box>
   );

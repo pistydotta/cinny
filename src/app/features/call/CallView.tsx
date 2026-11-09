@@ -16,6 +16,7 @@ import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
 import { LiveCards } from '../screen-share/LiveCards';
+import { LiveOverlay } from '../screen-share/LiveOverlay';
 import { ShareBar } from '../screen-share/ShareBar';
 
 function LivekitServerMissingMessage() {
@@ -136,6 +137,7 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
       <Box grow="Yes" className={css.CallStage}>
         <Box grow="Yes" ref={containerRef} />
         {callEmbed && joined && <LiveCards callEmbed={callEmbed} />}
+        {callEmbed && joined && <LiveOverlay callEmbed={callEmbed} />}
       </Box>
       {callEmbed && joined && <ShareBar callEmbed={callEmbed} />}
       {callEmbed && joined && <CallControls callEmbed={callEmbed} />}

@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-call-stage',
+    items: () => [
+      {
+        title: tr('whats_new.call_stage_title', 'Bigger lives, easier controls'),
+        body: tr(
+          'whats_new.call_stage_body',
+          'A live you watch now fills the call. Its volume and stop button sit on the live itself, and Hide people gives it the whole room without fullscreen. Who is talking gets a green ring in the channel list, and the faces moved next to the room in the call bar.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-floating-room-card',
     items: () => [
       {

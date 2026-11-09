@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import { Room } from 'matrix-js-sdk';
 import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
@@ -12,17 +13,23 @@ import { CallMemberPopout } from '../call-member-card/CallMemberPopout';
 import { useCallAudioReports } from '../call-member-card/callAudioStatus';
 import { userAudioStatus } from '../call-member-card/audioStatus';
 import { tr } from '../translation/tr';
+import { useCallEmbed } from '../../hooks/useCallEmbed';
+import { useCallSpeakers } from '../../hooks/useCallSpeakers';
+import { CallEmbed } from '../../plugins/call/CallEmbed';
+import * as css from './styles.css';
 
 function CallMemberRow({
   room,
   userId,
   muted,
   deafened,
+  speaking,
 }: {
   room: Room;
   userId: string;
   muted: boolean;
   deafened: boolean;
+  speaking: boolean;
 }) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -55,7 +62,11 @@ function CallMemberRow({
               textAlign: 'left',
             }}
           >
-            <Avatar size="200" radii="Pill">
+            <Avatar
+              size="200"
+              radii="Pill"
+              className={classNames(css.CallMemberAvatar, speaking && css.CallMemberSpeaking)}
+            >
               <UserAvatar
                 userId={userId}
                 src={avatarUrl}
@@ -63,7 +74,13 @@ function CallMemberRow({
                 renderFallback={() => <Icon size="50" src={Icons.User} filled />}
               />
             </Avatar>
-            <Text size="T300" priority="300" truncate title={name}>
+            <Text
+              size="T300"
+              priority={speaking ? '500' : '300'}
+              className={speaking ? css.CallMemberNameSpeaking : undefined}
+              truncate
+              title={name}
+            >
               {name}
             </Text>
             <Box gap="100" shrink="No" style={{ marginLeft: 'auto', opacity: 0.65 }}>
@@ -95,7 +112,10 @@ function CallMemberRow({
 
 // Discord-style: who's in the voice room, one row per person under its name.
 // Clicking someone opens a card with their profile and my volume for them.
-export function CallMemberAvatars({ room, members }: { room: Room; members: CallMembership[] }) {
+type ListProps = { room: Room; members: CallMembership[] };
+const NOBODY = new Set<string>();
+
+function CallMemberList({ room, members, speakers }: ListProps & { speakers: Set<string> }) {
   const { reports, liveMuted } = useCallAudioReports(room, members);
   const userIds = uniqueCallUserIds(members);
   if (userIds.length === 0) return null;
@@ -118,8 +138,23 @@ export function CallMemberAvatars({ room, members }: { room: Room; members: Call
           userId={userId}
           {...userAudioStatus(reports, members, userId)}
           muted={liveMuted.get(userId) ?? userAudioStatus(reports, members, userId).muted}
+          speaking={speakers.has(userId)}
         />
       ))}
     </Box>
+  );
+}
+
+// Only the call I'm in can say who is talking: it reads the call page's tiles.
+function SpeakingList({ callEmbed, ...props }: ListProps & { callEmbed: CallEmbed }) {
+  return <CallMemberList {...props} speakers={useCallSpeakers(callEmbed)} />;
+}
+
+export function CallMemberAvatars({ room, members }: ListProps) {
+  const callEmbed = useCallEmbed();
+  return callEmbed?.roomId === room.roomId ? (
+    <SpeakingList callEmbed={callEmbed} room={room} members={members} />
+  ) : (
+    <CallMemberList room={room} members={members} speakers={NOBODY} />
   );
 }
