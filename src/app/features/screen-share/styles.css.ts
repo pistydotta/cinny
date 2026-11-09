@@ -1,21 +1,102 @@
-import { globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { createVar, globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, toRem } from 'folds';
 
+// LiveCards sets it to the width of a person's tile in the call.
+export const tileWidthVar = createVar();
+
+// Shares waiting to be watched stand beside the call as tiles the size of a person's, stacked
+// and centered like the call's own column.
 export const Cards = style({
+  vars: { [tileWidthVar]: toRem(240) },
   padding: config.space.S300,
-  width: toRem(280),
+  width: `calc(${tileWidthVar} + 2 * ${config.space.S300})`,
   flexShrink: 0,
   overflowY: 'auto',
-  '@media': { 'screen and (max-width: 700px)': { width: '100%', maxHeight: toRem(240) } },
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  gap: config.space.S200,
+  '@media': {
+    'screen and (max-width: 700px)': {
+      width: '100%',
+      maxHeight: toRem(240),
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+    },
+  },
 });
 
-export const Card = style({
-  padding: config.space.S300,
-  backgroundColor: color.SurfaceVariant.Container,
-  border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
-  borderRadius: config.radii.R400,
+// The whole tile is the watch button. The share's last picture fills it, blurred and darkened
+// so the badge, the Watch pill and the name read on any screen. Dark in every theme: it is video.
+export const LiveTile = style({
+  position: 'relative',
+  width: tileWidthVar,
+  maxWidth: '100%',
+  aspectRatio: '16 / 9',
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 0,
   overflow: 'hidden',
+  border: 'none',
+  borderRadius: config.radii.R400,
+  backgroundColor: '#1B1E23',
+  color: '#F2F4F7',
+  cursor: 'pointer',
+  selectors: {
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      backgroundColor: 'rgba(10, 12, 16, 0.45)',
+      transition: 'background-color 120ms ease-out',
+    },
+    '&:hover::after': { backgroundColor: 'rgba(10, 12, 16, 0.3)' },
+    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 2 },
+  },
+});
+
+export const LiveTileShot = style({
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  filter: 'blur(10px)',
+  // Scaled so the blur's soft edge falls outside the tile.
+  transform: 'scale(1.15)',
+});
+
+export const LiveTileIcon = style({ position: 'relative', zIndex: 1, opacity: 0.35 });
+
+export const LiveTileWatch = style({
+  position: 'absolute',
+  zIndex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+  padding: `${config.space.S100} ${config.space.S300}`,
+  borderRadius: config.radii.Pill,
+  backgroundColor: color.Primary.Main,
+  color: color.Primary.OnMain,
+  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+  selectors: { [`${LiveTile}:hover &`]: { transform: 'scale(1.04)' } },
+});
+
+export const LiveTileName = style({
+  position: 'absolute',
+  zIndex: 1,
+  left: config.space.S200,
+  bottom: config.space.S200,
+  maxWidth: `calc(100% - 2 * ${config.space.S200})`,
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+  padding: `2px ${config.space.S200}`,
+  borderRadius: config.radii.Pill,
+  backgroundColor: 'rgba(10, 12, 16, 0.6)',
 });
 
 export const CompactCards = style({ padding: config.space.S200, minWidth: 0 });
@@ -29,26 +110,11 @@ export const CompactCard = style({
 
 export const LiveName = style({ minWidth: 0, maxWidth: '100%' });
 
-export const LivePreview = style({
-  width: '100%',
-  aspectRatio: '16 / 9',
-  position: 'relative',
-  borderRadius: config.radii.R300,
-  backgroundColor: color.Background.Container,
-  color: color.SurfaceVariant.OnContainer,
-});
-
 export const LiveBadge = style({
   position: 'absolute',
+  zIndex: 1,
   top: config.space.S200,
   right: config.space.S200,
-});
-
-export const WatchButton = style({
-  minHeight: toRem(44),
-  width: '100%',
-  flexShrink: 0,
-  gap: config.space.S200,
 });
 
 export const WatchControls = style({ minWidth: 0, maxWidth: '100%' });

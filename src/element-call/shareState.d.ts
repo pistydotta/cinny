@@ -10,6 +10,8 @@ export type RemoteShare = {
   volume: number;
   muted: boolean;
   decided: boolean;
+  /** A JPEG data URL of the share, refreshed every 15 seconds while not watched. */
+  preview?: string;
 };
 
 export type LocalShare = {
@@ -77,7 +79,12 @@ export type ShareStore = {
   setLocalVolume: (value: number) => void;
 };
 
-export function createShareStore(): ShareStore;
+export function grabFrame(publication: unknown): Promise<string | null>;
+/** grab null turns the previews off. */
+export function createShareStore(options?: {
+  grab?: ((publication: any) => Promise<string | null>) | null;
+  peekEveryMs?: number;
+}): ShareStore;
 export function createCaptureVolume(
   stream: MediaStream,
   Context?: typeof AudioContext

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Badge, Box, Button, Icon, Icons, Text } from 'folds';
+import React, { useEffect, useState } from 'react';
+import { Badge, Box, Icon, Icons, Text } from 'folds';
 import { CallEmbed } from '../../plugins/call/CallEmbed';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
@@ -7,11 +7,31 @@ import { useShares } from './useShares';
 import { readSavedVolume } from './watchRules';
 import * as css from './styles.css';
 
-// One card per share in the call that the person isn't watching yet. The floating viewer is too
+// The width of one person's tile in the call, so a share waiting to be watched looks like one
+// more person, as on Discord. The tiles resize with the window and the layout, so look again
+// every second while a tile is shown.
+const DEFAULT_TILE = 240;
+const usePeopleTileWidth = (callEmbed: CallEmbed, on: boolean): number => {
+  const [width, setWidth] = useState(DEFAULT_TILE);
+  useEffect(() => {
+    if (!on) return undefined;
+    const read = () => {
+      const tile = callEmbed.document?.querySelector('[data-video-fit]')?.getBoundingClientRect();
+      if (tile && tile.width > 0) setWidth(Math.round(Math.min(Math.max(tile.width, 160), 360)));
+    };
+    read();
+    const timer = window.setInterval(read, 1000);
+    return () => window.clearInterval(timer);
+  }, [callEmbed, on]);
+  return width;
+};
+
+// One tile per share in the call that the person isn't watching yet. The floating viewer is too
 // narrow for the card, so it gets one row per share instead.
 export function LiveCards({ callEmbed, compact }: { callEmbed: CallEmbed; compact?: boolean }) {
   const { store, remotes } = useShares(callEmbed.control);
   const waiting = remotes.filter((share) => !share.watching);
+  const tileWidth = usePeopleTileWidth(callEmbed, !compact && waiting.length > 0);
   if (!store || waiting.length === 0) return null;
   const watch = (id: string) =>
     store.watch(
@@ -49,33 +69,42 @@ export function LiveCards({ callEmbed, compact }: { callEmbed: CallEmbed; compac
   }
 
   return (
-    <Box className={css.Cards} direction="Column" gap="200">
+    <div
+      className={css.Cards}
+      style={{ [css.tileWidthVar]: `${tileWidth}px` } as React.CSSProperties}
+    >
       {waiting.map((share) => (
-        <Box key={share.id} className={css.Card} direction="Column" alignItems="Center" gap="300">
-          <Box className={css.LivePreview} alignItems="Center" justifyContent="Center">
-            <Icon size="600" src={Icons.ScreenShare} />
-            <Badge className={css.LiveBadge} variant="Critical" fill="Solid" size="400">
-              <Text size="L400">{tr('screen_share.badge', 'Live')}</Text>
-            </Badge>
-          </Box>
-          <Box className={css.LiveName}>
-            <Text size="T300" truncate>
-              {tr('screen_share.is_live', '{{name}} is live', { name: share.name })}
+        <button
+          key={share.id}
+          type="button"
+          className={css.LiveTile}
+          onClick={() => watch(share.id)}
+          aria-label={tr('screen_share.watch_named', "Watch {{name}}'s screen", {
+            name: share.name,
+          })}
+        >
+          {share.preview ? (
+            <img className={css.LiveTileShot} src={share.preview} alt="" />
+          ) : (
+            <Icon className={css.LiveTileIcon} size="600" src={Icons.ScreenShare} />
+          )}
+          <Badge className={css.LiveBadge} variant="Critical" fill="Solid" size="400">
+            <Text size="L400">{tr('screen_share.badge', 'Live')}</Text>
+          </Badge>
+          <span className={css.LiveTileWatch}>
+            <Icon size="100" src={Icons.Play} filled />
+            <Text as="span" size="B300">
+              {tr('screen_share.watch', 'Watch')}
             </Text>
-          </Box>
-          <Button
-            className={css.WatchButton}
-            size="400"
-            variant="Primary"
-            fill="Solid"
-            radii="300"
-            onClick={() => watch(share.id)}
-          >
-            <Icon size="200" src={Icons.Play} />
-            <Text size="B400">{tr('screen_share.watch_screen', 'Watch screen')}</Text>
-          </Button>
-        </Box>
+          </span>
+          <span className={css.LiveTileName}>
+            <Icon size="50" src={Icons.ScreenShare} />
+            <Text as="span" size="T200" truncate>
+              {share.name}
+            </Text>
+          </span>
+        </button>
       ))}
-    </Box>
+    </div>
   );
 }

@@ -65,6 +65,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// Previews are tested on their own; elsewhere a peek would subscribe behind the test's back.
+const newStore = () => createShareStore({ grab: null });
+
 const fakePublication = () => {
   const publication = {
     isDesired: true,
@@ -109,7 +112,7 @@ const fakeShare = (id = 'a', withSound = true) => {
 
 describe('remote share downloads', () => {
   it('subscribes to neither video nor sound while never watched', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     expect(video.isDesired).toBe(false);
@@ -117,7 +120,7 @@ describe('remote share downloads', () => {
   });
 
   it('subscribes to both on watch and to neither on unwatch', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.watch('a', 0.5);
@@ -129,7 +132,7 @@ describe('remote share downloads', () => {
   });
 
   it('sets the volume before subscribing, so the element attaches at the right value', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     sound.setSubscribed.mockClear();
@@ -142,7 +145,7 @@ describe('remote share downloads', () => {
   });
 
   it('muting only drops the sound, and unmuting brings it back', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.watch('a', 0.5);
@@ -155,7 +158,7 @@ describe('remote share downloads', () => {
   });
 
   it('keeps a muted share muted when watched again', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.watch('a', 0.5);
@@ -167,7 +170,7 @@ describe('remote share downloads', () => {
   });
 
   it('leaves the sound unsubscribed at volume 0, keeping the video', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.watch('a', 0);
@@ -176,7 +179,7 @@ describe('remote share downloads', () => {
   });
 
   it('drops the sound when dragged to 0, and sets the volume first when raised', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, sound } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.watch('a', 0.5);
@@ -193,7 +196,7 @@ describe('remote share downloads', () => {
   });
 
   it('a late sound publication stays off at volume 0', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant } = fakeShare('a', false);
     store.layoutShares(asVms([vm]));
     store.watch('a', 0);
@@ -203,7 +206,7 @@ describe('remote share downloads', () => {
   });
 
   it('only calls setSubscribed when the wish changes', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.layoutShares(asVms([vm]));
@@ -212,7 +215,7 @@ describe('remote share downloads', () => {
   });
 
   it('a late sound publication follows the state: not watching', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant } = fakeShare('a', false);
     store.layoutShares(asVms([vm]));
     const late = fakePublication();
@@ -221,7 +224,7 @@ describe('remote share downloads', () => {
   });
 
   it('a late sound publication follows the state: watching', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant } = fakeShare('a', false);
     store.layoutShares(asVms([vm]));
     store.watch('a', 0.5);
@@ -232,7 +235,7 @@ describe('remote share downloads', () => {
   });
 
   it('a late sound publication follows the state: watching but muted', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant } = fakeShare('a', false);
     store.layoutShares(asVms([vm]));
     store.watch('a', 0.5);
@@ -243,7 +246,7 @@ describe('remote share downloads', () => {
   });
 
   it('applies the rule when the participant shows up after the view model', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound, video$, participant } = fakeShare();
     video$.next(undefined);
     store.layoutShares(asVms([vm]));
@@ -254,7 +257,7 @@ describe('remote share downloads', () => {
   });
 
   it('lets go of the publication listener when the view model goes', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant, video$ } = fakeShare();
     store.layoutShares(asVms([vm]));
     store.layoutShares(asVms([vm]));
@@ -265,7 +268,7 @@ describe('remote share downloads', () => {
   });
 
   it('moves the listener when the participant changes', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant, video$ } = fakeShare();
     store.layoutShares(asVms([vm]));
     const next = fakeParticipant({ screen_share: fakePublication() });
@@ -275,7 +278,7 @@ describe('remote share downloads', () => {
   });
 
   it('re-applies the rule to a returning view model', () => {
-    const store = createShareStore();
+    const store = newStore();
     const first = fakeShare();
     store.layoutShares(asVms([first.vm]));
     store.watch('a', 0.5);
@@ -289,7 +292,7 @@ describe('remote share downloads', () => {
   });
 
   it('copes with a view model without the API', () => {
-    const store = createShareStore();
+    const store = newStore();
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const a = fakeVm('a');
     expect(() => store.layoutShares(asVms([a]))).not.toThrow();
@@ -303,7 +306,7 @@ describe('remote share downloads', () => {
   });
 
   it('logs and carries on when the publication API throws', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, video, sound } = fakeShare();
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     video.setSubscribed.mockImplementation(() => {
@@ -318,7 +321,7 @@ describe('remote share downloads', () => {
   });
 
   it('never emits on changes from layoutShares or a late publication', () => {
-    const store = createShareStore();
+    const store = newStore();
     const { vm, participant } = fakeShare('a', false);
     const next = vi.fn();
     store.changes.subscribe(next);
@@ -332,7 +335,7 @@ describe('remote share downloads', () => {
 
 describe('remote shares', () => {
   it('hides remote shares until watched', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     expect(store.layoutShares(asVms([a]))).toEqual([]);
     store.watch('a', 0.5);
@@ -340,7 +343,7 @@ describe('remote shares', () => {
   });
 
   it('never shows the local share', () => {
-    const store = createShareStore();
+    const store = newStore();
     const mine = fakeVm('me', { local: true });
     expect(store.layoutShares(asVms([mine]))).toEqual([]);
     store.watch('me', 1);
@@ -348,7 +351,7 @@ describe('remote shares', () => {
   });
 
   it('keeps an unwatched share silent', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     expect(a.adjustPlaybackVolume).toHaveBeenCalledWith(0);
@@ -356,7 +359,7 @@ describe('remote shares', () => {
   });
 
   it('plays at the given volume once watched, silent again after unwatch', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     store.watch('a', 0.5);
@@ -367,7 +370,7 @@ describe('remote shares', () => {
   });
 
   it('muting silences without losing the volume', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     store.watch('a', 0.5);
@@ -380,7 +383,7 @@ describe('remote shares', () => {
   });
 
   it('describes remote shares in the snapshot', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     expect(store.getSnapshot().remotes).toEqual([
@@ -409,14 +412,14 @@ describe('remote shares', () => {
   });
 
   it('copes with a view model that has no audioEnabled$', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a', { audioEnabled$: undefined });
     store.layoutShares(asVms([a]));
     expect(store.getSnapshot().remotes[0].hasSound).toBe(false);
   });
 
   it('subscribes to the names once per view model and lets go when it leaves', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     store.layoutShares(asVms([a]));
@@ -428,7 +431,7 @@ describe('remote shares', () => {
   });
 
   it('keeps its state through a short drop', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     store.watch('a', 0.5);
@@ -440,7 +443,7 @@ describe('remote shares', () => {
   });
 
   it('keeps a closed share closed through a short drop', () => {
-    const store = createShareStore();
+    const store = newStore();
     store.layoutShares(asVms([fakeVm('a')]));
     store.markDecided('a');
     store.layoutShares([]);
@@ -450,7 +453,7 @@ describe('remote shares', () => {
   });
 
   it('forgets a share gone for more than 30s', () => {
-    const store = createShareStore();
+    const store = newStore();
     store.layoutShares(asVms([fakeVm('a')]));
     store.watch('a', 0.5);
     store.markDecided('a');
@@ -463,7 +466,7 @@ describe('remote shares', () => {
   });
 
   it('leaves a gone share out of the snapshot', () => {
-    const store = createShareStore();
+    const store = newStore();
     store.layoutShares(asVms([fakeVm('a')]));
     store.layoutShares([]);
     expect(store.getSnapshot().remotes).toEqual([]);
@@ -472,7 +475,7 @@ describe('remote shares', () => {
 
 describe('snapshot and subscribe', () => {
   it('returns the same snapshot object until something changes', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     const first = store.getSnapshot();
@@ -483,7 +486,7 @@ describe('snapshot and subscribe', () => {
   });
 
   it('notifies listeners only when the snapshot changed, and stops after unsubscribe', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     const listener = vi.fn();
     const off = store.subscribe(listener);
@@ -501,7 +504,7 @@ describe('snapshot and subscribe', () => {
 
 describe('changes', () => {
   it('emits once at once on subscribe, then on watch and unwatch', () => {
-    const store = createShareStore();
+    const store = newStore();
     store.layoutShares(asVms([fakeVm('a')]));
     const next = vi.fn();
     store.changes.subscribe(next);
@@ -513,7 +516,7 @@ describe('changes', () => {
   });
 
   it('emits when the small picture is hidden or shown, not when it stays the same', () => {
-    const store = createShareStore();
+    const store = newStore();
     const next = vi.fn();
     store.changes.subscribe(next);
     expect(store.pipHidden()).toBe(false);
@@ -527,7 +530,7 @@ describe('changes', () => {
   });
 
   it('accepts an observer object or a plain function, and returns { unsubscribe }', () => {
-    const store = createShareStore();
+    const store = newStore();
     store.layoutShares(asVms([fakeVm('a')]));
     const next = vi.fn();
     const fn = vi.fn();
@@ -543,7 +546,7 @@ describe('changes', () => {
   });
 
   it('exposes the interop key RxJS looks up, returning itself', () => {
-    const store = createShareStore();
+    const store = newStore();
     const changes = store.changes as unknown as Record<string | symbol, () => unknown>;
     expect(changes['@@observable']()).toBe(changes);
     const symbolObservable = (Symbol as unknown as { observable?: symbol }).observable;
@@ -551,7 +554,7 @@ describe('changes', () => {
   });
 
   it('works with combineLatest and emits at once, so the layout is not blanked', () => {
-    const store = createShareStore();
+    const store = newStore();
     store.layoutShares(asVms([fakeVm('a')]));
     const seen: unknown[] = [];
     const sub = combineLatest([of('vms'), store.changes as never]).subscribe((v) => seen.push(v));
@@ -564,7 +567,7 @@ describe('changes', () => {
   });
 
   it('never emits from layoutShares, which would loop through the pipeline', () => {
-    const store = createShareStore();
+    const store = newStore();
     const next = vi.fn();
     store.changes.subscribe(next);
     next.mockClear();
@@ -583,7 +586,7 @@ describe('changes', () => {
 
 describe('local share', () => {
   const setup = () => {
-    const store = createShareStore();
+    const store = newStore();
     const video = fakeTrack('video', 'Screen 1');
     const audio = fakeTrack('audio', 'System audio');
     return { store, video, audio };
@@ -675,7 +678,7 @@ describe('local share', () => {
 
 describe('wrapGetDisplayMedia', () => {
   it('returns the same stream the original gave', async () => {
-    const store = createShareStore();
+    const store = newStore();
     const stream = fakeStream([fakeTrack('video', 'Screen 1')]);
     const mediaDevices = { getDisplayMedia: vi.fn().mockResolvedValue(stream) };
     wrapGetDisplayMedia(mediaDevices as never, store);
@@ -684,7 +687,7 @@ describe('wrapGetDisplayMedia', () => {
   });
 
   it('a failed getDisplayMedia leaves the state alone and rethrows', async () => {
-    const store = createShareStore();
+    const store = newStore();
     const error = new Error('denied');
     const mediaDevices = { getDisplayMedia: vi.fn().mockRejectedValue(error) };
     wrapGetDisplayMedia(mediaDevices as never, store);
@@ -696,7 +699,7 @@ describe('wrapGetDisplayMedia', () => {
 
 describe('hiding the people beside a share', () => {
   it('only hides them, and the small picture, while a share is watched', () => {
-    const store = createShareStore();
+    const store = newStore();
     const a = fakeVm('a');
     store.layoutShares(asVms([a]));
     store.setPeopleHidden(true);
@@ -711,7 +714,7 @@ describe('hiding the people beside a share', () => {
   });
 
   it('tells the layout and the listeners when it changes', () => {
-    const store = createShareStore();
+    const store = newStore();
     const seen: number[] = [];
     store.changes.subscribe((v: number) => seen.push(v));
     const listener = vi.fn();
@@ -724,5 +727,65 @@ describe('hiding the people beside a share', () => {
     expect(listener).toHaveBeenCalled();
     store.setPeopleHidden(true);
     expect(seen.length).toBe(before + 1);
+  });
+});
+
+describe('previews of shares not being watched', () => {
+  it('subscribes for one picture, then lets go, and shows it', async () => {
+    let finish: (url: string) => void = () => undefined;
+    const grab = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const store = createShareStore({ grab, peekEveryMs: 0 });
+    const share = fakeShare('a', true);
+    share.video.isDesired = false;
+    share.sound.isDesired = false;
+    store.layoutShares(asVms([share.vm]));
+    expect(grab).toHaveBeenCalledWith(share.video);
+    expect(share.video.isDesired).toBe(true);
+    expect(share.sound.isDesired).toBe(false);
+    finish('data:image/jpeg;base64,x');
+    await vi.waitFor(() => expect(share.video.isDesired).toBe(false));
+    expect(store.getSnapshot().remotes[0].preview).toBe('data:image/jpeg;base64,x');
+  });
+
+  it('takes no new picture of a share being watched, and keeps it subscribed', async () => {
+    vi.useFakeTimers();
+    try {
+      const grab = vi.fn(async () => 'data:x');
+      const store = createShareStore({ grab, peekEveryMs: 15_000 });
+      const share = fakeShare('a', true);
+      store.layoutShares(asVms([share.vm]));
+      await vi.advanceTimersByTimeAsync(0);
+      store.watch('a', 1);
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(grab).toHaveBeenCalledTimes(1);
+      expect(share.video.isDesired).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('refreshes on its interval and survives a failed picture', async () => {
+    vi.useFakeTimers();
+    try {
+      const grab = vi.fn().mockRejectedValueOnce(new Error('no frame')).mockResolvedValue('data:y');
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const store = createShareStore({ grab, peekEveryMs: 15_000 });
+      const share = fakeShare('a', false);
+      store.layoutShares(asVms([share.vm]));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(store.getSnapshot().remotes[0].preview).toBeUndefined();
+      expect(share.video.isDesired).toBe(false);
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(grab).toHaveBeenCalledTimes(2);
+      expect(store.getSnapshot().remotes[0].preview).toBe('data:y');
+      error.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

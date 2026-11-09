@@ -37,7 +37,8 @@ const sameRemote = (a, b) =>
   a.watching === b.watching &&
   a.volume === b.volume &&
   a.muted === b.muted &&
-  a.decided === b.decided;
+  a.decided === b.decided &&
+  a.preview === b.preview;
 
 const sameLocal = (a, b) =>
   a === b ||
@@ -58,9 +59,58 @@ const sameSnapshot = (a, b) =>
 // The share state for one call: which screen shares the person is watching, at what volume,
 // and what they are sharing themselves. Cinny reads it through getSnapshot/subscribe (React's
 // useSyncExternalStore); Element Call's layout pipeline goes through layoutShares and `changes`.
-export const createShareStore = () => {
+// How often someone not watching a share gets a fresh picture of it.
+const PEEK_EVERY_MS = 15_000;
+// A picture is small: it only stands for the share on a blurred tile.
+const PREVIEW_WIDTH = 320;
+const PREVIEW_WAIT_MS = 8_000;
+
+const wait = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+const timeout = (promise, ms) =>
+  Promise.race([promise, wait(ms).then(() => Promise.reject(new Error('timed out')))]);
+
+// One JPEG of a subscribed screen share. The video element is never shown or attached through
+// LiveKit, so adaptiveStream leaves the track alone and nothing plays it.
+export const grabFrame = async (publication) => {
+  const until = Date.now() + PREVIEW_WAIT_MS;
+  while (!publication.track?.mediaStreamTrack) {
+    if (Date.now() > until) return null;
+    // eslint-disable-next-line no-await-in-loop
+    await wait(200);
+  }
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.srcObject = new MediaStream([publication.track.mediaStreamTrack]);
+  try {
+    await timeout(video.play(), PREVIEW_WAIT_MS);
+    // The first decoded frame can be the black one before the keyframe; wait for a later one.
+    await timeout(
+      new Promise((resolve) => {
+        if (video.requestVideoFrameCallback) {
+          video.requestVideoFrameCallback(() => video.requestVideoFrameCallback(resolve));
+        } else setTimeout(resolve, 500);
+      }),
+      PREVIEW_WAIT_MS
+    );
+    if (!video.videoWidth) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = PREVIEW_WIDTH;
+    canvas.height = Math.round((PREVIEW_WIDTH * video.videoHeight) / video.videoWidth);
+    canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.6);
+  } finally {
+    video.pause();
+    video.srcObject = null;
+  }
+};
+
+export const createShareStore = ({ grab = grabFrame, peekEveryMs = PEEK_EVERY_MS } = {}) => {
   // id -> { id, userId, vm, unsubs, participant, offPublished, name, hasSound, watching, volume,
-  // muted, decided, timer }
+  // muted, decided, timer, peeking, preview }
   const entries = new Map();
   const listeners = new Set();
   const observers = new Set();
@@ -105,6 +155,7 @@ export const createShareStore = () => {
         volume: e.volume,
         muted: e.muted,
         decided: e.decided,
+        preview: e.preview,
       })),
   });
 
@@ -125,10 +176,35 @@ export const createShareStore = () => {
 
   const applySubscriptions = (e) => {
     if (!e.vm || !e.participant) return;
-    subscribeTo(e.participant, VIDEO_SOURCE, e.watching);
+    subscribeTo(e.participant, VIDEO_SOURCE, e.watching || !!e.peeking);
     // Not at volume 0 either: LiveKit's attach skips a volume of 0, so the element would play at 1.
     subscribeTo(e.participant, SOUND_SOURCE, e.watching && !e.muted && e.volume > 0);
   };
+
+  // A share nobody is watching downloads nothing, so its tile gets a picture by subscribing for
+  // a moment: one frame, then the subscription goes again. Never emits on changes: the layout
+  // doesn't depend on the picture, and this can run from inside the layout pipeline.
+  const peek = async (e) => {
+    if (!grab || e.peeking || e.watching || !e.vm || !e.participant) return;
+    const publication = e.participant.getTrackPublication(VIDEO_SOURCE);
+    if (!publication) return;
+    e.peeking = true;
+    applySubscriptions(e);
+    let preview = null;
+    try {
+      preview = await grab(publication);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('blazeroom screen share preview:', err);
+    }
+    e.peeking = false;
+    applySubscriptions(e);
+    if (preview && entries.get(e.id) === e) {
+      e.preview = preview;
+      refresh();
+    }
+  };
+  if (grab && peekEveryMs > 0) setInterval(() => entries.forEach((e) => peek(e)), peekEveryMs);
 
   const unbindParticipant = (e) => {
     e.offPublished?.();
@@ -142,7 +218,10 @@ export const createShareStore = () => {
       unbindParticipant(e);
       if (participant) {
         e.participant = participant;
-        const onPublished = () => applySubscriptions(e);
+        const onPublished = () => {
+          applySubscriptions(e);
+          if (!e.preview) peek(e);
+        };
         guarded(() => {
           participant.on('trackPublished', onPublished);
           e.offPublished = () => guarded(() => participant.off('trackPublished', onPublished));
@@ -150,6 +229,7 @@ export const createShareStore = () => {
       }
     }
     applySubscriptions(e);
+    if (!e.preview) peek(e);
   };
 
   const release = (e) => {

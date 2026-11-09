@@ -663,6 +663,7 @@
     "controls_news_body": "O volume da live e o ícone vermelho de parar de assistir agora ficam na barra da chamada. As transmissões disponíveis têm um cartão e botão de assistir mais limpos.",
     "is_live": "{{name}} está ao vivo",
     "watch": "Assistir",
+    "watch_named": "Assistir à tela de {{name}}",
     "stop_watching": "Parar de assistir",
     "hide_people": "Ocultar pessoas",
     "show_people": "Mostrar pessoas",

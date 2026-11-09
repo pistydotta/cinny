@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import classNames from 'classnames';
 import { Room } from 'matrix-js-sdk';
 import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
@@ -17,6 +17,11 @@ import { useCallEmbed } from '../../hooks/useCallEmbed';
 import { useCallSpeakers } from '../../hooks/useCallSpeakers';
 import { CallEmbed } from '../../plugins/call/CallEmbed';
 import * as css from './styles.css';
+import { useShares } from '../screen-share/useShares';
+import { readSavedVolume } from '../screen-share/watchRules';
+
+// Someone sharing their screen in the call I'm in: clicking their Live badge watches it.
+type LiveShare = { watching: boolean; watch: () => void };
 
 function CallMemberRow({
   room,
@@ -24,12 +29,14 @@ function CallMemberRow({
   muted,
   deafened,
   speaking,
+  live,
 }: {
   room: Room;
   userId: string;
   muted: boolean;
   deafened: boolean;
   speaking: boolean;
+  live?: LiveShare;
 }) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -40,7 +47,7 @@ function CallMemberRow({
     : undefined;
 
   return (
-    <li style={{ minWidth: 0 }}>
+    <Box as="li" alignItems="Center" gap="100" style={{ minWidth: 0 }}>
       <CallMemberPopout room={room} userId={userId}>
         {(open, opened) => (
           <Box
@@ -65,7 +72,11 @@ function CallMemberRow({
             <Avatar
               size="200"
               radii="Pill"
-              className={classNames(css.CallMemberAvatar, speaking && css.CallMemberSpeaking)}
+              className={classNames(
+                css.CallMemberAvatar,
+                live && !speaking && css.CallMemberLiveRing,
+                speaking && css.CallMemberSpeaking
+              )}
             >
               <UserAvatar
                 userId={userId}
@@ -106,7 +117,21 @@ function CallMemberRow({
           </Box>
         )}
       </CallMemberPopout>
-    </li>
+      {live &&
+        (live.watching ? (
+          <span className={css.CallMemberLive}>{tr('screen_share.badge', 'Live')}</span>
+        ) : (
+          <button
+            type="button"
+            className={css.CallMemberLive}
+            onClick={live.watch}
+            title={tr('screen_share.watch_named', "Watch {{name}}'s screen", { name })}
+            aria-label={tr('screen_share.watch_named', "Watch {{name}}'s screen", { name })}
+          >
+            {tr('screen_share.badge', 'Live')}
+          </button>
+        ))}
+    </Box>
   );
 }
 
@@ -114,8 +139,14 @@ function CallMemberRow({
 // Clicking someone opens a card with their profile and my volume for them.
 type ListProps = { room: Room; members: CallMembership[] };
 const NOBODY = new Set<string>();
+const NO_SHARES = new Map<string, LiveShare>();
 
-function CallMemberList({ room, members, speakers }: ListProps & { speakers: Set<string> }) {
+function CallMemberList({
+  room,
+  members,
+  speakers,
+  live,
+}: ListProps & { speakers: Set<string>; live: Map<string, LiveShare> }) {
   const { reports, liveMuted } = useCallAudioReports(room, members);
   const userIds = uniqueCallUserIds(members);
   if (userIds.length === 0) return null;
@@ -139,15 +170,32 @@ function CallMemberList({ room, members, speakers }: ListProps & { speakers: Set
           {...userAudioStatus(reports, members, userId)}
           muted={liveMuted.get(userId) ?? userAudioStatus(reports, members, userId).muted}
           speaking={speakers.has(userId)}
+          live={live.get(userId)}
         />
       ))}
     </Box>
   );
 }
 
-// Only the call I'm in can say who is talking: it reads the call page's tiles.
+// Only the call I'm in can say who is talking and who is live: both come from the call page.
 function SpeakingList({ callEmbed, ...props }: ListProps & { callEmbed: CallEmbed }) {
-  return <CallMemberList {...props} speakers={useCallSpeakers(callEmbed)} />;
+  const { store, remotes } = useShares(callEmbed.control);
+  const live = useMemo(() => {
+    const byUser = new Map<string, LiveShare>();
+    remotes.forEach((share) => {
+      if (byUser.get(share.userId)?.watching === false) return;
+      byUser.set(share.userId, {
+        watching: share.watching,
+        watch: () =>
+          store?.watch(
+            share.id,
+            readSavedVolume(() => localStorage)
+          ),
+      });
+    });
+    return byUser;
+  }, [remotes, store]);
+  return <CallMemberList {...props} speakers={useCallSpeakers(callEmbed)} live={live} />;
 }
 
 export function CallMemberAvatars({ room, members }: ListProps) {
@@ -155,6 +203,6 @@ export function CallMemberAvatars({ room, members }: ListProps) {
   return callEmbed?.roomId === room.roomId ? (
     <SpeakingList callEmbed={callEmbed} room={room} members={members} />
   ) : (
-    <CallMemberList room={room} members={members} speakers={NOBODY} />
+    <CallMemberList room={room} members={members} speakers={NOBODY} live={NO_SHARES} />
   );
 }
