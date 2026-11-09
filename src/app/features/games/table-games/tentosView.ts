@@ -43,5 +43,30 @@ export function placedCards(table: GameTable): PlacedCard[] {
   });
 }
 
+/** Seconds per turn, as the API counts them: Truco is quick, Fodinha bets on long hands. */
+export const turnMs = (kind: GameTable['kind']) => (kind === 'truco' ? 15_000 : 120_000);
+
+export type TrickResult = { kind: 'tie' } | { kind: 'won'; seat: number };
+
+/** Who took the trick shown on the felt, once it is complete. */
+export function trickResult(
+  table: Pick<GameTable, 'lastWinner'>,
+  done: boolean
+): TrickResult | null {
+  if (!done || table.lastWinner === undefined) return null;
+  return table.lastWinner === null ? { kind: 'tie' } : { kind: 'won', seat: table.lastWinner };
+}
+
+/** Truco's three tricks for the hand: whose pair took each one, from the viewer's side. */
+export function trickMarks(table: GameTable): ('us' | 'them' | 'tie' | 'open')[] {
+  const ours = ourTeam(table);
+  return [0, 1, 2].map((i) => {
+    const t = table.tricks?.[i];
+    if (t === undefined) return 'open';
+    if (t === null) return 'tie';
+    return t === ours ? 'us' : 'them';
+  });
+}
+
 /** Penalties a Fodinha player can still take: more than five eliminates. */
 export const livesLeft = (penalties: number) => Math.max(0, 5 - penalties);

@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-truco-rounds',
+    items: () => [
+      {
+        title: tr('whats_new.table_rounds_title', 'Faster Truco and tidier tables'),
+        body: tr(
+          'whats_new.table_rounds_body',
+          'Truco turns now last 15 seconds, and when time runs out the game plays for you instead of forfeiting the match. A finished trick stays on the table for a moment with who took it, and the hand’s three tricks show in the middle. When a game ends, Play again opens the same table with the same people invited. The list shows only open tables, games your friends are in and your own recent games.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-room-codes',
     items: () => [
       {

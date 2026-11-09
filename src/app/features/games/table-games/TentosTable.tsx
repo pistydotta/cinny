@@ -1,12 +1,30 @@
 import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import { tr } from '../../translation/tr';
 import { FodinhaLayout, pct, seatPoints, tableCenter, toward } from './fodinhaLayout';
-import { handOrder, manilhaRank, predictionTotal, seatBadge, SeatBadge } from './fodinhaSeat';
-import { isRed, livesLeft, nextRaise, ourTeam, placedCards } from './tentosView';
+import {
+  handOrder,
+  manilhaRank,
+  predictionTotal,
+  seatBadge,
+  SeatBadge,
+  shownTrick,
+} from './fodinhaSeat';
+import {
+  isRed,
+  livesLeft,
+  nextRaise,
+  ourTeam,
+  placedCards,
+  trickMarks,
+  trickResult,
+  turnMs,
+} from './tentosView';
 import { GamePlayer, GameTable, TableCard } from './types';
 import * as css from './tentos.css';
 
-const TURN_MS = 120_000;
+// How long a finished trick stays on the felt after it closes, even if the next one starts
+// (bots answer at once, and the others only poll every two seconds).
+const HOLD_MS = 2500;
 const RING_RADIUS = 24;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 const SUIT: Record<string, string> = { d: '♦', s: '♠', h: '♥', c: '♣', r: '★', b: '★' };
@@ -143,7 +161,8 @@ function Seat({ table, player, seat, name, avatar, style }: SeatProps) {
   const playing = !['waiting', 'finished', 'round_end'].includes(table.phase);
   // During a raise or the hand of eleven, `turn` is the seat asked to answer for its pair.
   const turn = playing && table.turn === seat && !player.eliminated;
-  const elapsed = table.deadline ? Math.max(0, TURN_MS - (table.deadline - Date.now())) : 0;
+  const turnTime = turnMs(table.kind);
+  const elapsed = table.deadline ? Math.max(0, turnTime - (table.deadline - Date.now())) : 0;
   const won = table.phase === 'finished' && table.winners?.includes(seat);
   let sub = '';
   let gold = false;
@@ -198,7 +217,7 @@ function Seat({ table, player, seat, name, avatar, style }: SeatProps) {
               style={
                 {
                   '--ring-length': RING_LENGTH,
-                  animationDuration: `${TURN_MS}ms`,
+                  animationDuration: `${turnTime}ms`,
                   animationDelay: `-${elapsed}ms`,
                 } as CSSProperties
               }
@@ -229,12 +248,42 @@ function Seat({ table, player, seat, name, avatar, style }: SeatProps) {
   );
 }
 
+type Held = Pick<GameTable, 'lastTrick' | 'lastWinner'>;
+
+/**
+ * Keeps the trick that just closed on the table for a moment, so everyone sees who took it
+ * before the next card covers it. Cleared early when you play.
+ */
+function useHeldTrick(table: GameTable): [Held | null, () => void] {
+  const cards = table.lastTrick ?? [];
+  const key = cards.length
+    ? `${table.id}:${table.round}:${cards.map((t) => `${t.seat}${t.card.rank}${t.card.suit}`)}`
+    : '';
+  const seen = useRef(key);
+  const [held, setHeld] = useState<Held | null>(null);
+  useEffect(() => {
+    if (key === seen.current) return undefined;
+    seen.current = key;
+    if (!key) {
+      setHeld(null);
+      return undefined;
+    }
+    setHeld({ lastTrick: table.lastTrick, lastWinner: table.lastWinner });
+    const timer = setTimeout(() => setHeld(null), HOLD_MS);
+    return () => clearTimeout(timer);
+    // The key covers the trick's cards; the winner arrives with them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return [held, () => setHeld(null)];
+}
+
 export type TentosTableProps = {
   table: GameTable;
   busy: boolean;
   isOwner: boolean;
   onAct: (action: Record<string, unknown>) => void;
   onJoin: () => void;
+  onRematch: () => void;
   onBack: () => void;
   onOpenSheet: () => void;
   nameOf: (userId: string) => string;
@@ -247,11 +296,16 @@ export function TentosTable({
   isOwner,
   onAct,
   onJoin,
+  onRematch,
   onBack,
   onOpenSheet,
   nameOf,
   avatarOf,
 }: TentosTableProps) {
+  const [held, release] = useHeldTrick(table);
+  // The felt shows the held trick, finished, until its moment is up.
+  const felt: GameTable = held ? { ...table, trick: [], ...held } : table;
+  const shown = shownTrick(felt);
   const stage = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<FodinhaLayout>('landscape');
   const [covered, setCovered] = useState(false);
@@ -343,6 +397,29 @@ export function TentosTable({
           });
   }
 
+  const took = trickResult(felt, shown.done);
+  let trickLine = '';
+  if (took && (phase === 'play' || phase === 'predict' || held)) {
+    if (took.kind === 'tie')
+      trickLine = truco
+        ? tr('table_games.trick_tied', 'Tied trick')
+        : tr('table_games.trick_tied_nobody', 'Tied: nobody takes it');
+    else if (took.seat === mySeat) trickLine = tr('table_games.trick_you', 'You took the trick');
+    else if (truco && mySeat >= 0 && took.seat % 2 === mySeat % 2)
+      trickLine = tr('table_games.trick_partner', 'Your partner took the trick');
+    else
+      trickLine = tr('table_games.trick_name', '{{name}} took the trick', {
+        name: nameOf(table.players[took.seat].userId),
+      });
+  }
+  const marks = truco && live ? trickMarks(table) : [];
+  const markName = {
+    us: mySeat >= 0 ? tr('table_games.us', 'us') : tr('table_games.pair_1', 'pair 1'),
+    them: mySeat >= 0 ? tr('table_games.them', 'them') : tr('table_games.pair_2', 'pair 2'),
+    tie: tr('table_games.tie', 'tie'),
+    open: '—',
+  };
+
   const blind = active && !me.cards && me.cardCount > 0;
   const hand: { card?: TableCard; index: number }[] = blind
     ? Array.from({ length: me.cardCount }, (_, index) => ({ index }))
@@ -388,6 +465,7 @@ export function TentosTable({
   const play = (index: number) => {
     onAct({ type: 'play', card: index, ...(covered && canCover ? { covered: true } : {}) });
     setCovered(false);
+    release();
   };
 
   const actions: React.ReactNode[] = [];
@@ -438,7 +516,9 @@ export function TentosTable({
         )
       );
   } else if (phase === 'finished') {
-    actions.push(pill('back', tr('table_games.back_to_tables', 'Back to tables'), onBack, true));
+    actions.push(pill('back', tr('table_games.back_to_tables', 'Back to tables'), onBack));
+    if (mySeat >= 0 && table.result !== 'cancelled')
+      actions.push(pill('again', tr('table_games.play_again', 'Play again'), onRematch, true));
   } else if (phase === 'round_end' && active) {
     actions.push(
       pill(
@@ -533,10 +613,35 @@ export function TentosTable({
             )}
             {title && <div className={css.CenterTitle}>{title}</div>}
             {line && <div className={css.CenterLine}>{line}</div>}
+            {marks.length > 0 && (
+              <div
+                className={css.Marks}
+                aria-label={marks
+                  .map((m, i) =>
+                    tr('table_games.trick_mark', 'Trick {{n}}: {{who}}', {
+                      n: i + 1,
+                      who: markName[m],
+                    })
+                  )
+                  .join(', ')}
+              >
+                {marks.map((m, i) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <span key={i} className={css.Mark} data-mark={m} title={markName[m]}>
+                    {i + 1}ª
+                  </span>
+                ))}
+              </div>
+            )}
             {callout && <div className={css.Callout}>{callout}</div>}
+            {trickLine && (
+              <div className={css.Callout} data-quiet="true">
+                {trickLine}
+              </div>
+            )}
           </div>
 
-          {placedCards(table).map(({ seat, card, latest, win, dim }) => (
+          {placedCards(felt).map(({ seat, card, latest, win, dim }) => (
             <div
               key={seat}
               className={css.Placed}

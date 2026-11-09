@@ -3,12 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { friendAvatarUrl, friendDisplayName } from '../../friends/userDisplay';
+import { useFriends } from '../../friends/useFriends';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
 import { useCredits } from '../credits/useCredits';
 import { createTableGamesApi } from './api';
 import { FodinhaScreen } from './FodinhaScreen';
+import { lobbySections, wonBy } from './lobby';
 import { SeatsSheet } from './SeatsSheet';
 import { TentosTable } from './TentosTable';
 import { botName, isBotId } from './tentosView';
@@ -123,6 +125,8 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
   const [loaded, setLoaded] = useState(false);
   const [creating, setCreating] = useState(false);
   const [sheet, setSheet] = useState(false);
+  const { lists } = useFriends();
+  const friends = useMemo(() => new Set((lists?.friends ?? []).map((f) => f.userId)), [lists]);
 
   const load = useCallback(async () => {
     if (tableId) {
@@ -232,6 +236,11 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
           isOwner={table.ownerId === myId}
           onAct={act}
           onJoin={() => run(() => api.join(table.id))}
+          onRematch={() =>
+            run(() => api.rematch(table.id)).then((next) => {
+              if (next) navigate(getGamesTableGamePath(kind, next.id));
+            })
+          }
           onBack={toLobby}
           onOpenSheet={() => setSheet(true)}
           nameOf={nameOf}
@@ -251,9 +260,14 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
     );
   }
 
-  const invitedHere = tables.filter((s) => s.phase === 'waiting' && s.invited?.includes(myId));
-  const others = tables.filter((s) => !invitedHere.includes(s));
-  const row = (s: TableSummary, invited = false) => (
+  const sections = lobbySections(tables, myId, friends);
+  const statusOf = (s: TableSummary) => {
+    if (s.phase !== 'finished') return phaseText(s.phase);
+    return wonBy(s, myId)
+      ? tr('table_games.you_won', 'You won')
+      : tr('table_games.you_lost', 'You lost');
+  };
+  const row = (s: TableSummary, tag?: string) => (
     <button
       key={s.id}
       type="button"
@@ -264,16 +278,28 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
         <div>{s.name}</div>
         <div className={css.Muted}>{s.players.map(nameOf).join(' · ')}</div>
       </span>
-      {invited && <span className={css.Tag}>{tr('table_games.invited_you', 'invited you')}</span>}
+      {tag && <span className={css.Tag}>{tag}</span>}
       <span className={css.Muted}>
         {s.players.length}/{s.capacity} ·{' '}
         {s.stake
           ? tr('table_games.credits_n', '{{n}} credits', { n: s.stake })
           : tr('table_games.free', 'free')}
       </span>
-      <span className={css.Muted}>{phaseText(s.phase)}</span>
+      <span className={css.Muted}>{statusOf(s)}</span>
     </button>
   );
+  const section = (label: string, list: TableSummary[], tag?: string) =>
+    list.length > 0 && (
+      <>
+        <p className={css.SectionLabel}>{label}</p>
+        <div className={css.List}>{list.map((s) => row(s, tag))}</div>
+      </>
+    );
+  const nothingOpen =
+    !sections.invited.length &&
+    !sections.mine.length &&
+    !sections.open.length &&
+    !sections.friends.length;
 
   return (
     <main className={css.Lobby}>
@@ -312,15 +338,20 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
             />
           </div>
         )}
-        {invitedHere.length > 0 && (
-          <>
-            <p className={css.SectionLabel}>{tr('table_games.invites', 'Invitations')}</p>
-            <div className={css.List}>{invitedHere.map((s) => row(s, true))}</div>
-          </>
-        )}
-        <p className={css.SectionLabel}>{tr('table_games.tables', 'Community tables')}</p>
         {!loaded && <p className={css.Muted}>{tr('table_games.loading', 'Loading…')}</p>}
-        {loaded && !others.length && (
+        {section(
+          tr('table_games.invites', 'Invitations'),
+          sections.invited,
+          tr('table_games.invited_you', 'invited you')
+        )}
+        {section(tr('table_games.your_tables', 'Your tables'), sections.mine)}
+        {section(tr('table_games.open_tables', 'Open tables'), sections.open)}
+        {section(
+          tr('table_games.friends_playing', 'Friends playing'),
+          sections.friends,
+          tr('table_games.watch', 'watch')
+        )}
+        {loaded && nothingOpen && (
           <p className={css.Muted}>
             {tr(
               'table_games.empty_tables_bots',
@@ -328,7 +359,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
             )}
           </p>
         )}
-        {others.length > 0 && <div className={css.List}>{others.map((s) => row(s))}</div>}
+        {section(tr('table_games.recent_games', 'Your recent games'), sections.recent)}
       </div>
     </main>
   );

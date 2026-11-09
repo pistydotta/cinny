@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { botName, isBotId, livesLeft, nextRaise, ourTeam, placedCards } from './tentosView';
+import {
+  botName,
+  isBotId,
+  livesLeft,
+  nextRaise,
+  ourTeam,
+  placedCards,
+  trickMarks,
+  trickResult,
+} from './tentosView';
 import { GameTable } from './types';
 
 const table = (over: Partial<GameTable>) => ({ mySeat: 0, players: [], ...over } as GameTable);
@@ -13,6 +22,15 @@ describe('tentos view', () => {
   });
   it('raises 1 → 3 → 6 → 9 → 12', () => {
     expect([1, 3, 6, 9].map(nextRaise)).toEqual([3, 6, 9, 12]);
+  });
+  it('says who took a finished trick, and nothing while it is open', () => {
+    expect(trickResult({ lastWinner: 2 }, true)).toEqual({ kind: 'won', seat: 2 });
+    expect(trickResult({ lastWinner: null }, true)).toEqual({ kind: 'tie' });
+    expect(trickResult({ lastWinner: 2 }, false)).toBeNull();
+  });
+  it('marks the three Truco tricks from the viewer’s pair', () => {
+    expect(trickMarks(table({ mySeat: 1, tricks: [1, null] }))).toEqual(['us', 'tie', 'open']);
+    expect(trickMarks(table({ mySeat: 0, tricks: [1] }))).toEqual(['them', 'open', 'open']);
   });
   it('shows spectators the first pair as ours', () => {
     expect(ourTeam(table({ mySeat: -1 }))).toBe(0);

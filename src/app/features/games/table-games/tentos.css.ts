@@ -132,6 +132,22 @@ export const Callout = style({
   color: GOLD,
   fontFamily: SERIF,
   fontSize: 14,
+  selectors: { '&[data-quiet="true"]': { borderColor: LINE, color: INK, fontSize: 13 } },
+});
+// Truco's three tricks: gold for us, a muted red for them, outlined while still open.
+export const Marks = style({ display: 'flex', gap: 6, marginTop: 2 });
+export const Mark = style({
+  minWidth: 26,
+  padding: '1px 6px',
+  borderRadius: 999,
+  border: `1px solid ${LINE}`,
+  color: MUTED,
+  fontSize: 11,
+  selectors: {
+    '&[data-mark="us"]': { background: GOLD, borderColor: GOLD, color: GOLD_TEXT },
+    '&[data-mark="them"]': { background: '#6b3a35', borderColor: '#6b3a35', color: INK },
+    '&[data-mark="tie"]': { borderColor: MUTED, color: INK },
+  },
 });
 
 export const Card = style({
