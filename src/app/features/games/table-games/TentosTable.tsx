@@ -20,13 +20,16 @@ import {
   turnMs,
 } from './tentosView';
 import { GamePlayer, GameTable, TableCard } from './types';
+import { hasScene, trucoScene } from './trucoScene';
 import * as css from './tentos.css';
+import barArt from '../art/truco-bar.webp';
 
 // How long a finished trick stays on the felt after it closes, even if the next one starts
 // (bots answer at once, and the others only poll every two seconds).
 const HOLD_MS = 2500;
 const RING_RADIUS = 24;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
+const px = (p: { x: number; y: number }): CSSProperties => ({ left: p.x, top: p.y });
 const SUIT: Record<string, string> = { d: '♦', s: '♠', h: '♥', c: '♣', r: '★', b: '★' };
 const suitName = (suit: string) =>
   ({
@@ -307,13 +310,13 @@ export function TentosTable({
   const felt: GameTable = held ? { ...table, trick: [], ...held } : table;
   const shown = shownTrick(felt);
   const stage = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<FodinhaLayout>('landscape');
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const [covered, setCovered] = useState(false);
   useEffect(() => {
     const el = stage.current;
     if (!el) return undefined;
     const observer = new ResizeObserver(([entry]) => {
-      setLayout(entry.contentRect.width < 620 ? 'portrait' : 'landscape');
+      setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -321,9 +324,29 @@ export function TentosTable({
 
   const truco = table.kind === 'truco';
   const { mySeat, phase } = table;
+  const live = phase !== 'waiting' && phase !== 'finished';
   const seats = Math.max(table.capacity, table.players.length);
-  const points = seatPoints(seats, Math.max(mySeat, 0), layout);
+  const layout: FodinhaLayout = size.width && size.width < 620 ? 'portrait' : 'landscape';
+  // Truco is played at the bar: the photo's chairs and table instead of the rings.
+  const scene =
+    truco && hasScene(seats) && size.width
+      ? trucoScene(size.width, size.height, seats, Math.max(mySeat, 0))
+      : null;
+  const ring = seatPoints(seats, Math.max(mySeat, 0), layout);
   const center = tableCenter(layout);
+  const seatAt = (seat: number): CSSProperties => (scene ? px(scene.seats[seat]) : pct(ring[seat]));
+  const playedAt = (seat: number): CSSProperties =>
+    scene ? px(scene.played[seat]) : pct(toward(center, ring[seat] ?? center, 0.56));
+  const vira = live && table.vira && (
+    <div
+      className={scene ? css.SceneVira : undefined}
+      style={
+        { '--card-w': `${scene?.card ?? 46}px`, ...(scene && px(scene.vira)) } as CSSProperties
+      }
+    >
+      <PlayingCard card={table.vira} />
+    </div>
+  );
   const me = mySeat >= 0 ? table.players[mySeat] : undefined;
   const active = !!me && !me.eliminated;
   const myTurn = active && table.turn === mySeat;
@@ -337,7 +360,6 @@ export function TentosTable({
     (phase === 'eleven'
       ? mySeat % 2 === table.decisionTeam
       : phase === 'respond' && mySeat % 2 !== table.pending?.team);
-  const live = phase !== 'waiting' && phase !== 'finished';
 
   // Center of the table: the vira and what the hand is worth, or what the table waits for.
   let title = '';
@@ -596,14 +618,28 @@ export function TentosTable({
           </button>
         </div>
 
-        <div className={css.Felt} data-layout={layout}>
-          <div className={css.Rings} />
-          <div className={css.Center} aria-live="polite">
+        <div className={css.Felt} data-layout={layout} data-scene={!!scene}>
+          {scene ? (
+            <img
+              className={css.Scene}
+              src={barArt}
+              alt=""
+              draggable={false}
+              style={{
+                left: scene.left,
+                top: scene.top,
+                width: scene.width,
+                height: scene.height,
+              }}
+            />
+          ) : (
+            <div className={css.Rings} />
+          )}
+          {scene && vira}
+          <div className={css.Center} aria-live="polite" style={scene ? px(scene.door) : undefined}>
             {live && table.vira && (
               <>
-                <div style={{ '--card-w': '46px' } as CSSProperties}>
-                  <PlayingCard card={table.vira} />
-                </div>
+                {!scene && vira}
                 <div className={css.CenterLine}>
                   {tr('table_games.manilha_short', 'vira · manilha {{rank}}', {
                     rank: manilhaRank(table.vira),
@@ -645,11 +681,9 @@ export function TentosTable({
             <div
               key={seat}
               className={css.Placed}
+              data-scene={!!scene}
               style={
-                {
-                  ...pct(toward(center, points[seat] ?? center, 0.56)),
-                  '--card-w': '44px',
-                } as CSSProperties
+                { ...playedAt(seat), '--card-w': `${scene ? scene.card : 44}px` } as CSSProperties
               }
             >
               <PlayingCard card={card} win={win} dim={dim} />
@@ -666,7 +700,7 @@ export function TentosTable({
             if (!player)
               return (
                 // eslint-disable-next-line react/no-array-index-key
-                <div key={`empty-${seat}`} className={css.Seat} style={pct(points[seat])}>
+                <div key={`empty-${seat}`} className={css.Seat} style={seatAt(seat)}>
                   <div className={css.Avatar} data-empty="true" />
                   <div className={css.SeatSub}>{tr('games.table.empty', 'empty')}</div>
                 </div>
@@ -679,7 +713,7 @@ export function TentosTable({
                 seat={seat}
                 name={nameOf(player.userId)}
                 avatar={avatarOf(player.userId)}
-                style={pct(points[seat])}
+                style={seatAt(seat)}
               />
             );
           })}

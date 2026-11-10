@@ -525,6 +525,10 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "truco_bar_title": "Truco no bar",
+    "truco_bar_body": "O truco agora é jogado numa mesa de bar: cada um senta numa cadeira de plástico vermelha, as cartas caem na mesa e a vira fica em cima do monte, do lado.",
+    "live_buttons_title": "Controles da live na borda",
+    "live_buttons_body": "Os controles da live que você assiste agora são botões soltos na borda direita: o X para parar de assistir no canto de cima e o som embaixo. O botão de olho deixa eles discretos até você passar o mouse.",
     "fodinha_table_title": "Fodinha com mesa de verdade",
     "fodinha_table_body": "A Fodinha agora é jogada numa mesa como a do poker, com regras novas: baralho de truco com vira e manilha, naipe desempatando, rodada de 1 carta na testa e rodadas que sobem até o máximo de cartas e depois descem. E quem estoura o tempo não é mais eliminado: o jogo joga por você.",
     "floating_call_title": "Mova a janelinha da chamada",
@@ -667,6 +671,8 @@
     "stop_watching": "Parar de assistir",
     "hide_people": "Ocultar pessoas",
     "show_people": "Mostrar pessoas",
+    "dim_controls": "Deixar controles discretos",
+    "show_controls": "Mostrar controles sempre",
     "volume": "Volume da live",
     "mute": "Mutar live",
     "unmute": "Ativar som da live",

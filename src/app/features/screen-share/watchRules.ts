@@ -30,3 +30,22 @@ export const saveVolume = (getStorage: () => Pick<Storage, 'setItem'>, volume: n
     // Storage blocked: the volume just isn't remembered.
   }
 };
+
+const DIM_KEY = 'blazeroom.liveControlsDim';
+
+// Whether the controls over a watched share stay faded until pointed at. Off by default.
+export const readControlsDim = (getStorage: () => Pick<Storage, 'getItem'>): boolean => {
+  try {
+    return getStorage().getItem(DIM_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+export const saveControlsDim = (getStorage: () => Pick<Storage, 'setItem'>, dim: boolean): void => {
+  try {
+    getStorage().setItem(DIM_KEY, dim ? '1' : '0');
+  } catch {
+    // Storage blocked: the choice lasts until the page reloads.
+  }
+};

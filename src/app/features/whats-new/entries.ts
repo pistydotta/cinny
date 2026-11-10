@@ -17,6 +17,30 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-truco-bar',
+    items: () => [
+      {
+        title: tr('whats_new.truco_bar_title', 'Truco at the bar'),
+        body: tr(
+          'whats_new.truco_bar_body',
+          'Truco is now played at a bar table: everyone sits on a red plastic chair, the cards land on the table and the vira lies on the deck beside them.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-live-buttons',
+    items: () => [
+      {
+        title: tr('whats_new.live_buttons_title', 'Live controls on the edge'),
+        body: tr(
+          'whats_new.live_buttons_body',
+          'The controls of a live you watch are now loose buttons on its right edge: the X to stop watching in the top corner and the sound at the bottom. The eye button fades them until you point at them.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-call-stage',
     items: () => [
       {

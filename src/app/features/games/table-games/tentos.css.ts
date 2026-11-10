@@ -445,3 +445,75 @@ export const Input = style({
 export const Choices = style({ display: 'flex', gap: 6, flexWrap: 'wrap' });
 
 globalStyle(`${Sheet} details summary`, { cursor: 'pointer', color: MUTED });
+
+/*
+ * Truco at the bar: the photo fills the stage, the players sit on its chairs and the cards
+ * lie on the plastic table, tilted away from the viewer.
+ */
+const SCENE = `${Felt}[data-scene="true"]`;
+const SHADE = '#120a06d9';
+export const Scene = style({
+  position: 'absolute',
+  maxWidth: 'none',
+  pointerEvents: 'none',
+  userSelect: 'none',
+});
+export const SceneVira = style({
+  position: 'absolute',
+  zIndex: 1,
+  transform: 'translate(-50%, -50%) perspective(420px) rotateX(38deg) rotateZ(-14deg)',
+  filter: 'drop-shadow(0 6px 4px #0009)',
+  '::before': {
+    // The rest of the deck, face down under the vira.
+    content: '""',
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 6,
+    transform: 'translate(10px, -4px) rotateZ(24deg)',
+    background: '#24252a',
+    border: '1px solid #6d5c36',
+    backgroundImage: 'repeating-linear-gradient(45deg, transparent 0 5px, #2c2d33 5px 6px)',
+    zIndex: -1,
+  },
+});
+globalStyle(SCENE, { top: 0, overflow: 'hidden' });
+globalStyle(`${Stage}:has(${SCENE})`, { background: '#2b170b' });
+globalStyle(`${Screen}:has(${SCENE}) ${Bar}`, {
+  background: 'linear-gradient(#1a0e07, #0f0805)',
+  borderTopColor: '#5a2a14',
+});
+globalStyle(`${SCENE} ${Placed}`, { gap: 0 });
+globalStyle(`${SCENE} ${Placed} > ${Card}`, {
+  transform: 'perspective(380px) rotateX(42deg)',
+  boxShadow: '0 8px 8px -2px #0008',
+});
+globalStyle(`${SCENE} ${PlacedName}`, { marginTop: -4, background: SHADE });
+globalStyle(`${SCENE} ${Center}`, {
+  padding: '10px 14px',
+  borderRadius: 14,
+  background: '#0b0d14b3',
+  backdropFilter: 'blur(3px)',
+  zIndex: 1,
+});
+globalStyle(`${SCENE} ${Avatar}`, {
+  width: 50,
+  height: 50,
+  borderWidth: 2,
+  borderColor: '#f2d39a',
+  boxShadow: '0 6px 14px #000c',
+});
+globalStyle(`${SCENE} ${Avatar}[data-turn="true"]`, { borderColor: GOLD });
+globalStyle(`${SCENE} ${Ring}`, { width: 60, height: 60 });
+globalStyle(`${SCENE} ${SeatName}, ${SCENE} ${SeatSub}`, {
+  padding: '1px 8px',
+  borderRadius: 999,
+  background: SHADE,
+});
+globalStyle(`${Stage}:has(${SCENE}) ${Corner} > div`, {
+  padding: 10,
+  borderRadius: 12,
+  background: SHADE,
+});
+globalStyle(`${Stage}:has(${SCENE}) ${Corner}[data-side="right"] > ${Pill}`, {
+  background: SHADE,
+});

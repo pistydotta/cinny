@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_VOLUME, readSavedVolume, saveVolume, shouldAutoWatch } from './watchRules';
+import {
+  DEFAULT_VOLUME,
+  readControlsDim,
+  readSavedVolume,
+  saveControlsDim,
+  saveVolume,
+  shouldAutoWatch,
+} from './watchRules';
 
 const memoryStorage = () => {
   const data = new Map<string, string>();
@@ -79,5 +86,24 @@ describe('saved volume', () => {
     };
     expect(readSavedVolume(blocked)).toBe(0.5);
     expect(() => saveVolume(blocked, 0.3)).not.toThrow();
+  });
+});
+
+describe('faded live controls', () => {
+  it('start fully shown', () => {
+    expect(readControlsDim(() => memoryStorage())).toBe(false);
+  });
+
+  it('remember the choice', () => {
+    const storage = memoryStorage();
+    saveControlsDim(() => storage, true);
+    expect(readControlsDim(() => storage)).toBe(true);
+    saveControlsDim(() => storage, false);
+    expect(readControlsDim(() => storage)).toBe(false);
+  });
+
+  it('survive blocked storage', () => {
+    expect(readControlsDim(throwing)).toBe(false);
+    expect(() => saveControlsDim(throwing, true)).not.toThrow();
   });
 });

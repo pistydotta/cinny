@@ -370,53 +370,109 @@ export const GoToRoom = style({
   },
 });
 
-// Controls over the watched share in the call room. A fixed strip as wide as the share, lined up
-// with its top edge; only the bar inside takes clicks, so the share stays clickable around it.
+// Controls over the watched share in the call room, as loose round buttons with no bar behind
+// them: stop watching in the top right corner, like a window's close, and the sound at the bottom
+// right, like a video player's. The box matches the share; only the buttons take clicks.
 // Above the call iframe, which has no z-index there.
 export const LiveOverlay = style({
   position: 'fixed',
   zIndex: 2,
   display: 'flex',
   flexDirection: 'column',
+  justifyContent: 'space-between',
   alignItems: 'flex-end',
-  gap: config.space.S100,
   padding: config.space.S300,
   pointerEvents: 'none',
-  opacity: 0,
-  transition: 'opacity 200ms ease-out',
-  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
-  selectors: { '&:focus-within': { opacity: 1 } },
 });
-export const LiveOverlayShown = style({ opacity: 1 });
 
-// Always dark, whatever the theme: it sits on video, like the call's own name tags.
-export const LiveOverlayBar = style({
+// Too short for two ends (a phone on its side): everything in one row at the top.
+export const LiveOverlayCompact = style({
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  alignItems: 'flex-start',
+  gap: config.space.S200,
+});
+
+export const LiveOverlayGroup = style({
   pointerEvents: 'auto',
   display: 'flex',
-  alignItems: 'center',
-  gap: config.space.S100,
-  padding: config.space.S100,
-  borderRadius: config.radii.Pill,
-  backgroundColor: 'rgba(16, 18, 22, 0.78)',
-  backdropFilter: 'blur(8px)',
+  flexDirection: 'column',
+  alignItems: 'flex-end',
+  gap: config.space.S200,
+  transition: 'opacity 200ms ease-out',
+  selectors: {
+    [`${LiveOverlayCompact} &`]: { flexDirection: 'row', alignItems: 'center' },
+  },
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+});
+
+// Out of the way: the buttons fade until the pointer or the keyboard reaches them.
+export const LiveOverlayDim = style({});
+globalStyle(`${LiveOverlayDim} ${LiveOverlayGroup}`, { opacity: 0.25 });
+globalStyle(
+  `${LiveOverlayDim} ${LiveOverlayGroup}:hover, ${LiveOverlayDim} ${LiveOverlayGroup}:focus-within`,
+  {
+    opacity: 1,
+  }
+);
+
+// Each button springs in when the share opens, one after another (the delay is set inline).
+const springIn = keyframes({
+  '0%': { opacity: 0, transform: 'translateY(-0.75rem) scale(0.5)' },
+  '100%': { opacity: 1, transform: 'none' },
+});
+
+// Always dark, whatever the theme: they sit on video, like the call's own name tags.
+const floating = {
+  pointerEvents: 'auto',
+  animation: `${springIn} 550ms cubic-bezier(0.3, 1.6, 0.5, 1) both`,
+  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+  '@media': { '(prefers-reduced-motion: reduce)': { animation: 'none' } },
+} as const;
+
+export const LiveFloat = style({
+  ...floating,
   color: '#F2F4F7',
-  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
+  backgroundColor: 'rgba(16, 18, 22, 0.72)',
+  backdropFilter: 'blur(8px)',
+  selectors: {
+    '&:hover': { backgroundColor: 'rgba(16, 18, 22, 0.92)' },
+    '&[aria-pressed=true]': { color: '#80C8FF' },
+  },
 });
 
-export const LiveOverlaySlider = style({
-  width: toRem(96),
-  backgroundColor: 'rgba(255, 255, 255, 0.28)',
+export const LiveFloatStop = style(floating);
+
+// The sound button opens its slider to the left on hover or focus, so it stays one round button.
+export const LiveVolume = style({
+  ...floating,
+  display: 'flex',
+  flexDirection: 'row-reverse',
+  alignItems: 'center',
+  borderRadius: config.radii.Pill,
+  color: '#F2F4F7',
+  backgroundColor: 'rgba(16, 18, 22, 0.72)',
+  backdropFilter: 'blur(8px)',
 });
 
-export const LiveOverlayDivider = style({
-  width: 1,
-  height: toRem(18),
-  margin: `0 ${config.space.S100}`,
-  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-});
-
-// The bar's light icon buttons read on the dark glass in light themes too.
-export const LiveOverlayButton = style({
+export const LiveVolumeButton = style({
   color: 'inherit',
-  selectors: { '&:hover, &[aria-pressed=true]': { backgroundColor: 'rgba(255, 255, 255, 0.14)' } },
+  flexShrink: 0,
+  selectors: { '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.14)' } },
+});
+
+export const LiveVolumeSlider = style({
+  width: 0,
+  margin: 0,
+  opacity: 0,
+  backgroundColor: 'rgba(255, 255, 255, 0.28)',
+  transition: 'width 180ms ease-out, margin 180ms ease-out, opacity 180ms ease-out',
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+  selectors: {
+    [`${LiveVolume}:hover &, ${LiveVolume}:focus-within &`]: {
+      width: toRem(96),
+      margin: `0 ${config.space.S100} 0 ${config.space.S300}`,
+      opacity: 1,
+    },
+  },
 });

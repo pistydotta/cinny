@@ -5,15 +5,24 @@ import { CallEmbed } from '../../plugins/call/CallEmbed';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
 import { useShares } from './useShares';
-import { saveVolume } from './watchRules';
+import { readControlsDim, saveControlsDim, saveVolume } from './watchRules';
 import * as css from './styles.css';
 
-type Rect = { top: number; left: number; width: number };
+type Rect = { top: number; left: number; width: number; height: number };
 const sameRect = (a: Rect | null, b: Rect | null) =>
-  a === b || (!!a && !!b && a.top === b.top && a.left === b.left && a.width === b.width);
+  a === b ||
+  (!!a &&
+    !!b &&
+    a.top === b.top &&
+    a.left === b.left &&
+    a.width === b.width &&
+    a.height === b.height);
 
-// How long the controls stay after the pointer stops moving over the call.
-const IDLE_MS = 2500;
+// Below this the share has no room for buttons at both ends (a phone on its side), so they line
+// up at the top instead.
+const COMPACT_HEIGHT = 260;
+// The buttons spring in one after another.
+const STAGGER_MS = 70;
 
 // Where Element Call draws the watched share, in this page's coordinates. Its spotlight tile is
 // the parent of the corner buttons; the iframe is the same origin, so its document is readable.
@@ -23,19 +32,23 @@ const shareRect = (callEmbed: CallEmbed): Rect | null => {
     ?.parentElement?.getBoundingClientRect();
   if (!tile || tile.width === 0) return null;
   const frame = callEmbed.iframe.getBoundingClientRect();
-  return { top: frame.top + tile.top, left: frame.left + tile.left, width: tile.width };
+  return {
+    top: frame.top + tile.top,
+    left: frame.left + tile.left,
+    width: tile.width,
+    height: tile.height,
+  };
 };
 
-// The watched share's sound, the people column and stop watching, over the top of the share in
-// the call room, the way a video player keeps its controls on the video. They show while the
-// pointer moves over the call and fade out after a moment, like the call's own name tags.
+// Stop watching, the people column and the share's sound, as loose buttons over the right edge
+// of the watched share in the call room: stop in the top corner, the sound at the bottom.
+// They can be faded until pointed at, for a share that needs the whole picture.
 export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
   const { store, remotes } = useShares(callEmbed.control);
   const watched = remotes.filter((share) => share.watching);
   const peopleHidden = store?.getSnapshot().peopleHidden ?? false;
   const [rect, setRect] = useState<Rect | null>(null);
-  const [awake, setAwake] = useState(true);
-  const [held, setHeld] = useState(false);
+  const [dim, setDim] = useState(() => readControlsDim(() => localStorage));
   const active = watched.length > 0;
 
   // The share moves with the layout, the window and the column, none of which tell this page,
@@ -60,25 +73,6 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
     return () => cancelAnimationFrame(frame);
   }, [active, callEmbed]);
 
-  // The pointer is over the iframe, so listen in its document.
-  useEffect(() => {
-    if (!active) return undefined;
-    const doc = callEmbed.document;
-    let timer = window.setTimeout(() => setAwake(false), IDLE_MS);
-    const wake = () => {
-      setAwake(true);
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => setAwake(false), IDLE_MS);
-    };
-    doc?.addEventListener('pointermove', wake);
-    doc?.addEventListener('pointerdown', wake);
-    return () => {
-      window.clearTimeout(timer);
-      doc?.removeEventListener('pointermove', wake);
-      doc?.removeEventListener('pointerdown', wake);
-    };
-  }, [active, callEmbed]);
-
   // Unwatching everything brings the people back for the next share.
   useEffect(() => {
     if (!active) store?.setPeopleHidden(false);
@@ -86,42 +80,112 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
 
   if (!store || !active || !rect) return null;
 
+  let order = 0;
+  const springIn = () => {
+    order += 1;
+    return { animationDelay: `${(order - 1) * STAGGER_MS}ms` };
+  };
+  const toggleDim = () => {
+    setDim(!dim);
+    saveControlsDim(() => localStorage, !dim);
+  };
+
   return (
     <div
-      className={classNames(css.LiveOverlay, (awake || held) && css.LiveOverlayShown)}
-      style={{ top: rect.top, left: rect.left, width: rect.width }}
-      onPointerEnter={() => setHeld(true)}
-      onPointerLeave={() => setHeld(false)}
-      onFocus={() => setHeld(true)}
-      onBlur={() => setHeld(false)}
+      className={classNames(
+        css.LiveOverlay,
+        rect.height < COMPACT_HEIGHT && css.LiveOverlayCompact,
+        dim && css.LiveOverlayDim
+      )}
+      style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
     >
-      {watched.map((share, i) => (
-        <div key={share.id} className={css.LiveOverlayBar}>
-          {share.hasSound && (
-            <>
+      <div className={css.LiveOverlayGroup}>
+        {watched.map((share) => (
+          <TipIconButton
+            key={share.id}
+            label={
+              watched.length > 1
+                ? `${tr('screen_share.stop_watching', 'Stop watching')}: ${share.name}`
+                : tr('screen_share.stop_watching', 'Stop watching')
+            }
+            className={css.LiveFloatStop}
+            style={springIn()}
+            variant="Critical"
+            fill="Solid"
+            size="400"
+            radii="Pill"
+            onClick={() => store.unwatch(share.id)}
+          >
+            <Icon size="200" src={Icons.Cross} />
+          </TipIconButton>
+        ))}
+        <TipIconButton
+          label={
+            dim
+              ? tr('screen_share.show_controls', 'Always show controls')
+              : tr('screen_share.dim_controls', 'Fade controls')
+          }
+          aria-pressed={dim}
+          className={css.LiveFloat}
+          style={springIn()}
+          variant="Secondary"
+          fill="None"
+          size="400"
+          radii="Pill"
+          onClick={toggleDim}
+        >
+          <Icon size="200" src={dim ? Icons.Eye : Icons.EyeBlind} />
+        </TipIconButton>
+      </div>
+      <div className={css.LiveOverlayGroup}>
+        <TipIconButton
+          label={
+            peopleHidden
+              ? tr('screen_share.show_people', 'Show people')
+              : tr('screen_share.hide_people', 'Hide people')
+          }
+          aria-pressed={peopleHidden}
+          className={css.LiveFloat}
+          style={springIn()}
+          variant="Secondary"
+          fill="None"
+          size="400"
+          radii="Pill"
+          onClick={() => store.setPeopleHidden(!peopleHidden)}
+        >
+          <Icon size="200" src={Icons.User} filled={!peopleHidden} />
+        </TipIconButton>
+        {watched
+          .filter((share) => share.hasSound)
+          .map((share) => (
+            <div key={share.id} className={css.LiveVolume} style={springIn()}>
               <TipIconButton
                 label={
                   share.muted
                     ? tr('screen_share.unmute', 'Unmute share')
                     : tr('screen_share.mute', 'Mute share')
                 }
-                className={share.muted ? undefined : css.LiveOverlayButton}
+                className={share.muted ? undefined : css.LiveVolumeButton}
                 variant={share.muted ? 'Warning' : 'Secondary'}
                 fill="None"
-                size="300"
+                size="400"
                 radii="Pill"
                 onClick={() => store.setMuted(share.id, !share.muted)}
               >
                 <Icon size="200" src={share.muted ? Icons.VolumeMute : Icons.VolumeHigh} />
               </TipIconButton>
               <input
-                className={classNames(css.Slider, css.LiveOverlaySlider)}
+                className={classNames(css.Slider, css.LiveVolumeSlider)}
                 type="range"
                 min={0}
                 max={1}
                 step={0.01}
                 value={share.muted ? 0 : share.volume}
-                aria-label={tr('screen_share.volume', 'Share volume')}
+                aria-label={
+                  watched.length > 1
+                    ? `${tr('screen_share.volume', 'Share volume')}: ${share.name}`
+                    : tr('screen_share.volume', 'Share volume')
+                }
                 onChange={(evt) => {
                   const volume = Number(evt.currentTarget.value);
                   if (share.muted && volume > 0) store.setMuted(share.id, false);
@@ -132,39 +196,9 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
                 }
                 onKeyUp={(evt) => saveVolume(() => localStorage, Number(evt.currentTarget.value))}
               />
-              <span className={css.LiveOverlayDivider} />
-            </>
-          )}
-          {i === 0 && (
-            <TipIconButton
-              label={
-                peopleHidden
-                  ? tr('screen_share.show_people', 'Show people')
-                  : tr('screen_share.hide_people', 'Hide people')
-              }
-              aria-pressed={peopleHidden}
-              className={css.LiveOverlayButton}
-              variant="Secondary"
-              fill="None"
-              size="300"
-              radii="Pill"
-              onClick={() => store.setPeopleHidden(!peopleHidden)}
-            >
-              <Icon size="200" src={Icons.User} filled={!peopleHidden} />
-            </TipIconButton>
-          )}
-          <TipIconButton
-            label={tr('screen_share.stop_watching', 'Stop watching')}
-            variant="Critical"
-            fill="Solid"
-            size="300"
-            radii="Pill"
-            onClick={() => store.unwatch(share.id)}
-          >
-            <Icon size="200" src={Icons.EyeBlind} />
-          </TipIconButton>
-        </div>
-      ))}
+            </div>
+          ))}
+      </div>
     </div>
   );
 }
