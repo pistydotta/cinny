@@ -6,6 +6,7 @@ import { ChipStack } from './poker/table/Chips';
 import { TopUpButton } from './credits/TopUpButton';
 import { useCredits } from './credits/useCredits';
 import * as css from './gamesHub.css';
+import { HubArt } from './horde/horde.css';
 import { tr } from '../translation/tr';
 
 const ROYAL: Card[] = [
@@ -19,10 +20,11 @@ const ROYAL: Card[] = [
 type GamesHubProps = {
   onOpenPoker: () => void;
   onOpenIdle: () => void;
+  onOpenHorde: () => void;
   onBack?: () => void;
 };
 
-export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
+export function GamesHub({ onOpenPoker, onOpenIdle, onOpenHorde, onBack }: GamesHubProps) {
   const { balance, atTables, refresh, topUp } = useCredits();
 
   useEffect(() => {
@@ -130,6 +132,28 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onBack }: GamesHubProps) {
                 )}
               </span>
               <button type="button" className={css.PlayButton} onClick={onOpenIdle}>
+                {tr('games.hub.play', 'Play')}
+              </button>
+            </div>
+          </div>
+
+          <div className={css.GameCard} data-playable="true">
+            <div className={HubArt}>
+              <span>🧟</span>
+              <span>🔥</span>
+              <span>🧙</span>
+              <span>⚡</span>
+              <span>👹</span>
+            </div>
+            <div className={css.CardBody}>
+              <span className={css.GameName}>BrazilianBonk</span>
+              <span className={css.GameMeta}>
+                {tr(
+                  'games.hub.horde_meta',
+                  '3D roguelike · survive the horde, stack weapons and beat the boss'
+                )}
+              </span>
+              <button type="button" className={css.PlayButton} onClick={onOpenHorde}>
                 {tr('games.hub.play', 'Play')}
               </button>
             </div>

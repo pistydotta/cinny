@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-horde',
+    items: () => [
+      {
+        title: tr('whats_new.horde_title', 'New game: BrazilianBonk'),
+        body: tr(
+          'whats_new.horde_body',
+          'A 3D roguelike in the Games tab: pick a hero, survive 10 minutes of horde with weapons that attack by themselves, build your combo on every level and spend the gold on permanent upgrades. It plays with a keyboard and on a phone.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-idle-rework',
     items: () => [
       {
