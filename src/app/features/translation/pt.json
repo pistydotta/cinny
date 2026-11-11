@@ -114,7 +114,7 @@
     "fodinha_rules": "Variante de eliminação · 2–6 jogadores, baralho de truco com 40 cartas (sem 8, 9, 10 e curingas). A cada rodada uma vira fica virada na mesa; a carta acima dela é a manilha e ganha de todas. As outras valem 3 > 2 > A > K > J > Q > 7 > 6 > 5 > 4. O naipe desempata tudo: paus > copas > espadas > ouros. Não é obrigatório seguir o naipe. Antes de jogar, cada um dá o palpite de quantas vazas vai fazer; o último pode fechar a soma com o número de cartas, se quiser. A rodada de 1 carta é na testa: você vê a carta de todo mundo, menos a sua. As rodadas sobem de uma em uma até o máximo que o baralho permite (19 com 2 jogadores, 13 com 3, 9 com 4, 7 com 5, 6 com 6), depois descem até 1 e sobem de novo. A diferença entre o palpite e as vazas feitas vira penalidade. Mais de 5 penalidades acumuladas elimina ao fim da rodada. Se todos ultrapassarem o limite, o menor total sobrevive; empatados no menor total continuam. O último sobrevivente ganha o pote.",
     "chess_rules": "Xadrez casual sem relógio ou créditos. As brancas começam. O servidor valida lances, roque, en passant, promoção e xeque-mate. Afogamento, material insuficiente, repetição tripla e regra dos cinquenta lances encerram automaticamente em empate. Qualquer membro conectado pode assistir e comentar. Selecione uma peça e depois um destino destacado.",
     "rules": "Regras da mesa",
-    "timeout_rules": "No truco cada vez dura 15 segundos; na fodinha, 2 minutos. Quando o tempo acaba, o jogo joga por você: no truco joga uma carta ou responde ao pedido, sem nunca pedir; na fodinha dá palpite 0 ou joga sua primeira carta. Uma rodada encerrada avança sozinha depois do mesmo tempo. Mesas em espera expiram em 24 horas, com devolução. Sair de um jogo começado perde a aposta. As apostas são só créditos de jogo.",
+    "timeout_rules": "No truco cada vez dura 45 segundos; na fodinha, 2 minutos. Quando o tempo acaba, o jogo joga por você: no truco joga uma carta ou responde ao pedido, sem nunca pedir; na fodinha dá palpite 0 ou joga sua primeira carta. Uma rodada encerrada avança sozinha depois do mesmo tempo. Mesas em espera expiram em 24 horas, com devolução. Sair de um jogo começado perde a aposta. As apostas são só créditos de jogo.",
     "create": "Criar mesa",
     "visibility": "As mesas são visíveis para membros conectados da comunidade. Abra uma mesa para assistir; entrar como jogador é uma escolha separada.",
     "name": "Nome da mesa",
@@ -525,6 +525,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "truco_time_title": "Mais tempo no truco",
+    "truco_time_body": "Cada vez no truco agora dura 45 segundos. Ficou sem moedas? O botão Pegar mais créditos agora também está no saguão do truco e da fodinha.",
     "truco_bar_title": "Truco no bar",
     "truco_bar_body": "O truco agora é jogado numa mesa de bar: cada um senta numa cadeira de plástico vermelha, as cartas caem na mesa e a vira fica em cima do monte, do lado.",
     "live_buttons_title": "Controles da live na borda",

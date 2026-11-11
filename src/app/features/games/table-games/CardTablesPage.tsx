@@ -7,7 +7,9 @@ import { useFriends } from '../../friends/useFriends';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
+import { TopUpButton } from '../credits/TopUpButton';
 import { useCredits } from '../credits/useCredits';
+import { formatChips } from '../poker/types';
 import { createTableGamesApi } from './api';
 import { FodinhaScreen } from './FodinhaScreen';
 import { lobbySections, wonBy } from './lobby';
@@ -117,7 +119,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
   const { tableId } = useParams();
   const useAuthentication = useMediaAuthentication();
   const api = useMemo(() => createTableGamesApi(() => mx.getAccessToken()), [mx]);
-  const { balance, refresh } = useCredits();
+  const { balance, atTables, refresh, topUp } = useCredits();
   const [tables, setTables] = useState<TableSummary[]>([]);
   const [table, setTable] = useState<GameTable>();
   const [error, setError] = useState('');
@@ -323,6 +325,16 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
             {creating ? tr('table_games.close', 'Close') : tr('table_games.new_table', 'New table')}
           </button>
         </header>
+        {/* Someone who lost everything can always get back in from here. */}
+        <div className={css.LobbyHead}>
+          <span className={`${css.Grow} ${css.Muted}`}>
+            {tr('games.wallet.card_games', 'Card-game wallet')}:{' '}
+            {tr('games.wallet.coins', '{{coins}} coins', {
+              coins: balance === undefined ? '—' : formatChips(balance),
+            })}
+          </span>
+          <TopUpButton atTables={atTables} topUp={topUp} className={css.Pill} />
+        </div>
         {errorBox}
         {creating && (
           <div className={css.List} style={{ padding: 16 }}>

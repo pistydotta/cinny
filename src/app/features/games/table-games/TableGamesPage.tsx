@@ -21,7 +21,7 @@ function Rules({ kind }: { kind: GameKind }) {
         <p className={css.Muted}>
           {tr(
             'table_games.timeout_rules',
-            'Truco gives 15 seconds per turn and Fodinha 2 minutes. When time runs out the game plays for you: in Truco it plays a card or answers a raise, never raising; in Fodinha it bets 0 or plays your first card. A finished round moves on by itself after the same time. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
+            'Truco gives 45 seconds per turn and Fodinha 2 minutes. When time runs out the game plays for you: in Truco it plays a card or answers a raise, never raising; in Fodinha it bets 0 or plays your first card. A finished round moves on by itself after the same time. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
           )}
         </p>
       )}

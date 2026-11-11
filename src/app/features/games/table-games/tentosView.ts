@@ -44,7 +44,7 @@ export function placedCards(table: GameTable): PlacedCard[] {
 }
 
 /** Seconds per turn, as the API counts them: Truco is quick, Fodinha bets on long hands. */
-export const turnMs = (kind: GameTable['kind']) => (kind === 'truco' ? 15_000 : 120_000);
+export const turnMs = (kind: GameTable['kind']) => (kind === 'truco' ? 45_000 : 120_000);
 
 export type TrickResult = { kind: 'tie' } | { kind: 'won'; seat: number };
 

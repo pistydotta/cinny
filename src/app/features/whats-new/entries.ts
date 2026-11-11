@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-truco-time-top-up',
+    items: () => [
+      {
+        title: tr('whats_new.truco_time_title', 'More time in Truco'),
+        body: tr(
+          'whats_new.truco_time_body',
+          'Each Truco turn now lasts 45 seconds. Ran out of coins? Get more coins is now in the Truco and Fodinha lobby too.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-truco-bar',
     items: () => [
       {
