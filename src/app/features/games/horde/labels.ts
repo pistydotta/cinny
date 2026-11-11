@@ -5,19 +5,34 @@ type Label = { icon: string; name: string; text: string };
 
 export const weaponLabel = (id: WeaponId): Label => {
   switch (id) {
-    case 'ember':
+    case 'missile':
       return {
-        icon: '🔥',
-        name: tr('games.horde.weapon.ember', 'Living Ember'),
-        text: tr('games.horde.weapon.ember_text', 'Shoots embers at the closest enemies.'),
-      };
-    case 'blades':
-      return {
-        icon: '🗡️',
-        name: tr('games.horde.weapon.blades', 'Orbiting Blades'),
+        icon: '🚀',
+        name: tr('games.horde.weapon.missile', 'Nuclear Missile'),
         text: tr(
-          'games.horde.weapon.blades_text',
-          'Blades circle you and cut whatever they touch.'
+          'games.horde.weapon.missile_text',
+          'A small missile that blows up where it lands.'
+        ),
+      };
+    case 'card':
+      return {
+        icon: '📘',
+        name: tr('games.horde.weapon.card', 'Work Card'),
+        text: tr('games.horde.weapon.card_text', 'Throws work cards at the closest enemies.'),
+      };
+    case 'aura':
+      return {
+        icon: '💧',
+        name: tr('games.horde.weapon.aura', 'Fascist Tears'),
+        text: tr('games.horde.weapon.aura_text', 'An aura that hurts whoever comes close to you.'),
+      };
+    case 'urns':
+      return {
+        icon: '🗳️',
+        name: tr('games.horde.weapon.urns', 'Hacked Ballot Boxes'),
+        text: tr(
+          'games.horde.weapon.urns_text',
+          'Ballot boxes circle you and hit whatever they touch.'
         ),
       };
     case 'nova':
@@ -68,7 +83,10 @@ export const passiveLabel = (id: PassiveId): Label => {
       return {
         icon: '🎯',
         name: tr('games.horde.passive.reach', 'Reach'),
-        text: tr('games.horde.passive.reach_text', '+12% area for blasts, blades and fire.'),
+        text: tr(
+          'games.horde.passive.reach_text',
+          '+12% area for blasts, auras, ballot boxes and fire.'
+        ),
       };
     case 'swift':
       return {
@@ -92,7 +110,10 @@ export const passiveLabel = (id: PassiveId): Label => {
       return {
         icon: '✨',
         name: tr('games.horde.passive.multi', 'Echo'),
-        text: tr('games.horde.passive.multi_text', '+1 projectile, blade or lightning strike.'),
+        text: tr(
+          'games.horde.passive.multi_text',
+          '+1 projectile, ballot box or lightning strike.'
+        ),
       };
   }
 };
@@ -130,28 +151,28 @@ export const characterLabel = (id: CharacterId): Omit<Label, 'icon'> => {
     case 'lula':
       return {
         name: 'Lula',
-        text: tr('games.horde.character.lula_text', 'Hits harder. Starts with Living Ember.'),
+        text: tr('games.horde.character.lula_text', 'Hits harder. Starts with the Work Card.'),
       };
     case 'janja':
       return {
         name: 'Janja',
-        text: tr(
-          'games.horde.character.janja_text',
-          'Tough and slow. Starts with Orbiting Blades.'
-        ),
+        text: tr('games.horde.character.janja_text', 'Tough and slow. Starts with Fascist Tears.'),
       };
     case 'bolsonaro':
       return {
         name: 'Bolsonaro',
         text: tr(
           'games.horde.character.bolsonaro_text',
-          'Fast and fragile. Starts with the Spinning Axe.'
+          'Fast and fragile. Starts with the Hacked Ballot Boxes.'
         ),
       };
     default:
       return {
         name: 'Enéas',
-        text: tr('games.horde.character.eneas_text', 'Small and furious. Starts with Shockwave.'),
+        text: tr(
+          'games.horde.character.eneas_text',
+          'Small and furious. Starts with the Nuclear Missile.'
+        ),
       };
   }
 };

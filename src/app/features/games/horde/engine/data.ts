@@ -12,7 +12,16 @@ export const WEAPON_MAX_LEVEL = 6;
 export const SHRINE_RADIUS = 2.6;
 export const SHRINE_SECONDS = 3;
 
-export const WEAPON_IDS: WeaponId[] = ['ember', 'blades', 'nova', 'bolt', 'axe', 'trail'];
+export const WEAPON_IDS: WeaponId[] = [
+  'missile',
+  'card',
+  'aura',
+  'urns',
+  'nova',
+  'bolt',
+  'axe',
+  'trail',
+];
 
 export const PASSIVE_MAX: Record<PassiveId, number> = {
   might: 5,
@@ -49,10 +58,10 @@ export type CharacterDef = {
 };
 
 export const CHARACTERS: Record<CharacterId, CharacterDef> = {
-  eneas: { weapon: 'nova', hp: 100, speed: 7.2, damage: 1 },
-  lula: { weapon: 'ember', hp: 100, speed: 7, damage: 1.12 },
-  janja: { weapon: 'blades', hp: 130, speed: 6.6, damage: 1 },
-  bolsonaro: { weapon: 'axe', hp: 85, speed: 7.9, damage: 1 },
+  eneas: { weapon: 'missile', hp: 100, speed: 7.2, damage: 1 },
+  lula: { weapon: 'card', hp: 100, speed: 7, damage: 1.12 },
+  janja: { weapon: 'aura', hp: 130, speed: 6.6, damage: 1 },
+  bolsonaro: { weapon: 'urns', hp: 85, speed: 7.9, damage: 1 },
 };
 export const CHARACTER_IDS = Object.keys(CHARACTERS) as CharacterId[];
 

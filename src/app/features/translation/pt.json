@@ -257,7 +257,7 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
-    "horde_title": "Jogo novo: Última Brasa",
+    "horde_title": "Jogo novo: BrazilianBonk",
     "horde_body": "Um roguelike em 3D na aba Jogos: escolha um herói, sobreviva a 10 minutos de horda com armas que atacam sozinhas, monte seu combo a cada nível e gaste o ouro em melhorias permanentes. Funciona no teclado e no celular.",
     "music_bot_title": "Bot de música nas chamadas",
     "music_bot_body": "Numa chamada, cole um link do YouTube, Spotify, SoundCloud e outros (ou só o nome da música) na barra do bot, ou digite /play no chat da sala. Todo mundo na chamada ouve junto, cada um no seu volume.",
@@ -1325,13 +1325,8 @@
       }
     },
     "horde": {
-      "title": "Última Brasa",
       "subtitle": "Sobreviva a {{minutes}} minutos de horda e derrube o chefe. As armas atacam sozinhas.",
       "weapon": {
-        "ember": "Brasa Viva",
-        "ember_text": "Dispara brasas nos inimigos mais próximos.",
-        "blades": "Lâminas Orbitais",
-        "blades_text": "Lâminas giram ao seu redor e cortam o que encostar.",
         "nova": "Onda de Choque",
         "nova_text": "Uma explosão ao seu redor que empurra os inimigos.",
         "bolt": "Relâmpago",
@@ -1339,7 +1334,15 @@
         "axe": "Machado Giratório",
         "axe_text": "Um machadão que atravessa tudo no caminho.",
         "trail": "Rastro de Fogo",
-        "trail_text": "O chão queima por onde você passa."
+        "trail_text": "O chão queima por onde você passa.",
+        "missile": "Míssil Nuclear",
+        "missile_text": "Um míssil pequeno que explode onde cai.",
+        "card": "Carteira de Trabalho",
+        "card_text": "Arremessa carteiras de trabalho nos inimigos mais próximos.",
+        "aura": "Lágrimas Fascistas",
+        "aura_text": "Uma aura que machuca quem chega perto de você.",
+        "urns": "Urnas Hackeadas",
+        "urns_text": "Urnas giram ao seu redor e acertam o que encostar."
       },
       "passive": {
         "might": "Fúria",
@@ -1347,7 +1350,7 @@
         "haste": "Pressa",
         "haste_text": "As armas atacam 12% mais rápido.",
         "reach": "Alcance",
-        "reach_text": "+12% de área para explosões, lâminas e fogo.",
+        "reach_text": "+12% de área para explosões, auras, urnas e fogo.",
         "swift": "Botas Leves",
         "swift_text": "+8% de velocidade de movimento.",
         "vigor": "Vigor",
@@ -1355,7 +1358,7 @@
         "magnet": "Ímã",
         "magnet_text": "Pega gemas 35% mais longe.",
         "multi": "Eco",
-        "multi_text": "+1 projétil, lâmina ou raio."
+        "multi_text": "+1 projétil, urna ou raio."
       },
       "choice": {
         "heal": "Assado",
@@ -1366,10 +1369,10 @@
         "level": "Nível {{level}}"
       },
       "character": {
-        "eneas_text": "Baixinho e furioso. Começa com a Onda de Choque.",
-        "lula_text": "Bate mais forte. Começa com a Brasa Viva.",
-        "janja_text": "Resistente e lenta. Começa com as Lâminas Orbitais.",
-        "bolsonaro_text": "Rápido e frágil. Começa com o Machado Giratório."
+        "eneas_text": "Baixinho e furioso. Começa com o Míssil Nuclear.",
+        "lula_text": "Bate mais forte. Começa com a Carteira de Trabalho.",
+        "janja_text": "Resistente e lenta. Começa com as Lágrimas Fascistas.",
+        "bolsonaro_text": "Rápido e frágil. Começa com as Urnas Hackeadas."
       },
       "meta": {
         "vigor": "Couro grosso",
@@ -1397,8 +1400,8 @@
       "help_keys": "WASD ou setas para andar, Espaço para esquivar, Esc para pausar. As armas atacam sozinhas.",
       "resume": "Continuar",
       "give_up": "Desistir da partida",
-      "won": "A brasa segue viva!",
-      "dead": "A brasa se apagou",
+      "won": "Vitória! A horda caiu",
+      "dead": "Você foi derrotado",
       "stat": {
         "time": "Sobreviveu",
         "kills": "Abates",

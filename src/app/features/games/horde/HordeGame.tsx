@@ -220,8 +220,8 @@ function HordeRun({ seed, meta, onEnd, onAgain, onExit }: HordeRunProps) {
           <div className={css.Panel}>
             <h2 className={css.PanelTitle}>
               {result.won
-                ? tr('games.horde.won', 'The ember lives on!')
-                : tr('games.horde.dead', 'The ember went out')}
+                ? tr('games.horde.won', 'Victory! The horde is down')
+                : tr('games.horde.dead', 'You were defeated')}
             </h2>
             <div className={css.Stats}>
               <span className={css.Stat}>
@@ -330,7 +330,7 @@ export function HordeGame({ userId, onBack }: HordeGameProps) {
             <Icon size="200" src={Icons.ArrowLeft} />
           </button>
           <div className={css.Grow}>
-            <h1 className={css.Title}>{tr('games.horde.title', 'Last Ember')}</h1>
+            <h1 className={css.Title}>BrazilianBonk</h1>
             <p className={css.Subtitle}>
               {tr(
                 'games.horde.subtitle',

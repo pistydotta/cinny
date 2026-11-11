@@ -66,6 +66,46 @@ describe('horde run', () => {
     expect(run.passives.length).toBeLessThanOrEqual(4);
   });
 
+  it('blows a missile up on everything around where it lands', () => {
+    const run = createRun(1, 'eneas');
+    run.spawnBudget = -1000;
+    const enemy = (id: number, x: number, z: number) =>
+      run.enemies.push({
+        ...{ id, kind: 'brute' as const, elite: false, x, z, hp: 500, maxHp: 500 },
+        ...{ speed: 0, radius: 1, damage: 0, xp: 1, shootCd: 9, urnCd: 0 },
+        ...{ pushX: 0, pushZ: 0, flash: 0 },
+      });
+    enemy(9001, 8, 0);
+    enemy(9002, 9.5, 0.5);
+    enemy(9003, 8, 15);
+    const blasts = [];
+    for (let i = 0; i < 90 && blasts.length === 0; i += 1) {
+      blasts.push(...step(run, IDLE, TICK).filter((e) => e.type === 'blast'));
+    }
+    expect(blasts).toHaveLength(1);
+    const hp = (id: number) => run.enemies.find((e) => e.id === id)?.hp;
+    expect(hp(9001)).toBeLessThan(500);
+    expect(hp(9002)).toBeLessThan(500);
+    expect(hp(9003)).toBe(500);
+    expect(run.shots).toHaveLength(0);
+  });
+
+  it('hurts only what stands inside the aura', () => {
+    const run = createRun(1, 'janja');
+    run.spawnBudget = -1000;
+    const enemy = (id: number, x: number) =>
+      run.enemies.push({
+        ...{ id, kind: 'brute' as const, elite: false, x, z: 0, hp: 500, maxHp: 500 },
+        ...{ speed: 0, radius: 1, damage: 0, xp: 1, shootCd: 9, urnCd: 0 },
+        ...{ pushX: 0, pushZ: 0, flash: 0 },
+      });
+    enemy(9001, 3);
+    enemy(9002, 9);
+    for (let i = 0; i < 90; i += 1) step(run, IDLE, TICK);
+    expect(run.enemies.find((e) => e.id === 9001)?.hp).toBeLessThan(500);
+    expect(run.enemies.find((e) => e.id === 9002)?.hp).toBe(500);
+  });
+
   it('keeps everything inside the arena', () => {
     const run = createRun(3, 'bolsonaro');
     for (let i = 0; i < 60 * 30; i += 1) {

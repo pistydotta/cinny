@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import * as THREE from 'three';
 import { ARENA_RADIUS, ENEMIES, MAX_ENEMIES, SHRINE_RADIUS } from '../engine/data';
-import { bladeCount, bladeOrbit, runStats } from '../engine/run';
+import { auraRadius, runStats, urnCount, urnOrbit } from '../engine/run';
 import { Enemy, EnemyKind, GameEvent, RunState, ShotKind } from '../engine/types';
 import { HERO_SPRITES } from '../sprites';
 import { Particles } from './particles';
@@ -16,7 +16,7 @@ import { ball, box, cone, enemyGeometry, grainTexture, merge } from './models';
 
 const RENDER_HEIGHT = 360;
 const KINDS: EnemyKind[] = ['husk', 'runner', 'brute', 'spitter', 'boss'];
-const SHOT_KINDS: ShotKind[] = ['ember', 'axe', 'spit'];
+const SHOT_KINDS: ShotKind[] = ['card', 'missile', 'axe', 'spit'];
 const SKY = 0x1a1326;
 // Behind and above the hero, low enough to see the horde coming from the horizon.
 const CAMERA_UP = 12.5;
@@ -64,7 +64,9 @@ export class HordeScene {
 
   private zones: THREE.InstancedMesh;
 
-  private blades: THREE.InstancedMesh;
+  private urns: THREE.InstancedMesh;
+
+  private aura: THREE.Mesh;
 
   private shrines: { crystal: THREE.Mesh; ring: THREE.Mesh }[] = [];
 
@@ -115,7 +117,20 @@ export class HordeScene {
     });
 
     const shotShapes: Record<ShotKind, THREE.BufferGeometry> = {
-      ember: ball(0.34, 0xffb347),
+      // A work card: the little blue booklet.
+      card: merge([
+        box(0.55, 0.1, 0.75, 0x1c4fb0),
+        box(0.22, 0.12, 0.22, 0xe8c84a),
+        box(0.57, 0.06, 0.1, 0x143a82, { at: [0, 0, -0.34] }),
+      ]),
+      // A small missile, nose towards +z.
+      missile: merge([
+        box(0.24, 0.24, 0.8, 0xe6e8ee),
+        cone(0.17, 0.4, 5, 0xd9362b, { at: [0, 0, 0.6], rot: [Math.PI / 2, 0, 0] }),
+        box(0.6, 0.05, 0.22, 0xd9362b, { at: [0, 0, -0.34] }),
+        box(0.05, 0.6, 0.22, 0xd9362b, { at: [0, 0, -0.34] }),
+        box(0.14, 0.14, 0.06, 0xf2c230, { at: [0, 0, 0.1] }),
+      ]),
       spit: ball(0.4, 0xb04cff),
       axe: merge([
         box(1.5, 0.14, 0.3, 0xd8dde6),
@@ -124,7 +139,7 @@ export class HordeScene {
       ]),
     };
     SHOT_KINDS.forEach((kind) => {
-      const mesh = instanced(shotShapes[kind], kind === 'axe' ? this.lit : this.glow, 400);
+      const mesh = instanced(shotShapes[kind], kind === 'spit' ? this.glow : this.lit, 400);
       this.shotMeshes.set(kind, mesh);
       this.scene.add(mesh);
     });
@@ -156,12 +171,29 @@ export class HordeScene {
       new THREE.MeshLambertMaterial({ flatShading: true, emissive: 0x222222 }),
       420
     );
-    this.blades = instanced(
-      merge([box(0.22, 0.08, 1.3, 0xe6ecf5), box(0.5, 0.1, 0.16, 0xc79a3a, { at: [0, 0, -0.6] })]),
+    // A ballot box: the beige voting machine with its screen and keys.
+    this.urns = instanced(
+      merge([
+        box(0.9, 0.62, 0.7, 0xd9d2bd, { at: [0, 0, 0] }),
+        box(0.4, 0.3, 0.05, 0x16324a, { at: [-0.18, 0.06, 0.36] }),
+        box(0.24, 0.36, 0.05, 0x2b2b30, { at: [0.26, 0.02, 0.36] }),
+        box(0.09, 0.07, 0.06, 0x2fbf4a, { at: [0.32, -0.11, 0.38] }),
+        box(0.09, 0.07, 0.06, 0xff8a2a, { at: [0.2, -0.11, 0.38] }),
+      ]),
       this.lit,
       12
     );
-    this.scene.add(this.shadows, this.zones, this.pickups, this.blades);
+    this.aura = new THREE.Mesh(
+      flat,
+      new THREE.MeshBasicMaterial({
+        color: 0x7fd0ff,
+        transparent: true,
+        opacity: 0.2,
+        depthWrite: false,
+      })
+    );
+    this.aura.visible = false;
+    this.scene.add(this.shadows, this.zones, this.pickups, this.urns, this.aura);
 
     this.buildShrines();
 
@@ -391,11 +423,19 @@ export class HordeScene {
         this.shake = Math.max(this.shake, 0.45);
         const { x, z } = this.run.player;
         this.particles.burst(x, heightAt(x, z) + 1, z, 14, 0xff4040, 6);
-      } else if (event.type === 'nova') {
+      } else if (event.type === 'nova' || event.type === 'blast') {
+        const blast = event.type === 'blast';
         const ring = this.rings.find((r) => r.age >= 1) ?? this.rings[0];
         ring.age = 0;
         ring.radius = event.radius;
         ring.mesh.position.set(event.x, heightAt(event.x, event.z) + 0.4, event.z);
+        (ring.mesh.material as THREE.MeshBasicMaterial).color.setHex(blast ? 0xffa040 : 0x9fd8ff);
+        if (blast) {
+          const y = heightAt(event.x, event.z) + 0.6;
+          this.particles.burst(event.x, y, event.z, 26, 0xff8a2a, 9);
+          this.particles.burst(event.x, y, event.z, 10, 0xfff2a0, 5);
+          this.shake = Math.max(this.shake, 0.22);
+        }
       } else if (event.type === 'bolt') {
         this.drawBolt(event.points);
       } else if (event.type === 'levelup' || event.type === 'shrine') {
@@ -502,13 +542,16 @@ export class HordeScene {
       const index = shotCounts.get(s.kind) ?? 0;
       if (mesh && index < 400) {
         this.dummy.position.set(s.x, heightAt(s.x, s.z) + 1, s.z);
-        this.dummy.rotation.set(0, s.kind === 'axe' ? this.clock * 16 + s.id : 0, 0);
+        let spin = 0;
+        if (s.kind === 'missile') spin = Math.atan2(s.vx, s.vz);
+        else if (s.kind !== 'spit') spin = this.clock * 16 + s.id;
+        this.dummy.rotation.set(0, spin, 0);
         this.dummy.scale.setScalar(s.kind === 'axe' ? s.radius / 1.1 : 1);
         this.dummy.updateMatrix();
         mesh.setMatrixAt(index, this.dummy.matrix);
         shotCounts.set(s.kind, index + 1);
-        if (s.kind === 'ember' && run.tick % 2 === 0) {
-          this.particles.burst(s.x, heightAt(s.x, s.z) + 1, s.z, 1, 0xff7a1a, 1);
+        if (s.kind === 'missile' && run.tick % 2 === 0) {
+          this.particles.burst(s.x, heightAt(s.x, s.z) + 1, s.z, 1, 0xb8b8c0, 1);
         }
       }
     }
@@ -564,24 +607,37 @@ export class HordeScene {
     this.pickups.instanceMatrix.needsUpdate = true;
     if (this.pickups.instanceColor) this.pickups.instanceColor.needsUpdate = true;
 
-    // Orbiting blades.
-    const bladesWeapon = run.weapons.find((w) => w.id === 'blades');
-    if (bladesWeapon) {
-      const stats = runStats(run);
-      const count = Math.min(12, bladeCount(bladesWeapon, stats));
-      const orbit = bladeOrbit(stats);
-      for (let i = 0; i < count; i += 1) {
-        const angle = bladesWeapon.angle + (i / count) * Math.PI * 2;
-        const x = player.x + Math.cos(angle) * orbit;
-        const z = player.z + Math.sin(angle) * orbit;
-        this.dummy.position.set(x, heightAt(x, z) + 1, z);
-        this.dummy.rotation.set(0, -angle, 0);
-        this.dummy.scale.setScalar(1);
-        this.dummy.updateMatrix();
-        this.blades.setMatrixAt(i, this.dummy.matrix);
+    // Ballot boxes in orbit, screens facing out.
+    const stats = runStats(run);
+    const urns = run.weapons.find((w) => w.id === 'urns');
+    const urnsShown = urns ? Math.min(12, urnCount(urns, stats)) : 0;
+    for (let i = 0; urns && i < urnsShown; i += 1) {
+      const angle = urns.angle + (i / urnsShown) * Math.PI * 2;
+      const x = player.x + Math.cos(angle) * urnOrbit(stats);
+      const z = player.z + Math.sin(angle) * urnOrbit(stats);
+      this.dummy.position.set(x, heightAt(x, z) + 1 + Math.sin(this.clock * 5 + i) * 0.12, z);
+      this.dummy.rotation.set(0, Math.PI / 2 - angle, 0);
+      this.dummy.scale.setScalar(1);
+      this.dummy.updateMatrix();
+      this.urns.setMatrixAt(i, this.dummy.matrix);
+    }
+    this.urns.count = urnsShown;
+    this.urns.instanceMatrix.needsUpdate = true;
+
+    // The aura of tears: a pale disc under the hero, with drops falling inside it.
+    const aura = run.weapons.find((w) => w.id === 'aura');
+    this.aura.visible = aura !== undefined;
+    if (aura) {
+      const radius = auraRadius(aura, stats);
+      this.aura.position.set(player.x, heightAt(player.x, player.z) + 0.12, player.z);
+      this.aura.scale.setScalar(radius * (1 + Math.sin(this.clock * 4) * 0.03));
+      if (dt > 0 && run.tick % 3 === 0) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.sqrt(Math.random()) * radius;
+        const x = player.x + Math.cos(angle) * dist;
+        const z = player.z + Math.sin(angle) * dist;
+        this.particles.burst(x, heightAt(x, z) + 2.2, z, 1, 0x8fd8ff, 0.4);
       }
-      this.blades.count = count;
-      this.blades.instanceMatrix.needsUpdate = true;
     }
 
     // Shrines.

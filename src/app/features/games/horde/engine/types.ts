@@ -1,6 +1,6 @@
 import { Rng } from './rng';
 
-export type WeaponId = 'ember' | 'blades' | 'nova' | 'bolt' | 'axe' | 'trail';
+export type WeaponId = 'missile' | 'card' | 'aura' | 'urns' | 'nova' | 'bolt' | 'axe' | 'trail';
 export type PassiveId = 'might' | 'haste' | 'reach' | 'swift' | 'vigor' | 'magnet' | 'multi';
 export type EnemyKind = 'husk' | 'runner' | 'brute' | 'spitter' | 'boss';
 export type CharacterId = 'eneas' | 'lula' | 'janja' | 'bolsonaro';
@@ -20,8 +20,8 @@ export type Enemy = {
   xp: number;
   // Seconds until it can shoot again (spitters and bosses).
   shootCd: number;
-  // Seconds until the orbiting blades can hit it again.
-  bladeCd: number;
+  // Seconds until the orbiting ballot boxes can hit it again.
+  urnCd: number;
   // Knockback still to play out, in units per second.
   pushX: number;
   pushZ: number;
@@ -29,7 +29,7 @@ export type Enemy = {
   flash: number;
 };
 
-export type ShotKind = 'ember' | 'axe' | 'spit';
+export type ShotKind = 'card' | 'missile' | 'axe' | 'spit';
 
 export type Shot = {
   id: number;
@@ -44,6 +44,8 @@ export type Shot = {
   // How many more enemies it can go through. -1 never stops.
   pierce: number;
   life: number;
+  // Missiles: the radius of the explosion where it lands. 0 for everything else.
+  blast: number;
   hit: number[];
 };
 
@@ -87,7 +89,7 @@ export type OwnedWeapon = {
   id: WeaponId;
   level: number;
   cooldown: number;
-  // Blades only: where the orbit is.
+  // Ballot boxes only: where the orbit is.
   angle: number;
 };
 
@@ -153,6 +155,7 @@ export type GameEvent =
   | { type: 'kill'; x: number; z: number; kind: EnemyKind; elite: boolean }
   | { type: 'hurt'; amount: number }
   | { type: 'nova'; x: number; z: number; radius: number }
+  | { type: 'blast'; x: number; z: number; radius: number }
   | { type: 'bolt'; points: { x: number; z: number }[] }
   | { type: 'pickup'; kind: PickupKind; x: number; z: number }
   | { type: 'levelup' }

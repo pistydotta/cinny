@@ -146,7 +146,7 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onOpenHorde, onBack }: Games
               <span>👹</span>
             </div>
             <div className={css.CardBody}>
-              <span className={css.GameName}>{tr('games.horde.title', 'Last Ember')}</span>
+              <span className={css.GameName}>BrazilianBonk</span>
               <span className={css.GameMeta}>
                 {tr(
                   'games.hub.horde_meta',

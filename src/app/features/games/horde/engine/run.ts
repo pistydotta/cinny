@@ -75,10 +75,13 @@ type Stats = ReturnType<typeof runStats>;
 const maxHpOf = (state: RunState): number =>
   CHARACTERS[state.character].hp + 10 * state.meta.vigor + 20 * passiveLevel(state, 'vigor');
 
-export const bladeCount = (weapon: OwnedWeapon, stats: Stats): number =>
+export const urnCount = (weapon: OwnedWeapon, stats: Stats): number =>
   2 + Math.floor(weapon.level / 2) + stats.extraShots;
 
-export const bladeOrbit = (stats: Stats): number => 3.2 * stats.area;
+export const urnOrbit = (stats: Stats): number => 3.2 * stats.area;
+
+export const auraRadius = (weapon: OwnedWeapon, stats: Stats): number =>
+  (2.8 + 0.3 * weapon.level) * stats.area;
 
 export const novaRadius = (weapon: OwnedWeapon, stats: Stats): number =>
   (4.6 + 0.6 * weapon.level) * stats.area;
@@ -291,7 +294,7 @@ const spawnEnemy = (
     damage: damage * (1 + state.time / 500),
     xp,
     shootCd: 2,
-    bladeCd: 0,
+    urnCd: 0,
     pushX: 0,
     pushZ: 0,
     flash: 0,
@@ -432,6 +435,7 @@ const fireHostile = (state: RunState, e: Enemy, angle: number, speed: number, da
     damage,
     pierce: 0,
     life: 4,
+    blast: 0,
     hit: [],
   });
 };
@@ -466,7 +470,7 @@ const moveEnemies = (state: RunState, grid: Grid, dt: number, events: GameEvent[
     e.pushX *= 0.86;
     e.pushZ *= 0.86;
     e.flash = Math.max(0, e.flash - dt);
-    e.bladeCd = Math.max(0, e.bladeCd - dt);
+    e.urnCd = Math.max(0, e.urnCd - dt);
 
     if (e.kind === 'spitter' || e.kind === 'boss') {
       e.shootCd -= dt;
@@ -540,7 +544,7 @@ const firePlayerShot = (
   kind: ShotKind,
   angle: number,
   speed: number,
-  shot: { radius: number; damage: number; pierce: number; life: number }
+  shot: { radius: number; damage: number; pierce: number; life: number; blast?: number }
 ) => {
   state.shots.push({
     id: newId(state),
@@ -551,6 +555,7 @@ const firePlayerShot = (
     vx: Math.cos(angle) * speed,
     vz: Math.sin(angle) * speed,
     hit: [],
+    blast: 0,
     ...shot,
   });
 };
@@ -566,8 +571,10 @@ const fireWeapon = (
   const { player, rng } = state;
   const lv = weapon.level;
   const cooldowns: Record<WeaponId, number> = {
-    ember: 0.85,
-    blades: 0,
+    missile: 1.7 - lv * 0.07,
+    card: 0.85,
+    aura: 0.5,
+    urns: 0,
     nova: 3.2 - lv * 0.15,
     bolt: 1.7 - lv * 0.08,
     axe: 1.5 - lv * 0.06,
@@ -575,7 +582,39 @@ const fireWeapon = (
   };
   const wait = cooldowns[weapon.id] * stats.cooldown;
 
-  if (weapon.id === 'ember') {
+  if (weapon.id === 'missile') {
+    const count = 1 + Math.floor(lv / 3) + stats.extraShots;
+    const targets = nearestEnemies(state, count, 20);
+    if (targets.length === 0) return 0;
+    for (let i = 0; i < count; i += 1) {
+      const target = targets[i % targets.length];
+      const spread = i >= targets.length ? (rng.next() - 0.5) * 0.5 : 0;
+      firePlayerShot(
+        state,
+        'missile',
+        Math.atan2(target.z - player.z, target.x - player.x) + spread,
+        16,
+        {
+          radius: 0.45,
+          damage: (16 + 7 * lv) * stats.damage,
+          pierce: 0,
+          life: 1.5,
+          blast: (2 + 0.25 * lv) * stats.area,
+        }
+      );
+    }
+    return wait;
+  }
+
+  if (weapon.id === 'aura') {
+    const damage = (3 + 2 * lv) * stats.damage;
+    eachNear(grid, player.x, player.z, auraRadius(weapon, stats), (e) =>
+      hurtEnemy(state, e, damage, events)
+    );
+    return wait;
+  }
+
+  if (weapon.id === 'card') {
     const count = 1 + Math.floor(lv / 3) + stats.extraShots;
     const targets = nearestEnemies(state, count, 22);
     if (targets.length === 0) return 0;
@@ -584,7 +623,7 @@ const fireWeapon = (
       const spread = i >= targets.length ? (rng.next() - 0.5) * 0.4 : 0;
       firePlayerShot(
         state,
-        'ember',
+        'card',
         Math.atan2(target.z - player.z, target.x - player.x) + spread,
         24,
         {
@@ -675,10 +714,10 @@ const runWeapons = (state: RunState, stats: Stats, grid: Grid, dt: number, event
   const { player } = state;
   for (let i = 0; i < state.weapons.length; i += 1) {
     const weapon = state.weapons[i];
-    if (weapon.id === 'blades') {
+    if (weapon.id === 'urns') {
       weapon.angle += (2.8 / stats.cooldown) * dt;
-      const count = bladeCount(weapon, stats);
-      const orbit = bladeOrbit(stats);
+      const count = urnCount(weapon, stats);
+      const orbit = urnOrbit(stats);
       const damage = (6 + 3.5 * weapon.level) * stats.damage;
       for (let b = 0; b < count; b += 1) {
         const angle = weapon.angle + (b / count) * Math.PI * 2;
@@ -688,8 +727,8 @@ const runWeapons = (state: RunState, stats: Stats, grid: Grid, dt: number, event
           player.z + Math.sin(angle) * orbit,
           0.8,
           (e) => {
-            if (e.bladeCd > 0) return;
-            e.bladeCd = 0.4;
+            if (e.urnCd > 0) return;
+            e.urnCd = 0.4;
             hurtEnemy(state, e, damage, events, 6);
           }
         );
@@ -713,6 +752,19 @@ const moveShots = (state: RunState, grid: Grid, dt: number, events: GameEvent[])
       if ((shot.x - player.x) ** 2 + (shot.z - player.z) ** 2 < r * r && player.dashTime <= 0) {
         hurtPlayer(state, shot.damage, events);
         shot.life = 0;
+      }
+    } else if (shot.blast > 0) {
+      // A missile goes off on the first enemy it touches, or where it runs out of fuel.
+      let touched = shot.life <= 0;
+      eachNear(grid, shot.x, shot.z, shot.radius, () => {
+        touched = true;
+      });
+      if (touched) {
+        shot.life = 0;
+        eachNear(grid, shot.x, shot.z, shot.blast, (e) =>
+          hurtEnemy(state, e, shot.damage, events, 8)
+        );
+        events.push({ type: 'blast', x: shot.x, z: shot.z, radius: shot.blast });
       }
     } else {
       eachNear(grid, shot.x, shot.z, shot.radius, (e) => {
