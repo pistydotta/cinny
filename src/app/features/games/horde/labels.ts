@@ -124,37 +124,34 @@ export const choiceLabel = (choice: Choice): Label & { tag: string } => {
   };
 };
 
-export const characterLabel = (id: CharacterId): Label => {
+// Caricatures of real politicians: the texts only say how each one plays.
+export const characterLabel = (id: CharacterId): Omit<Label, 'icon'> => {
   switch (id) {
-    case 'guardian':
+    case 'lula':
       return {
-        icon: '🛡️',
-        name: tr('games.horde.character.guardian', 'Guardian'),
+        name: 'Lula',
+        text: tr('games.horde.character.lula_text', 'Hits harder. Starts with Living Ember.'),
+      };
+    case 'janja':
+      return {
+        name: 'Janja',
         text: tr(
-          'games.horde.character.guardian_text',
+          'games.horde.character.janja_text',
           'Tough and slow. Starts with Orbiting Blades.'
         ),
       };
-    case 'ranger':
+    case 'bolsonaro':
       return {
-        icon: '🏹',
-        name: tr('games.horde.character.ranger', 'Wanderer'),
+        name: 'Bolsonaro',
         text: tr(
-          'games.horde.character.ranger_text',
+          'games.horde.character.bolsonaro_text',
           'Fast and fragile. Starts with the Spinning Axe.'
         ),
       };
-    case 'eneas':
-      return {
-        icon: '💣',
-        name: tr('games.horde.character.eneas', 'Enéas'),
-        text: tr('games.horde.character.eneas_text', 'Small and furious. Starts with Shockwave.'),
-      };
     default:
       return {
-        icon: '🔥',
-        name: tr('games.horde.character.pyro', 'Pyromancer'),
-        text: tr('games.horde.character.pyro_text', 'Hits harder. Starts with Living Ember.'),
+        name: 'Enéas',
+        text: tr('games.horde.character.eneas_text', 'Small and furious. Starts with Shockwave.'),
       };
   }
 };

@@ -1366,14 +1366,10 @@
         "level": "Nível {{level}}"
       },
       "character": {
-        "guardian": "Guardiã",
-        "guardian_text": "Resistente e lenta. Começa com as Lâminas Orbitais.",
-        "ranger": "Andarilho",
-        "ranger_text": "Rápido e frágil. Começa com o Machado Giratório.",
-        "pyro": "Piromante",
-        "pyro_text": "Bate mais forte. Começa com a Brasa Viva.",
-        "eneas": "Enéas",
-        "eneas_text": "Baixinho e furioso. Começa com a Onda de Choque."
+        "eneas_text": "Baixinho e furioso. Começa com a Onda de Choque.",
+        "lula_text": "Bate mais forte. Começa com a Brasa Viva.",
+        "janja_text": "Resistente e lenta. Começa com as Lâminas Orbitais.",
+        "bolsonaro_text": "Rápido e frágil. Começa com o Machado Giratório."
       },
       "meta": {
         "vigor": "Couro grosso",

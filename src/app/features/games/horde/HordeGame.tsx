@@ -354,14 +354,10 @@ export function HordeGame({ userId, onBack }: HordeGameProps) {
                 data-selected={meta.character === id}
                 onClick={() => pickCharacter(id)}
               >
-                {HERO_SPRITES[id] ? (
-                  <span
-                    className={css.CardSprite}
-                    style={{ backgroundImage: `url(${HERO_SPRITES[id]})` }}
-                  />
-                ) : (
-                  <span className={css.CardIcon}>{label.icon}</span>
-                )}
+                <span
+                  className={css.CardSprite}
+                  style={{ backgroundImage: `url(${HERO_SPRITES[id]})` }}
+                />
                 <span className={css.CardName}>{label.name}</span>
                 <span className={css.CardText}>{label.text}</span>
               </button>

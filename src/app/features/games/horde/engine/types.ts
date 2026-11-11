@@ -3,7 +3,7 @@ import { Rng } from './rng';
 export type WeaponId = 'ember' | 'blades' | 'nova' | 'bolt' | 'axe' | 'trail';
 export type PassiveId = 'might' | 'haste' | 'reach' | 'swift' | 'vigor' | 'magnet' | 'multi';
 export type EnemyKind = 'husk' | 'runner' | 'brute' | 'spitter' | 'boss';
-export type CharacterId = 'guardian' | 'pyro' | 'ranger' | 'eneas';
+export type CharacterId = 'eneas' | 'lula' | 'janja' | 'bolsonaro';
 export type MetaUpgradeId = 'vigor' | 'might' | 'swift' | 'wisdom' | 'greed' | 'reroll';
 
 export type Enemy = {

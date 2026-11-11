@@ -20,21 +20,21 @@ const summary = (s: RunState) => ({
 
 describe('horde run', () => {
   it('gives the same run for the same seed and inputs', () => {
-    const a = playBot(createRun(42, 'pyro'), 1, 90);
-    const b = playBot(createRun(42, 'pyro'), 1, 90);
+    const a = playBot(createRun(42, 'lula'), 1, 90);
+    const b = playBot(createRun(42, 'lula'), 1, 90);
     expect(summary(a)).toEqual(summary(b));
-    const c = playBot(createRun(43, 'pyro'), 1, 90);
+    const c = playBot(createRun(43, 'lula'), 1, 90);
     expect(summary(c)).not.toEqual(summary(a));
   });
 
   it('kills a player who stands still', () => {
-    const run = playBot(createRun(7, 'ranger'), 0, 600);
+    const run = playBot(createRun(7, 'bolsonaro'), 0, 600);
     expect(run.phase).toBe('dead');
     expect(run.time).toBeLessThan(240);
   });
 
   it('stops for a choice on level up and applies it', () => {
-    const run = createRun(1, 'pyro');
+    const run = createRun(1, 'lula');
     run.pickups.push({ id: 999, kind: 'xp', x: 0, z: 0, value: xpToNext(1), pulled: false });
     step(run, IDLE, TICK);
     expect(run.phase).toBe('choosing');
@@ -53,7 +53,7 @@ describe('horde run', () => {
   });
 
   it('rerolls only while there are rerolls left', () => {
-    const run = createRun(1, 'pyro', { ...newMeta().upgrades, reroll: 1 });
+    const run = createRun(1, 'lula', { ...newMeta().upgrades, reroll: 1 });
     run.pendingChoices = 1;
     step(run, IDLE, TICK);
     expect(reroll(run)).toBe(true);
@@ -61,13 +61,13 @@ describe('horde run', () => {
   });
 
   it('never offers more than four weapons or four passives', () => {
-    const run = playBot(createRun(5, 'guardian'), 1, 400);
+    const run = playBot(createRun(5, 'janja'), 1, 400);
     expect(run.weapons.length).toBeLessThanOrEqual(4);
     expect(run.passives.length).toBeLessThanOrEqual(4);
   });
 
   it('keeps everything inside the arena', () => {
-    const run = createRun(3, 'ranger');
+    const run = createRun(3, 'bolsonaro');
     for (let i = 0; i < 60 * 30; i += 1) {
       if (run.phase === 'choosing') choose(run, 0);
       step(run, { moveX: 1, moveZ: 0, dash: i % 200 === 0 }, TICK);
@@ -88,7 +88,7 @@ describe('horde meta', () => {
   });
 
   it('pays the run and keeps the records', () => {
-    const run = playBot(createRun(9, 'pyro'), 1, 60);
+    const run = playBot(createRun(9, 'lula'), 1, 60);
     const meta = finishRun(newMeta(), run);
     expect(meta.gold).toBe(runGold(run));
     expect(meta.runs).toBe(1);
@@ -96,11 +96,11 @@ describe('horde meta', () => {
   });
 
   it('reads a saved game back and ignores a broken one', () => {
-    const meta = { ...newMeta(), gold: 12, character: 'ranger' as const };
+    const meta = { ...newMeta(), gold: 12, character: 'janja' as const };
     expect(parseMeta(JSON.stringify(meta))).toEqual(meta);
     expect(parseMeta('{oops')).toEqual(newMeta());
-    expect(parseMeta(JSON.stringify({ ...meta, character: 'nobody' })).character).toBe('pyro');
-    expect(parseMeta(JSON.stringify({ ...meta, character: 'eneas' })).character).toBe('eneas');
+    expect(parseMeta(JSON.stringify({ ...meta, character: 'pyro' })).character).toBe('eneas');
+    expect(parseMeta(JSON.stringify({ ...meta, character: 'lula' })).character).toBe('lula');
     expect(parseMeta(JSON.stringify({ version: 1, gold: -5, upgrades: { reroll: 99 } }))).toEqual({
       ...newMeta(),
       upgrades: { ...newMeta().upgrades, reroll: 3 },

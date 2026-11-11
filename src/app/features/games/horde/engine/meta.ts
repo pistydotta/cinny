@@ -19,7 +19,7 @@ export const newMeta = (): MetaSave => ({
   version: 1,
   gold: 0,
   upgrades: { ...NO_META },
-  character: 'pyro',
+  character: 'eneas',
   runs: 0,
   wins: 0,
   bestTime: 0,

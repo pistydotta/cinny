@@ -49,10 +49,10 @@ export type CharacterDef = {
 };
 
 export const CHARACTERS: Record<CharacterId, CharacterDef> = {
-  guardian: { weapon: 'blades', hp: 130, speed: 6.6, damage: 1 },
-  pyro: { weapon: 'ember', hp: 100, speed: 7, damage: 1.12 },
-  ranger: { weapon: 'axe', hp: 85, speed: 7.9, damage: 1 },
   eneas: { weapon: 'nova', hp: 100, speed: 7.2, damage: 1 },
+  lula: { weapon: 'ember', hp: 100, speed: 7, damage: 1.12 },
+  janja: { weapon: 'blades', hp: 130, speed: 6.6, damage: 1 },
+  bolsonaro: { weapon: 'axe', hp: 85, speed: 7.9, damage: 1 },
 };
 export const CHARACTER_IDS = Object.keys(CHARACTERS) as CharacterId[];
 

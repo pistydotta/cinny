@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { CharacterId, EnemyKind } from '../engine/types';
+import { EnemyKind } from '../engine/types';
 
 // Every model is a handful of boxes and cones with flat colors per vertex, built in code: the
 // low-poly look of an old console, and nothing to download. Feet stand on y = 0, front is +z.
@@ -122,62 +122,6 @@ export const enemyGeometry = (kind: EnemyKind): THREE.BufferGeometry => {
         box(0.1, 0.08, 0.04, EYE, { at: [0.12, 1.55, 0.28] }),
       ]);
   }
-};
-
-// Heroes with pixel art (sprites/) aren't here: SpriteHero draws those.
-const LOOKS: Partial<
-  Record<CharacterId, { body: number; trim: number; skin: number; cape: number }>
-> = {
-  guardian: { body: 0x8d99a8, trim: 0x3d5a80, skin: 0xe2b48c, cape: 0x2f4a6e },
-  ranger: { body: 0x4d7a3a, trim: 0x8a6a3a, skin: 0xd9a57a, cape: 0x2e4a24 },
-};
-
-const PYRO_LOOK = { body: 0xc2452d, trim: 0xf2a33a, skin: 0xe2b48c, cape: 0x6a1f18 };
-
-export type PlayerModel = {
-  root: THREE.Group;
-  legL: THREE.Mesh;
-  legR: THREE.Mesh;
-  armL: THREE.Mesh;
-  armR: THREE.Mesh;
-  body: THREE.Group;
-};
-
-export const playerModel = (character: CharacterId, material: THREE.Material): PlayerModel => {
-  const look = LOOKS[character] ?? PYRO_LOOK;
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const add = (geometry: THREE.BufferGeometry, parent: THREE.Object3D, y = 0, x = 0) => {
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, 0);
-    parent.add(mesh);
-    return mesh;
-  };
-  const hat =
-    character === 'pyro'
-      ? cone(0.34, 0.6, 5, look.trim, { at: [0, 1.95, 0] })
-      : box(0.5, 0.16, 0.5, look.trim, { at: [0, 1.75, 0] });
-  add(
-    merge([
-      box(0.62, 0.7, 0.4, look.body, { at: [0, 1.05, 0] }),
-      box(0.66, 0.12, 0.44, look.trim, { at: [0, 0.76, 0] }),
-      box(0.42, 0.4, 0.4, look.skin, { at: [0, 1.5, 0] }),
-      hat,
-      box(0.6, 0.8, 0.08, look.cape, { at: [0, 0.95, -0.26], rot: [0.15, 0, 0] }),
-    ]),
-    body
-  );
-  // Limbs hang from their top end, so rotating one swings it.
-  const limb = (w: number, h: number, color: number) => box(w, h, w, color, { at: [0, -h / 2, 0] });
-  return {
-    root,
-    body,
-    legL: add(limb(0.22, 0.7, look.trim), root, 0.7, -0.17),
-    legR: add(limb(0.22, 0.7, look.trim), root, 0.7, 0.17),
-    armL: add(limb(0.18, 0.6, look.body), body, 1.36, -0.42),
-    armR: add(limb(0.18, 0.6, look.body), body, 1.36, 0.42),
-  };
 };
 
 // A small noisy texture, drawn once and sampled without filtering: the grain of an old console.
