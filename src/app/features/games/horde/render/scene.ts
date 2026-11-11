@@ -3,7 +3,9 @@ import * as THREE from 'three';
 import { ARENA_RADIUS, ENEMIES, MAX_ENEMIES, SHRINE_RADIUS } from '../engine/data';
 import { bladeCount, bladeOrbit, runStats } from '../engine/run';
 import { Enemy, EnemyKind, GameEvent, RunState, ShotKind } from '../engine/types';
+import { HERO_SPRITES } from '../sprites';
 import { Particles } from './particles';
+import { SpriteHero } from './spriteHero';
 import {
   PlayerModel,
   ball,
@@ -81,7 +83,11 @@ export class HordeScene {
 
   private boltLife = 0;
 
-  private player: PlayerModel;
+  private player: PlayerModel | undefined;
+
+  private sprite: SpriteHero | undefined;
+
+  private hero: THREE.Object3D;
 
   private particles: Particles;
 
@@ -200,8 +206,13 @@ export class HordeScene {
     this.bolts.frustumCulled = false;
     this.scene.add(this.bolts);
 
-    this.player = playerModel(run.character, this.lit);
-    this.scene.add(this.player.root);
+    const sheet = HERO_SPRITES[run.character];
+    if (sheet) {
+      this.sprite = new SpriteHero(sheet);
+      this.disposables.push(this.sprite);
+    } else this.player = playerModel(run.character, this.lit);
+    this.hero = this.sprite?.root ?? this.player?.root ?? new THREE.Group();
+    this.scene.add(this.hero);
 
     this.particles = new Particles(this.scene);
     this.disposables.push(this.lit, this.glow, flat, boltGeometry);
@@ -466,6 +477,25 @@ export class HordeScene {
     mesh.setColorAt(index, this.color);
   }
 
+  // The box heroes walk by swinging their limbs.
+  private swing(model: PlayerModel, dt: number) {
+    const { player } = this.run;
+    const facing = Math.atan2(player.dirX, player.dirZ);
+    let turn = facing - model.root.rotation.y;
+    turn = Math.atan2(Math.sin(turn), Math.cos(turn));
+    model.root.rotation.y += turn * Math.min(1, dt * 16);
+    this.walk += dt * (player.moving ? 13 : 0);
+    const swing = player.moving ? Math.sin(this.walk) * 0.9 : 0;
+    model.legL.rotation.x = swing;
+    model.legR.rotation.x = -swing;
+    model.armL.rotation.x = -swing * 0.8;
+    model.armR.rotation.x = swing * 0.8;
+    model.body.position.y = player.moving
+      ? Math.abs(Math.sin(this.walk)) * 0.08
+      : Math.sin(this.clock * 2.5) * 0.03;
+    model.body.rotation.x = player.dashTime > 0 ? 0.5 : 0;
+  }
+
   render(dt: number) {
     const { run } = this;
     const { player } = run;
@@ -619,25 +649,12 @@ export class HordeScene {
     // The hero.
     const model = this.player;
     const ground = heightAt(player.x, player.z);
-    model.root.position.set(player.x, ground, player.z);
-    const facing = Math.atan2(player.dirX, player.dirZ);
-    let turn = facing - model.root.rotation.y;
-    turn = Math.atan2(Math.sin(turn), Math.cos(turn));
-    model.root.rotation.y += turn * Math.min(1, dt * 16);
-    this.walk += dt * (player.moving ? 13 : 0);
-    const swing = player.moving ? Math.sin(this.walk) * 0.9 : 0;
-    model.legL.rotation.x = swing;
-    model.legR.rotation.x = -swing;
-    model.armL.rotation.x = -swing * 0.8;
-    model.armR.rotation.x = swing * 0.8;
-    model.body.position.y = player.moving
-      ? Math.abs(Math.sin(this.walk)) * 0.08
-      : Math.sin(this.clock * 2.5) * 0.03;
-    model.body.rotation.x = player.dashTime > 0 ? 0.5 : 0;
-    model.root.visible = player.invuln <= 0 || Math.floor(this.clock * 20) % 2 === 0;
+    this.hero.position.set(player.x, ground, player.z);
+    this.hero.visible = player.invuln <= 0 || Math.floor(this.clock * 20) % 2 === 0;
+    this.sprite?.update(player, this.camera, dt);
+    if (model) this.swing(model, dt);
 
     this.particles.update(dt);
-
     // The camera follows from behind and above, and shakes when something big happens.
     this.shake = Math.max(0, this.shake - dt * 1.8);
     const jolt = this.shake * this.shake * 1.6;

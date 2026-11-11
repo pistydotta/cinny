@@ -13,6 +13,7 @@ import {
   passiveLabel,
   weaponLabel,
 } from './labels';
+import { HERO_SPRITES } from './sprites';
 import * as css from './horde.css';
 import { tr } from '../../translation/tr';
 
@@ -353,7 +354,14 @@ export function HordeGame({ userId, onBack }: HordeGameProps) {
                 data-selected={meta.character === id}
                 onClick={() => pickCharacter(id)}
               >
-                <span className={css.CardIcon}>{label.icon}</span>
+                {HERO_SPRITES[id] ? (
+                  <span
+                    className={css.CardSprite}
+                    style={{ backgroundImage: `url(${HERO_SPRITES[id]})` }}
+                  />
+                ) : (
+                  <span className={css.CardIcon}>{label.icon}</span>
+                )}
                 <span className={css.CardName}>{label.name}</span>
                 <span className={css.CardText}>{label.text}</span>
               </button>

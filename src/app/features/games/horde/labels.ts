@@ -144,6 +144,12 @@ export const characterLabel = (id: CharacterId): Label => {
           'Fast and fragile. Starts with the Spinning Axe.'
         ),
       };
+    case 'eneas':
+      return {
+        icon: '💣',
+        name: tr('games.horde.character.eneas', 'Enéas'),
+        text: tr('games.horde.character.eneas_text', 'Small and furious. Starts with Shockwave.'),
+      };
     default:
       return {
         icon: '🔥',

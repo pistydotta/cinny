@@ -1,4 +1,4 @@
-import { META_IDS, META_UPGRADES, metaCost } from './data';
+import { CHARACTER_IDS, META_IDS, META_UPGRADES, metaCost } from './data';
 import { NO_META } from './run';
 import { CharacterId, MetaBonuses, MetaUpgradeId, RunState } from './types';
 
@@ -43,7 +43,7 @@ export const parseMeta = (text: string | null | undefined): MetaSave => {
     META_IDS.forEach((id) => {
       meta.upgrades[id] = count(raw.upgrades?.[id], META_UPGRADES[id].max);
     });
-    if (raw.character === 'guardian' || raw.character === 'ranger') meta.character = raw.character;
+    if (CHARACTER_IDS.includes(raw.character)) meta.character = raw.character;
     meta.runs = count(raw.runs);
     meta.wins = count(raw.wins);
     meta.bestTime = count(raw.bestTime);

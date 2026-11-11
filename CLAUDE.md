@@ -52,7 +52,9 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   with three.js (models are boxes built in code, rendered at low resolution for the old-console look)
   and is the only part that imports it, loaded with `import()` when a run starts so three.js stays out
   of the main bundle. `runner.ts` owns the loop, keys and touch stick. Gold and permanent upgrades are
-  in localStorage only, for now. Balance changes: run `playBot` (`engine/bot.ts`) over a few seeds.
+  in localStorage only, for now. A hero with a sheet in `sprites/` (one row of eight 48px frames from
+  PixelLab, south first, turning to south-east) is drawn as a card facing the camera (`SpriteHero`)
+  instead of boxes; the politician heroes are caricatures, so keep their texts light. Balance changes: run `playBot` (`engine/bot.ts`) over a few seeds.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):

@@ -89,6 +89,16 @@ export const Card = style({
 });
 
 export const CardIcon = style({ fontSize: 30, lineHeight: 1 });
+
+// The first frame of a hero's sheet (eight frames in a row): the hero facing the player.
+export const CardSprite = style({
+  width: 64,
+  height: 64,
+  margin: '-4px 0 -2px -8px',
+  backgroundSize: '800% 100%',
+  backgroundPosition: '0 0',
+  imageRendering: 'pixelated',
+});
 export const CardName = style({ fontSize: 16, fontWeight: 800 });
 export const CardText = style({ fontSize: 13, color: MUTED, lineHeight: 1.35 });
 export const CardTag = style({ fontSize: 12, fontWeight: 800, color: GOLD });

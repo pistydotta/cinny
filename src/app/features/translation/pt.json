@@ -1371,7 +1371,9 @@
         "ranger": "Andarilho",
         "ranger_text": "Rápido e frágil. Começa com o Machado Giratório.",
         "pyro": "Piromante",
-        "pyro_text": "Bate mais forte. Começa com a Brasa Viva."
+        "pyro_text": "Bate mais forte. Começa com a Brasa Viva.",
+        "eneas": "Enéas",
+        "eneas_text": "Baixinho e furioso. Começa com a Onda de Choque."
       },
       "meta": {
         "vigor": "Couro grosso",

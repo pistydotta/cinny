@@ -99,6 +99,8 @@ describe('horde meta', () => {
     const meta = { ...newMeta(), gold: 12, character: 'ranger' as const };
     expect(parseMeta(JSON.stringify(meta))).toEqual(meta);
     expect(parseMeta('{oops')).toEqual(newMeta());
+    expect(parseMeta(JSON.stringify({ ...meta, character: 'nobody' })).character).toBe('pyro');
+    expect(parseMeta(JSON.stringify({ ...meta, character: 'eneas' })).character).toBe('eneas');
     expect(parseMeta(JSON.stringify({ version: 1, gold: -5, upgrades: { reroll: 99 } }))).toEqual({
       ...newMeta(),
       upgrades: { ...newMeta().upgrades, reroll: 3 },

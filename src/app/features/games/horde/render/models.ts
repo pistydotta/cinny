@@ -124,11 +124,15 @@ export const enemyGeometry = (kind: EnemyKind): THREE.BufferGeometry => {
   }
 };
 
-const LOOKS: Record<CharacterId, { body: number; trim: number; skin: number; cape: number }> = {
+// Heroes with pixel art (sprites/) aren't here: SpriteHero draws those.
+const LOOKS: Partial<
+  Record<CharacterId, { body: number; trim: number; skin: number; cape: number }>
+> = {
   guardian: { body: 0x8d99a8, trim: 0x3d5a80, skin: 0xe2b48c, cape: 0x2f4a6e },
-  pyro: { body: 0xc2452d, trim: 0xf2a33a, skin: 0xe2b48c, cape: 0x6a1f18 },
   ranger: { body: 0x4d7a3a, trim: 0x8a6a3a, skin: 0xd9a57a, cape: 0x2e4a24 },
 };
+
+const PYRO_LOOK = { body: 0xc2452d, trim: 0xf2a33a, skin: 0xe2b48c, cape: 0x6a1f18 };
 
 export type PlayerModel = {
   root: THREE.Group;
@@ -140,7 +144,7 @@ export type PlayerModel = {
 };
 
 export const playerModel = (character: CharacterId, material: THREE.Material): PlayerModel => {
-  const look = LOOKS[character];
+  const look = LOOKS[character] ?? PYRO_LOOK;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
