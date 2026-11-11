@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GamesHub, PokerLobby, PracticeScreen, TableScreen } from '../../../features/games';
 import { IdleGame } from '../../../features/games/idle';
+import { HordeGame } from '../../../features/games/horde';
 import { createPokerApi } from '../../../features/games/poker/api';
 import { errorText } from '../../../features/games/poker/errorText';
 import * as css from '../../../features/games/poker/pokerPage.css';
@@ -11,6 +12,7 @@ import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import {
   getGamesPath,
   getGamesIdlePath,
+  getGamesHordePath,
   getGamesPokerPath,
   getGamesPokerPracticePath,
   getGamesPokerTablePath,
@@ -26,6 +28,7 @@ export function GamesHubPage() {
     <GamesHub
       onOpenPoker={() => navigate(getGamesPokerPath())}
       onOpenIdle={() => navigate(getGamesIdlePath())}
+      onOpenHorde={() => navigate(getGamesHordePath())}
       onBack={screenSize === ScreenSize.Mobile ? () => navigate(getHomePath()) : undefined}
     />
   );
@@ -40,6 +43,13 @@ export function IdleGamePage() {
   return (
     <IdleGame userId={userId} defaultName={defaultName} onBack={() => navigate(getGamesPath())} />
   );
+}
+
+export function HordeGamePage() {
+  const mx = useMatrixClient();
+  const navigate = useNavigate();
+
+  return <HordeGame userId={mx.getUserId() ?? ''} onBack={() => navigate(getGamesPath())} />;
 }
 
 export function PokerLobbyPage() {

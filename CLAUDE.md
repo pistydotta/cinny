@@ -46,6 +46,13 @@ PR deploys. A merge that only touches `.github/` or `*.md` makes no version.
   the rebirth altar and zones are data there. `runner.ts` keeps it playing on every screen once
   `GamesTab` sees a save, and hands each tick's events to `fx/` (a canvas particle engine) without
   going through React. Balance changes: play a few simulated hours with `advance` before shipping.
+- `games/horde` (Última Brasa) is a 3D horde-survival roguelike, also in the browser. `engine/` is plain,
+  deterministic TS like the idle one: `step(run, input, dt)` at 60 ticks a second, with the seeded rng
+  in the run, so a seed plus the inputs replays a run (rankings, co-op later). `render/` draws the run
+  with three.js (models are boxes built in code, rendered at low resolution for the old-console look)
+  and is the only part that imports it, loaded with `import()` when a run starts so three.js stays out
+  of the main bundle. `runner.ts` owns the loop, keys and touch stick. Gold and permanent upgrades are
+  in localStorage only, for now. Balance changes: run `playBot` (`engine/bot.ts`) over a few seeds.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - New files of ours go in [.github/workflows/blazeroom-ci.yml](.github/workflows/blazeroom-ci.yml):

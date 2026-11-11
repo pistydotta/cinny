@@ -257,6 +257,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "horde_title": "Jogo novo: Última Brasa",
+    "horde_body": "Um roguelike em 3D na aba Jogos: escolha um herói, sobreviva a 10 minutos de horda com armas que atacam sozinhas, monte seu combo a cada nível e gaste o ouro em melhorias permanentes. Funciona no teclado e no celular.",
     "music_bot_title": "Bot de música nas chamadas",
     "music_bot_body": "Numa chamada, cole um link do YouTube, Spotify, SoundCloud e outros (ou só o nome da música) na barra do bot, ou digite /play no chat da sala. Todo mundo na chamada ouve junto, cada um no seu volume.",
     "always_joined_title": "Salas públicas sempre à mão",
@@ -636,7 +638,8 @@
       "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
       "soon": "Em breve",
       "subtitle": "Jogue com seus créditos. O saldo é o mesmo em todos os jogos.",
-      "idle_meta": "RPG idle · 6 classes e 12 especializações, forja, renascimento e arena"
+      "idle_meta": "RPG idle · 6 classes e 12 especializações, forja, renascimento e arena",
+      "horde_meta": "Roguelike 3D · sobreviva à horda, acumule armas e vença o chefe"
     },
     "lobby": {
       "accept": "Aceitar",
@@ -1320,6 +1323,103 @@
         "elsewhere_text": "Aqui ele fica pausado para um não sobrescrever o outro. Jogue aqui para trazer ele com tudo o que fez lá.",
         "play_here": "Jogar aqui"
       }
+    },
+    "horde": {
+      "title": "Última Brasa",
+      "subtitle": "Sobreviva a {{minutes}} minutos de horda e derrube o chefe. As armas atacam sozinhas.",
+      "weapon": {
+        "ember": "Brasa Viva",
+        "ember_text": "Dispara brasas nos inimigos mais próximos.",
+        "blades": "Lâminas Orbitais",
+        "blades_text": "Lâminas giram ao seu redor e cortam o que encostar.",
+        "nova": "Onda de Choque",
+        "nova_text": "Uma explosão ao seu redor que empurra os inimigos.",
+        "bolt": "Relâmpago",
+        "bolt_text": "Atinge um inimigo próximo e salta para outros.",
+        "axe": "Machado Giratório",
+        "axe_text": "Um machadão que atravessa tudo no caminho.",
+        "trail": "Rastro de Fogo",
+        "trail_text": "O chão queima por onde você passa."
+      },
+      "passive": {
+        "might": "Fúria",
+        "might_text": "+15% de dano em todas as armas.",
+        "haste": "Pressa",
+        "haste_text": "As armas atacam 12% mais rápido.",
+        "reach": "Alcance",
+        "reach_text": "+12% de área para explosões, lâminas e fogo.",
+        "swift": "Botas Leves",
+        "swift_text": "+8% de velocidade de movimento.",
+        "vigor": "Vigor",
+        "vigor_text": "+20 de vida máxima e vida que se recupera.",
+        "magnet": "Ímã",
+        "magnet_text": "Pega gemas 35% mais longe.",
+        "multi": "Eco",
+        "multi_text": "+1 projétil, lâmina ou raio."
+      },
+      "choice": {
+        "heal": "Assado",
+        "heal_text": "Cura 30% da sua vida.",
+        "gold": "Saco de ouro",
+        "gold_text": "+25 de ouro.",
+        "new": "Nova",
+        "level": "Nível {{level}}"
+      },
+      "character": {
+        "guardian": "Guardiã",
+        "guardian_text": "Resistente e lenta. Começa com as Lâminas Orbitais.",
+        "ranger": "Andarilho",
+        "ranger_text": "Rápido e frágil. Começa com o Machado Giratório.",
+        "pyro": "Piromante",
+        "pyro_text": "Bate mais forte. Começa com a Brasa Viva."
+      },
+      "meta": {
+        "vigor": "Couro grosso",
+        "vigor_text": "+10 de vida por nível",
+        "might": "Braço forte",
+        "might_text": "+5% de dano por nível",
+        "swift": "Pés leves",
+        "swift_text": "+3% de velocidade por nível",
+        "wisdom": "Sabedoria",
+        "wisdom_text": "+5% de experiência por nível",
+        "greed": "Ganância",
+        "greed_text": "+10% de ouro por nível",
+        "reroll": "Dados viciados",
+        "reroll_text": "+1 troca das melhorias por partida"
+      },
+      "hud": {
+        "level": "Nv {{level}}"
+      },
+      "pause": "Pausar",
+      "dash": "Esquiva",
+      "choose": "Escolha uma melhoria",
+      "reroll": "🎲 Trocar ({{count}})",
+      "paused": "Pausado",
+      "help_touch": "Arraste em qualquer lugar para andar. As armas atacam sozinhas.",
+      "help_keys": "WASD ou setas para andar, Espaço para esquivar, Esc para pausar. As armas atacam sozinhas.",
+      "resume": "Continuar",
+      "give_up": "Desistir da partida",
+      "won": "A brasa segue viva!",
+      "dead": "A brasa se apagou",
+      "stat": {
+        "time": "Sobreviveu",
+        "kills": "Abates",
+        "level": "Nível",
+        "gold": "Ouro"
+      },
+      "again": "Jogar de novo",
+      "to_menu": "Melhorias e heróis",
+      "failed": "O jogo não conseguiu começar: este aparelho está sem gráficos 3D.",
+      "pick_hero": "Herói",
+      "start": "Começar partida",
+      "record": {
+        "runs": "Partidas: {{count}}",
+        "wins": "Vitórias: {{count}}",
+        "time": "Melhor tempo: {{time}}",
+        "kills": "Mais abates: {{count}}"
+      },
+      "meta_title": "Melhorias permanentes",
+      "meta_max": "No máximo"
     }
   },
   "music_bot": {
