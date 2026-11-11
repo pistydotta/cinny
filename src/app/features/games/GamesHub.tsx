@@ -12,6 +12,8 @@ import { gameName } from './table-games/text';
 import trucoArt from './art/truco.webp';
 import fodinhaArt from './art/fodinha.webp';
 import chessArt from './art/chess.webp';
+import { HubArt } from './horde/horde.css';
+import { HERO_SPRITES } from './horde/sprites';
 
 const ROYAL: Card[] = [
   { rank: 10, suit: 's' },
@@ -24,11 +26,18 @@ const ROYAL: Card[] = [
 type GamesHubProps = {
   onOpenPoker: () => void;
   onOpenIdle: () => void;
+  onOpenHorde: () => void;
   onOpenTableGame: (kind: GameKind) => void;
   onBack?: () => void;
 };
 
-export function GamesHub({ onOpenPoker, onOpenIdle, onOpenTableGame, onBack }: GamesHubProps) {
+export function GamesHub({
+  onOpenPoker,
+  onOpenIdle,
+  onOpenHorde,
+  onOpenTableGame,
+  onBack,
+}: GamesHubProps) {
   const { balance, atTables, refresh, topUp } = useCredits();
 
   useEffect(() => {
@@ -176,6 +185,41 @@ export function GamesHub({ onOpenPoker, onOpenIdle, onOpenTableGame, onBack }: G
                   className={css.PlayButton}
                   onClick={() => onOpenTableGame('chess')}
                 >
+                  {tr('games.hub.play', 'Play')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className={css.GameSection} aria-labelledby="action-games-heading">
+          <div>
+            <h2 id="action-games-heading" className={css.SectionTitle}>
+              {tr('games.hub.action_games', 'Action')}
+            </h2>
+            <p className={css.Subtitle}>
+              {tr(
+                'games.hub.horde_currency',
+                'Runs pay gold for upgrades in this game. It is separate from card-game credits.'
+              )}
+            </p>
+          </div>
+          <div className={css.Grid}>
+            <div className={css.GameCard} data-playable="true">
+              <div className={HubArt}>
+                {Object.entries(HERO_SPRITES).map(([id, sheet]) => (
+                  <span key={id} style={{ backgroundImage: `url(${sheet})` }} />
+                ))}
+              </div>
+              <div className={css.CardBody}>
+                <span className={css.GameName}>BrazilianBonk</span>
+                <span className={css.GameMeta}>
+                  {tr(
+                    'games.hub.horde_meta',
+                    '3D roguelike · survive the horde, stack weapons and beat the boss'
+                  )}
+                </span>
+                <button type="button" className={css.PlayButton} onClick={onOpenHorde}>
                   {tr('games.hub.play', 'Play')}
                 </button>
               </div>

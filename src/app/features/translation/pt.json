@@ -525,6 +525,8 @@
     "source_code": "Código-fonte"
   },
   "whats_new": {
+    "horde_title": "Jogo novo: BrazilianBonk",
+    "horde_body": "Um roguelike em 3D na aba Jogos: escolha entre Enéas, Lula, Janja e Bolsonaro, sobreviva a 10 minutos de horda com armas que atacam sozinhas, monte seu combo a cada nível e gaste o ouro em melhorias permanentes. O progresso fica na sua conta e tem ranking. Funciona no teclado e no celular.",
     "truco_time_title": "Mais tempo no truco",
     "truco_time_body": "Cada vez no truco agora dura 45 segundos. Ficou sem moedas? O botão Pegar mais créditos agora também está no saguão do truco e da fodinha.",
     "truco_bar_title": "Truco no bar",
@@ -959,7 +961,10 @@
       "poker_meta": "Texas Hold’em sem limite · 2 a 6 jogadores",
       "soon": "Em breve",
       "subtitle": "Escolha um jogo e comece a jogar.",
-      "idle_meta": "RPG idle · 6 classes e 12 especializações, forja, renascimento e arena"
+      "idle_meta": "RPG idle · 6 classes e 12 especializações, forja, renascimento e arena",
+      "horde_meta": "Roguelike 3D · sobreviva à horda, acumule armas e vença o chefe",
+      "action_games": "Ação",
+      "horde_currency": "As partidas pagam ouro para melhorias neste jogo. Ele é separado dos créditos dos jogos de cartas."
     },
     "lobby": {
       "accept": "Aceitar",
@@ -1671,6 +1676,107 @@
       "public_hint": "Aparece no lobby de todo mundo e qualquer um pode entrar.",
       "anyone": "Convidar qualquer pessoa",
       "anyone_hint": "Quem está na mesa pode convidar qualquer pessoa do servidor, não só amigos."
+    },
+    "horde": {
+      "subtitle": "Sobreviva a {{minutes}} minutos de horda e derrube o chefe. As armas atacam sozinhas.",
+      "weapon": {
+        "nova": "Onda de Choque",
+        "nova_text": "Uma explosão ao seu redor que empurra os inimigos.",
+        "bolt": "Relâmpago",
+        "bolt_text": "Atinge um inimigo próximo e salta para outros.",
+        "axe": "Machado Giratório",
+        "axe_text": "Um machadão que atravessa tudo no caminho.",
+        "trail": "Rastro de Fogo",
+        "trail_text": "O chão queima por onde você passa.",
+        "missile": "Míssil Nuclear",
+        "missile_text": "Um míssil pequeno que explode onde cai.",
+        "card": "Carteira de Trabalho",
+        "card_text": "Arremessa carteiras de trabalho nos inimigos mais próximos.",
+        "aura": "Lágrimas Fascistas",
+        "aura_text": "Uma aura que machuca quem chega perto de você.",
+        "urns": "Urnas Hackeadas",
+        "urns_text": "Urnas giram ao seu redor e acertam o que encostar."
+      },
+      "passive": {
+        "might": "Fúria",
+        "might_text": "+15% de dano em todas as armas.",
+        "haste": "Pressa",
+        "haste_text": "As armas atacam 12% mais rápido.",
+        "reach": "Alcance",
+        "reach_text": "+12% de área para explosões, auras, urnas e fogo.",
+        "swift": "Botas Leves",
+        "swift_text": "+8% de velocidade de movimento.",
+        "vigor": "Vigor",
+        "vigor_text": "+20 de vida máxima e vida que se recupera.",
+        "magnet": "Ímã",
+        "magnet_text": "Pega gemas 35% mais longe.",
+        "multi": "Eco",
+        "multi_text": "+1 projétil, urna ou raio."
+      },
+      "choice": {
+        "heal": "Assado",
+        "heal_text": "Cura 30% da sua vida.",
+        "gold": "Saco de ouro",
+        "gold_text": "+25 de ouro.",
+        "new": "Nova",
+        "level": "Nível {{level}}"
+      },
+      "character": {
+        "eneas_text": "Baixinho e furioso. Começa com o Míssil Nuclear.",
+        "lula_text": "Bate mais forte. Começa com a Carteira de Trabalho.",
+        "janja_text": "Resistente e lenta. Começa com as Lágrimas Fascistas.",
+        "bolsonaro_text": "Rápido e frágil. Começa com as Urnas Hackeadas."
+      },
+      "meta": {
+        "vigor": "Couro grosso",
+        "vigor_text": "+10 de vida por nível",
+        "might": "Braço forte",
+        "might_text": "+5% de dano por nível",
+        "swift": "Pés leves",
+        "swift_text": "+3% de velocidade por nível",
+        "wisdom": "Sabedoria",
+        "wisdom_text": "+5% de experiência por nível",
+        "greed": "Ganância",
+        "greed_text": "+10% de ouro por nível",
+        "reroll": "Dados viciados",
+        "reroll_text": "+1 troca das melhorias por partida"
+      },
+      "hud": {
+        "level": "Nv {{level}}"
+      },
+      "pause": "Pausar",
+      "dash": "Esquiva",
+      "choose": "Escolha uma melhoria",
+      "reroll": "🎲 Trocar ({{count}})",
+      "paused": "Pausado",
+      "help_touch": "Arraste em qualquer lugar para andar. As armas atacam sozinhas.",
+      "help_keys": "WASD ou setas para andar, Espaço para esquivar, Esc para pausar. As armas atacam sozinhas.",
+      "resume": "Continuar",
+      "give_up": "Desistir da partida",
+      "won": "Vitória! A horda caiu",
+      "dead": "Você foi derrotado",
+      "stat": {
+        "time": "Sobreviveu",
+        "kills": "Abates",
+        "level": "Nível",
+        "gold": "Ouro"
+      },
+      "again": "Jogar de novo",
+      "to_menu": "Melhorias e heróis",
+      "failed": "O jogo não conseguiu começar: este aparelho está sem gráficos 3D.",
+      "pick_hero": "Herói",
+      "start": "Começar partida",
+      "record": {
+        "runs": "Partidas: {{count}}",
+        "wins": "Vitórias: {{count}}",
+        "time": "Melhor tempo: {{time}}",
+        "kills": "Mais abates: {{count}}"
+      },
+      "meta_title": "Melhorias permanentes",
+      "meta_max": "No máximo",
+      "ranking": "Ranking",
+      "rank_won": "Venceu o chefe",
+      "offline": "Sem conexão com o servidor. Dá para jogar mesmo assim: as partidas ficam guardadas aqui e contam quando ele voltar. Melhorias só podem ser compradas online."
     }
   },
   "music_bot": {

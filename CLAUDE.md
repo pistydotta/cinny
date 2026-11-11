@@ -22,7 +22,7 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 - Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes
   none: it shows the view the API sends and posts the player's action. The credits wallet
   (`games/credits`) is the API's too, shared only between card games. The Games hub shows
-  card games and idle RPGs in separate sections with direct game buttons, and the wallet
+  card games, action games and idle RPGs in separate sections with direct game buttons, and the wallet
   belongs inside the card-games section. Idle gold stays in the hero's save, with no credit
   transfers. `games/legacy` only cleans up the old Matrix-room tables and
   can go once people have opened the app.
@@ -34,6 +34,21 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   the rebirth altar and zones are data there. `runner.ts` keeps it playing on every screen once
   `GamesTab` sees a save, and hands each tick's events to `fx/` (a canvas particle engine) without
   going through React. Balance changes: play a few simulated hours with `advance` before shipping.
+- `games/horde` (BrazilianBonk) is a 3D horde-survival roguelike that runs in the browser. `engine/` is
+  plain, deterministic TS like the idle one: `step(run, input, dt)` at 60 ticks a second, with the
+  seeded rng in the run, so a seed plus the inputs replays a run. `render/` draws it with three.js
+  (monsters are boxes built in code, rendered at low resolution for the old-console look) and is the
+  only part that imports it, loaded with `import()` when a run starts so three.js stays out of the main
+  bundle. `runner.ts` owns the loop, keys and touch stick. Heroes are pixel art from PixelLab in
+  `sprites/` (one row of eight 48px frames, south first, turning to south-east), drawn as a card facing
+  the camera (`SpriteHero`). They are caricatures of politicians, and each one's starting weapon is a
+  joke the owners picked (the names in `labels.ts`); other texts only say how each one plays.
+  Gold, upgrades and records are the API's (`/api/horde`, `profile.ts`, `useHordeProfile.ts`), with a
+  copy in localStorage. Offline the game still plays: finished runs wait in localStorage and are sent
+  when the server answers, and upgrades can't be bought until then. Upgrade costs are in
+  `engine/data.ts` and in `api/src/horde.js`: change both. Balance changes: run `playBot`
+  (`engine/bot.ts`) over a few seeds; the bot only runs away, so it says little about close-range
+  weapons.
 - `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
   free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but
