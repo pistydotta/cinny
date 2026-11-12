@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-truco-table-refresh',
+    items: () => [
+      {
+        title: tr('whats_new.truco_refresh_title', 'A new look for the Truco table'),
+        body: tr(
+          'whats_new.truco_refresh_body',
+          'See whose turn it is and which card won each trick right at the table. Choose a Paulista or Spanish deck, and see your partner’s suggestion when the other team calls Truco.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-brazilianbonk-movement',
     items: () => [
       {

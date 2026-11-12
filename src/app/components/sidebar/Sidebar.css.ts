@@ -176,6 +176,19 @@ export const SidebarAvatar = recipe({
     outlined: {
       true: {
         border: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
+        selectors: {
+          '.dark-theme button&': {
+            borderRadius: '50%',
+            backgroundColor: `color-mix(in srgb, ${color.SurfaceVariant.Container} 75%, ${color.Background.Container})`,
+            borderColor: 'transparent',
+          },
+          '.dark-theme button&:hover, .dark-theme button&:focus-visible': {
+            backgroundColor: color.SurfaceVariant.ContainerHover,
+          },
+          '.dark-theme button&:active': {
+            backgroundColor: color.SurfaceVariant.ContainerActive,
+          },
+        },
       },
     },
   },
@@ -184,6 +197,17 @@ export const SidebarAvatar = recipe({
   },
 });
 export type SidebarAvatarVariants = RecipeVariants<typeof SidebarAvatar>;
+
+export const SidebarSpaceAvatar = style({
+  borderRadius: '50%',
+});
+
+export const SidebarSpaceInitials = style({
+  fontFamily: 'var(--font-secondary)',
+  fontWeight: 600,
+  letterSpacing: '0.015em',
+  textTransform: 'uppercase',
+});
 
 export const SidebarFolder = recipe({
   base: [

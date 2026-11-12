@@ -14,28 +14,30 @@ const CHAIRS: Record<number, Point[]> = {
     { x: 94, y: 71 },
   ],
 };
-// Where each seat's card lands on the table top (y 75% is its back edge).
+// Where each seat's card lands on the table top (y 75% is its back edge). Each card stays by
+// its own player's side of the table — near the viewer at the bottom, the others toward their
+// chairs — so the four spread to the edges.
 const PLAYED: Record<number, Point[]> = {
   2: [
-    { x: 50, y: 87 },
-    { x: 50, y: 79 },
+    { x: 50, y: 89 },
+    { x: 50, y: 76 },
   ],
   4: [
-    { x: 50, y: 87 },
-    { x: 34, y: 83 },
+    { x: 50, y: 89 },
+    { x: 31, y: 84 },
     { x: 50, y: 79 },
-    { x: 66, y: 83 },
+    { x: 69, y: 84 },
   ],
 };
 // The viewer sits at the camera; their avatar goes on the near edge of the table, in the
 // middle, no lower than NEAR_GAP px above the stage's bottom so their name still shows.
 const NEAR: Point = { x: 50, y: 96 };
 const NEAR_GAP = 42;
-const VIRA: Point = { x: 80, y: 88 };
 // The dark doorway behind the far chair: the score of the hand reads well there.
 const DOOR: Point = { x: 50, y: 46 };
 
 const EDGE = 52;
+const TABLE_BACK = 0.75;
 
 export const hasScene = (seats: number) => seats === 2 || seats === 4;
 
@@ -45,13 +47,15 @@ export type Scene = {
   top: number;
   width: number;
   height: number;
-  /** Seat avatars, played cards, the vira and the center text, in px of the stage. */
+  /** Seat avatars, played cards, the vira and the center panel, in px of the stage. */
   seats: Point[];
   played: Point[];
   vira: Point;
+  viraCard: number;
   door: Point;
   /** Width of a card on the table, in px: it grows with the photo. */
   card: number;
+  handCard: number;
 };
 
 // A tall screen sees the middle of the photo and cuts the ceiling, so the table gets bigger;
@@ -60,9 +64,8 @@ export type Scene = {
 const TALL_SHOWN = 0.74;
 const TALL: Record<number, { seats: number[]; played: number[] }> = {
   2: { seats: [50], played: [50, 50] },
-  4: { seats: [14, 50, 86], played: [50, 27, 50, 73] },
+  4: { seats: [14, 50, 86], played: [50, 22, 50, 78] },
 };
-const TALL_VIRA = { x: 84, y: 96 };
 
 /**
  * Places the photo in a `width`×`height` stage and the table's points on it. `bottom` is the
@@ -70,7 +73,25 @@ const TALL_VIRA = { x: 84, y: 96 };
  */
 export function trucoScene(width: number, height: number, seats: number, bottom: number): Scene {
   const tall = width < height * 1.2;
-  const scale = Math.max(width / SCENE_WIDTH, height / (SCENE_HEIGHT * (tall ? TALL_SHOWN : 1)));
+  const coverScale = Math.max(
+    width / SCENE_WIDTH,
+    height / (SCENE_HEIGHT * (tall ? TALL_SHOWN : 1))
+  );
+  const card = Math.round(
+    Math.min(64, width * 0.13, Math.max(46, SCENE_WIDTH * coverScale * 0.03))
+  );
+  const playedWidth = card + 13;
+  const projectedHalfHeight = 0.53;
+  const playHalfHeight = Math.ceil(playedWidth * projectedHalfHeight);
+  const handCard = Math.round(Math.min(80, Math.max(50, width * 0.092)));
+  const viraCard = Math.round(Math.min(60, Math.max(44, width * 0.072)));
+  const pileHalfHeight = Math.ceil(viraCard * 0.68);
+  const handTop = height - Math.ceil(handCard * 1.54) - 12;
+  const vira = { x: Math.round(width / 2), y: handTop - pileHalfHeight - 10 };
+  const farPlayLimit = vira.y - pileHalfHeight - playHalfHeight - 11;
+  // Keep the back edge behind the entire far card, including the space taken by its label.
+  const farPlayTop = farPlayLimit - playHalfHeight - 16;
+  const scale = Math.max(coverScale, (height - farPlayTop) / (SCENE_HEIGHT * (1 - TABLE_BACK)));
   const w = SCENE_WIDTH * scale;
   const h = SCENE_HEIGHT * scale;
   const left = (width - w) / 2;
@@ -88,15 +109,27 @@ export function trucoScene(width: number, height: number, seats: number, bottom:
   const chairs = CHAIRS[count];
   const played = PLAYED[count];
   const order = (seat: number) => (seat - bottom + count) % count;
-  const card = Math.round(Math.min(64, Math.max(46, w * 0.03)));
   const near = at(NEAR);
   near.y = Math.min(near.y, Math.round(height - NEAR_GAP));
-  // Table cards by step from the viewer. When the stage is too short for the viewer's card
-  // between the far chair and their avatar, it lies beside the avatar instead (left: the vira
-  // is on the right).
+  // Reserve the fan's height, the played card's label, and room for a focused hand card.
   const spots = played.map((p, step) => at(p, tall ? TALL[count].played[step] : undefined));
-  if (spots[0].y + card * 0.9 > near.y - 36) {
-    spots[0] = { x: Math.round(near.x - card - 36), y: Math.round(near.y - 8) };
+  const farStep = count / 2;
+  const tabletop = Math.round(top + TABLE_BACK * h);
+  spots[farStep].y = Math.min(
+    farPlayLimit,
+    Math.max(spots[farStep].y, tabletop + playHalfHeight + 15)
+  );
+  // Leave space beside the fan for the viewer's play and its index.
+  const fanGap = Math.round(handCard + playedWidth / 2 + 18);
+  const compact = width < 480;
+  // On phones the viewer's avatar is on the left of the fan.
+  spots[0].x += compact ? fanGap : -fanGap;
+  spots[0].y = Math.min(spots[0].y, near.y - playHalfHeight - (compact ? 40 : 56));
+  const adjacent = compact ? 3 : 1;
+  if (count === 4 && Math.abs(spots[0].x - spots[adjacent].x) < playedWidth + 12) {
+    const sideY = spots[0].y - Math.ceil(playedWidth * 2 * projectedHalfHeight) - 16;
+    spots[1].y = Math.min(spots[1].y, sideY);
+    spots[3].y = Math.min(spots[3].y, sideY);
   }
   return {
     left: Math.round(left),
@@ -106,11 +139,19 @@ export function trucoScene(width: number, height: number, seats: number, bottom:
     seats: Array.from({ length: count }, (_, seat) => {
       const step = order(seat);
       if (step === 0) return near;
-      return at(chairs[step - 1], tall ? TALL[count].seats[step - 1] : undefined);
+      const chair = at(chairs[step - 1], tall ? TALL[count].seats[step - 1] : undefined);
+      if (step === farStep)
+        chair.y = Math.min(
+          chair.y,
+          spots[step].y - Math.ceil((card + 13) * projectedHalfHeight) - 60
+        );
+      return chair;
     }),
     played: Array.from({ length: count }, (_, seat) => spots[order(seat)]),
-    vira: tall ? at(TALL_VIRA, TALL_VIRA.x) : at(VIRA),
+    vira,
+    viraCard,
     door: at(DOOR),
     card,
+    handCard,
   };
 }

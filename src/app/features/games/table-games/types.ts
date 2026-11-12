@@ -1,5 +1,12 @@
 export type GameKind = 'truco' | 'fodinha' | 'chess';
+export type TrucoResponse = 'accept' | 'decline' | 'raise';
 export type TableCard = { rank: string; suit: string; covered?: boolean };
+export type TrucoTrick = {
+  round: number;
+  number: number;
+  winner: { seat: number; card: TableCard } | null;
+  closingPlay: { seat: number; card: TableCard };
+};
 export type GamePlayer = {
   userId: string;
   cards?: TableCard[];
@@ -36,12 +43,13 @@ export type GameTable = {
   eleven?: boolean;
   decisionTeam?: number;
   lastRaise?: number | null;
-  pending?: { team: number; value: number };
+  pending?: { team: number; value: number; raisedBy?: number; suggestion?: TrucoResponse };
   trick?: { seat: number; card: TableCard }[];
   lastTrick?: { seat: number; card: TableCard }[];
   lastWinner?: number | null;
   // Truco: the pair that took each trick of this hand so far (null: tied).
   tricks?: (number | null)[];
+  recentTricks?: TrucoTrick[];
   // Truco: the pair that took the last hand (null: three ties) and the points it scored.
   handWinner?: number | null;
   handPoints?: number;

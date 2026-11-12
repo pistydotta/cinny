@@ -17,6 +17,7 @@ import { SeatsSheet } from './SeatsSheet';
 import { TentosTable } from './TentosTable';
 import { botName, isBotId } from './tentosView';
 import { gameError, gameName, phaseText } from './text';
+import { readTrucoDeck, saveTrucoDeck, TrucoDeck } from './trucoDeck';
 import { GameTable, TableSummary } from './types';
 import * as css from './tentos.css';
 
@@ -115,6 +116,7 @@ function CreateForm({
 export function CardTablesPage({ kind }: { kind: CardKind }) {
   const mx = useMatrixClient();
   const myId = mx.getUserId() ?? '';
+  const [deck, setDeck] = useState<TrucoDeck>(() => readTrucoDeck(myId));
   const navigate = useNavigate();
   const { tableId } = useParams();
   const useAuthentication = useMediaAuthentication();
@@ -210,6 +212,17 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
         onClose={() => setSheet(false)}
         nameOf={nameOf}
         seatsOnly={kind === 'fodinha'}
+        deckPreference={
+          kind === 'truco'
+            ? {
+                value: deck,
+                onChange: (next) => {
+                  setDeck(next);
+                  saveTrucoDeck(myId, next);
+                },
+              }
+            : undefined
+        }
       />
     );
     if (kind === 'fodinha')
@@ -234,6 +247,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
       <main className={css.Screen}>
         <TentosTable
           table={table}
+          deck={deck}
           busy={busy}
           isOwner={table.ownerId === myId}
           onAct={act}

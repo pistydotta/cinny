@@ -57,6 +57,7 @@ import {
   SidebarFolder,
   SidebarFolderDropTarget,
 } from '../../../components/sidebar';
+import { SidebarSpaceAvatar, SidebarSpaceInitials } from '../../../components/sidebar/Sidebar.css';
 import { RoomUnreadProvider, RoomsUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { UnreadBadge } from '../../../components/unread-badge';
@@ -448,6 +449,8 @@ function SpaceTab({
             {(triggerRef) => (
               <SidebarAvatar
                 as="button"
+                className={SidebarSpaceAvatar}
+                aria-label={space.name}
                 data-id={space.roomId}
                 ref={triggerRef}
                 size={folder ? '300' : '400'}
@@ -459,7 +462,9 @@ function SpaceTab({
                   src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
                   alt={space.name}
                   renderFallback={() => (
-                    <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name, 2)}</Text>
+                    <Text className={SidebarSpaceInitials} size={folder ? 'H6' : 'H5'}>
+                      {nameInitials(space.name, 2)}
+                    </Text>
                   )}
                 />
               </SidebarAvatar>
@@ -586,14 +591,14 @@ function ClosedSpaceFolder({
                   if (!space) return null;
 
                   return (
-                    <SidebarAvatar key={sId} size="200" radii="300">
+                    <SidebarAvatar key={sId} size="200" className={SidebarSpaceAvatar}>
                       <RoomAvatar
                         roomId={space.roomId}
                         src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
                         alt={space.name}
                         renderFallback={() => (
-                          <Text size="Inherit">
-                            <b>{nameInitials(space.name, 2)}</b>
+                          <Text className={SidebarSpaceInitials} size="Inherit">
+                            {nameInitials(space.name, 2)}
                           </Text>
                         )}
                       />

@@ -42,6 +42,29 @@ describe('trucoScene', () => {
     });
   });
 
+  it.each([
+    [390, 630],
+    [833, 745],
+    [1280, 620],
+  ])('centers the vira between the far play and the viewer’s hand at %i × %i', (width, height) => {
+    const scene = trucoScene(width, height, 4, 1);
+    expect(scene.vira.x).toBe(Math.round(width / 2));
+    expect(scene.vira.y).toBeGreaterThan(scene.played[3].y);
+    expect(scene.vira.y + scene.viraCard * 0.68).toBeLessThan(height - scene.handCard * 1.54 - 12);
+    const tabletop = scene.top + scene.height * 0.75;
+    const farCardTop = scene.played[3].y - (scene.card + 13) * 0.53 - 12;
+    expect(farCardTop).toBeGreaterThanOrEqual(tabletop);
+    expect(trucoScene(width, height, 4, 0).vira).toEqual(scene.vira);
+  });
+
+  it.each([320, 390])('separates the viewer’s play from the side cards at %ipx', (width) => {
+    const scene = trucoScene(width, 630, 4, 0);
+    const playedWidth = scene.card + 13;
+    expect(scene.played[0].x).toBeGreaterThan(width / 2 + scene.handCard);
+    expect(scene.played[0].x + playedWidth / 2).toBeLessThan(width);
+    expect(scene.played[0].y - scene.played[3].y).toBeGreaterThan(playedWidth * 1.06);
+  });
+
   it('keeps the viewer centered and their card off their avatar on a short stage', () => {
     const s = trucoScene(1000, 480, 4, 0);
     expect(s.seats[0].x).toBe(500);
