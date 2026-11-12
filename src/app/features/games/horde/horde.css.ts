@@ -439,3 +439,66 @@ globalStyle(`${HubArt} > span`, {
   backgroundPosition: '0 0',
   imageRendering: 'pixelated',
 });
+
+// --- Jumping, the camera and the controls screen --------------------------------------------
+
+export const JumpButton = style([
+  DashButton,
+  { right: 104, bottom: 40, width: 84, height: 84, fontSize: 14 },
+]);
+
+export const Speed = style({
+  fontSize: 12,
+  fontVariantNumeric: 'tabular-nums',
+  color: MUTED,
+  selectors: { '&[data-fast="true"]': { color: GOLD } },
+});
+
+export const AimHint = style({
+  position: 'absolute',
+  left: '50%',
+  top: '58%',
+  transform: 'translateX(-50%)',
+  padding: '8px 14px',
+  borderRadius: 12,
+  background: 'rgba(0,0,0,0.55)',
+  fontSize: 13,
+  fontWeight: 800,
+  pointerEvents: 'none',
+  textAlign: 'center',
+});
+
+export const ControlsList = style({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) auto auto',
+  alignItems: 'center',
+  gap: '6px 8px',
+  fontSize: 14,
+});
+
+export const KeyButton = style({
+  minWidth: 92,
+  padding: '6px 10px',
+  borderRadius: 8,
+  border: `1px solid ${LINE}`,
+  background: 'rgba(255,255,255,0.07)',
+  color: '#fff',
+  font: 'inherit',
+  fontSize: 13,
+  fontWeight: 800,
+  cursor: 'pointer',
+  selectors: {
+    '&[data-conflict="true"]': { borderColor: '#ff6a5a', color: '#ffb0a6' },
+    '&[data-waiting="true"]': { borderColor: GOLD, color: GOLD },
+  },
+});
+
+export const SettingRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  fontSize: 14,
+  flexWrap: 'wrap',
+});
+
+export const Warning = style({ margin: 0, fontSize: 13, color: '#ffb0a6', textAlign: 'center' });

@@ -95,7 +95,21 @@ export type OwnedWeapon = {
 
 export type Player = {
   x: number;
+  // Height of the feet. On the ground it is the terrain's height there.
+  y: number;
   z: number;
+  // Velocity in units per second.
+  vx: number;
+  vy: number;
+  vz: number;
+  grounded: boolean;
+  // Seconds since landing, for the friction-free window of the bunny hop.
+  groundTime: number;
+  // Seconds left of a jump pressed in the air, and of jumping after leaving the ground.
+  jumpBuffer: number;
+  coyote: number;
+  // Jumps made since leaving the ground, for extra jumps.
+  airJumps: number;
   // Unit vector of the last direction moved.
   dirX: number;
   dirZ: number;
@@ -107,6 +121,8 @@ export type Player = {
   invuln: number;
   dashCd: number;
   dashTime: number;
+  // The horizontal speed when the dash started, given back when it ends.
+  dashKeep: number;
 };
 
 export type Phase = 'playing' | 'choosing' | 'dead' | 'won';
@@ -143,9 +159,14 @@ export type RunState = {
 };
 
 export type Input = {
-  // Any length; the engine clamps it to 1.
+  // The direction to move in the world, already turned by the camera. Any length; the engine
+  // clamps it to 1.
   moveX: number;
   moveZ: number;
+  // True on the tick the jump key went down. Holding it never jumps again.
+  jump: boolean;
+  // Whether the jump key is still held: letting go early makes a lower jump.
+  jumpHeld: boolean;
   dash: boolean;
 };
 
@@ -160,5 +181,7 @@ export type GameEvent =
   | { type: 'pickup'; kind: PickupKind; x: number; z: number }
   | { type: 'levelup' }
   | { type: 'dash' }
+  | { type: 'jump'; air: boolean }
+  | { type: 'land'; speed: number }
   | { type: 'boss' }
   | { type: 'shrine'; x: number; z: number };

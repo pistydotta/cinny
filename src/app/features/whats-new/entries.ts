@@ -17,6 +17,21 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-brazilianbonk-movement',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_movement_title',
+          'BrazilianBonk: jump, free camera and controls'
+        ),
+        body: tr(
+          'whats_new.horde_movement_body',
+          "The hero now jumps with Space (over low enemies and their shots) and dodges with Shift. The camera turns with the mouse, and well-timed jumps while strafing and turning build speed. Every key can be changed in Controls. Enéas's weapon is now the Atomic Bomb."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-brazilianbonk',
     items: () => [
       {

@@ -39,16 +39,49 @@ export type EnemyDef = {
   speed: number;
   damage: number;
   radius: number;
+  // How tall the body is: a hero whose feet are higher than this jumps over it.
+  height: number;
   xp: number;
 };
 
 export const ENEMIES: Record<EnemyKind, EnemyDef> = {
-  husk: { hp: 12, speed: 3.2, damage: 8, radius: 0.6, xp: 1 },
-  runner: { hp: 7, speed: 5.4, damage: 6, radius: 0.45, xp: 1 },
-  brute: { hp: 70, speed: 2.3, damage: 18, radius: 1.05, xp: 6 },
-  spitter: { hp: 20, speed: 2.7, damage: 6, radius: 0.6, xp: 3 },
-  boss: { hp: 1400, speed: 3.5, damage: 28, radius: 2.3, xp: 60 },
+  husk: { hp: 12, speed: 3.2, damage: 8, radius: 0.6, height: 1.5, xp: 1 },
+  runner: { hp: 7, speed: 5.4, damage: 6, radius: 0.45, height: 1.1, xp: 1 },
+  brute: { hp: 70, speed: 2.3, damage: 18, radius: 1.05, height: 2.4, xp: 6 },
+  spitter: { hp: 20, speed: 2.7, damage: 6, radius: 0.6, height: 1.6, xp: 3 },
+  boss: { hp: 1400, speed: 3.5, damage: 28, radius: 2.3, height: 5, xp: 60 },
 };
+
+// How the hero moves, in units and seconds. Kept together so they can be tuned by playing.
+// On the ground the hero speeds up to its Movement Speed fast and stops fast. In the air there is no
+// friction, and the push only works while the speed along the direction asked for is under
+// `airCap`: strafing while turning the camera the same way, in an arc, adds speed (the bunny hop of
+// the old shooters). Landing keeps all of it for `hopWindow` seconds, so a jump in time loses none.
+export const MOVE = {
+  gravity: 30,
+  jumpSpeed: 11.5,
+  // Gravity is this many times stronger while rising with the jump key let go: a tap jumps low.
+  jumpCut: 2.6,
+  // A press this early before landing still jumps on landing.
+  jumpBuffer: 0.1,
+  // Leaving an edge, a jump still works for this long.
+  coyote: 0.1,
+  groundAccel: 14,
+  friction: 10,
+  // Below this speed friction stops the hero as if it were going this fast, so it stops for good.
+  stopSpeed: 2,
+  airAccel: 70,
+  airCap: 0.7,
+  hopWindow: 4 / 60,
+  // The horizontal speed can't pass this many times the Movement Speed.
+  maxSpeed: 2.4,
+  dashSeconds: 0.18,
+  dashSpeed: 26,
+  dashCooldown: 2.2,
+};
+
+// Hostile shots fly this high over the ground; a hero whose feet are higher is not hit.
+export const SHOT_HEIGHT = 1;
 
 export type CharacterDef = {
   weapon: WeaponId;

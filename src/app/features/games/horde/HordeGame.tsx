@@ -9,10 +9,13 @@ import {
   characterLabel,
   choiceLabel,
   formatTime,
+  keysOf,
   metaLabel,
   passiveLabel,
   weaponLabel,
 } from './labels';
+import { Controls, loadControls } from './controls';
+import { ControlsPanel, useKeyboardLayout } from './ControlsPanel';
 import { HERO_SPRITES } from './sprites';
 import { useHordeProfile } from './useHordeProfile';
 import * as css from './horde.css';
@@ -23,6 +26,8 @@ type Result = { won: boolean; time: number; kills: number; level: number; gold: 
 type HordeRunProps = {
   seed: number;
   meta: MetaSave;
+  controls: Controls;
+  onControls: (controls: Controls) => void;
   onEnd: (run: RunState) => void;
   onAgain: () => void;
   onExit: () => void;
@@ -30,19 +35,64 @@ type HordeRunProps = {
 
 const TOUCH = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
 
-function HordeRun({ seed, meta, onEnd, onAgain, onExit }: HordeRunProps) {
+function HelpText({ controls }: { controls: Controls }) {
+  const layout = useKeyboardLayout();
+  if (TOUCH) {
+    return (
+      <p className={css.Hint}>
+        {tr(
+          'games.horde.help_touch',
+          'Left side of the screen to move, right side to turn the camera. Weapons attack by themselves.'
+        )}
+      </p>
+    );
+  }
+  const move = ['forward', 'left', 'back', 'right'] as const;
+  return (
+    <p className={css.Hint}>
+      {tr(
+        'games.horde.help_keys',
+        '{{move}} to move, the mouse turns the camera, {{jump}} to jump, {{dash}} to dodge, {{pause}} to pause. Weapons attack by themselves.',
+        {
+          move: move
+            .map((action) =>
+              keysOf(
+                {
+                  ...controls,
+                  keys: { ...controls.keys, [action]: [controls.keys[action][0], ''] },
+                },
+                action,
+                layout
+              )
+            )
+            .join(' '),
+          jump: keysOf(controls, 'jump', layout),
+          dash: keysOf(controls, 'dash', layout),
+          pause: keysOf(controls, 'pause', layout),
+        }
+      )}
+    </p>
+  );
+}
+
+function HordeRun({ seed, meta, controls, onControls, onEnd, onAgain, onExit }: HordeRunProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const runnerRef = useRef<HordeRunner>();
   const [hud, setHud] = useState<Hud>();
   const [result, setResult] = useState<Result>();
   const [failed, setFailed] = useState(false);
+  const [editing, setEditing] = useState(false);
   // The run starts with the save as it was when Play was pressed; later saves don't restart it.
-  const start = useRef({ seed, meta, onEnd });
+  const start = useRef({ seed, meta, controls, onEnd });
+
+  useEffect(() => {
+    runnerRef.current?.setControls(controls);
+  }, [controls]);
 
   useEffect(() => {
     let cancelled = false;
-    const { seed: runSeed, meta: runMeta, onEnd: end } = start.current;
+    const { seed: runSeed, meta: runMeta, controls: runControls, onEnd: end } = start.current;
     // three.js is big, so it only loads when a run starts.
     import('./render/scene')
       .then(({ HordeScene }) => {
@@ -54,6 +104,7 @@ function HordeRun({ seed, meta, onEnd, onAgain, onExit }: HordeRunProps) {
           run,
           new HordeScene(canvas, run),
           overlay,
+          runControls,
           setHud,
           (ended) => {
             setResult({
@@ -126,6 +177,9 @@ function HordeRun({ seed, meta, onEnd, onAgain, onExit }: HordeRunProps) {
           </div>
 
           <div className={css.HudBottom}>
+            <span className={css.Speed} data-fast={hud.speed > 9}>
+              {tr('games.horde.hud.speed', '{{speed}} m/s', { speed: hud.speed.toFixed(1) })}
+            </span>
             <span>
               {Math.ceil(hud.hp)} / {hud.maxHp}
             </span>
@@ -134,15 +188,33 @@ function HordeRun({ seed, meta, onEnd, onAgain, onExit }: HordeRunProps) {
             </div>
           </div>
 
+          {!TOUCH && !hud.aiming && hud.phase === 'playing' && !hud.paused && (
+            <div className={css.AimHint}>
+              {tr('games.horde.aim_hint', 'Click to turn the camera with the mouse')}
+            </div>
+          )}
+
           {TOUCH && (
-            <button
-              type="button"
-              className={css.DashButton}
-              data-ready={hud.dash >= 1}
-              onPointerDown={() => runner?.pressDash()}
-            >
-              {tr('games.horde.dash', 'Dash')}
-            </button>
+            <>
+              <button
+                type="button"
+                className={css.JumpButton}
+                onPointerDown={() => runner?.holdJump(true)}
+                onPointerUp={() => runner?.holdJump(false)}
+                onPointerCancel={() => runner?.holdJump(false)}
+                onPointerLeave={() => runner?.holdJump(false)}
+              >
+                {tr('games.horde.jump', 'Jump')}
+              </button>
+              <button
+                type="button"
+                className={css.DashButton}
+                data-ready={hud.dash >= 1}
+                onPointerDown={() => runner?.pressDash()}
+              >
+                {tr('games.horde.dash', 'Dash')}
+              </button>
+            </>
           )}
         </>
       )}
@@ -186,32 +258,40 @@ function HordeRun({ seed, meta, onEnd, onAgain, onExit }: HordeRunProps) {
       {hud?.paused && hud.phase === 'playing' && (
         <div className={css.Curtain}>
           <div className={css.Panel}>
-            <h2 className={css.PanelTitle}>{tr('games.horde.paused', 'Paused')}</h2>
-            <p className={css.Hint}>
-              {TOUCH
-                ? tr(
-                    'games.horde.help_touch',
-                    'Drag anywhere to move. Weapons attack by themselves.'
-                  )
-                : tr(
-                    'games.horde.help_keys',
-                    'WASD or arrows to move, Space to dash, Esc to pause. Weapons attack by themselves.'
-                  )}
-            </p>
-            <div className={css.PanelRow}>
-              <button
-                type="button"
-                className={css.PlayButton}
-                onClick={() => runner?.setPaused(false)}
-              >
-                {tr('games.horde.resume', 'Continue')}
-              </button>
-            </div>
-            <div className={css.PanelRow}>
-              <button type="button" className={css.PlainButton} onClick={onExit}>
-                {tr('games.horde.give_up', 'Give up the run')}
-              </button>
-            </div>
+            {editing ? (
+              <ControlsPanel
+                controls={controls}
+                onChange={onControls}
+                onClose={() => setEditing(false)}
+                touch={!!TOUCH}
+              />
+            ) : (
+              <>
+                <h2 className={css.PanelTitle}>{tr('games.horde.paused', 'Paused')}</h2>
+                <HelpText controls={controls} />
+                <div className={css.PanelRow}>
+                  <button
+                    type="button"
+                    className={css.PlayButton}
+                    onClick={() => runner?.setPaused(false)}
+                  >
+                    {tr('games.horde.resume', 'Continue')}
+                  </button>
+                </div>
+                <div className={css.PanelRow}>
+                  <button
+                    type="button"
+                    className={css.PlainButton}
+                    onClick={() => setEditing(true)}
+                  >
+                    {tr('games.horde.controls', 'Controls')}
+                  </button>
+                  <button type="button" className={css.PlainButton} onClick={onExit}>
+                    {tr('games.horde.give_up', 'Give up the run')}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -293,6 +373,8 @@ export function HordeGame({ userId, getToken, nameOf, onBack }: HordeGameProps) 
     getToken
   );
   const [seed, setSeed] = useState<number>();
+  const [controls, setControls] = useState(loadControls);
+  const [editing, setEditing] = useState(false);
 
   if (seed !== undefined) {
     return (
@@ -300,10 +382,27 @@ export function HordeGame({ userId, getToken, nameOf, onBack }: HordeGameProps) 
         key={seed}
         seed={seed}
         meta={meta}
+        controls={controls}
+        onControls={setControls}
         onEnd={endRun}
         onAgain={() => setSeed(newSeed())}
         onExit={() => setSeed(undefined)}
       />
+    );
+  }
+
+  if (editing) {
+    return (
+      <div className={css.Page}>
+        <div className={css.Inner}>
+          <ControlsPanel
+            controls={controls}
+            onChange={setControls}
+            onClose={() => setEditing(false)}
+            touch={!!TOUCH}
+          />
+        </div>
+      </div>
     );
   }
 
@@ -358,14 +457,12 @@ export function HordeGame({ userId, getToken, nameOf, onBack }: HordeGameProps) 
         <button type="button" className={css.PlayButton} onClick={() => setSeed(newSeed())}>
           {tr('games.horde.start', 'Start run')}
         </button>
-        <p className={css.Hint}>
-          {TOUCH
-            ? tr('games.horde.help_touch', 'Drag anywhere to move. Weapons attack by themselves.')
-            : tr(
-                'games.horde.help_keys',
-                'WASD or arrows to move, Space to dash, Esc to pause. Weapons attack by themselves.'
-              )}
-        </p>
+        <HelpText controls={controls} />
+        <div className={css.PanelRow}>
+          <button type="button" className={css.PlainButton} onClick={() => setEditing(true)}>
+            {tr('games.horde.controls', 'Controls')}
+          </button>
+        </div>
 
         {meta.runs > 0 && (
           <div className={css.Records}>

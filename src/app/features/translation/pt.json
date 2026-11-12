@@ -581,7 +581,9 @@
     "table_bots_title": "Truco e Fodinha com bots",
     "table_bots_body": "As mesas de Truco e Fodinha foram redesenhadas: a tela é só a mesa, com a vira no meio, cada carta na frente de quem jogou e o placar em tentos. Convide amigos pela mesa ou complete os lugares vazios com bots.",
     "fodinha_oval_title": "Fodinha de volta à mesa oval",
-    "fodinha_oval_body": "O Fodinha voltou a ser jogado na mesa oval, como no poker, com as apostas e as penalidades em cada lugar. Bots e convites continuam: convide pela mesa ou complete os lugares vazios com bots."
+    "fodinha_oval_body": "O Fodinha voltou a ser jogado na mesa oval, como no poker, com as apostas e as penalidades em cada lugar. Bots e convites continuam: convide pela mesa ou complete os lugares vazios com bots.",
+    "horde_movement_title": "BrazilianBonk: pulo, câmera livre e controles",
+    "horde_movement_body": "O herói agora pula com o Espaço (por cima de inimigos baixos e dos tiros deles) e esquiva com o Shift. A câmera gira com o mouse, e pulos no tempo certo andando de lado e girando a câmera ganham velocidade. Todas as teclas podem ser trocadas em Controles. A arma do Enéas agora é a Bomba Atômica."
   },
   "admin": {
     "deactivate": {
@@ -1692,8 +1694,8 @@
         "axe_text": "Um machadão que atravessa tudo no caminho.",
         "trail": "Rastro de Fogo",
         "trail_text": "O chão queima por onde você passa.",
-        "missile": "Míssil Nuclear",
-        "missile_text": "Um míssil pequeno que explode onde cai.",
+        "missile": "Bomba Atômica",
+        "missile_text": "Uma bomba pequena que cai no inimigo mais perto e explode onde cai.",
         "card": "Carteira de Trabalho",
         "card_text": "Arremessa carteiras de trabalho nos inimigos mais próximos.",
         "aura": "Lágrimas Fascistas",
@@ -1726,7 +1728,7 @@
         "level": "Nível {{level}}"
       },
       "character": {
-        "eneas_text": "Baixinho e furioso. Começa com o Míssil Nuclear.",
+        "eneas_text": "Baixinho e furioso. Começa com a Bomba Atômica.",
         "lula_text": "Bate mais forte. Começa com a Carteira de Trabalho.",
         "janja_text": "Resistente e lenta. Começa com as Lágrimas Fascistas.",
         "bolsonaro_text": "Rápido e frágil. Começa com as Urnas Hackeadas."
@@ -1746,15 +1748,16 @@
         "reroll_text": "+1 troca das melhorias por partida"
       },
       "hud": {
-        "level": "Nv {{level}}"
+        "level": "Nv {{level}}",
+        "speed": "{{speed}} m/s"
       },
       "pause": "Pausar",
       "dash": "Esquiva",
       "choose": "Escolha uma melhoria",
       "reroll": "🎲 Trocar ({{count}})",
       "paused": "Pausado",
-      "help_touch": "Arraste em qualquer lugar para andar. As armas atacam sozinhas.",
-      "help_keys": "WASD ou setas para andar, Espaço para esquivar, Esc para pausar. As armas atacam sozinhas.",
+      "help_touch": "Lado esquerdo da tela para andar, lado direito para girar a câmera. As armas atacam sozinhas.",
+      "help_keys": "{{move}} para andar, o mouse gira a câmera, {{jump}} para pular, {{dash}} para esquivar, {{pause}} para pausar. As armas atacam sozinhas.",
       "resume": "Continuar",
       "give_up": "Desistir da partida",
       "won": "Vitória! A horda caiu",
@@ -1780,7 +1783,38 @@
       "meta_max": "No máximo",
       "ranking": "Ranking",
       "rank_won": "Venceu o chefe",
-      "offline": "Sem conexão com o servidor. Dá para jogar mesmo assim: as partidas ficam guardadas aqui e contam quando ele voltar. Melhorias só podem ser compradas online."
+      "offline": "Sem conexão com o servidor. Dá para jogar mesmo assim: as partidas ficam guardadas aqui e contam quando ele voltar. Melhorias só podem ser compradas online.",
+      "aim_hint": "Clique para girar a câmera com o mouse",
+      "jump": "Pular",
+      "controls": "Controles",
+      "controls_hint": "Clique numa tecla para trocar e aperte a nova tecla ou botão do mouse. Esc cancela. Botão direito limpa.",
+      "press_key": "Aperte uma tecla…",
+      "controls_clash": "As teclas em vermelho fazem mais de uma coisa: {{keys}}",
+      "sensitivity": "Sensibilidade da câmera",
+      "fov": "Campo de visão",
+      "distance": "Distância da câmera",
+      "invert_y": "Inverter eixo vertical da câmera",
+      "auto_camera": "Câmera acompanha para onde o herói corre",
+      "controls_reset": "Restaurar padrões",
+      "done": "Pronto",
+      "action": {
+        "forward": "Frente",
+        "back": "Trás",
+        "left": "Esquerda",
+        "right": "Direita",
+        "jump": "Pular",
+        "dash": "Esquivar",
+        "pause": "Pausar",
+        "pick": "Escolher melhoria {{n}}",
+        "reroll": "Trocar as melhorias"
+      },
+      "key": {
+        "mouse_left": "Clique esquerdo",
+        "mouse_middle": "Clique do meio",
+        "mouse_right": "Clique direito",
+        "mouse": "Mouse {{n}}",
+        "space": "Espaço"
+      }
     }
   },
   "music_bot": {

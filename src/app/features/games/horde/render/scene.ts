@@ -1,7 +1,8 @@
 /* eslint-disable no-param-reassign */
 import * as THREE from 'three';
-import { ARENA_RADIUS, ENEMIES, MAX_ENEMIES, SHRINE_RADIUS } from '../engine/data';
+import { ARENA_RADIUS, ENEMIES, MAX_ENEMIES, SHOT_HEIGHT, SHRINE_RADIUS } from '../engine/data';
 import { auraRadius, runStats, urnCount, urnOrbit } from '../engine/run';
+import { heightAt } from '../engine/terrain';
 import { Enemy, EnemyKind, GameEvent, RunState, ShotKind } from '../engine/types';
 import { HERO_SPRITES } from '../sprites';
 import { Particles } from './particles';
@@ -18,13 +19,12 @@ const RENDER_HEIGHT = 360;
 const KINDS: EnemyKind[] = ['husk', 'runner', 'brute', 'spitter', 'boss'];
 const SHOT_KINDS: ShotKind[] = ['card', 'missile', 'axe', 'spit'];
 const SKY = 0x1a1326;
-// Behind and above the hero, low enough to see the horde coming from the horizon.
-const CAMERA_UP = 12.5;
-const CAMERA_BACK = 15;
+// The camera looks at this point over the hero's feet.
+const CAMERA_AIM = 1.6;
 
-// Gentle hills, only for the eyes: the run itself is played on a flat plane.
-export const heightAt = (x: number, z: number): number =>
-  Math.sin(x * 0.07) * Math.cos(z * 0.06) * 0.9 + Math.sin((x + z) * 0.03) * 0.6;
+// Where the camera is, turned by the player. `yaw` 0 is behind the hero on +z looking towards -z;
+// `pitch` is how far above the hero it looks down from, in radians.
+export type CameraView = { yaw: number; pitch: number; distance: number; fov: number };
 
 const hash = (x: number, z: number): number => {
   const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
@@ -86,6 +86,8 @@ export class HordeScene {
 
   private target = new THREE.Vector3();
 
+  private aim = new THREE.Vector3();
+
   private shake = 0;
 
   private clock = 0;
@@ -123,13 +125,13 @@ export class HordeScene {
         box(0.22, 0.12, 0.22, 0xe8c84a),
         box(0.57, 0.06, 0.1, 0x143a82, { at: [0, 0, -0.34] }),
       ]),
-      // A small missile, nose towards +z.
+      // A falling bomb: a round nose towards +z, a body that narrows to the tail and four fins.
       missile: merge([
-        box(0.24, 0.24, 0.8, 0xe6e8ee),
-        cone(0.17, 0.4, 5, 0xd9362b, { at: [0, 0, 0.6], rot: [Math.PI / 2, 0, 0] }),
-        box(0.6, 0.05, 0.22, 0xd9362b, { at: [0, 0, -0.34] }),
-        box(0.05, 0.6, 0.22, 0xd9362b, { at: [0, 0, -0.34] }),
-        box(0.14, 0.14, 0.06, 0xf2c230, { at: [0, 0, 0.1] }),
+        ball(0.36, 0x3c4a3a, { at: [0, 0, 0.08] }),
+        cone(0.3, 0.7, 6, 0x3c4a3a, { at: [0, 0, -0.3], rot: [-Math.PI / 2, 0, 0] }),
+        box(0.66, 0.05, 0.24, 0x2a3328, { at: [0, 0, -0.56] }),
+        box(0.05, 0.66, 0.24, 0x2a3328, { at: [0, 0, -0.56] }),
+        box(0.5, 0.5, 0.06, 0xf2c230, { at: [0, 0, -0.1] }),
       ]),
       spit: ball(0.4, 0xb04cff),
       axe: merge([
@@ -229,7 +231,7 @@ export class HordeScene {
 
     this.particles = new Particles(this.scene);
     this.disposables.push(this.lit, this.glow, flat, boltGeometry);
-    this.camera.position.set(0, CAMERA_UP, CAMERA_BACK);
+    this.camera.position.set(0, 6, 9);
     this.resize();
   }
 
@@ -375,8 +377,6 @@ export class HordeScene {
     const scale = Math.min(1, RENDER_HEIGHT / height);
     this.renderer.setSize(Math.round(width * scale), Math.round(height * scale), false);
     this.camera.aspect = width / height;
-    // A tall phone screen sees less to the sides, so the camera backs off a little.
-    this.camera.fov = width < height ? 58 : 46;
     this.camera.updateProjectionMatrix();
   }
 
@@ -441,6 +441,9 @@ export class HordeScene {
       } else if (event.type === 'levelup' || event.type === 'shrine') {
         const { x, z } = this.run.player;
         this.particles.burst(x, heightAt(x, z) + 1, z, 40, 0x6ae6ff, 9);
+      } else if (event.type === 'land' && event.speed > 9) {
+        const { x, z } = this.run.player;
+        this.particles.burst(x, heightAt(x, z) + 0.2, z, 6, 0xd8c8a8, 3);
       } else if (event.type === 'dash') {
         const { x, z } = this.run.player;
         this.particles.burst(x, heightAt(x, z) + 0.6, z, 12, 0xffffff, 3);
@@ -498,7 +501,7 @@ export class HordeScene {
     mesh.setColorAt(index, this.color);
   }
 
-  render(dt: number) {
+  render(dt: number, view: CameraView) {
     const { run } = this;
     const { player } = run;
     this.clock += dt;
@@ -541,11 +544,12 @@ export class HordeScene {
       const mesh = this.shotMeshes.get(s.kind);
       const index = shotCounts.get(s.kind) ?? 0;
       if (mesh && index < 400) {
-        this.dummy.position.set(s.x, heightAt(s.x, s.z) + 1, s.z);
+        this.dummy.position.set(s.x, heightAt(s.x, s.z) + SHOT_HEIGHT, s.z);
         let spin = 0;
         if (s.kind === 'missile') spin = Math.atan2(s.vx, s.vz);
         else if (s.kind !== 'spit') spin = this.clock * 16 + s.id;
-        this.dummy.rotation.set(0, spin, 0);
+        // The bomb flies nose down, as if it were falling on its target.
+        this.dummy.rotation.set(s.kind === 'missile' ? 0.45 : 0, spin, 0, 'YXZ');
         this.dummy.scale.setScalar(s.kind === 'axe' ? s.radius / 1.1 : 1);
         this.dummy.updateMatrix();
         mesh.setMatrixAt(index, this.dummy.matrix);
@@ -642,12 +646,12 @@ export class HordeScene {
 
     // Shrines.
     run.shrines.forEach((shrine, i) => {
-      const view = this.shrines[i];
-      view.crystal.visible = !shrine.used;
-      view.crystal.rotation.y = this.clock * 1.5;
-      view.crystal.scale.setScalar(1 + shrine.charge * 0.8);
-      view.ring.visible = !shrine.used;
-      (view.ring.material as THREE.MeshBasicMaterial).opacity = 0.35 + shrine.charge * 0.65;
+      const shown = this.shrines[i];
+      shown.crystal.visible = !shrine.used;
+      shown.crystal.rotation.y = this.clock * 1.5;
+      shown.crystal.scale.setScalar(1 + shrine.charge * 0.8);
+      shown.ring.visible = !shrine.used;
+      (shown.ring.material as THREE.MeshBasicMaterial).opacity = 0.35 + shrine.charge * 0.65;
     });
 
     // Shock waves and lightning fade out.
@@ -665,24 +669,42 @@ export class HordeScene {
     this.bolts.visible = this.boltLife > 0;
 
     // The hero.
-    const ground = heightAt(player.x, player.z);
-    this.hero.root.position.set(player.x, ground, player.z);
+    this.hero.root.position.set(player.x, player.y, player.z);
     this.hero.root.visible = player.invuln <= 0 || Math.floor(this.clock * 20) % 2 === 0;
-    this.hero.update(player, this.camera, dt);
 
     this.particles.update(dt);
-    // The camera follows from behind and above, and shakes when something big happens.
+    // The camera orbits the hero where the player turned it, and shakes when something big happens.
+    // Its height follows the jump only halfway, so hopping doesn't bob the whole screen.
+    const ground = heightAt(player.x, player.z);
+    const aimY = ground + (player.y - ground) * 0.5 + CAMERA_AIM;
+    const smooth = Math.min(1, dt * 14);
+    this.aim.set(
+      this.aim.x + (player.x - this.aim.x) * smooth,
+      this.aim.y + (aimY - this.aim.y) * smooth,
+      this.aim.z + (player.z - this.aim.z) * smooth
+    );
+    if (this.clock <= dt) this.aim.set(player.x, aimY, player.z);
+    const flat = Math.cos(view.pitch) * view.distance;
+    this.camera.position.set(
+      this.aim.x + Math.sin(view.yaw) * flat,
+      this.aim.y + Math.sin(view.pitch) * view.distance,
+      this.aim.z + Math.cos(view.yaw) * flat
+    );
+    // Never under the hills.
+    const floor = heightAt(this.camera.position.x, this.camera.position.z) + 0.5;
+    if (this.camera.position.y < floor) this.camera.position.y = floor;
+    this.camera.lookAt(this.aim);
     this.shake = Math.max(0, this.shake - dt * 1.8);
     const jolt = this.shake * this.shake * 1.6;
-    this.target.set(player.x, ground + CAMERA_UP, player.z + CAMERA_BACK);
-    this.camera.position.lerp(this.target, Math.min(1, dt * 7));
     this.camera.position.x += (Math.random() - 0.5) * jolt;
     this.camera.position.y += (Math.random() - 0.5) * jolt;
-    this.camera.lookAt(
-      this.camera.position.x,
-      this.camera.position.y - CAMERA_UP + 1,
-      this.camera.position.z - CAMERA_BACK - 2
-    );
+    // A tall phone screen sees less to the sides, so it gets a wider view.
+    const fov = view.fov + (this.camera.aspect < 1 ? 12 : 0);
+    if (this.camera.fov !== fov) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+    }
+    this.hero.update(player, view.yaw, this.camera, dt);
 
     this.renderer.render(this.scene, this.camera);
   }

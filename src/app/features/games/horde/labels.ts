@@ -1,4 +1,5 @@
 import { CharacterId, Choice, MetaUpgradeId, PassiveId, WeaponId } from './engine/types';
+import { Action, Controls, fallbackKeyName } from './controls';
 import { tr } from '../../translation/tr';
 
 type Label = { icon: string; name: string; text: string };
@@ -7,11 +8,11 @@ export const weaponLabel = (id: WeaponId): Label => {
   switch (id) {
     case 'missile':
       return {
-        icon: '🚀',
-        name: tr('games.horde.weapon.missile', 'Nuclear Missile'),
+        icon: '💣',
+        name: tr('games.horde.weapon.missile', 'Atomic Bomb'),
         text: tr(
           'games.horde.weapon.missile_text',
-          'A small missile that blows up where it lands.'
+          'A small bomb that falls on the nearest enemy and blows up where it lands.'
         ),
       };
     case 'card':
@@ -171,7 +172,7 @@ export const characterLabel = (id: CharacterId): Omit<Label, 'icon'> => {
         name: 'Enéas',
         text: tr(
           'games.horde.character.eneas_text',
-          'Small and furious. Starts with the Nuclear Missile.'
+          'Small and furious. Starts with the Atomic Bomb.'
         ),
       };
   }
@@ -222,3 +223,58 @@ export const formatTime = (seconds: number): string => {
   const whole = Math.floor(seconds);
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 };
+
+export const actionLabel = (action: Action): string => {
+  switch (action) {
+    case 'forward':
+      return tr('games.horde.action.forward', 'Forward');
+    case 'back':
+      return tr('games.horde.action.back', 'Back');
+    case 'left':
+      return tr('games.horde.action.left', 'Left');
+    case 'right':
+      return tr('games.horde.action.right', 'Right');
+    case 'jump':
+      return tr('games.horde.action.jump', 'Jump');
+    case 'dash':
+      return tr('games.horde.action.dash', 'Dodge');
+    case 'pause':
+      return tr('games.horde.action.pause', 'Pause');
+    case 'pick1':
+      return tr('games.horde.action.pick', 'Pick upgrade {{n}}', { n: 1 });
+    case 'pick2':
+      return tr('games.horde.action.pick', 'Pick upgrade {{n}}', { n: 2 });
+    case 'pick3':
+      return tr('games.horde.action.pick', 'Pick upgrade {{n}}', { n: 3 });
+    default:
+      return tr('games.horde.action.reroll', 'Reroll the upgrades');
+  }
+};
+
+// How a key is printed. `layout` is the browser's map of this keyboard's labels, when it has one.
+export const keyLabel = (code: string, layout?: Map<string, string>): string => {
+  if (!code) return '—';
+  const mouse = /^Mouse(\d)$/.exec(code);
+  if (mouse) {
+    const names = [
+      tr('games.horde.key.mouse_left', 'Left click'),
+      tr('games.horde.key.mouse_middle', 'Middle click'),
+      tr('games.horde.key.mouse_right', 'Right click'),
+    ];
+    return (
+      names[Number(mouse[1])] ??
+      tr('games.horde.key.mouse', 'Mouse {{n}}', { n: Number(mouse[1]) + 1 })
+    );
+  }
+  if (code === 'Space') return tr('games.horde.key.space', 'Space');
+  if (code === 'Escape') return 'Esc';
+  const printed = layout?.get(code);
+  if (printed && printed.trim()) return printed.toUpperCase();
+  return fallbackKeyName(code);
+};
+
+// "W A S D" style text for the help lines, from the keys in use.
+export const keysOf = (controls: Controls, action: Action, layout?: Map<string, string>): string =>
+  [
+    ...new Set(controls.keys[action].filter((code) => code).map((code) => keyLabel(code, layout))),
+  ].join(' / ') || '—';

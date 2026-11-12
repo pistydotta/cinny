@@ -47,6 +47,8 @@ export const botInput = (state: RunState, skill: number): Input => {
   return {
     moveX: (awayX * 4 + circleX) * skill,
     moveZ: (awayZ * 4 + circleZ) * skill,
+    jump: false,
+    jumpHeld: false,
     dash: false,
   };
 };

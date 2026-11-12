@@ -49,6 +49,14 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   `engine/data.ts` and in `api/src/horde.js`: change both. Balance changes: run `playBot`
   (`engine/bot.ts`) over a few seeds; the bot only runs away, so it says little about close-range
   weapons.
+  Movement is 3D in the engine: the hero has `y` and a velocity, the ground is `engine/terrain.ts`
+  (the renderer draws the same `heightAt`), Space jumps and Shift dodges. The bunny hop is Quake's
+  air acceleration (strafe while turning gains speed, landing keeps it for a few ticks, a held key
+  never jumps again); its numbers are `MOVE` in `engine/data.ts`, tested in `movement.test.ts`.
+  The camera orbits the hero with pointer lock (Esc releases it, which is the pause). The engine
+  never sees the camera: `runner.ts` turns keys plus camera angle into a world direction, rounded
+  to 1024 directions in `controls.ts` so a replay sends the same commands. Keys are configurable
+  (`controls.ts`, `ControlsPanel.tsx`), saved per browser by `KeyboardEvent.code`.
 - `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
   free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but

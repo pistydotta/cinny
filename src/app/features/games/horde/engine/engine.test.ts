@@ -5,7 +5,7 @@ import { buyMeta, finishRun, newMeta, parseMeta, runGold } from './meta';
 import { choose, createRun, reroll, step } from './run';
 import { RunState } from './types';
 
-const IDLE = { moveX: 0, moveZ: 0, dash: false };
+const IDLE = { moveX: 0, moveZ: 0, jump: false, jumpHeld: false, dash: false };
 
 const summary = (s: RunState) => ({
   time: s.time,
@@ -110,7 +110,7 @@ describe('horde run', () => {
     const run = createRun(3, 'bolsonaro');
     for (let i = 0; i < 60 * 30; i += 1) {
       if (run.phase === 'choosing') choose(run, 0);
-      step(run, { moveX: 1, moveZ: 0, dash: i % 200 === 0 }, TICK);
+      step(run, { ...IDLE, moveX: 1, dash: i % 200 === 0, jump: i % 50 === 0 }, TICK);
     }
     expect(Math.hypot(run.player.x, run.player.z)).toBeLessThanOrEqual(70);
   });

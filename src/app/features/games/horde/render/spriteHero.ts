@@ -30,19 +30,22 @@ export class SpriteHero {
   }
 
   update(
-    player: { dirX: number; dirZ: number; moving: boolean; dashTime: number },
+    player: { dirX: number; dirZ: number; moving: boolean; grounded: boolean; dashTime: number },
+    cameraYaw: number,
     camera: THREE.Camera,
     dt: number
   ) {
-    // 0 is towards the camera (+z), a quarter turn is to the right of the screen (+x).
-    const turn = Math.atan2(player.dirX, player.dirZ) / (Math.PI / 4);
+    // The frame depends on where the hero faces seen from the camera: 0 is towards the camera, a
+    // quarter turn is to the right of the screen.
+    const turn = (Math.atan2(player.dirX, player.dirZ) - cameraYaw) / (Math.PI / 4);
     const frame = ((Math.round(turn) % SPRITE_FRAMES) + SPRITE_FRAMES) % SPRITE_FRAMES;
     this.texture.offset.x = frame / SPRITE_FRAMES;
 
     this.root.quaternion.copy(camera.quaternion);
-    this.walk += dt * (player.moving ? 13 : 0);
-    this.card.position.y = player.moving ? Math.abs(Math.sin(this.walk)) * 0.22 : 0;
-    this.card.rotation.z = player.moving ? Math.sin(this.walk) * 0.09 : 0;
+    const walking = player.moving && player.grounded;
+    this.walk += dt * (walking ? 13 : 0);
+    this.card.position.y = walking ? Math.abs(Math.sin(this.walk)) * 0.22 : 0;
+    this.card.rotation.z = walking ? Math.sin(this.walk) * 0.09 : 0;
     const stretch = player.dashTime > 0 ? 0.8 : 1;
     this.card.scale.set(2 - stretch, stretch, 1);
   }

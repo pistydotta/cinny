@@ -8,11 +8,13 @@ import {
   MAX_PICKUPS,
   MAX_WEAPONS,
   MID_BOSS_AT,
+  MOVE,
   PASSIVE_IDS,
   PASSIVE_MAX,
   RUN_SECONDS,
   SHRINE_RADIUS,
   SHRINE_SECONDS,
+  SHOT_HEIGHT,
   WEAPON_IDS,
   WEAPON_MAX_LEVEL,
   enemyScale,
@@ -20,6 +22,7 @@ import {
   xpToNext,
 } from './data';
 import { createRng } from './rng';
+import { heightAt } from './terrain';
 import {
   CharacterId,
   Choice,
@@ -39,9 +42,6 @@ import {
 const PLAYER_RADIUS = 0.5;
 const CELL = 3;
 const CRIT_CHANCE = 0.1;
-const DASH_SECONDS = 0.18;
-const DASH_SPEED = 26;
-const DASH_COOLDOWN = 2.2;
 
 export const NO_META: MetaBonuses = {
   vigor: 0,
@@ -67,6 +67,8 @@ export const runStats = (state: RunState) => {
     regen: 0.3 * passiveLevel(state, 'vigor'),
     xp: 1 + 0.05 * state.meta.wisdom,
     gold: 1 + 0.1 * state.meta.greed,
+    // Jumps in the air after the first one. Nothing gives them yet.
+    extraJumps: 0,
   };
 };
 
@@ -102,7 +104,16 @@ export const createRun = (
     phase: 'playing',
     player: {
       x: 0,
+      y: heightAt(0, 0),
       z: 0,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      grounded: true,
+      groundTime: 1,
+      jumpBuffer: 0,
+      coyote: 0,
+      airJumps: 0,
       dirX: 0,
       dirZ: 1,
       moving: false,
@@ -113,6 +124,7 @@ export const createRun = (
       invuln: 0,
       dashCd: 0,
       dashTime: 0,
+      dashKeep: 0,
     },
     weapons: [{ id: CHARACTERS[character].weapon, level: 1, cooldown: 0.5, angle: 0 }],
     passives: [],
@@ -440,6 +452,10 @@ const fireHostile = (state: RunState, e: Enemy, angle: number, speed: number, da
   });
 };
 
+// How high the hero's feet are over the ground under them.
+const playerLift = (state: RunState): number =>
+  state.player.y - heightAt(state.player.x, state.player.z);
+
 const hurtPlayer = (state: RunState, amount: number, events: GameEvent[]) => {
   const { player } = state;
   if (player.invuln > 0 || player.dashTime > 0 || state.phase !== 'playing') return;
@@ -488,7 +504,12 @@ const moveEnemies = (state: RunState, grid: Grid, dt: number, events: GameEvent[
       }
     }
 
-    if (dist < e.radius + PLAYER_RADIUS) hurtPlayer(state, e.damage, events);
+    if (
+      dist < e.radius + PLAYER_RADIUS &&
+      playerLift(state) < ENEMIES[e.kind].height * (e.radius / ENEMIES[e.kind].radius)
+    ) {
+      hurtPlayer(state, e.damage, events);
+    }
   }
 
   // Push overlapping enemies apart so the horde spreads instead of stacking on one spot.
@@ -749,7 +770,11 @@ const moveShots = (state: RunState, grid: Grid, dt: number, events: GameEvent[])
     shot.life -= dt;
     if (shot.hostile) {
       const r = shot.radius + PLAYER_RADIUS;
-      if ((shot.x - player.x) ** 2 + (shot.z - player.z) ** 2 < r * r && player.dashTime <= 0) {
+      if (
+        (shot.x - player.x) ** 2 + (shot.z - player.z) ** 2 < r * r &&
+        playerLift(state) < SHOT_HEIGHT + shot.radius &&
+        player.dashTime <= 0
+      ) {
         hurtPlayer(state, shot.damage, events);
         shot.life = 0;
       }
@@ -792,6 +817,22 @@ const moveShots = (state: RunState, grid: Grid, dt: number, events: GameEvent[])
 
 // --- Player --------------------------------------------------------------------------------
 
+// Quake's acceleration: pushes along `dir` only while the speed along it is under `cap`.
+const accelerate = (
+  player: RunState['player'],
+  dirX: number,
+  dirZ: number,
+  cap: number,
+  accel: number,
+  dt: number
+) => {
+  const room = cap - (player.vx * dirX + player.vz * dirZ);
+  if (room <= 0) return;
+  const push = Math.min(room, accel * dt);
+  player.vx += dirX * push;
+  player.vz += dirZ * push;
+};
+
 const movePlayer = (
   state: RunState,
   input: Input,
@@ -800,30 +841,126 @@ const movePlayer = (
   events: GameEvent[]
 ) => {
   const { player } = state;
-  const len = Math.hypot(input.moveX, input.moveZ);
+  const len = Math.min(1, Math.hypot(input.moveX, input.moveZ));
   player.moving = len > 0.05;
+  const wishX = player.moving ? input.moveX / Math.hypot(input.moveX, input.moveZ) : 0;
+  const wishZ = player.moving ? input.moveZ / Math.hypot(input.moveX, input.moveZ) : 0;
   if (player.moving) {
-    player.dirX = input.moveX / len;
-    player.dirZ = input.moveZ / len;
+    player.dirX = wishX;
+    player.dirZ = wishZ;
   }
+  const wishSpeed = stats.speed * len;
   player.invuln = Math.max(0, player.invuln - dt);
   player.dashCd = Math.max(0, player.dashCd - dt);
+  player.jumpBuffer = Math.max(0, player.jumpBuffer - dt);
+  player.coyote = Math.max(0, player.coyote - dt);
+  if (player.grounded) player.groundTime += dt;
+
+  // Jumping: only a press jumps, early presses wait for the landing, and a press in the air with
+  // no ground to use spends an extra jump.
+  if (input.jump) {
+    if (!player.grounded && player.coyote <= 0 && player.airJumps < stats.extraJumps) {
+      player.airJumps += 1;
+      player.vy = MOVE.jumpSpeed;
+      events.push({ type: 'jump', air: true });
+    } else player.jumpBuffer = MOVE.jumpBuffer;
+  }
+  if (player.jumpBuffer > 0 && (player.grounded || player.coyote > 0)) {
+    player.vy = MOVE.jumpSpeed;
+    player.grounded = false;
+    player.jumpBuffer = 0;
+    player.coyote = 0;
+    events.push({ type: 'jump', air: false });
+  }
+
   if (input.dash && player.dashCd <= 0) {
-    player.dashCd = DASH_COOLDOWN;
-    player.dashTime = DASH_SECONDS;
+    player.dashCd = MOVE.dashCooldown;
+    player.dashTime = MOVE.dashSeconds;
+    player.dashKeep = Math.hypot(player.vx, player.vz);
+    player.vy = Math.max(0, player.vy);
     events.push({ type: 'dash' });
   }
-  let speed = player.moving ? stats.speed * Math.min(1, len) : 0;
+
   if (player.dashTime > 0) {
     player.dashTime -= dt;
-    speed = DASH_SPEED;
+    player.vx = player.dirX * MOVE.dashSpeed;
+    player.vz = player.dirZ * MOVE.dashSpeed;
+    if (player.dashTime <= 0) {
+      // The dash gives no speed of its own: it ends at the speed it started with.
+      const keep = Math.max(wishSpeed, player.dashKeep);
+      player.vx = player.dirX * keep;
+      player.vz = player.dirZ * keep;
+    }
+  } else if (player.grounded) {
+    if (player.groundTime > MOVE.hopWindow) {
+      const speed = Math.hypot(player.vx, player.vz);
+      if (speed > 0) {
+        const drop = Math.max(speed, MOVE.stopSpeed) * MOVE.friction * dt;
+        const scale = Math.max(0, speed - drop) / speed;
+        player.vx *= scale;
+        player.vz *= scale;
+      }
+    }
+    if (player.moving)
+      accelerate(player, wishX, wishZ, wishSpeed, MOVE.groundAccel * wishSpeed, dt);
+  } else if (player.moving) {
+    accelerate(
+      player,
+      wishX,
+      wishZ,
+      Math.min(wishSpeed, MOVE.airCap),
+      MOVE.airAccel * wishSpeed,
+      dt
+    );
   }
-  player.x += player.dirX * speed * dt;
-  player.z += player.dirZ * speed * dt;
+
+  if (player.dashTime <= 0) {
+    const speed = Math.hypot(player.vx, player.vz);
+    const cap = stats.speed * MOVE.maxSpeed;
+    if (speed > cap) {
+      player.vx *= cap / speed;
+      player.vz *= cap / speed;
+    }
+  }
+
+  // Rising with the key let go falls back sooner, so a tap is a small hop.
+  const lift = player.vy > 0 && !input.jumpHeld ? MOVE.jumpCut : 1;
+  if (!player.grounded) player.vy -= MOVE.gravity * lift * dt;
+  player.x += player.vx * dt;
+  player.z += player.vz * dt;
+  player.y += player.vy * dt;
+
   const dist = Math.hypot(player.x, player.z);
   if (dist > ARENA_RADIUS - 1) {
     player.x *= (ARENA_RADIUS - 1) / dist;
     player.z *= (ARENA_RADIUS - 1) / dist;
+    // The wall stops the part of the speed going into it.
+    const out = (player.vx * player.x + player.vz * player.z) / (ARENA_RADIUS - 1);
+    if (out > 0) {
+      player.vx -= (out * player.x) / (ARENA_RADIUS - 1);
+      player.vz -= (out * player.z) / (ARENA_RADIUS - 1);
+    }
+  }
+
+  const ground = heightAt(player.x, player.z);
+  if (player.grounded) {
+    // Walking follows the hills; there are no ledges to fall from yet.
+    player.y = ground;
+    player.vy = 0;
+  } else if (player.y <= ground) {
+    player.y = ground;
+    player.vy = 0;
+    player.grounded = true;
+    player.groundTime = 0;
+    player.airJumps = 0;
+    events.push({ type: 'land', speed: Math.hypot(player.vx, player.vz) });
+    if (player.jumpBuffer > 0) {
+      // Pressed just before landing: off again on the same tick, with all the speed.
+      player.vy = MOVE.jumpSpeed;
+      player.grounded = false;
+      player.jumpBuffer = 0;
+      events.push({ type: 'jump', air: false });
+    }
   }
   if (stats.regen > 0) player.hp = Math.min(player.maxHp, player.hp + stats.regen * dt);
 };
