@@ -12,6 +12,10 @@ const quietRun = (): RunState => {
   run.spawnBudget = -1e9;
   run.nextEliteAt = 1e9;
   run.shrines = [];
+  // No barrels or pots, and no set pieces of the horde.
+  run.enemies = [];
+  run.nextHordeEvent = 99;
+  run.nextPotsAt = 1e9;
   return run;
 };
 
@@ -51,7 +55,7 @@ describe('horde movement', () => {
     let top = 0;
     for (let i = 0; i < 120; i += 1) {
       events.push(...step(run, { ...IDLE, jumpHeld: true }, TICK));
-      top = Math.max(top, run.player.y - heightAt(run.player.x, run.player.z));
+      top = Math.max(top, run.player.y - heightAt(run.map, run.player.x, run.player.z));
     }
     expect(top).toBeGreaterThan(1.8);
     expect(run.player.grounded).toBe(true);
@@ -66,7 +70,7 @@ describe('horde movement', () => {
       let top = 0;
       for (let i = 0; i < 60; i += 1) {
         step(run, { ...IDLE, jumpHeld: held }, TICK);
-        top = Math.max(top, run.player.y - heightAt(run.player.x, run.player.z));
+        top = Math.max(top, run.player.y - heightAt(run.map, run.player.x, run.player.z));
       }
       return top;
     };
@@ -89,7 +93,7 @@ describe('horde movement', () => {
     let jumps = 0;
     let pressed = false;
     for (let i = 0; i < 120; i += 1) {
-      const lift = run.player.y - heightAt(run.player.x, run.player.z);
+      const lift = run.player.y - heightAt(run.map, run.player.x, run.player.z);
       // Pressed once on the way down, a few ticks before touching the ground.
       const press: boolean =
         !run.player.grounded && run.player.vy < 0 && lift < 0.45 && lift > 0.2 && !pressed;
@@ -102,7 +106,7 @@ describe('horde movement', () => {
   });
 
   it('gains speed hopping in time while strafing, and loses it jumping late', () => {
-    const base = runStats(quietRun()).speed;
+    const base = runStats(quietRun()).moveSpeed;
     const timed = quietRun();
     runUp(timed);
     hop(timed, 4);
@@ -118,10 +122,10 @@ describe('horde movement', () => {
     const run = quietRun();
     runUp(run);
     hop(run, 20);
-    expect(speedOf(run)).toBeLessThanOrEqual(runStats(run).speed * MOVE.maxSpeed + 1e-9);
+    expect(speedOf(run)).toBeLessThanOrEqual(runStats(run).moveSpeed * MOVE.maxSpeed + 1e-9);
     run.player.vx = 500;
     step(run, IDLE, TICK);
-    expect(speedOf(run)).toBeLessThanOrEqual(runStats(run).speed * MOVE.maxSpeed + 1e-9);
+    expect(speedOf(run)).toBeLessThanOrEqual(runStats(run).moveSpeed * MOVE.maxSpeed + 1e-9);
   });
 
   it('dashes in the air and keeps only the speed it had', () => {

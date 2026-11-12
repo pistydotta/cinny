@@ -17,9 +17,15 @@ export class Particles {
 
   private life = new Float32Array(MAX);
 
+  // 1 falls like a spark; smoke floats up with a small negative weight.
+  private weight = new Float32Array(MAX);
+
   private next = 0;
 
   private color = new THREE.Color();
+
+  // Share of the sparks asked for that are made: lower on a slow device.
+  density = 1;
 
   constructor(scene: THREE.Scene) {
     const geometry = new THREE.BufferGeometry();
@@ -38,7 +44,8 @@ export class Particles {
 
   burst(x: number, y: number, z: number, count: number, color: number, speed: number) {
     this.color.setHex(color);
-    for (let n = 0; n < count; n += 1) {
+    const made = this.density >= 1 ? count : Math.ceil(count * this.density);
+    for (let n = 0; n < made; n += 1) {
       const i = this.next;
       this.next = (this.next + 1) % MAX;
       const angle = Math.random() * Math.PI * 2;
@@ -48,7 +55,36 @@ export class Particles {
       this.velocity[i * 3 + 1] = 2 + Math.random() * speed * 0.8;
       this.velocity[i * 3 + 2] = Math.sin(angle) * out;
       this.life[i] = 0.35 + Math.random() * 0.45;
+      this.weight[i] = 1;
       const shade = 0.7 + Math.random() * 0.5;
+      this.colors.setXYZ(i, this.color.r * shade, this.color.g * shade, this.color.b * shade);
+    }
+    this.colors.needsUpdate = true;
+  }
+
+  // Slow puffs that rise and spread: bomb smoke and the little mushroom of a blast.
+  smoke(
+    x: number,
+    y: number,
+    z: number,
+    count: number,
+    color: number,
+    spread: number,
+    rise: number
+  ) {
+    this.color.setHex(color);
+    for (let n = 0; n < count; n += 1) {
+      const i = this.next;
+      this.next = (this.next + 1) % MAX;
+      const angle = Math.random() * Math.PI * 2;
+      const out = Math.random() * spread;
+      this.position.setXYZ(i, x, y, z);
+      this.velocity[i * 3] = Math.cos(angle) * out;
+      this.velocity[i * 3 + 1] = rise * (0.6 + Math.random() * 0.6);
+      this.velocity[i * 3 + 2] = Math.sin(angle) * out;
+      this.life[i] = 0.7 + Math.random() * 0.6;
+      this.weight[i] = -0.05;
+      const shade = 0.6 + Math.random() * 0.4;
       this.colors.setXYZ(i, this.color.r * shade, this.color.g * shade, this.color.b * shade);
     }
     this.colors.needsUpdate = true;
@@ -62,7 +98,7 @@ export class Particles {
         if (this.life[i] <= 0) {
           array[i * 3 + 1] = HIDDEN;
         } else {
-          this.velocity[i * 3 + 1] -= GRAVITY * dt;
+          this.velocity[i * 3 + 1] -= GRAVITY * this.weight[i] * dt;
           array[i * 3] += this.velocity[i * 3] * dt;
           array[i * 3 + 1] += this.velocity[i * 3 + 1] * dt;
           array[i * 3 + 2] += this.velocity[i * 3 + 2] * dt;

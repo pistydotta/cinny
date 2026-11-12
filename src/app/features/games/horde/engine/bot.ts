@@ -1,5 +1,5 @@
 import { TICK } from './data';
-import { choose, step } from './run';
+import { choose, closeChest, step } from './run';
 import { Input, RunState } from './types';
 
 // A simple player for tests and balance: it runs from whatever is close, picks up gems and
@@ -9,6 +9,7 @@ export const botInput = (state: RunState, skill: number): Input => {
   let awayX = 0;
   let awayZ = 0;
   state.enemies.forEach((e) => {
+    if (e.prop) return;
     const dx = player.x - e.x;
     const dz = player.z - e.z;
     const d2 = dx * dx + dz * dz;
@@ -55,8 +56,12 @@ export const botInput = (state: RunState, skill: number): Input => {
 
 // Plays a run to its end, or to `maxSeconds`.
 export const playBot = (state: RunState, skill: number, maxSeconds = 900): RunState => {
-  while ((state.phase === 'playing' || state.phase === 'choosing') && state.time < maxSeconds) {
-    if (state.phase === 'choosing') choose(state, 0);
+  while (
+    (state.phase === 'playing' || state.phase === 'choosing' || state.phase === 'chest') &&
+    state.time < maxSeconds
+  ) {
+    if (state.phase === 'chest') closeChest(state);
+    else if (state.phase === 'choosing') choose(state, 0);
     else step(state, botInput(state, skill), TICK);
   }
   return state;

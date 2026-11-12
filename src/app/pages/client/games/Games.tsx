@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
 import { GamesHub, PokerLobby, PracticeScreen, TableScreen } from '../../../features/games';
 import { IdleGame } from '../../../features/games/idle';
 import { HordeGame } from '../../../features/games/horde';
+import { callEmbedAtom } from '../../../state/callEmbed';
 import { createPokerApi } from '../../../features/games/poker/api';
 import { errorText } from '../../../features/games/poker/errorText';
 import * as css from '../../../features/games/poker/pokerPage.css';
@@ -56,12 +58,16 @@ export function HordeGamePage() {
     [mx]
   );
 
+  // A call this app has joined: the game then plays quietly, under the voices.
+  const inCall = useAtomValue(callEmbedAtom) !== undefined;
+
   return (
     <HordeGame
       userId={mx.getUserId() ?? ''}
       getToken={getToken}
       nameOf={nameOf}
       onBack={() => navigate(getGamesPath())}
+      inCall={inCall}
     />
   );
 }

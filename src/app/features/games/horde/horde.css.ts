@@ -83,6 +83,18 @@ export const Card = style({
   cursor: 'pointer',
   selectors: {
     '&[data-selected="true"]': { borderColor: GOLD, background: 'rgba(245,200,75,0.10)' },
+    '&[data-rarity="rare"]': {
+      borderColor: '#b07cff',
+      boxShadow: '0 0 18px rgba(176,124,255,0.35)',
+    },
+    '&[data-rarity="epic"]': {
+      borderColor: GOLD,
+      boxShadow: '0 0 22px rgba(245,200,75,0.5)',
+    },
+    '&[data-rarity="evolve"]': {
+      borderColor: '#ff6a3a',
+      boxShadow: '0 0 22px rgba(255,106,58,0.5)',
+    },
     '&:disabled': { opacity: 0.5, cursor: 'default' },
     '&:hover:not(:disabled)': { background: 'rgba(255,255,255,0.08)' },
   },
@@ -131,7 +143,10 @@ export const PlainButton = style({
   font: 'inherit',
   fontWeight: 700,
   cursor: 'pointer',
-  selectors: { '&:disabled': { opacity: 0.45, cursor: 'default' } },
+  selectors: {
+    '&:disabled': { opacity: 0.45, cursor: 'default' },
+    '&[data-selected="true"]': { borderColor: GOLD, color: GOLD },
+  },
 });
 
 export const Records = style({
@@ -173,7 +188,9 @@ export const HudTop = style({
   top: 0,
   left: 0,
   right: 0,
-  padding: '0 10px',
+  // Clear of a phone's notch and rounded corners.
+  padding: '0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left))',
+  paddingTop: 'env(safe-area-inset-top)',
   display: 'flex',
   flexDirection: 'column',
   gap: 6,
@@ -250,7 +267,7 @@ export const HudBottom = style({
   position: 'absolute',
   left: 0,
   right: 0,
-  bottom: 14,
+  bottom: 'max(14px, env(safe-area-inset-bottom))',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -278,8 +295,8 @@ export const HpFill = style({
 
 export const DashButton = style({
   position: 'absolute',
-  right: 18,
-  bottom: 22,
+  right: 'max(18px, env(safe-area-inset-right))',
+  bottom: 'max(22px, env(safe-area-inset-bottom))',
   width: 76,
   height: 76,
   borderRadius: '50%',
@@ -420,26 +437,6 @@ export const RankStat = style({
   color: MUTED,
 });
 
-// The card on the games hub.
-export const HubArt = style({
-  height: 170,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 2,
-  background: 'radial-gradient(ellipse at 50% 80%, #6a2a55 0%, #2a1638 50%, #0e0a16 100%)',
-  boxShadow: 'inset 0 -20px 40px rgba(0,0,0,0.35)',
-});
-
-// Each hero on the card: the first frame of its sheet.
-globalStyle(`${HubArt} > span`, {
-  width: 72,
-  height: 72,
-  backgroundSize: '800% 100%',
-  backgroundPosition: '0 0',
-  imageRendering: 'pixelated',
-});
-
 // --- Jumping, the camera and the controls screen --------------------------------------------
 
 export const JumpButton = style([
@@ -502,3 +499,297 @@ export const SettingRow = style({
 });
 
 export const Warning = style({ margin: 0, fontSize: 13, color: '#ffb0a6', textAlign: 'center' });
+
+// --- Stats screen, defense bars and powerups ------------------------------------------------
+
+export const StatGroups = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  gap: 14,
+});
+
+export const StatGroup = style({ display: 'flex', flexDirection: 'column', gap: 2 });
+
+export const StatGroupTitle = style({
+  margin: '0 0 4px',
+  fontSize: 12,
+  fontWeight: 900,
+  letterSpacing: 1,
+  textTransform: 'uppercase',
+  color: GOLD,
+});
+
+export const StatRow = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  padding: '5px 8px',
+  borderRadius: 8,
+  border: 'none',
+  background: 'transparent',
+  color: MUTED,
+  font: 'inherit',
+  fontSize: 13,
+  textAlign: 'left',
+  cursor: 'pointer',
+  selectors: {
+    '&:hover': { background: 'rgba(255,255,255,0.06)' },
+    '&[data-changed="true"]': { color: '#fff' },
+  },
+});
+
+export const StatLine = style({ display: 'flex', alignItems: 'center', gap: 8, width: '100%' });
+
+export const StatNumber = style({ fontWeight: 800, fontVariantNumeric: 'tabular-nums' });
+
+export const StatHelp = style({ fontSize: 12, lineHeight: 1.35, color: MUTED });
+
+export const ShieldBar = style({
+  width: 'min(300px, 62%)',
+  height: 6,
+  borderRadius: 3,
+  overflow: 'hidden',
+  background: 'rgba(0,0,0,0.6)',
+});
+
+export const ShieldFill = style({
+  height: '100%',
+  background: 'linear-gradient(90deg, #5ab8ff, #a8e0ff)',
+  transition: 'width 120ms linear',
+});
+
+export const Buffs = style({ display: 'flex', gap: 6, justifyContent: 'center' });
+
+export const Buff = style({
+  padding: '2px 8px',
+  borderRadius: 10,
+  background: 'rgba(0,0,0,0.55)',
+  fontSize: 12,
+  fontWeight: 800,
+  fontVariantNumeric: 'tabular-nums',
+});
+
+export const DamageList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  fontSize: 13,
+});
+
+export const DamageRow = style({ display: 'flex', alignItems: 'center', gap: 8 });
+
+export const DamageBar = style({
+  height: 8,
+  borderRadius: 4,
+  background: 'linear-gradient(90deg, #ff9a3a, #e2541c)',
+});
+
+// --- Build, ability and chests ------------------------------------------------------------
+
+export const BuildRow = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  padding: '5px 8px',
+  borderRadius: 8,
+  background: 'rgba(255,255,255,0.03)',
+  fontSize: 13,
+});
+
+export const AbilityButton = style([
+  DashButton,
+  { right: 30, bottom: 112, width: 64, height: 64, fontSize: 24 },
+]);
+
+// The ability's icon in the corner on a keyboard, filling up while it recharges.
+export const AbilityChip = style({
+  position: 'absolute',
+  right: 14,
+  bottom: 14,
+  width: 52,
+  height: 52,
+  borderRadius: 12,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 24,
+  background: 'rgba(0,0,0,0.55)',
+  border: `1px solid ${LINE}`,
+  overflow: 'hidden',
+  pointerEvents: 'none',
+  selectors: { '&[data-ready="true"]': { borderColor: GOLD, boxShadow: `0 0 12px ${GOLD}` } },
+});
+
+export const AbilityFill = style({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'rgba(245,200,75,0.25)',
+});
+
+export const AbilityKey = style({
+  position: 'absolute',
+  right: 3,
+  bottom: 1,
+  fontSize: 10,
+  fontWeight: 900,
+  color: MUTED,
+});
+
+export const CardActions = style({ display: 'flex', gap: 6, alignSelf: 'stretch' });
+
+export const SmallButton = style([
+  PlainButton,
+  { padding: '4px 8px', fontSize: 12, borderRadius: 8 },
+]);
+
+const spin = keyframes({
+  '0%': { transform: 'rotateY(0deg) scale(0.6)', opacity: 0 },
+  '60%': { transform: 'rotateY(540deg) scale(1.1)', opacity: 1 },
+  '100%': { transform: 'rotateY(720deg) scale(1)', opacity: 1 },
+});
+
+// A chest's prize spins in, one after the other.
+export const ChestCard = style([
+  Card,
+  {
+    cursor: 'default',
+    animationName: spin,
+    animationDuration: '900ms',
+    animationTimingFunction: 'ease-out',
+    animationFillMode: 'both',
+  },
+]);
+
+export const CardSlot = style({ display: 'flex', flexDirection: 'column', gap: 6 });
+
+// The card fills its slot, so banish buttons line up under cards of any length.
+globalStyle(`${CardSlot} > button:first-child`, { flexGrow: 1 });
+
+// A goal or a warning just over the health bar: a challenge's countdown, a curse, a shrine.
+export const Objective = style({
+  padding: '3px 10px',
+  borderRadius: 10,
+  background: 'rgba(0,0,0,0.6)',
+  color: '#ffd9a0',
+  fontSize: 13,
+  selectors: { '&[data-curse]': { color: '#d08aff' } },
+});
+
+// --- Results, the daily challenge, achievements and the ranking's builds -----------------
+
+export const ResultNotes = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 4,
+  fontSize: 14,
+  color: MUTED,
+  textAlign: 'center',
+});
+
+export const Good = style({ color: GOLD, fontWeight: 800 });
+
+export const DailyCard = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: 12,
+  borderRadius: 14,
+  border: `1px solid ${LINE}`,
+  background: 'rgba(255,255,255,0.04)',
+  flexWrap: 'wrap',
+});
+
+export const Achievements = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+  gap: 8,
+});
+
+export const Achievement = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  padding: '8px 10px',
+  borderRadius: 10,
+  background: 'rgba(255,255,255,0.04)',
+  fontSize: 13,
+  color: MUTED,
+  selectors: { '&[data-done="true"]': { color: '#fff', background: 'rgba(245,200,75,0.08)' } },
+});
+
+export const ProgressBar = style({
+  height: 5,
+  borderRadius: 3,
+  overflow: 'hidden',
+  background: 'rgba(0,0,0,0.5)',
+});
+
+globalStyle(`${ProgressBar} > span`, {
+  display: 'block',
+  height: '100%',
+  background: 'linear-gradient(90deg, #ff9a3a, #f5c84b)',
+});
+
+export const RankBuild = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 3,
+  fontSize: 12,
+  marginTop: 2,
+});
+
+globalStyle(`${RankBuild} > span[data-evolved="true"]`, { filter: `drop-shadow(0 0 3px ${GOLD})` });
+
+export const DailyText = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  flex: '1 1 220px',
+  minWidth: 0,
+});
+
+// The first run's tips, under the top of the screen.
+export const Tip = style({
+  position: 'absolute',
+  left: '50%',
+  top: 96,
+  transform: 'translateX(-50%)',
+  maxWidth: 'calc(100% - 32px)',
+  padding: '8px 14px',
+  borderRadius: 12,
+  background: 'rgba(0,0,0,0.6)',
+  border: `1px solid ${GOLD}`,
+  color: '#fff',
+  fontSize: 14,
+  fontWeight: 800,
+  textAlign: 'center',
+  pointerEvents: 'none',
+});
+
+export const Select = style({
+  padding: '6px 10px',
+  borderRadius: 8,
+  border: `1px solid ${LINE}`,
+  background: '#1c1626',
+  color: '#fff',
+  font: 'inherit',
+  fontSize: 13,
+});
+
+// The banner while watching someone's run.
+export const Watching = style({
+  position: 'absolute',
+  left: '50%',
+  top: 96,
+  transform: 'translateX(-50%)',
+  padding: '6px 14px',
+  borderRadius: 12,
+  background: 'rgba(0,0,0,0.6)',
+  color: '#fff',
+  fontSize: 14,
+  fontWeight: 800,
+  pointerEvents: 'none',
+});

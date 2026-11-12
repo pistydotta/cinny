@@ -1,9 +1,27 @@
 import { Action, Controls, actionsOf, isHeld, worldMove } from './controls';
-import { MOVE, TICK, xpToNext } from './engine/data';
+import { ABILITY_COOLDOWN, MOVE, SHRINE_RADIUS, TICK, xpToNext } from './engine/data';
 import { MetaSave, parseMeta } from './engine/meta';
-import { choose, reroll, step } from './engine/run';
-import { Choice, GameEvent, Input, PassiveId, Phase, RunState, WeaponId } from './engine/types';
+import { banish, choose, closeChest, reroll, runStats, skip, step } from './engine/run';
+import { ReplayRecorder, packInput } from './engine/replay';
+import { ReplayPlayer } from './engine/replayCheck';
+import { Stats } from './engine/stats';
+import { weaponSpec } from './engine/weapons';
+import {
+  Choice,
+  GameEvent,
+  Input,
+  PassiveId,
+  Phase,
+  RunState,
+  ShrineKind,
+  WeaponId,
+} from './engine/types';
 import type { CameraView, HordeScene } from './render/scene';
+import type { HordeAudio } from './audio/sound';
+import { effectiveVolume } from './audio/mix';
+import { groupHits } from './numbers';
+import { bannerOf, eliteModLabel } from './labels';
+import { MapHud } from './mapHud';
 
 // Plays a run on a canvas: reads the keys, the mouse and the touch stick, turns the camera,
 // steps the engine 60 times a second whatever the screen's refresh rate, and tells React only
@@ -18,12 +36,29 @@ export type Hud = {
   paused: boolean;
   hp: number;
   maxHp: number;
+  overHp: number;
+  shield: number;
+  maxShield: number;
+  // Seconds left of the powerups that last.
+  buffs: { rage: number; freeze: number; star: number };
   level: number;
   xp: number;
   time: number;
   kills: number;
   gold: number;
   dash: number;
+  // 1 when the hero's ability is ready.
+  ability: number;
+  banishes: number;
+  skips: number;
+  // What an open chest gave.
+  chest: Choice[] | undefined;
+  // A challenge shrine running: seconds and kills left.
+  challenge: { seconds: number; kills: number } | undefined;
+  // Seconds left of a cursed shrine.
+  curse: number;
+  // The kind of the unused shrine the hero stands on.
+  shrine: ShrineKind | undefined;
   // Horizontal speed, for the speedometer.
   speed: number;
   // Whether the mouse is captured and turns the camera.
@@ -60,12 +95,30 @@ export const hudOf = (run: RunState, paused: boolean, aiming = false): Hud => {
     paused,
     hp: run.player.hp,
     maxHp: run.player.maxHp,
+    overHp: run.player.overHp,
+    shield: run.player.shield,
+    maxShield: runStats(run).shield,
+    buffs: { ...run.buffs },
     level: run.player.level,
     xp: run.player.xp / xpToNext(run.player.level),
     time: run.time,
     kills: run.kills,
     gold: run.gold,
     dash: 1 - run.player.dashCd / MOVE.dashCooldown,
+    ability: 1 - run.player.abilityCd / ABILITY_COOLDOWN[run.character],
+    banishes: run.banishes,
+    skips: run.skips,
+    chest: run.chest,
+    challenge: run.challenge && {
+      seconds: Math.max(0, run.challenge.until - run.time),
+      kills: Math.max(0, run.challenge.need - (run.kills - run.challenge.from)),
+    },
+    curse: Math.max(0, (run.curseUntil ?? 0) - run.time),
+    shrine: run.shrines.find(
+      (s) =>
+        !s.used &&
+        (s.x - run.player.x) ** 2 + (s.z - run.player.z) ** 2 < SHRINE_RADIUS * SHRINE_RADIUS
+    )?.kind,
     speed: Math.hypot(run.player.vx, run.player.vz),
     aiming,
     rerolls: run.rerolls,
@@ -87,6 +140,19 @@ const TOUCH = typeof window !== 'undefined' && window.matchMedia?.('(pointer: co
 
 type Drag = { id: number; x: number; y: number };
 
+// Seconds between saves of a run in play.
+const SAVE_EVERY = 4;
+// Automatic quality steps down this ladder when frames run slow.
+const AUTO_LEVELS = ['low', 'medium'] as const;
+
+// The best thing on offer, for the sound of the offer.
+const bestRarity = (choices: Choice[] | undefined): 'rare' | 'epic' | 'evolve' | undefined => {
+  if (choices?.some((c) => c.kind === 'evolve')) return 'evolve';
+  if (choices?.some((c) => 'rarity' in c && c.rarity === 'epic')) return 'epic';
+  if (choices?.some((c) => 'rarity' in c && c.rarity === 'rare')) return 'rare';
+  return undefined;
+};
+
 // Right click can be a key, so it doesn't open the browser's menu over the game.
 const noMenu = (event: Event) => event.preventDefault();
 
@@ -97,6 +163,8 @@ export class HordeRunner {
   private jump = false;
 
   private dash = false;
+
+  private ability = false;
 
   // The touch jump button, held.
   private touchJump = false;
@@ -129,6 +197,33 @@ export class HordeRunner {
 
   private knob: HTMLDivElement;
 
+  private flashEl: HTMLDivElement;
+
+  // Records every command for the server's check, or plays recorded ones when watching.
+  private recorder: ReplayRecorder | undefined;
+
+  private player: ReplayPlayer | undefined;
+
+  // The recording has nothing more to play: it reached its last tick, or a run left mid-way.
+  private watchOver = false;
+
+  // The rounded move of the last input, as the recording keeps it.
+  private move = { sector: 0, power: 0 };
+
+  private sinceSave = 0;
+
+  // Automatic quality: a step of AUTO_LEVELS, and frame times over the last few seconds.
+  private autoLevel = 1;
+
+  private frameTime = 0;
+
+  private frames = 0;
+
+  // The names over elites' heads, by enemy id.
+  private eliteTags = new Map<number, HTMLDivElement>();
+
+  private mapHud: MapHud;
+
   private observer: ResizeObserver;
 
   constructor(
@@ -137,9 +232,26 @@ export class HordeRunner {
     private overlay: HTMLElement,
     private controls: Controls,
     private onHud: (hud: Hud) => void,
-    private onEnd: (run: RunState) => void
+    private onEnd: (run: RunState) => void,
+    // Sound is optional: without an AudioContext (or with it refused) the game plays silent.
+    private sound: {
+      audio?: HordeAudio;
+      inCall?: boolean;
+      // Keeps the run in the browser every few seconds and when the page goes away.
+      onSave?: (run: RunState) => void;
+      // Watching a recorded run: its commands drive it up to the tick it ended at, and the keys
+      // only move the camera.
+      watch?: { log: number[]; endTick: number };
+    } = {}
   ) {
     this.view = { yaw: 0, pitch: 0.42, distance: controls.distance, fov: controls.fov };
+    if (sound.watch) this.player = new ReplayPlayer(sound.watch.log);
+    else this.recorder = new ReplayRecorder(run);
+    this.flashEl = document.createElement('div');
+    this.flashEl.style.cssText =
+      'position:absolute;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen';
+    overlay.appendChild(this.flashEl);
+    this.applySettings();
     this.knob = document.createElement('div');
     this.knob.style.cssText =
       'position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;' +
@@ -151,10 +263,12 @@ export class HordeRunner {
       'border-radius:50%;background:rgba(255,255,255,.55)';
     this.knob.appendChild(nub);
     overlay.appendChild(this.knob);
+    this.mapHud = new MapHud(overlay, run, scene);
 
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.onBlur);
+    window.addEventListener('pagehide', this.onPageHide);
     document.addEventListener('visibilitychange', this.onBlur);
     document.addEventListener('pointerlockchange', this.onLockChange);
     overlay.addEventListener('pointerdown', this.onPointerDown);
@@ -169,11 +283,28 @@ export class HordeRunner {
     this.frame = requestAnimationFrame(this.loop);
   }
 
+  // Keeps a run that isn't over, for "Continue run".
+  save() {
+    const { phase } = this.run;
+    if (phase === 'playing' || phase === 'choosing' || phase === 'chest')
+      this.sound.onSave?.(this.run);
+  }
+
+  private onPageHide = () => this.save();
+
+  // Given up: nothing is kept any more.
+  discard() {
+    this.ended = true;
+    this.sound.onSave = undefined;
+  }
+
   stop() {
+    if (!this.ended) this.save();
     cancelAnimationFrame(this.frame);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.onBlur);
+    window.removeEventListener('pagehide', this.onPageHide);
     document.removeEventListener('visibilitychange', this.onBlur);
     document.removeEventListener('pointerlockchange', this.onLockChange);
     this.overlay.removeEventListener('pointerdown', this.onPointerDown);
@@ -184,11 +315,40 @@ export class HordeRunner {
     this.observer.disconnect();
     this.knob.remove();
     this.releasePointer();
+    this.flashEl.remove();
+    this.eliteTags.forEach((el) => el.remove());
+    this.mapHud.dispose();
+    this.sound.audio?.dispose();
     this.scene.dispose();
+  }
+
+  // Joining or leaving a call while playing turns the game down or back up.
+  setInCall(inCall: boolean) {
+    this.sound.inCall = inCall;
+    this.applySettings();
+  }
+
+  // The run's build, with each weapon's numbers now, for the build screen.
+  build() {
+    const stats = runStats(this.run);
+    return {
+      hero: this.run.character,
+      weapons: this.run.weapons.map((weapon) => ({
+        weapon: { ...weapon },
+        spec: weaponSpec(weapon, stats),
+      })),
+      passives: this.run.passives.map((p) => ({ ...p })),
+    };
+  }
+
+  // The hero's stats right now, for the stats screen.
+  stats(): Stats {
+    return runStats(this.run);
   }
 
   setControls(controls: Controls) {
     this.controls = controls;
+    this.applySettings();
     this.view.distance = controls.distance;
     this.view.fov = controls.fov;
   }
@@ -206,6 +366,38 @@ export class HordeRunner {
     this.dash = true;
   }
 
+  pressAbility() {
+    this.ability = true;
+  }
+
+  banish(index: number) {
+    const { tick } = this.run;
+    if (this.player || !banish(this.run, index)) return;
+    this.recorder?.banish(tick, index);
+    this.sendHud();
+  }
+
+  skip() {
+    const { tick } = this.run;
+    if (this.player || !skip(this.run)) return;
+    this.recorder?.skip(tick);
+    this.afterOffer();
+  }
+
+  // Back to the run after looking at a chest.
+  closeChest() {
+    const { tick } = this.run;
+    if (this.player || !closeChest(this.run)) return;
+    this.recorder?.closeChest(tick);
+    this.afterOffer();
+  }
+
+  private afterOffer() {
+    this.held.clear();
+    if (this.run.phase === 'playing' && !this.paused) this.capturePointer();
+    this.sendHud();
+  }
+
   // The touch jump button: pressed and let go, like the key.
   holdJump(down: boolean) {
     if (down && !this.touchJump) this.jump = true;
@@ -213,15 +405,17 @@ export class HordeRunner {
   }
 
   choose(index: number) {
-    if (choose(this.run, index)) {
-      this.held.clear();
-      if (this.run.phase === 'playing' && !this.paused) this.capturePointer();
-      this.sendHud();
-    }
+    const { tick } = this.run;
+    if (this.player || !choose(this.run, index)) return;
+    this.recorder?.choose(tick, index);
+    this.afterOffer();
   }
 
   reroll() {
-    if (reroll(this.run)) this.sendHud();
+    const { tick } = this.run;
+    if (this.player || !reroll(this.run)) return;
+    this.recorder?.reroll(tick);
+    this.sendHud();
   }
 
   private sendHud() {
@@ -260,6 +454,12 @@ export class HordeRunner {
 
   private act(action: Action, event: Event) {
     const { phase } = this.run;
+    if (phase === 'chest') {
+      if (action === 'pick1' || action === 'pick2' || action === 'pick3' || action === 'jump') {
+        this.closeChest();
+      }
+      return;
+    }
     if (phase === 'choosing') {
       if (action === 'pick1' || action === 'pick2' || action === 'pick3') {
         this.choose(Number(action.slice(4)) - 1);
@@ -276,6 +476,7 @@ export class HordeRunner {
     if (this.paused || phase !== 'playing') return;
     if (action === 'jump') this.jump = true;
     else if (action === 'dash') this.dash = true;
+    else if (action === 'ability') this.ability = true;
     event.preventDefault();
   }
 
@@ -302,6 +503,7 @@ export class HordeRunner {
 
   // Leaving the window pauses: nobody should die while answering a message.
   private onBlur = () => {
+    this.save();
     this.stick = undefined;
     this.look = undefined;
     this.touchJump = false;
@@ -406,14 +608,19 @@ export class HordeRunner {
       right = this.stick.dx;
       forward = -this.stick.dy;
     }
-    const { jump, dash } = this;
+    const { jump, dash, ability } = this;
     this.jump = false;
     this.dash = false;
+    this.ability = false;
+    const { moveX, moveZ, sector, power } = worldMove(right, forward, this.view.yaw);
+    this.move = { sector, power };
     return {
-      ...worldMove(right, forward, this.view.yaw),
+      moveX,
+      moveZ,
       jump,
       jumpHeld: isHeld(controls, 'jump', held) || this.touchJump,
       dash,
+      ability,
     };
   }
 
@@ -429,10 +636,136 @@ export class HordeRunner {
     this.view.yaw += diff * Math.min(1, dt * 1.6);
   }
 
-  private showNumbers(events: GameEvent[]) {
+  private applySettings() {
+    const { controls, sound } = this;
+    this.scene.reduceMotion = controls.reduceMotion;
+    if (controls.quality !== 'auto') this.scene.setQuality(controls.quality);
+    else this.scene.setQuality(AUTO_LEVELS[this.autoLevel]);
+    sound.audio?.setVolume(effectiveVolume(controls.volume, controls.muted, !!sound.inCall));
+  }
+
+  // A quick colored flash over the whole screen. Not with "reduce motion".
+  private flash(color: string, strength: number) {
+    if (this.controls.reduceMotion) return;
+    this.flashEl.style.background = color;
+    this.flashEl.animate([{ opacity: strength }, { opacity: 0 }], {
+      duration: 260,
+      easing: 'ease-out',
+    });
+  }
+
+  // Big words across the screen: a boss, a horde event, a shrine's result.
+  private warn(text: string, color = '#ff5a3a') {
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.style.cssText =
+      'position:absolute;left:0;right:0;top:28%;text-align:center;pointer-events:none;' +
+      `font-weight:900;font-size:clamp(20px,4.5vw,40px);letter-spacing:2px;color:${color};` +
+      'text-shadow:0 3px 0 #000,0 0 18px rgba(255,60,30,.8)';
+    this.overlay.appendChild(el);
+    el.animate(
+      [
+        { opacity: 0, transform: 'scale(1.4)' },
+        { opacity: 1, transform: 'scale(1)', offset: 0.15 },
+        { opacity: 1, offset: 0.8 },
+        { opacity: 0 },
+      ],
+      { duration: 2800, easing: 'ease-out' }
+    ).onfinish = () => el.remove();
+  }
+
+  private effects(events: GameEvent[]) {
     for (let i = 0; i < events.length; i += 1) {
       const event = events[i];
-      if (event.type === 'hit' && this.numbers < MAX_NUMBERS) {
+      if (event.type === 'levelup' || event.type === 'shrine') this.flash('#6ae6ff', 0.35);
+      else if (event.type === 'blast' && event.radius > 4.5) this.flash('#ffb060', 0.2);
+      else if (event.type === 'powerup' && event.kind === 'bomb') this.flash('#ffffff', 0.7);
+      else if (event.type === 'evolve') this.flash('#ff9a3a', 0.5);
+      else if (event.type === 'ability') this.flash('#ffe08a', 0.25);
+      else if (event.type === 'hurt') {
+        this.flash('#ff2020', 0.18);
+        if (this.controls.vibrate) navigator.vibrate?.(35);
+      } else if (event.type === 'boss') this.flash('#ff3020', 0.4);
+      const banner = bannerOf(event);
+      if (banner) this.warn(banner.text, banner.color);
+    }
+  }
+
+  // Watching: the recording's commands play the run at its own speed, choices and all.
+  private watchFrame(dt: number) {
+    const { player, run } = this;
+    if (!player) return;
+    this.debt += dt;
+    const frameEvents: GameEvent[] = [];
+    const endTick = this.sound.watch?.endTick ?? Infinity;
+    while (this.debt >= TICK && run.phase !== 'dead' && run.phase !== 'won') {
+      if (run.tick >= endTick || !player.apply(run)) {
+        this.watchOver = true;
+        break;
+      }
+      if (run.phase === 'playing') {
+        this.debt -= TICK;
+        const events = step(run, player.input, TICK);
+        this.scene.handle(events);
+        this.sound.audio?.handle(events);
+        for (let i = 0; i < events.length; i += 1) frameEvents.push(events[i]);
+      } else if (!player.waitsForCommand(run)) {
+        // The recording stops here (the run was left at a choice).
+        this.watchOver = true;
+        break;
+      }
+    }
+    this.showNumbers(frameEvents);
+  }
+
+  // With automatic quality, a few seconds under 40 frames a second steps down a level.
+  private watchFrames(dt: number) {
+    if (this.controls.quality !== 'auto' || dt <= 0) return;
+    this.frameTime += dt;
+    this.frames += 1;
+    if (this.frameTime < 3) return;
+    const average = this.frameTime / this.frames;
+    this.frameTime = 0;
+    this.frames = 0;
+    if (average > 1 / 40 && this.autoLevel > 0) {
+      this.autoLevel -= 1;
+      this.scene.setQuality(AUTO_LEVELS[this.autoLevel]);
+    }
+  }
+
+  // Each elite's twist, written over it. Few elites live at once, so DOM is fine.
+  private placeEliteTags() {
+    const seen = new Set<number>();
+    this.run.enemies.forEach((e) => {
+      if (!e.mod || e.hp <= 0 || seen.size >= 6) return;
+      seen.add(e.id);
+      let el = this.eliteTags.get(e.id);
+      if (!el) {
+        el = document.createElement('div');
+        el.textContent = eliteModLabel(e.mod);
+        el.style.cssText =
+          'position:absolute;pointer-events:none;transform:translate(-50%,-100%);' +
+          'font-size:12px;font-weight:900;color:#ffd23a;text-shadow:0 2px 0 #000';
+        this.overlay.appendChild(el);
+        this.eliteTags.set(e.id, el);
+      }
+      const at = this.scene.project(e.x, e.z, e.radius * 3.4);
+      el.style.left = `${at.x}px`;
+      el.style.top = `${at.y}px`;
+    });
+    this.eliteTags.forEach((el, id) => {
+      if (!seen.has(id)) {
+        el.remove();
+        this.eliteTags.delete(id);
+      }
+    });
+  }
+
+  private showNumbers(events: GameEvent[]) {
+    const hits = groupHits(events);
+    for (let i = 0; i < hits.length; i += 1) {
+      const event = hits[i];
+      if (this.numbers < MAX_NUMBERS) {
         const at = this.scene.project(event.x, event.z, 1.8);
         const el = document.createElement('span');
         el.textContent = String(event.amount);
@@ -463,35 +796,62 @@ export class HordeRunner {
     this.last = now;
     const phaseBefore = this.run.phase;
 
-    if (!this.paused && this.run.phase === 'playing') {
+    if (this.watchOver) {
+      this.debt = 0;
+    } else if (
+      !this.paused &&
+      this.player &&
+      this.run.phase !== 'dead' &&
+      this.run.phase !== 'won'
+    ) {
+      this.watchFrame(dt);
+    } else if (!this.paused && this.run.phase === 'playing') {
       this.debt += dt;
       this.followHero(dt);
       let input = this.input();
+      const frameEvents: GameEvent[] = [];
       while (this.debt >= TICK && this.run.phase === 'playing') {
         this.debt -= TICK;
+        this.recorder?.input(this.run.tick, packInput(this.move.sector, this.move.power, input));
         const events = step(this.run, input, TICK);
         // A press counts once, on the first tick of the frame.
-        input = { ...input, jump: false, dash: false };
+        input = { ...input, jump: false, dash: false, ability: false };
         this.scene.handle(events);
-        this.showNumbers(events);
+        this.sound.audio?.handle(events);
+        this.effects(events);
+        for (let i = 0; i < events.length; i += 1) frameEvents.push(events[i]);
       }
+      this.showNumbers(frameEvents);
     } else {
       this.debt = 0;
     }
     this.scene.render(this.paused ? 0 : dt, this.view);
+    this.placeEliteTags();
+    this.mapHud.update(dt, this.view.yaw);
 
     if (this.run.phase !== phaseBefore && this.run.phase !== 'playing') {
       // A choice or the end of the run: the mouse is needed for the buttons.
       this.held.clear();
       this.releasePointer();
+      if (this.run.phase === 'choosing') this.sound.audio?.offer(bestRarity(this.run.choices));
+    }
+    if (!this.paused && this.run.phase === 'playing') {
+      this.sinceSave += dt;
+      if (this.sinceSave > SAVE_EVERY) {
+        this.sinceSave = 0;
+        this.save();
+      }
+      this.watchFrames(dt);
     }
     this.sinceHud += dt;
     if (this.run.phase !== phaseBefore || this.sinceHud > 0.12) {
       this.sinceHud = 0;
       this.sendHud();
     }
-    if (!this.ended && (this.run.phase === 'dead' || this.run.phase === 'won')) {
+    const over = this.run.phase === 'dead' || this.run.phase === 'won';
+    if (!this.ended && (over || this.watchOver)) {
       this.ended = true;
+      if (over) this.sound.audio?.end(this.run.phase === 'won');
       this.onEnd(this.run);
     }
   };

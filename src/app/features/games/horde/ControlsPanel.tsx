@@ -5,6 +5,8 @@ import {
   Controls,
   DEFAULT_CONTROLS,
   LIMITS,
+  QUALITIES,
+  Quality,
   bindKey,
   conflicts,
   saveControls,
@@ -38,9 +40,24 @@ type ControlsPanelProps = {
   onChange: (controls: Controls) => void;
   onClose: () => void;
   touch: boolean;
+  // In a voice call the game plays quieter; say so next to the volume.
+  inCall?: boolean;
 };
 
-export function ControlsPanel({ controls, onChange, onClose, touch }: ControlsPanelProps) {
+const qualityLabel = (quality: Quality): string => {
+  switch (quality) {
+    case 'low':
+      return tr('games.horde.quality_low', 'Low (old phones)');
+    case 'medium':
+      return tr('games.horde.quality_medium', 'Medium');
+    case 'high':
+      return tr('games.horde.quality_high', 'High (sharper)');
+    default:
+      return tr('games.horde.quality_auto', 'Automatic');
+  }
+};
+
+export function ControlsPanel({ controls, onChange, onClose, touch, inCall }: ControlsPanelProps) {
   const layout = useKeyboardLayout();
   const [waiting, setWaiting] = useState<{ action: Action; slot: 0 | 1 }>();
   const clashes = conflicts(controls);
@@ -78,7 +95,7 @@ export function ControlsPanel({ controls, onChange, onClose, touch }: ControlsPa
 
   const slider = (
     label: string,
-    key: 'sensitivity' | 'fov' | 'distance',
+    key: 'sensitivity' | 'fov' | 'distance' | 'volume',
     step: number,
     shown: string
   ) => (
@@ -180,6 +197,64 @@ export function ControlsPanel({ controls, onChange, onClose, touch }: ControlsPa
             onChange={(event) => change({ ...controls, autoCamera: event.target.checked })}
           />
           {tr('games.horde.auto_camera', 'Camera follows where the hero runs')}
+        </label>
+      )}
+      <h3 className={css.StatGroupTitle}>{tr('games.horde.sound_screen', 'Sound and screen')}</h3>
+      {slider(
+        tr('games.horde.volume', 'Volume'),
+        'volume',
+        0.05,
+        `${Math.round(controls.volume * 100)}%`
+      )}
+      {inCall && (
+        <p className={css.Hint}>
+          {tr('games.horde.in_call', 'You are in a call, so the game plays at a fifth of this.')}
+        </p>
+      )}
+      <label htmlFor="horde-muted" className={css.SettingRow}>
+        <input
+          id="horde-muted"
+          type="checkbox"
+          checked={controls.muted}
+          onChange={(event) => change({ ...controls, muted: event.target.checked })}
+        />
+        {tr('games.horde.muted', 'Mute')}
+      </label>
+      <label htmlFor="horde-motion" className={css.SettingRow}>
+        <input
+          id="horde-motion"
+          type="checkbox"
+          checked={controls.reduceMotion}
+          onChange={(event) => change({ ...controls, reduceMotion: event.target.checked })}
+        />
+        {tr('games.horde.reduce_motion', 'Reduce motion (no shaking, flashes or freeze frames)')}
+      </label>
+      <div className={css.SettingRow}>
+        <label htmlFor="horde-quality" className={css.Grow}>
+          {tr('games.horde.quality', 'Graphics')}
+        </label>
+        <select
+          id="horde-quality"
+          className={css.Select}
+          value={controls.quality}
+          onChange={(event) => change({ ...controls, quality: event.target.value as Quality })}
+        >
+          {QUALITIES.map((q) => (
+            <option key={q} value={q}>
+              {qualityLabel(q)}
+            </option>
+          ))}
+        </select>
+      </div>
+      {touch && (
+        <label htmlFor="horde-vibrate" className={css.SettingRow}>
+          <input
+            id="horde-vibrate"
+            type="checkbox"
+            checked={controls.vibrate}
+            onChange={(event) => change({ ...controls, vibrate: event.target.checked })}
+          />
+          {tr('games.horde.vibrate', 'Vibrate when hit')}
         </label>
       )}
       <div className={css.PanelRow}>

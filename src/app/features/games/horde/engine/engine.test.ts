@@ -4,6 +4,7 @@ import { TICK, metaCost, xpToNext } from './data';
 import { buyMeta, finishRun, newMeta, parseMeta, runGold } from './meta';
 import { choose, createRun, reroll, step } from './run';
 import { RunState } from './types';
+import { MAP_HALF } from './terrain';
 
 const IDLE = { moveX: 0, moveZ: 0, jump: false, jumpHeld: false, dash: false };
 
@@ -112,7 +113,8 @@ describe('horde run', () => {
       if (run.phase === 'choosing') choose(run, 0);
       step(run, { ...IDLE, moveX: 1, dash: i % 200 === 0, jump: i % 50 === 0 }, TICK);
     }
-    expect(Math.hypot(run.player.x, run.player.z)).toBeLessThanOrEqual(70);
+    expect(Math.abs(run.player.x)).toBeLessThan(MAP_HALF);
+    expect(Math.abs(run.player.z)).toBeLessThan(MAP_HALF);
   });
 });
 

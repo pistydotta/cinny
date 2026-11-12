@@ -1,4 +1,5 @@
 import { CHARACTER_IDS, META_IDS, META_UPGRADES, metaCost } from './data';
+import { Progress } from './achievements';
 import { NO_META } from './run';
 import { CharacterId, MetaBonuses, MetaUpgradeId, RunState } from './types';
 
@@ -13,7 +14,16 @@ export type MetaSave = {
   bestTime: number;
   bestKills: number;
   bestLevel: number;
+  // Totals over every run, for achievements and mastery (the server's, with local runs added).
+  totalKills: number;
+  heroes: Record<CharacterId, { wins: number; kills: number }>;
+  bestTier: number;
 };
+
+const noHeroes = (): MetaSave['heroes'] =>
+  Object.fromEntries(CHARACTER_IDS.map((id) => [id, { wins: 0, kills: 0 }])) as MetaSave['heroes'];
+
+export const progressOf = (meta: MetaSave): Progress => meta;
 
 export const newMeta = (): MetaSave => ({
   version: 1,
@@ -25,6 +35,9 @@ export const newMeta = (): MetaSave => ({
   bestTime: 0,
   bestKills: 0,
   bestLevel: 0,
+  totalKills: 0,
+  heroes: noHeroes(),
+  bestTier: -1,
 });
 
 const count = (value: unknown, max = Number.MAX_SAFE_INTEGER): number =>
@@ -49,6 +62,17 @@ export const parseMeta = (text: string | null | undefined): MetaSave => {
     meta.bestTime = count(raw.bestTime);
     meta.bestKills = count(raw.bestKills);
     meta.bestLevel = count(raw.bestLevel);
+    meta.totalKills = count(raw.totalKills);
+    CHARACTER_IDS.forEach((id) => {
+      meta.heroes[id] = {
+        wins: count(raw.heroes?.[id]?.wins),
+        kills: count(raw.heroes?.[id]?.kills),
+      };
+    });
+    meta.bestTier =
+      typeof raw.bestTier === 'number' && raw.bestTier >= 0
+        ? Math.min(3, Math.floor(raw.bestTier))
+        : -1;
   } catch {
     // A broken save starts over.
   }
@@ -74,4 +98,13 @@ export const finishRun = (meta: MetaSave, run: RunState): MetaSave => ({
   bestTime: Math.max(meta.bestTime, Math.floor(run.time)),
   bestKills: Math.max(meta.bestKills, run.kills),
   bestLevel: Math.max(meta.bestLevel, run.player.level),
+  totalKills: meta.totalKills + run.kills,
+  heroes: {
+    ...meta.heroes,
+    [run.character]: {
+      wins: meta.heroes[run.character].wins + (run.phase === 'won' ? 1 : 0),
+      kills: meta.heroes[run.character].kills + run.kills,
+    },
+  },
+  bestTier: run.phase === 'won' ? Math.max(meta.bestTier, run.tier) : meta.bestTier,
 });

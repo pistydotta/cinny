@@ -1,3 +1,5 @@
+import { DIRECTIONS, POWER_STEPS, moveOf } from './engine/replay';
+
 // Which key does what, and how the camera feels. Kept per browser. Keys are saved by
 // `KeyboardEvent.code`, the place of the key on the keyboard, so WASD stays in the same place on
 // any layout; mouse buttons are `Mouse0` (left), `Mouse1` (middle), `Mouse2` (right) and so on.
@@ -9,6 +11,7 @@ export type Action =
   | 'right'
   | 'jump'
   | 'dash'
+  | 'ability'
   | 'pause'
   | 'pick1'
   | 'pick2'
@@ -22,6 +25,7 @@ export const ACTIONS: Action[] = [
   'right',
   'jump',
   'dash',
+  'ability',
   'pause',
   'pick1',
   'pick2',
@@ -31,6 +35,9 @@ export const ACTIONS: Action[] = [
 
 // Each action takes two keys; '' is an empty slot.
 export type Binding = [string, string];
+
+export type Quality = 'auto' | 'low' | 'medium' | 'high';
+export const QUALITIES: Quality[] = ['auto', 'low', 'medium', 'high'];
 
 export type Controls = {
   keys: Record<Action, Binding>;
@@ -43,6 +50,15 @@ export type Controls = {
   distance: number;
   // On touch screens: the camera slowly turns to look where the hero walks.
   autoCamera: boolean;
+  // Sound, from 0 to 1, and the mute switch.
+  volume: number;
+  muted: boolean;
+  // No screen shake, flashes or freeze frames.
+  reduceMotion: boolean;
+  // How much the 3D draws: 'auto' starts at medium and steps down if frames run slow.
+  quality: Quality;
+  // A short buzz on phones when the hero is hit.
+  vibrate: boolean;
 };
 
 export const DEFAULT_CONTROLS: Controls = {
@@ -53,6 +69,7 @@ export const DEFAULT_CONTROLS: Controls = {
     right: ['KeyD', 'ArrowRight'],
     jump: ['Space', ''],
     dash: ['ShiftLeft', 'ShiftRight'],
+    ability: ['KeyQ', 'Mouse2'],
     pause: ['Escape', 'KeyP'],
     pick1: ['Digit1', ''],
     pick2: ['Digit2', ''],
@@ -64,12 +81,18 @@ export const DEFAULT_CONTROLS: Controls = {
   fov: 60,
   distance: 9,
   autoCamera: true,
+  volume: 0.6,
+  muted: false,
+  reduceMotion: false,
+  quality: 'auto',
+  vibrate: true,
 };
 
 export const LIMITS = {
   sensitivity: [0.5, 8],
   fov: [45, 90],
   distance: [5, 16],
+  volume: [0, 1],
 } as const;
 
 const CODE = /^[A-Za-z0-9]{1,24}$/;
@@ -107,6 +130,11 @@ export const parseControls = (raw: string | null | undefined): Controls => {
     fov: clamp(data.fov, LIMITS.fov, d.fov),
     distance: clamp(data.distance, LIMITS.distance, d.distance),
     autoCamera: typeof data.autoCamera === 'boolean' ? data.autoCamera : d.autoCamera,
+    volume: clamp(data.volume, LIMITS.volume, d.volume),
+    muted: typeof data.muted === 'boolean' ? data.muted : d.muted,
+    reduceMotion: typeof data.reduceMotion === 'boolean' ? data.reduceMotion : d.reduceMotion,
+    quality: QUALITIES.includes(data.quality as Quality) ? (data.quality as Quality) : d.quality,
+    vibrate: typeof data.vibrate === 'boolean' ? data.vibrate : d.vibrate,
   };
 };
 
@@ -160,12 +188,21 @@ export const fallbackKeyName = (code: string): string => {
 
 const STORAGE_KEY = 'blazeroom.horde.controls.v1';
 
+// Someone who asked the system for less motion gets it here too, until they choose otherwise.
+const systemReducesMotion = (): boolean =>
+  typeof window !== 'undefined' &&
+  !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 export const loadControls = (): Controls => {
+  let raw: string | null = null;
   try {
-    return parseControls(localStorage.getItem(STORAGE_KEY));
+    raw = localStorage.getItem(STORAGE_KEY);
   } catch {
-    return DEFAULT_CONTROLS;
+    // No storage: the defaults.
   }
+  const controls = parseControls(raw);
+  if (!raw?.includes('reduceMotion')) controls.reduceMotion = systemReducesMotion();
+  return controls;
 };
 
 export const saveControls = (controls: Controls) => {
@@ -180,19 +217,17 @@ export const saveControls = (controls: Controls) => {
 // `forward` into the screen) and where the camera looks. The camera at `yaw` 0 sits on +z looking
 // towards -z. The answer is rounded to one of 1024 directions and 16 lengths, so a recorded run
 // replays the same commands the live one used.
-export const DIRECTIONS = 1024;
+export { DIRECTIONS };
 
-export const worldMove = (
-  right: number,
-  forward: number,
-  yaw: number
-): { moveX: number; moveZ: number } => {
+export type WorldMove = { moveX: number; moveZ: number; sector: number; power: number };
+
+export const worldMove = (right: number, forward: number, yaw: number): WorldMove => {
   const len = Math.min(1, Math.hypot(right, forward));
-  if (len < 0.05) return { moveX: 0, moveZ: 0 };
+  if (len < 0.05) return { moveX: 0, moveZ: 0, sector: 0, power: 0 };
   const x = right * Math.cos(yaw) - forward * Math.sin(yaw);
   const z = -right * Math.sin(yaw) - forward * Math.cos(yaw);
-  const sector = Math.round((Math.atan2(x, z) / (Math.PI * 2)) * DIRECTIONS);
-  const angle = (sector / DIRECTIONS) * Math.PI * 2;
-  const size = Math.round(len * 16) / 16;
-  return { moveX: Math.sin(angle) * size, moveZ: Math.cos(angle) * size };
+  const turn = Math.round((Math.atan2(x, z) / (Math.PI * 2)) * DIRECTIONS);
+  const sector = ((turn % DIRECTIONS) + DIRECTIONS) % DIRECTIONS;
+  const power = Math.round(len * POWER_STEPS);
+  return { ...moveOf(sector, power), sector, power };
 };

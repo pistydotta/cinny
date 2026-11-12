@@ -12,8 +12,7 @@ import { gameName } from './table-games/text';
 import trucoArt from './art/truco.webp';
 import fodinhaArt from './art/fodinha.webp';
 import chessArt from './art/chess.webp';
-import { HubArt } from './horde/horde.css';
-import { HERO_SPRITES } from './horde/sprites';
+import hordeArt from './art/brazilianbonk.webp';
 
 const ROYAL: Card[] = [
   { rank: 10, suit: 's' },
@@ -206,11 +205,7 @@ export function GamesHub({
           </div>
           <div className={css.Grid}>
             <div className={css.GameCard} data-playable="true">
-              <div className={HubArt}>
-                {Object.entries(HERO_SPRITES).map(([id, sheet]) => (
-                  <span key={id} style={{ backgroundImage: `url(${sheet})` }} />
-                ))}
-              </div>
+              <img className={css.GameArtwork} src={hordeArt} alt="" loading="lazy" />
               <div className={css.CardBody}>
                 <span className={css.GameName}>BrazilianBonk</span>
                 <span className={css.GameMeta}>

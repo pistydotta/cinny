@@ -1,5 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import { ApiError, createApiRequest } from '../../../utils/blazeroomApi';
+import { ENGINE_VERSION } from './engine/data';
+import { encodeLog, startOf } from './engine/replay';
+import { ReplayPayload } from './engine/replayCheck';
 import { MetaSave } from './engine/meta';
 import { CharacterId, MetaUpgradeId, RunState } from './engine/types';
 
@@ -10,7 +13,13 @@ import { CharacterId, MetaUpgradeId, RunState } from './engine/types';
 // Offline, the game still plays. The result is kept in a list in localStorage and sent the next
 // time the server answers. Each run has an id made here, so a report sent twice is paid once.
 
-export type HordeProfile = Omit<MetaSave, 'version' | 'character'>;
+type Totals = 'totalKills' | 'heroes' | 'bestTier';
+
+// The server's profile. Totals came later, so an older server may not send them.
+export type HordeProfile = Omit<MetaSave, 'version' | 'character' | Totals> &
+  Partial<Pick<MetaSave, Totals>>;
+
+export type RunBuild = { weapons: string[]; boletos: string[] };
 
 export type RunReport = {
   id: string;
@@ -21,9 +30,34 @@ export type RunReport = {
   level: number;
   gold: number;
   won: boolean;
+  // The rules version the run was played under (ENGINE_VERSION).
+  engine?: number;
+  // The difficulty tier picked for the run (0 is normal).
+  tier?: number;
+  // Weapons and Boletos at the end, like "missile6*" (evolved) or "might5".
+  build?: RunBuild;
+  // The daily challenge's day, when the run was one.
+  daily?: string;
+  // Picked up again after the page closed: out of the rankings unless its replay checks out.
+  resumed?: boolean;
+  // The run's commands, which the server replays to check the report.
+  replay?: ReplayPayload;
+  // When the run ended (ms since 1970), so runs can't overlap in time.
+  endedAt?: number;
 };
 
-export type RankingRow = Omit<RunReport, 'id' | 'seed' | 'gold'> & { userId: string };
+export type RankingRow = Omit<
+  RunReport,
+  'id' | 'seed' | 'gold' | 'engine' | 'daily' | 'resumed' | 'replay' | 'endedAt'
+> & {
+  userId: string;
+  runId?: string;
+  // true once the server replayed it and got the same result; null while it can't say.
+  verified?: boolean | null;
+  hasReplay?: boolean;
+};
+
+export type RankingQuery = { scope: 'all' | 'week' | 'daily'; hero?: CharacterId; day?: string };
 
 // More runs than this waiting means days offline; the oldest ones are let go.
 export const MAX_PENDING = 30;
@@ -45,14 +79,34 @@ export const createHordeApi = (
     async buy(id: MetaUpgradeId): Promise<HordeProfile> {
       return (await (await request('/api/horde/upgrades', 'POST', { id })).json()) as HordeProfile;
     },
-    async ranking(): Promise<RankingRow[]> {
-      const res = await request('/api/horde/ranking', 'GET');
+    async daily(): Promise<{ day: string; seed: number; character: CharacterId }> {
+      return (await (await request('/api/horde/daily', 'GET')).json()) as {
+        day: string;
+        seed: number;
+        character: CharacterId;
+      };
+    },
+    async replay(userId: string, runId: string): Promise<ReplayPayload & { engine: number }> {
+      const params = new URLSearchParams({ user: userId, run: runId });
+      const res = await request(`/api/horde/replay?${params}`, 'GET');
+      return (await res.json()) as ReplayPayload & { engine: number };
+    },
+    async ranking(query: RankingQuery = { scope: 'all' }): Promise<RankingRow[]> {
+      const params = new URLSearchParams({ scope: query.scope });
+      if (query.hero) params.set('hero', query.hero);
+      if (query.day) params.set('day', query.day);
+      const res = await request(`/api/horde/ranking?${params}`, 'GET');
       return ((await res.json()) as { ranking: RankingRow[] }).ranking;
     },
   };
 };
 
 export type HordeApi = ReturnType<typeof createHordeApi>;
+
+export const buildOf = (run: RunState): RunBuild => ({
+  weapons: run.weapons.map((w) => `${w.id}${w.level}${w.evolved ? '*' : ''}`),
+  boletos: run.passives.map((p) => `${p.id}${p.level}`),
+});
 
 export const reportOf = (run: RunState, id: string): RunReport => ({
   id,
@@ -63,6 +117,15 @@ export const reportOf = (run: RunState, id: string): RunReport => ({
   level: run.player.level,
   gold: Math.round(run.gold),
   won: run.phase === 'won',
+  engine: ENGINE_VERSION,
+  tier: run.tier,
+  build: buildOf(run),
+  ...(run.daily ? { daily: run.daily } : {}),
+  ...(run.resumed ? { resumed: true } : {}),
+  ...(run.replay
+    ? { replay: { start: startOf(run), log: encodeLog(run.replay.log), endTick: run.tick } }
+    : {}),
+  endedAt: Date.now(),
 });
 
 // The server's numbers over the local copy; the hero picked stays this browser's choice.
@@ -75,6 +138,9 @@ export const withProfile = (meta: MetaSave, profile: HordeProfile): MetaSave => 
   bestTime: profile.bestTime,
   bestKills: profile.bestKills,
   bestLevel: profile.bestLevel,
+  totalKills: profile.totalKills ?? meta.totalKills,
+  heroes: profile.heroes ? { ...meta.heroes, ...profile.heroes } : meta.heroes,
+  bestTier: profile.bestTier ?? meta.bestTier,
 });
 
 export const parsePending = (text: string | null | undefined): RunReport[] => {
@@ -88,8 +154,15 @@ export const parsePending = (text: string | null | undefined): RunReport[] => {
   }
 };
 
+// Replays are big: only the newest few waiting runs keep theirs (the rest go unchecked), so the
+// list stays well inside what a browser stores.
+const PENDING_REPLAYS = 5;
+
 export const addPending = (pending: RunReport[], run: RunReport): RunReport[] =>
-  [...pending, run].slice(-MAX_PENDING);
+  [...pending, run].slice(-MAX_PENDING).map((r, i, all) => {
+    if (i >= all.length - PENDING_REPLAYS || !r.replay) return r;
+    return { ...r, replay: undefined };
+  });
 
 export type SyncResult = {
   /** The server's profile, when it answered. */

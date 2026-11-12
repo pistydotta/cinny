@@ -17,6 +17,141 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-brazilianbonk-map',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_map_title',
+          'BrazilianBonk: a new, bigger map with real terrain'
+        ),
+        body: tr(
+          'whats_new.horde_map_body',
+          'The map is three times bigger and changes every run: mesas with cliffs and ramps, ledges to jump onto, pillars and mountains all around. Blessing totems on the high tops can be rare or epic, chests around the map open for gold (each one dearer) and a minimap in the corner shows where everything is.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-art',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_art_title',
+          'BrazilianBonk: pixel-art icons and a sky that falls into night'
+        ),
+        body: tr(
+          'whats_new.horde_art_body',
+          'Weapons, Boletos, abilities and upgrades have their own pixel-art icons. Each run starts at sunset and ends deep in the night, and the sky turns red while a boss is alive. The game also has its own cover in the Games tab.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-replays',
+    items: () => [
+      {
+        title: tr('whats_new.horde_replays_title', 'BrazilianBonk: replays and a checked ranking'),
+        body: tr(
+          'whats_new.horde_replays_body',
+          "Every run now records its commands, and the server plays it again to check the result: checked runs get a ✓ in the ranking, and the ▶ next to them lets you watch anyone's run. Picked-up runs also rank once their replay checks out. Gold earned per day now has a limit."
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-robust',
+    items: () => [
+      {
+        title: tr('whats_new.horde_robust_title', 'BrazilianBonk: runs are no longer lost'),
+        body: tr(
+          'whats_new.horde_robust_body',
+          'If the page reloads, you click a notification or the phone closes the app, the run is kept and you can continue it from the menu (picked-up runs pay gold as usual but stay out of the ranking). There is also a graphics quality option, automatic by default, vibration when hit on phones, and tips on your first run.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-return',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_return_title',
+          'BrazilianBonk: achievements, daily challenge and mastery'
+        ),
+        body: tr(
+          'whats_new.horde_return_body',
+          "Achievements unlock new weapons and Boletos (your old runs already count). Every day there is a challenge with the same run for everyone and its own ranking. The ranking has tabs for the week, each hero and the day, with everyone's build. Each hero gains mastery as you kill with it, and the end screen shows records, how close you came and the next achievement. Enter plays again."
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-enemies',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_enemies_title',
+          'BrazilianBonk: new enemies, real bosses and shrines'
+        ),
+        body: tr(
+          'whats_new.horde_enemies_body',
+          'New enemies: the charger (marks a line, then rushes), the walking bomb (warns with a circle and blows up), the shield soldier (only hurt from behind or by area damage), the summoner and swarms. Bosses have attacks marked on the ground and get furious at half health. Sieges, stampedes and rains of blasts come at set minutes, elites have twists, barrels blow up, pots hold gold and shrines can curse, pay gold, heal or challenge you. Winners can play harder tiers.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-builds',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_builds_title',
+          'BrazilianBonk: evolutions, abilities and chests'
+        ),
+        body: tr(
+          'whats_new.horde_builds_body',
+          "Each hero has an ability on Q (or the new button on a phone). Maxed weapons evolve with their Boleto into a much stronger form. Offers can be rare or epic, chests open with a draw and give 1, 3 or 5 upgrades, and two new permanent upgrades let you banish or skip offers. The pause has a Build screen with every weapon's numbers."
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-balance',
+    items: () => [
+      {
+        title: tr('whats_new.horde_balance_title', 'BrazilianBonk: weapons rebalanced'),
+        body: tr(
+          'whats_new.horde_balance_body',
+          'After thousands of simulated runs: the Work Card and Lightning hit harder, Fascist Tears grow more per level, the Atomic Bomb and the Fire Trail start a little weaker, and the final boss is tougher.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-feel',
+    items: () => [
+      {
+        title: tr('whats_new.horde_feel_title', 'BrazilianBonk: sound and impact'),
+        body: tr(
+          'whats_new.horde_feel_body',
+          'The game has sound now: hits, explosions, lightning, gems that climb in pitch when you grab many in a row, the boss arriving and victory. If you are in a call it plays quietly. Enemies are flung away when they die, the bomb leaves a little mushroom cloud, the boss arrives with a warning and, when it dies, pulls every gem on the map. Volume, mute and "reduce motion" are in Controls.'
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-brazilianbonk-stats',
+    items: () => [
+      {
+        title: tr('whats_new.horde_stats_title', 'BrazilianBonk: stats, Boletos and powerups'),
+        body: tr(
+          'whats_new.horde_stats_body',
+          'Heroes now have 30 stats (armor, evasion, shield, crit, luck, difficulty and more), shown in the new Stats screen. Passives became Boletos, one for each stat, still four per run. Shrines give blessings that take no slot, rare offers give two levels, enemies drop powerups (bomb, rage, freeze, star, gold rain) and there are five new permanent upgrades. Your gold and upgrades are all still there.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-truco-table-refresh',
     items: () => [
       {

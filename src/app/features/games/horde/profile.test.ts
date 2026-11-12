@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ENGINE_VERSION } from './engine/data';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { newMeta } from './engine/meta';
 import { createRun } from './engine/run';
@@ -40,6 +41,10 @@ const fakeApi = (over: Partial<HordeApi>): HordeApi => ({
   profile: async () => profile(0),
   report: async () => profile(0),
   buy: async () => profile(0),
+  daily: async () => ({ day: '2026-11-12', seed: 1, character: 'eneas' }),
+  replay: async () => {
+    throw new Error('no replays here');
+  },
   ranking: async () => [],
   ...over,
 });
@@ -67,7 +72,9 @@ describe('horde profile api', () => {
     run.kills = 40;
     run.gold = 9;
     run.phase = 'dead';
-    expect(reportOf(run, 'run-0009')).toEqual({
+    const { endedAt, ...sent } = reportOf(run, 'run-0009');
+    expect(endedAt).toBeGreaterThan(0);
+    expect(sent).toEqual({
       id: 'run-0009',
       seed: 77,
       character: 'janja',
@@ -76,6 +83,9 @@ describe('horde profile api', () => {
       level: 1,
       gold: 9,
       won: false,
+      engine: ENGINE_VERSION,
+      tier: 0,
+      build: { weapons: ['aura1'], boletos: [] },
     });
   });
 
@@ -145,5 +155,18 @@ describe('horde pending runs', () => {
     });
     const result = await syncProfile(api, [report('run-0001'), report('run-0002')]);
     expect(result).toEqual({ profile: profile(10), pending: [], online: true });
+  });
+});
+
+describe('horde pending replays', () => {
+  it('keeps the replay only on the newest waiting runs', () => {
+    const replay = { start: { seed: 1 } as never, log: 'AAAA', endTick: 10 };
+    let pending: ReturnType<typeof addPending> = [];
+    for (let i = 0; i < 9; i += 1) {
+      pending = addPending(pending, { ...report(`run-000${i}`), replay });
+    }
+    expect(pending.filter((r) => r.replay)).toHaveLength(5);
+    expect(pending[pending.length - 1].replay).toBeDefined();
+    expect(pending[0].replay).toBeUndefined();
   });
 });
