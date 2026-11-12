@@ -31,6 +31,7 @@ export function UnAuthRouteThemeManager() {
 export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
   const activeTheme = useActiveTheme();
   const [monochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+  const [animatedDivider] = useSetting(settingsAtom, 'animatedDivider');
 
   useEffect(() => {
     document.body.className = '';
@@ -38,12 +39,17 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
 
     document.body.classList.add(...activeTheme.classNames);
 
+    // shell.css.ts freezes the room-list divider spark when this class is present.
+    if (!animatedDivider) {
+      document.body.classList.add('forge-static-divider');
+    }
+
     if (monochromeMode) {
       document.body.style.filter = 'grayscale(1)';
     } else {
       document.body.style.filter = '';
     }
-  }, [activeTheme, monochromeMode]);
+  }, [activeTheme, monochromeMode, animatedDivider]);
 
   return <ThemeContextProvider value={activeTheme}>{children}</ThemeContextProvider>;
 }

@@ -29,6 +29,18 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     ],
   },
   {
+    id: '2026-11-forge-theme',
+    items: () => [
+      {
+        title: tr('whats_new.forge_title', 'New look: Forge'),
+        body: tr(
+          'whats_new.forge_body',
+          'Blazeroom has a new graphite and wine-red look, in light and dark modes. Pick one in Settings > General > Theme. The wallpaper now shows only on the sign-in screen.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-truco-time-top-up',
     items: () => [
       {

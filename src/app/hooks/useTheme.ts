@@ -1,7 +1,8 @@
-import { lightTheme } from 'folds';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
-import { butterTheme, darkTheme, silverTheme } from '../../colors.css';
+import { forgeRadii, onDarkFontWeight, onLightFontWeight } from '../../config.css';
+import { forgeDarkTheme, forgeLightTheme } from '../../colors.css';
+import { DARK_THEME_ID, LIGHT_THEME_ID, resolveThemeId } from '../features/forge-theme/themeMode';
+import { tr } from '../features/translation/tr';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 
@@ -16,30 +17,22 @@ export type Theme = {
   classNames: string[];
 };
 
+// Forge is the only look, in a light and a dark mode. The ids and the `dark-theme` class are
+// the old Cinny ones: saved settings and the name colours in index.css still key on them.
 export const LightTheme: Theme = {
-  id: 'light-theme',
+  id: LIGHT_THEME_ID,
   kind: ThemeKind.Light,
-  classNames: [lightTheme, onLightFontWeight, 'prism-light'],
+  classNames: ['light-theme', forgeLightTheme, forgeRadii, onLightFontWeight, 'prism-light'],
 };
 
-export const SilverTheme: Theme = {
-  id: 'silver-theme',
-  kind: ThemeKind.Light,
-  classNames: ['silver-theme', silverTheme, onLightFontWeight, 'prism-light'],
-};
 export const DarkTheme: Theme = {
-  id: 'dark-theme',
+  id: DARK_THEME_ID,
   kind: ThemeKind.Dark,
-  classNames: ['dark-theme', darkTheme, onDarkFontWeight, 'prism-dark'],
-};
-export const ButterTheme: Theme = {
-  id: 'butter-theme',
-  kind: ThemeKind.Dark,
-  classNames: ['butter-theme', butterTheme, onDarkFontWeight, 'prism-dark'],
+  classNames: ['dark-theme', forgeDarkTheme, forgeRadii, onDarkFontWeight, 'prism-dark'],
 };
 
 export const useThemes = (): Theme[] => {
-  const themes: Theme[] = useMemo(() => [LightTheme, SilverTheme, DarkTheme, ButterTheme], []);
+  const themes: Theme[] = useMemo(() => [LightTheme, DarkTheme], []);
 
   return themes;
 };
@@ -47,10 +40,8 @@ export const useThemes = (): Theme[] => {
 export const useThemeNames = (): Record<string, string> =>
   useMemo(
     () => ({
-      [LightTheme.id]: 'Light',
-      [SilverTheme.id]: 'Silver',
-      [DarkTheme.id]: 'Dark',
-      [ButterTheme.id]: 'Butter',
+      [LightTheme.id]: tr('forge.light', 'Light'),
+      [DarkTheme.id]: tr('forge.dark', 'Dark'),
     }),
     []
   );
@@ -77,24 +68,14 @@ export const useSystemThemeKind = (): ThemeKind => {
 
 export const useActiveTheme = (): Theme => {
   const systemThemeKind = useSystemThemeKind();
-  const themes = useThemes();
   const [systemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [themeId] = useSetting(settingsAtom, 'themeId');
-  const [lightThemeId] = useSetting(settingsAtom, 'lightThemeId');
-  const [darkThemeId] = useSetting(settingsAtom, 'darkThemeId');
 
   if (!systemTheme) {
-    const selectedTheme = themes.find((theme) => theme.id === themeId) ?? LightTheme;
-
-    return selectedTheme;
+    return resolveThemeId(themeId) === DARK_THEME_ID ? DarkTheme : LightTheme;
   }
 
-  const selectedTheme =
-    systemThemeKind === ThemeKind.Dark
-      ? themes.find((theme) => theme.id === darkThemeId) ?? DarkTheme
-      : themes.find((theme) => theme.id === lightThemeId) ?? LightTheme;
-
-  return selectedTheme;
+  return systemThemeKind === ThemeKind.Dark ? DarkTheme : LightTheme;
 };
 
 const ThemeContext = createContext<Theme | null>(null);

@@ -24,3 +24,13 @@ export const onDarkFontWeight = createTheme(config.fontWeight, {
   W800: '800',
   W900: '900',
 });
+
+// Forge is square-shouldered: one small radius everywhere, avatars stay round.
+export const forgeRadii = createTheme(config.radii, {
+  R0: '0',
+  R300: '4px',
+  R400: '4px',
+  R500: '6px',
+  Round: '50%',
+  Pill: '4px',
+});

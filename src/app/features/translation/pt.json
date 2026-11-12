@@ -1,4 +1,6 @@
 {
+  "forge.animated_divider": "Divisor animado",
+  "forge.animated_divider_description": "A linha ao lado da lista de salas brilha e uma faísca desce por ela.",
   "invite_dialog.title_room": "Convidar para #{{name}}",
   "invite_dialog.title_space": "Convidar para {{name}}",
   "invite_dialog.search": "Buscar por nome ou @usuário",
@@ -527,6 +529,8 @@
   "whats_new": {
     "horde_title": "Jogo novo: BrazilianBonk",
     "horde_body": "Um roguelike em 3D na aba Jogos: escolha entre Enéas, Lula, Janja e Bolsonaro, sobreviva a 10 minutos de horda com armas que atacam sozinhas, monte seu combo a cada nível e gaste o ouro em melhorias permanentes. O progresso fica na sua conta e tem ranking. Funciona no teclado e no celular.",
+    "forge_title": "Visual novo: Forge",
+    "forge_body": "O blazeroom ganhou um visual grafite com vinho, em modo claro e escuro. Escolha em Configurações > General > Tema. O papel de parede agora aparece só na tela de entrada.",
     "truco_time_title": "Mais tempo no truco",
     "truco_time_body": "Cada vez no truco agora dura 45 segundos. Ficou sem moedas? O botão Pegar mais créditos agora também está no saguão do truco e da fodinha.",
     "truco_bar_title": "Truco no bar",
@@ -2009,5 +2013,12 @@
     "error": "Não foi possível concluir. Verifique a conexão e se o bot pode entrar e publicar neste servidor e chat.",
     "news_title": "Webhooks de entrada",
     "news_body": "Superadmins podem criar URLs de webhook em Admin para enviar textos e links de ferramentas externas a um chat do servidor."
+  },
+  "forge": {
+    "theme": "Tema",
+    "theme_description": "Sistema acompanha o modo claro ou escuro do seu aparelho.",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Escuro"
   }
 }

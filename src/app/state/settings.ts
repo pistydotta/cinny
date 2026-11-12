@@ -21,6 +21,8 @@ export interface Settings {
   lightThemeId?: string;
   darkThemeId?: string;
   monochromeMode?: boolean;
+  // Dark/light room-list divider: animated spark by default, or a still thread when off.
+  animatedDivider: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
   twitterEmoji: boolean;
@@ -58,6 +60,7 @@ const defaultSettings: Settings = {
   lightThemeId: undefined,
   darkThemeId: undefined,
   monochromeMode: false,
+  animatedDivider: true,
   isMarkdown: true,
   editorToolbar: false,
   twitterEmoji: false,

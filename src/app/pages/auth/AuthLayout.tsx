@@ -11,6 +11,7 @@ import {
 import classNames from 'classnames';
 
 import { AuthFooter } from './AuthFooter';
+import { AppBackground } from '../../features/app-background/AppBackground';
 import * as css from './styles.css';
 import * as PatternsCss from '../../styles/Patterns.css';
 import {
@@ -135,6 +136,7 @@ export function AuthLayout() {
         justifyContent="SpaceBetween"
         gap="400"
       >
+        <AppBackground />
         <Box direction="Column" className={css.AuthCard}>
           <Header className={css.AuthHeader} size="600" variant="Surface">
             <Box grow="Yes" direction="Row" gap="300" alignItems="Center">

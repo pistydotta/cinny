@@ -2,16 +2,16 @@ import React, { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Text, color, config, toRem } from 'folds';
 
-// A small card at the bottom of the screen that leaves the page usable.
+// A small card in the bottom-right corner, above the composer row, that leaves the page usable.
 export function PromptCard({ text, children }: { text: ReactNode; children: ReactNode }) {
   return createPortal(
     <Box
-      justifyContent="Center"
+      justifyContent="End"
       style={{
         position: 'fixed',
         left: config.space.S400,
         right: config.space.S400,
-        bottom: config.space.S500,
+        bottom: toRem(88),
         zIndex: 9998,
         pointerEvents: 'none',
       }}
@@ -23,11 +23,12 @@ export function PromptCard({ text, children }: { text: ReactNode; children: Reac
         gap="300"
         style={{
           pointerEvents: 'auto',
-          maxWidth: toRem(480),
+          maxWidth: toRem(360),
           padding: `${config.space.S200} ${config.space.S200} ${config.space.S200} ${config.space.S400}`,
           borderRadius: config.radii.R400,
           background: color.Surface.Container,
           color: color.Surface.OnContainer,
+          border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
         }}
       >

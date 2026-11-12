@@ -14,7 +14,7 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `room-invite`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `pinned-chats`, `games`, `screen-share`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `forge-theme`, `pinned-chats`, `games`, `screen-share`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
@@ -60,6 +60,12 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   Run `npm run build` too. These checks run only on deployment, never PR events.
 
 ## Traps already hit
+
+- The only look is Forge (`features/forge-theme`), in a light and a dark mode; the Cinny themes
+  are gone. Theme ids stay `light-theme` and `dark-theme`, and the palette lives in `palette.ts`,
+  where a test checks contrast. Cinny's shell is restyled from `shell.css.ts` instead of editing
+  upstream style files. The wallpaper shows only behind the logged-out pages. Games screens
+  still carry their own gold and serif styles until their redesign PRs.
 
 - Screen-share cards sit beside the call stage; the floating viewer reuses the same
   iframe. Placement must use viewport coordinates and inactive call rooms must not
