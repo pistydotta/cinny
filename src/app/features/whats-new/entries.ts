@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-call-audio-menu',
+    items: () => [
+      {
+        title: tr('whats_new.call_audio_title', 'Microphone and sound, straight from the call'),
+        body: tr(
+          'whats_new.call_audio_body',
+          'The little arrow beside the mic and headphone buttons picks your microphone and speaker and sets how loud you go out and how loud the call plays. Your choice stays on this device and every call starts with it. Everything is also in Settings > Voice & video.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-brazilianbonk-map',
     items: () => [
       {

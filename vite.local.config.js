@@ -71,8 +71,10 @@ export default mergeConfig(base, {
             ).pipe(res);
             return;
           }
-          const localOrigin =
-            req.headers.host === 'localhost:8082' ? 'http://localhost:8082' : origin;
+          // Follow the request's host so a second checkout can run on another port.
+          const localOrigin = /^(localhost|127\.0\.0\.1):\d+$/.test(req.headers.host ?? '')
+            ? `http://${req.headers.host}`
+            : origin;
           const configs = {
             '/public/element-call/config.json': {
               ...JSON.parse(

@@ -1,10 +1,12 @@
-import { Box, Text } from 'folds';
+import { Box, Icon, Icons } from 'folds';
 import React, { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getLoginPath } from '../../pathUtils';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { PasswordResetForm } from './PasswordResetForm';
 import { ResetPasswordPathSearchParams } from '../../paths';
+import { tr } from '../../../features/translation/tr';
+import { AuthSecondary } from '../../../features/auth-card';
 
 const useResetPasswordSearchParams = (
   searchParams: URLSearchParams
@@ -22,16 +24,12 @@ export function ResetPassword() {
   const resetPasswordSearchParams = useResetPasswordSearchParams(searchParams);
 
   return (
-    <Box direction="Column" gap="500">
-      <Text size="H2" priority="400">
-        Reset Password
-      </Text>
+    <Box direction="Column" gap="300">
       <PasswordResetForm defaultEmail={resetPasswordSearchParams.email} />
-      <span data-spacing-node />
-
-      <Text align="Center">
-        Remember your password? <Link to={getLoginPath(server)}>Login</Link>
-      </Text>
+      <Link to={getLoginPath(server)} className={AuthSecondary}>
+        <Icon size="100" src={Icons.ArrowLeft} />
+        {tr('reset_password.back', 'Back to login')}
+      </Link>
     </Box>
   );
 }

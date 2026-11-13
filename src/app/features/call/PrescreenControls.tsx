@@ -8,6 +8,7 @@ import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
 import { useCallEmbed, useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallPreferences } from '../../state/hooks/callPreferences';
 import { switchingToCallAtom, useSwitchCall } from '../call-switch/useSwitchCall';
+import { AudioMenuArrow } from '../call-audio-settings';
 
 type PrescreenControlsProps = {
   canJoin?: boolean;
@@ -42,7 +43,9 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
     >
       <Box shrink="No" alignItems="Inherit" justifyContent="SpaceBetween" gap="200">
         <MicrophoneButton enabled={microphone} onToggle={handleMicrophoneToggle} />
+        <AudioMenuArrow kind="input" />
         <SoundButton enabled={sound} onToggle={toggleSound} />
+        <AudioMenuArrow kind="output" />
       </Box>
       <ControlDivider />
       <Box shrink="No" alignItems="Inherit" justifyContent="SpaceBetween" gap="200">

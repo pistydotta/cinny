@@ -14,9 +14,9 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `room-invite`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `forge-theme`, `settings-shell`, `app-update`, `pinned-chats`, `games`, `screen-share`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `auth-card`, `app-background`, `forge-theme`, `settings-shell`, `app-update`, `pinned-chats`, `games`, `screen-share`
   (with `pages/client/games`),
-  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `room-nav/CallMemberAvatars.tsx` and
+  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `call-audio-settings`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
 - Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes
@@ -211,6 +211,11 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   Sharing explicitly selects the current call's room queue and copies the current
   private song; changing calls never carries sharing. Slash commands use that same
   destination; private requests never post chat notices. See `../docs/music.md`.
+- Call mic/speaker choice (`features/call-audio-settings`) stays per browser, in Element Call's
+  own `matrix-setting-audio-input`/`-output` keys, so every call starts with it. A bundle patch
+  exposes those settings as `window.blazeroomDeviceSettings` to switch mid-call. Input volume is
+  a gain step in `blazeroom-noise.js`, which now processes every mic stream; output volume
+  multiplies the per-person volumes in `voiceVolume.js` (no boost above 100%).
 - Compact voice controls use a pointer-transparent PopOut root and a clickable menu;
   a normal folds PopOut creates a full-screen layer that blocks background clicks.
   Per-person volume and mute reuse the saved `call-member-card/voices` preferences

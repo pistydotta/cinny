@@ -1,6 +1,9 @@
 import { useAtomValue } from 'jotai';
 import React, { CSSProperties, useId, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
+import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
+import { DirectCreateSearchParams } from '../../pages/paths';
 import { callEmbedAtom } from '../../state/callEmbed';
 import { useRoom } from '../../hooks/useRoom';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -19,6 +22,7 @@ import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
 import type { CallEmbed } from '../../plugins/call';
 import { useVoice, useSaveVoice } from '../call-member-card/voices';
+import { VoiceSettingsDialog } from '../call-audio-settings';
 import * as css from './voiceMember.css';
 
 function VoiceAudio({ call, userId }: { call: CallEmbed; userId: string }) {
@@ -27,9 +31,11 @@ function VoiceAudio({ call, userId }: { call: CallEmbed; userId: string }) {
   const { microphone, sound } = useCallControlState(call.control);
   const voice = useVoice(userId);
   const saveVoice = useSaveVoice(userId, call);
+  const [settings, setSettings] = useState(false);
   if (userId === mx.getSafeUserId())
     return (
       <Box gap="200">
+        {settings && <VoiceSettingsDialog onClose={() => setSettings(false)} />}
         <TipIconButton
           size="300"
           label={tr('voice_member.microphone', 'Toggle microphone')}
@@ -47,7 +53,7 @@ function VoiceAudio({ call, userId }: { call: CallEmbed; userId: string }) {
         <TipIconButton
           size="300"
           label={tr('call_member.audio_settings', 'Audio settings')}
-          onClick={() => call.control.toggleSettings()}
+          onClick={() => setSettings(true)}
         >
           <Icon size="100" src={Icons.Setting} />
         </TipIconButton>
@@ -93,6 +99,7 @@ function VoiceAudio({ call, userId }: { call: CallEmbed; userId: string }) {
 
 export function VoiceMemberMenu({ userId, onClose }: { userId: string; onClose: () => void }) {
   const mx = useMatrixClient();
+  const navigate = useNavigate();
   const openProfile = useOpenUserRoomProfile();
   const room = useRoom();
   const useAuthentication = useMediaAuthentication();
@@ -129,6 +136,19 @@ export function VoiceMemberMenu({ userId, onClose }: { userId: string; onClose: 
             {tr('voice_member.call_controls', 'Call controls')}
           </Text>
         </Box>
+        {userId !== me && (
+          <TipIconButton
+            size="300"
+            label={tr('voice_member.message', 'Send direct message')}
+            onClick={() => {
+              onClose();
+              const params: DirectCreateSearchParams = { userId };
+              navigate(withSearchParam(getDirectCreatePath(), params));
+            }}
+          >
+            <Icon size="50" src={Icons.Message} />
+          </TipIconButton>
+        )}
         <TipIconButton
           size="300"
           label={tr('call_member.profile', 'View profile')}

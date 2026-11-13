@@ -9,10 +9,17 @@ import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '../OrDivider';
-import { getLoginPath, getRegisterPath, withSearchParam } from '../../pathUtils';
+import {
+  getLoginPath,
+  getRegisterPath,
+  getResetPasswordPath,
+  withSearchParam,
+} from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '../../paths';
 import { useClientConfig } from '../../../hooks/useClientConfig';
+import { tr } from '../../../features/translation/tr';
+import { AuthLinks } from '../../../features/auth-card';
 
 const getLoginTokenSearchParam = () => {
   // when using hasRouter query params in existing route
@@ -55,10 +62,7 @@ export function Login() {
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
 
   return (
-    <Box direction="Column" gap="500">
-      <Text size="H2" priority="400">
-        Login
-      </Text>
+    <Box direction="Column" gap="400">
       {parsedFlows.token && loginSearchParams.loginToken && (
         <TokenLogin token={loginSearchParams.loginToken} />
       )}
@@ -91,8 +95,10 @@ export function Login() {
           <span data-spacing-node />
         </>
       )}
-      <Text align="Center">
-        Do not have an account? <Link to={getRegisterPath(server)}>Register</Link>
+      <Text align="Center" size="T200" className={AuthLinks}>
+        <Link to={getResetPasswordPath(server)}>{tr('login.forgot', 'Forgot password')}</Link>
+        {' · '}
+        <Link to={getRegisterPath(server)}>{tr('login.register', 'Create account')}</Link>
       </Text>
     </Box>
   );

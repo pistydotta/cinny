@@ -20,7 +20,14 @@ const EXPAND_ORIGINAL = 'ye.pipe(ZJ(e=>e?Te(!1):Ce(!1)))';
 const EXPAND_PATCHED =
   'IJ([ye,window.blazeroomShares?.changes??PJ(0)]).pipe(W(()=>!!window.blazeroomShares?.peopleHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0)))';
 
-const replaceOnce = (source, original, patched, what) => {
+// Element Call's chosen mic and speaker settings, so a change from the app's audio menu applies
+// to the call in progress (setValue also saves them where the next call reads them). vKe and
+// yKe are the audio-input and audio-output settings, declared in one var list.
+const DEVICES_ORIGINAL = 'yKe=new eY(`audio-output`,void 0),';
+const DEVICES_PATCHED =
+  'yKe=new eY(`audio-output`,void 0),$blazeroomDevices=window.blazeroomDeviceSettings={audioInput:vKe,audioOutput:yKe},';
+
+const replaceOnce = (source, [original, patched, what]) => {
   const at = source.indexOf(original);
   if (at === -1) throw new Error(`Element Call bundle: ${what} text not found`);
   if (source.indexOf(original, at + 1) !== -1) {
@@ -29,17 +36,14 @@ const replaceOnce = (source, original, patched, what) => {
   return source.slice(0, at) + patched + source.slice(at + original.length);
 };
 
+const PATCHES = [
+  [ORIGINAL, PATCHED, 'share layout'],
+  [VOICE_ORIGINAL, VOICE_PATCHED, 'voice volume'],
+  [EXPAND_ORIGINAL, EXPAND_PATCHED, 'expanded share'],
+  [DEVICES_ORIGINAL, DEVICES_PATCHED, 'audio devices'],
+];
+
 // Throws so that upgrading Element Call fails the build instead of silently bringing the old
 // behaviour back.
-export const patchElementCall = (source) =>
-  replaceOnce(
-    replaceOnce(
-      replaceOnce(source, ORIGINAL, PATCHED, 'share layout'),
-      VOICE_ORIGINAL,
-      VOICE_PATCHED,
-      'voice volume'
-    ),
-    EXPAND_ORIGINAL,
-    EXPAND_PATCHED,
-    'expanded share'
-  );
+/** @param {string} source @returns {string} */
+export const patchElementCall = (source) => PATCHES.reduce(replaceOnce, source);

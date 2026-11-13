@@ -30,6 +30,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
+import { AudioMenuArrow } from '../call-audio-settings';
 
 type CallControlsProps = {
   callEmbed: CallEmbed;
@@ -102,7 +103,9 @@ export function CallControls({ callEmbed }: CallControlsProps) {
         <Box alignItems="Center" gap="Inherit" grow="Yes" direction={compact ? 'Column' : 'Row'}>
           <Box shrink="No" alignItems="Inherit" justifyContent="Inherit" gap="200">
             <MicrophoneButton enabled={microphone} onToggle={handleMicrophoneToggle} />
+            <AudioMenuArrow kind="input" />
             <SoundButton enabled={sound} onToggle={() => callEmbed.control.toggleSound()} />
+            <AudioMenuArrow kind="output" />
           </Box>
           {!compact && <ControlDivider />}
           <Box shrink="No" alignItems="Inherit" justifyContent="Inherit" gap="200">

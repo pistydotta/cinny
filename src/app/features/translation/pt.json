@@ -60,6 +60,24 @@
   "call_status.call_on": "Chamada em andamento",
   "voice_member.volume_for_you": "Volume para você",
   "voice_member.call_controls": "Controles da chamada",
+  "voice_member.message": "Enviar mensagem direta",
+  "call_audio.system_default": "Padrão do sistema",
+  "call_audio.permission": "Permita o microfone para ver o nome de cada dispositivo.",
+  "call_audio.input_device": "Dispositivo de entrada",
+  "call_audio.input_volume": "Volume de entrada",
+  "call_audio.noise": "Supressão de ruído",
+  "call_audio.noise_next_call": "Vale a partir da próxima chamada.",
+  "call_audio.output_device": "Dispositivo de saída",
+  "call_audio.output_unsupported": "Este navegador toca as chamadas no dispositivo do sistema. Troque nas configurações do sistema.",
+  "call_audio.output_volume": "Volume de saída",
+  "call_audio.voice_settings": "Configurações de voz",
+  "call_audio.input_options": "Opções do microfone",
+  "call_audio.output_options": "Opções de som",
+  "call_audio.input": "Microfone",
+  "call_audio.output": "Som",
+  "call_audio.saved_here": "Fica salvo neste dispositivo e vale para todas as chamadas. As mudanças também valem para a chamada em andamento.",
+  "whats_new.call_audio_title": "Microfone e som direto da chamada",
+  "whats_new.call_audio_body": "A setinha ao lado dos botões de microfone e fone escolhe seu microfone e sua saída de som, e ajusta o volume com que você sai e com que a chamada toca. A escolha fica salva neste dispositivo e toda chamada já começa com ela. Tudo também está em Configurações > Voz e vídeo.",
   "room_delete.action": "Excluir sala",
   "room_delete.title": "Excluir sala para todos?",
   "room_delete.warning": "Isso remove permanentemente todos desta sala, impede novas entradas e exclui o histórico deste servidor. Não é possível desfazer. Cópias já salvas em dispositivos ou outros servidores não podem ser apagadas.",
@@ -570,7 +588,7 @@
       "date_time": "Data e hora",
       "editor": "Editor",
       "privacy": "Privacidade",
-      "microphone": "Microfone",
+      "microphone": "Microfone e som",
       "messages": "Mensagens",
       "timeline": "Linha do tempo",
       "encryption": "Criptografia",
@@ -651,7 +669,7 @@
       "date_time": "Como horários e datas aparecem nas conversas.",
       "editor": "Como você escreve e envia mensagens.",
       "privacy": "O que os outros veem da sua atividade.",
-      "microphone": "Como sua voz chega aos outros nas chamadas.",
+      "microphone": "Como você fala e ouve nas chamadas.",
       "messages": "O visual das mensagens nas conversas.",
       "timeline": "O que aparece entre as mensagens.",
       "debug_timeline": "Veja o que o app normalmente esconde.",
@@ -2455,5 +2473,30 @@
   "app_update": {
     "available": "Saiu uma versão nova do blazeroom.",
     "reload": "Atualizar agora"
+  },
+  "login": {
+    "title": "Entrar no blazeroom",
+    "username": "usuário",
+    "password": "senha",
+    "forgot": "Esqueci a senha",
+    "invalid": "Usuário ou senha incorretos.",
+    "submit": "Entrar",
+    "register": "Criar conta",
+    "passkey": "Entrar com passkey",
+    "passkey_soon": "Em breve"
+  },
+  "auth": {
+    "server": "Servidor",
+    "change_server": "trocar"
+  },
+  "reset_password": {
+    "title": "Redefinir senha",
+    "intro": "Vamos te mandar um e-mail para confirmar. Depois disso a senha nova passa a valer.",
+    "email": "e-mail",
+    "new": "nova senha",
+    "confirm": "confirme a nova senha",
+    "submit": "Redefinir senha",
+    "done": "Sua senha foi trocada. Entre com a nova.",
+    "back": "Voltar para o login"
   }
 }

@@ -5,6 +5,7 @@ import { StatusDivider } from './components';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { callEmbedAtom } from '../../state/callEmbed';
+import { AudioMenuArrow } from '../call-audio-settings';
 
 type MicrophoneButtonProps = {
   enabled: boolean;
@@ -14,7 +15,7 @@ type MicrophoneButtonProps = {
 function MicrophoneButton({ enabled, onToggle, disabled }: MicrophoneButtonProps) {
   const [micState, toggleMic] = useAsyncCallback(onToggle);
   const loading = micState.status === AsyncStatus.Loading;
-  
+
   return (
     <TooltipProvider
       position="Top"
@@ -164,7 +165,10 @@ export function CallControl({
   const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
   const setCallEmbed = useSetAtom(callEmbedAtom);
 
-  const handleMicrophoneToggle = useCallback(() => callEmbed.control.toggleMicrophone(), [callEmbed]);
+  const handleMicrophoneToggle = useCallback(
+    () => callEmbed.control.toggleMicrophone(),
+    [callEmbed]
+  );
   const handleVideoToggle = useCallback(() => callEmbed.control.toggleVideo(), [callEmbed]);
 
   const [hangupState, hangup] = useAsyncCallback(
@@ -189,17 +193,15 @@ export function CallControl({
           onToggle={handleMicrophoneToggle}
           disabled={!callJoined}
         />
+        <AudioMenuArrow kind="input" />
         <SoundButton
           enabled={sound}
           onToggle={() => callEmbed.control.toggleSound()}
           disabled={!callJoined}
         />
+        <AudioMenuArrow kind="output" />
         {!compact && <StatusDivider />}
-        <VideoButton
-          enabled={video}
-          onToggle={handleVideoToggle}
-          disabled={!callJoined}
-        />
+        <VideoButton enabled={video} onToggle={handleVideoToggle} disabled={!callJoined} />
         {!compact && (
           <ScreenShareButton
             enabled={screenshare}

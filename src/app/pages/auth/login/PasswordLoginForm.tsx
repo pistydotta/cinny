@@ -1,29 +1,10 @@
-import React, { FormEventHandler, MouseEventHandler, useCallback, useState } from 'react';
-import {
-  Box,
-  Button,
-  Header,
-  Icon,
-  Icons,
-  Input,
-  Menu,
-  Overlay,
-  OverlayBackdrop,
-  OverlayCenter,
-  PopOut,
-  RectCords,
-  Spinner,
-  Text,
-  config,
-} from 'folds';
-import FocusTrap from 'focus-trap-react';
-import { Link } from 'react-router-dom';
+import React, { FormEventHandler, useCallback } from 'react';
+import { Box, Button, Input, Overlay, OverlayBackdrop, OverlayCenter, Spinner, Text } from 'folds';
 import { MatrixError } from 'matrix-js-sdk';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
 import { EMAIL_REGEX } from '../../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useClientConfig } from '../../../hooks/useClientConfig';
 import {
   CustomLoginResponse,
@@ -34,86 +15,14 @@ import {
 } from './loginUtil';
 import { PasswordInput } from '../../../components/password-input';
 import { FieldError } from '../FiledError';
-import { getResetPasswordPath } from '../../pathUtils';
-import { stopPropagation } from '../../../utils/keyboard';
-import { TipIconButton } from '../../../features/tooltips/TipIconButton';
 import { tr } from '../../../features/translation/tr';
-
-function UsernameHint({ server }: { server: string }) {
-  const [anchor, setAnchor] = useState<RectCords>();
-
-  const handleOpenMenu: MouseEventHandler<HTMLElement> = (evt) => {
-    setAnchor(evt.currentTarget.getBoundingClientRect());
-  };
-  return (
-    <PopOut
-      anchor={anchor}
-      position="Top"
-      align="End"
-      content={
-        <FocusTrap
-          focusTrapOptions={{
-            initialFocus: false,
-            onDeactivate: () => setAnchor(undefined),
-            clickOutsideDeactivates: true,
-            escapeDeactivates: stopPropagation,
-          }}
-        >
-          <Menu>
-            <Header size="300" style={{ padding: `0 ${config.space.S200}` }}>
-              <Text size="L400">Hint</Text>
-            </Header>
-            <Box
-              style={{ padding: config.space.S200, paddingTop: 0 }}
-              direction="Column"
-              tabIndex={0}
-              gap="100"
-            >
-              <Text size="T300">
-                <Text as="span" size="Inherit" priority="300">
-                  Username:
-                </Text>{' '}
-                user123
-              </Text>
-              <Text size="T300">
-                <Text as="span" size="Inherit" priority="300">
-                  Matrix ID:
-                </Text>
-                {` @user123:${server}`}
-              </Text>
-              <Text size="T300">
-                <Text as="span" size="Inherit" priority="300">
-                  Email:
-                </Text>
-                {` user123@${server}`}
-              </Text>
-            </Box>
-          </Menu>
-        </FocusTrap>
-      }
-    >
-      <TipIconButton
-        label={tr('tips.more', 'More options')}
-        tabIndex={-1}
-        onClick={handleOpenMenu}
-        type="button"
-        variant="Background"
-        size="300"
-        radii="300"
-        aria-pressed={!!anchor}
-      >
-        <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.Info} />
-      </TipIconButton>
-    </PopOut>
-  );
-}
+import { AuthField, AuthSubmit, PasskeyButton } from '../../../features/auth-card';
 
 type PasswordLoginFormProps = {
   defaultUsername?: string;
   defaultEmail?: string;
 };
 export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLoginFormProps) {
-  const server = useAuthServer();
   const clientConfig = useClientConfig();
 
   const serverDiscovery = useAutoDiscoveryInfo();
@@ -199,20 +108,19 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   };
 
   return (
-    <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="400">
+    <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="300">
       <Box direction="Column" gap="100">
-        <Text as="label" size="L400" priority="300">
-          Username
-        </Text>
         <Input
           defaultValue={defaultUsername ?? defaultEmail}
-          style={{ paddingRight: config.space.S300 }}
           name="usernameInput"
+          placeholder={tr('login.username', 'Username')}
+          aria-label={tr('login.username', 'Username')}
+          autoComplete="username"
+          className={AuthField}
           variant="Background"
-          size="500"
+          size="400"
           required
           outlined
-          after={<UsernameHint server={server} />}
         />
         {loginState.status === AsyncStatus.Error && (
           <>
@@ -226,15 +134,22 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         )}
       </Box>
       <Box direction="Column" gap="100">
-        <Text as="label" size="L400" priority="300">
-          Password
-        </Text>
-        <PasswordInput name="passwordInput" variant="Background" size="500" outlined required />
+        <PasswordInput
+          name="passwordInput"
+          placeholder={tr('login.password', 'Password')}
+          aria-label={tr('login.password', 'Password')}
+          autoComplete="current-password"
+          className={AuthField}
+          variant="Background"
+          size="400"
+          outlined
+          required
+        />
         <Box alignItems="Start" justifyContent="SpaceBetween" gap="200">
           {loginState.status === AsyncStatus.Error && (
             <>
               {loginState.error.errcode === LoginError.Forbidden && (
-                <FieldError message="Invalid Username or Password." />
+                <FieldError message={tr('login.invalid', 'Wrong username or password.')} />
               )}
               {loginState.error.errcode === LoginError.UserDeactivated && (
                 <FieldError message="This account has been deactivated." />
@@ -250,18 +165,14 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
               )}
             </>
           )}
-          <Box grow="Yes" shrink="No" justifyContent="End">
-            <Text as="span" size="T200" priority="400" align="Right">
-              <Link to={getResetPasswordPath(server)}>Forget Password?</Link>
-            </Text>
-          </Box>
         </Box>
       </Box>
-      <Button type="submit" variant="Primary" size="500">
-        <Text as="span" size="B500">
-          Login
+      <Button type="submit" variant="Primary" size="400" className={AuthSubmit}>
+        <Text as="span" size="B400">
+          {tr('login.submit', 'Log in')}
         </Text>
       </Button>
+      <PasskeyButton />
 
       <Overlay
         open={

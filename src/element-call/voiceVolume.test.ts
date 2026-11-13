@@ -6,6 +6,7 @@ import {
   readVoices,
   VOICE_STORAGE_KEY,
 } from './voiceVolume';
+import { OUTPUT_VOLUME_KEY } from './audioSettings';
 
 const storageWith = (value: string) => ({
   getItem: (key: string) => (key === VOICE_STORAGE_KEY ? value : null),
@@ -57,5 +58,16 @@ describe('voice volume', () => {
     store.reload();
     expect(seen).toEqual([0, 1]);
     expect(store.get('@a:x').muted).toBe(true);
+  });
+
+  it("applies the person's output volume on top, and rereads it on reload", () => {
+    expect(playbackVolume({ '@a:x': { volume: 0.5 } }, '@a:x', 1, 0.5)).toBe(0.25);
+    expect(playbackVolume({}, '@a:x', 1, 0)).toBe(MUTED_VOLUME);
+    const saved: Record<string, string> = { [OUTPUT_VOLUME_KEY]: '0.4' };
+    const store = createVoiceStore({ getItem: (key) => saved[key] ?? null });
+    expect(store.volumeFor('@a:x', 1)).toBe(0.4);
+    saved[OUTPUT_VOLUME_KEY] = '1';
+    store.reload();
+    expect(store.volumeFor('@a:x', 1)).toBe(1);
   });
 });

@@ -12,7 +12,8 @@ export const AuthLayout = style({
 });
 
 export const AuthCard = style({
-  marginTop: '1vh',
+  marginTop: 'auto',
+  marginBottom: 'auto',
   maxWidth: toRem(460),
   width: '100%',
   backgroundColor: color.Surface.Container,
@@ -45,10 +46,10 @@ export const AuthCardContent = style({
   maxWidth: toRem(402),
   width: '100%',
   margin: 'auto',
-  padding: config.space.S400,
+  padding: config.space.S500,
   paddingTop: config.space.S700,
-  paddingBottom: toRem(44),
-  gap: toRem(44),
+  paddingBottom: config.space.S700,
+  gap: config.space.S500,
 });
 
 export const AuthFooter = style({

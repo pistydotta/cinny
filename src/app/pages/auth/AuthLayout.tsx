@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Box, Header, Scroll, Spinner, Text, color } from 'folds';
+import { Box, Scroll, Spinner, Text, color } from 'folds';
 import {
   Outlet,
   generatePath,
@@ -21,8 +21,9 @@ import {
 } from '../../hooks/useClientConfig';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '../paths';
-import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { ServerPicker } from './ServerPicker';
+import { AuthBrand, AuthCardSkin, ServerChip } from '../../features/auth-card';
+import { tr } from '../../features/translation/tr';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
 import { SpecVersionsLoader } from '../../components/SpecVersionsLoader';
 import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
@@ -43,6 +44,12 @@ const currentAuthPath = (pathname: string): string => {
     return REGISTER_PATH;
   }
   return LOGIN_PATH;
+};
+
+const authTitle = (authPath: string): string => {
+  if (authPath === REGISTER_PATH) return tr('register.title', 'Register');
+  if (authPath === RESET_PASSWORD_PATH) return tr('reset_password.title', 'Reset password');
+  return tr('login.title', 'Log in to blazeroom');
 };
 
 function AuthLayoutLoading({ message }: { message: string }) {
@@ -126,6 +133,7 @@ export function AuthLayout() {
 
   const [autoDiscoveryError, autoDiscoveryInfo] =
     discoveryState.status === AsyncStatus.Success ? discoveryState.data.response : [];
+  const serverList = clientConfig.homeserverList ?? [];
 
   return (
     <Scroll variant="Background" visibility="Hover" size="300" hideTrack>
@@ -137,24 +145,22 @@ export function AuthLayout() {
         gap="400"
       >
         <AppBackground />
-        <Box direction="Column" className={css.AuthCard}>
-          <Header className={css.AuthHeader} size="600" variant="Surface">
-            <Box grow="Yes" direction="Row" gap="300" alignItems="Center">
-              <img className={css.AuthLogo} src={CinnySVG} alt="blazeroom logo" />
-              <Text size="H3">blazeroom</Text>
-            </Box>
-          </Header>
+        <Box direction="Column" className={classNames(css.AuthCard, AuthCardSkin)}>
           <Box className={css.AuthCardContent} direction="Column">
-            <Box direction="Column" gap="100">
-              <Text as="label" size="L400" priority="300">
-                Homeserver
-              </Text>
-              <ServerPicker
+            <Box direction="Column" gap="200">
+              <AuthBrand title={authTitle(currentAuthPath(location.pathname))} />
+              <ServerChip
                 server={server}
-                serverList={clientConfig.homeserverList ?? []}
-                allowCustomServer={clientConfig.allowCustomHomeservers}
-                onServerChange={selectServer}
-              />
+                canChange={!!clientConfig.allowCustomHomeservers || serverList.length > 1}
+                forceOpen={discoveryState.status === AsyncStatus.Error || !!autoDiscoveryError}
+              >
+                <ServerPicker
+                  server={server}
+                  serverList={serverList}
+                  allowCustomServer={clientConfig.allowCustomHomeservers}
+                  onServerChange={selectServer}
+                />
+              </ServerChip>
             </Box>
             {discoveryState.status === AsyncStatus.Loading && (
               <AuthLayoutLoading message="Looking for homeserver..." />

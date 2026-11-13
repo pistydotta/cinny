@@ -4,7 +4,12 @@ export type Voice = { volume: number; muted: boolean };
 export type Voices = Record<string, Partial<Voice>>;
 export function readVoices(storage: Pick<Storage, 'getItem'> | undefined): Voices;
 export function voiceFor(voices: Voices, userId: string): Voice;
-export function playbackVolume(voices: Voices, userId: string, base: number): number;
+export function playbackVolume(
+  voices: Voices,
+  userId: string,
+  base: number,
+  output?: number
+): number;
 export type VoiceStore = {
   observeParticipant: (
     userId: string,

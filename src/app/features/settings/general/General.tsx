@@ -42,6 +42,7 @@ import { SelfChatSetting } from '../../self-chat/SelfChatHiding';
 import { LanguageSetting } from '../../translation/LanguageSetting';
 import { TipIconButton } from '../../tooltips/TipIconButton';
 import { tr } from '../../translation/tr';
+import { CallAudioSettings } from '../../call-audio-settings';
 
 function PageZoomInput() {
   const [pageZoom, setPageZoom] = useSetting(settingsAtom, 'pageZoom');
@@ -522,27 +523,18 @@ export function ActivityPrivacy() {
 }
 
 function Calls() {
-  const [noiseSuppression, setNoiseSuppression] = useSetting(settingsAtom, 'callNoiseSuppression');
-
   return (
     <SettingsSection
-      title={tr('settings.section.microphone', 'Microphone')}
+      title={tr('settings.section.microphone', 'Microphone and sound')}
       description={tr(
         'settings.about_section.microphone',
-        'How your voice reaches others in calls.'
+        'How you speak and hear in calls.'
       )}
     >
       <SettingsRow>
-        <SettingTile
-          title={tr('settings.noise_suppression', 'Noise suppression')}
-          description={tr(
-            'settings.noise_suppression_description',
-            'Filter background noise like keyboards, fans and voices from your microphone (RNNoise). Applies from the next call you join.'
-          )}
-          after={
-            <Switch variant="Primary" value={noiseSuppression} onChange={setNoiseSuppression} />
-          }
-        />
+        <Box direction="Column" style={{ padding: config.space.S300 }}>
+          <CallAudioSettings />
+        </Box>
       </SettingsRow>
     </SettingsSection>
   );

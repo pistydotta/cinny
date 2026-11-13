@@ -28,6 +28,8 @@ import { ResetPasswordResult, resetPassword } from './resetPasswordUtil';
 import { getLoginPath, withSearchParam } from '../../pathUtils';
 import { LoginPathSearchParams } from '../../paths';
 import { getUIAError, getUIAErrorCode } from '../../../utils/matrix-uia';
+import { tr } from '../../../features/translation/tr';
+import { AuthField, AuthSubmit } from '../../../features/auth-card';
 
 type FormData = {
   email: string;
@@ -56,11 +58,11 @@ function ResetPasswordComplete({ email }: { email?: string }) {
           <Dialog>
             <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
               <Text>
-                Password has been reset successfully. Please login with your new password.
+                {tr('reset_password.done', 'Your password was changed. Log in with the new one.')}
               </Text>
               <Button variant="Primary" onClick={handleClick}>
                 <Text size="B400" as="span">
-                  Login
+                  {tr('login.submit', 'Log in')}
                 </Text>
               </Button>
             </Box>
@@ -75,8 +77,6 @@ type PasswordResetFormProps = {
   defaultEmail?: string;
 };
 export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
-  const server = useAuthServer();
-
   const serverDiscovery = useAutoDiscoveryInfo();
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
   const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
@@ -165,20 +165,24 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
   );
 
   return (
-    <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="400">
-      <Text size="T300" priority="400">
-        Homeserver <strong>{server}</strong> will send you an email to let you reset your password.
+    <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="300">
+      <Text size="T300" priority="300" align="Center">
+        {tr(
+          'reset_password.intro',
+          "We'll email you a link to confirm. Then your new password takes effect."
+        )}
       </Text>
       <Box direction="Column" gap="100">
-        <Text as="label" size="L400" priority="300">
-          Email
-        </Text>
         <Input
           defaultValue={defaultEmail}
           type="email"
           name="emailInput"
+          placeholder={tr('reset_password.email', 'email')}
+          aria-label={tr('reset_password.email', 'email')}
+          autoComplete="email"
+          className={AuthField}
           variant="Background"
-          size="500"
+          size="400"
           required
           outlined
         />
@@ -192,29 +196,31 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
         {(match, doMatch, passRef, confPassRef) => (
           <>
             <Box direction="Column" gap="100">
-              <Text as="label" size="L400" priority="300">
-                New Password
-              </Text>
               <PasswordInput
                 ref={passRef}
                 onChange={doMatch}
                 name="passwordInput"
+                placeholder={tr('reset_password.new', 'new password')}
+                aria-label={tr('reset_password.new', 'new password')}
+                autoComplete="new-password"
+                className={AuthField}
                 variant="Background"
-                size="500"
+                size="400"
                 outlined
                 required
               />
             </Box>
             <Box direction="Column" gap="100">
-              <Text as="label" size="L400" priority="300">
-                Confirm Password
-              </Text>
               <PasswordInput
                 ref={confPassRef}
                 onChange={doMatch}
                 name="confirmPasswordInput"
+                placeholder={tr('reset_password.confirm', 'confirm new password')}
+                aria-label={tr('reset_password.confirm', 'confirm new password')}
+                autoComplete="new-password"
+                className={AuthField}
                 variant="Background"
-                size="500"
+                size="400"
                 style={{ color: match ? undefined : color.Critical.Main }}
                 outlined
                 required
@@ -230,10 +236,9 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
           }`}
         />
       )}
-      <span data-spacing-node />
-      <Button type="submit" variant="Primary" size="500">
-        <Text as="span" size="B500">
-          Reset Password
+      <Button type="submit" variant="Primary" size="400" className={AuthSubmit}>
+        <Text as="span" size="B400">
+          {tr('reset_password.submit', 'Reset password')}
         </Text>
       </Button>
 
