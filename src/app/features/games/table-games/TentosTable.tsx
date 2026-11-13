@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  CSSProperties,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import { tr } from '../../translation/tr';
 import { FodinhaLayout, pct, seatPoints, tableCenter, toward } from './fodinhaLayout';
 import {
@@ -27,12 +20,10 @@ import {
   turnMs,
 } from './tentosView';
 import { GamePlayer, GameTable, TableCard, TrucoResponse, TrucoTrick } from './types';
-import { TrucoDeck } from './trucoDeck';
 import { hasScene, trucoScene } from './trucoScene';
 import * as css from './tentos.css';
+import { GameCard } from '../cards/GameCard';
 import barArt from '../art/truco-bar.webp';
-import spanishDeck from '../art/truco-spanish-deck.png';
-import paulistaBack from '../art/truco-paulista/B-1.svg';
 
 // How long a finished trick stays on the felt after it closes, even if the next one starts
 // (bots answer at once, and the others only poll every two seconds).
@@ -44,15 +35,6 @@ const RING_RADIUS = 24;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 const px = (p: { x: number; y: number }): CSSProperties => ({ left: p.x, top: p.y });
 const SUIT: Record<string, string> = { d: '♦', s: '♠', h: '♥', c: '♣', r: '★', b: '★' };
-const SPANISH_SUITS = ['d', 'h', 's', 'c'];
-const SPANISH_RANKS: Record<string, string> = { A: '1', J: '10', Q: '11', K: '12' };
-const DeckContext = createContext<TrucoDeck | undefined>(undefined);
-const PAULISTA_FACES = import.meta.glob<string>('../art/truco-paulista/[CDHS]-*.svg', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-});
-const spanishRank = (rank: string) => SPANISH_RANKS[rank] ?? rank;
 const suitName = (suit: string) =>
   ({
     d: tr('table_games.suit_d', 'diamonds'),
@@ -60,22 +42,12 @@ const suitName = (suit: string) =>
     h: tr('table_games.suit_h', 'hearts'),
     c: tr('table_games.suit_c', 'clubs'),
   }[suit] ?? suit);
-const spanishSuitName = (suit: string) =>
-  ({
-    d: tr('table_games.spanish_coins', 'coins'),
-    h: tr('table_games.spanish_cups', 'cups'),
-    s: tr('table_games.spanish_swords', 'swords'),
-    c: tr('table_games.spanish_batons', 'batons'),
-  }[suit] ?? suit);
-const cardName = (card: TableCard, deck?: TrucoDeck) =>
+const cardName = (card: TableCard) =>
   tr('table_games.card_name', '{{rank}} of {{suit}}', {
-    rank: deck === 'spanish' ? spanishRank(card.rank) : card.rank,
-    suit: deck === 'spanish' ? spanishSuitName(card.suit) : suitName(card.suit),
+    rank: card.rank,
+    suit: suitName(card.suit),
   });
-const cardIndex = (card: TableCard, deck?: TrucoDeck) =>
-  deck === 'spanish'
-    ? `${spanishRank(card.rank)} · ${spanishSuitName(card.suit)}`
-    : `${card.rank}${SUIT[card.suit]}`;
+const cardIndex = (card: TableCard) => `${card.rank}${SUIT[card.suit]}`;
 
 export function PlayingCard({
   card,
@@ -88,42 +60,18 @@ export function PlayingCard({
   win?: boolean;
   dim?: boolean;
 }) {
-  const deck = useContext(DeckContext);
-  const face = !back && !!card && !card.covered;
-  let artwork: CSSProperties | undefined;
-  if (deck === 'spanish') {
-    // The sprite has one row per Spanish suit in rank order, then a row with the back.
-    const column = face ? Number(spanishRank(card.rank)) - 1 : 1;
-    const row = face ? SPANISH_SUITS.indexOf(card.suit) : 4;
-    artwork = { backgroundPosition: `${(column * 100) / 11}% ${row * 25}%` };
-  } else if (deck === 'paulista') {
-    const image = face
-      ? PAULISTA_FACES[`../art/truco-paulista/${card.suit.toUpperCase()}-${card.rank}.svg`]
-      : paulistaBack;
-    artwork = { backgroundImage: `url(${image})` };
-  }
+  const face = !back && card && !card.covered;
   return (
-    <div
+    <GameCard
       className={css.Card}
-      data-deck={deck}
-      data-back={!face}
-      data-red={face && isRed(card)}
-      data-win={win || undefined}
-      data-dim={dim || undefined}
-      style={artwork}
-      role="img"
-      aria-label={
-        face && card ? cardName(card, deck) : tr('games.table.face_down', 'Face-down card')
+      face={
+        face
+          ? { rank: card.rank, suit: SUIT[card.suit], red: isRed(card), label: cardName(card) }
+          : undefined
       }
-    >
-      {face && !deck && (
-        <>
-          {card.rank}
-          <span className={css.CardSuit}>{SUIT[card.suit]}</span>
-          <span className={css.CardBig}>{SUIT[card.suit]}</span>
-        </>
-      )}
-    </div>
+      win={win}
+      dim={dim}
+    />
   );
 }
 
@@ -675,7 +623,6 @@ function useHeldTrick(table: GameTable): [Held | null, () => void] {
 }
 
 function TrucoResults({ table, nameOf }: { table: GameTable; nameOf: (userId: string) => string }) {
-  const deck = useContext(DeckContext);
   const recent = table.recentTricks;
   const seen = useRef(recent?.at(-1));
   const [visible, setVisible] = useState<{ trick: TrucoTrick; expiresAt: number }[]>([]);
@@ -719,7 +666,7 @@ function TrucoResults({ table, nameOf }: { table: GameTable; nameOf: (userId: st
                 {winner && winningPlayer
                   ? tr('table_games.truco_trick_winner', '{{name}} won with {{card}}', {
                       name: nameOf(winningPlayer.userId),
-                      card: cardName(winner.card, deck),
+                      card: cardName(winner.card),
                     })
                   : tr('table_games.truco_trick_tied', 'Tie')}
               </div>
@@ -729,7 +676,7 @@ function TrucoResults({ table, nameOf }: { table: GameTable; nameOf: (userId: st
                     name: nameOf(closingPlayer.userId),
                     card: closingPlay.card.covered
                       ? tr('games.table.face_down', 'Face-down card')
-                      : cardName(closingPlay.card, deck),
+                      : cardName(closingPlay.card),
                   })}
                 </div>
               )}
@@ -743,7 +690,6 @@ function TrucoResults({ table, nameOf }: { table: GameTable; nameOf: (userId: st
 
 export type TentosTableProps = {
   table: GameTable;
-  deck?: TrucoDeck;
   busy: boolean;
   isOwner: boolean;
   onAct: (action: Record<string, unknown>) => void;
@@ -757,7 +703,6 @@ export type TentosTableProps = {
 
 export function TentosTable({
   table,
-  deck,
   busy,
   isOwner,
   onAct,
@@ -802,7 +747,7 @@ export function TentosTable({
   const manilha = vira && manilhaRank(vira);
   const viraLabel = manilha
     ? tr('table_games.manilha_short', 'vira · manilha {{rank}}', {
-        rank: deck === 'spanish' ? spanishRank(manilha) : manilha,
+        rank: manilha,
       })
     : undefined;
   const me = mySeat >= 0 ? table.players[mySeat] : undefined;
@@ -1067,66 +1012,61 @@ export function TentosTable({
   );
 
   return (
-    <DeckContext.Provider value={deck}>
-      <div
-        className={css.Screen}
-        style={
-          deck
-            ? ({
-                '--truco-art': `url(${spanishDeck})`,
-              } as CSSProperties)
-            : undefined
-        }
-      >
-        <div ref={stage} className={css.Stage}>
-          {truco ? (
-            <>
-              <div className={css.Corner} data-side="left">
-                <button type="button" className={css.TrucoBack} onClick={onBack}>
-                  <span aria-hidden="true">←</span>
-                  {tr('table_games.back_to_tables', 'Back to tables')}
-                </button>
-              </div>
-              <span className={css.TrucoTableName} title={table.name}>
-                {table.name}
-              </span>
-              {phase !== 'waiting' && (
-                <div className={css.TrucoScoreboard}>
-                  <Tally table={table} />
-                  <HandTricks table={table} nameOf={nameOf} />
-                </div>
-              )}
-            </>
-          ) : (
+    <div className={css.Screen}>
+      <div ref={stage} className={css.Stage}>
+        {truco ? (
+          <>
             <div className={css.Corner} data-side="left">
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  type="button"
-                  className={css.Pill}
-                  onClick={onBack}
-                  aria-label={tr('games.action.back', 'Back')}
-                >
-                  ←
-                </button>
-                <span className={css.TableName}>{table.name}</span>
-              </div>
+              <button type="button" className={css.TrucoBack} onClick={onBack}>
+                <span aria-hidden="true">←</span>
+                {tr('table_games.back_to_tables', 'Back to tables')}
+              </button>
             </div>
-          )}
-          <div className={css.Corner} data-side="right">
-            <button type="button" className={css.Pill} onClick={onOpenSheet}>
-              {phase === 'waiting'
-                ? tr('table_games.invite', '+ Invite')
-                : tr('table_games.table_menu', 'Table')}
-            </button>
+            <span className={css.TrucoTableName} title={table.name}>
+              {table.name}
+            </span>
+            {phase !== 'waiting' && (
+              <div className={css.TrucoScoreboard}>
+                <Tally table={table} />
+                <HandTricks table={table} nameOf={nameOf} />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className={css.Corner} data-side="left">
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className={css.Pill}
+                onClick={onBack}
+                aria-label={tr('games.action.back', 'Back')}
+              >
+                ←
+              </button>
+              <span className={css.TableName}>{table.name}</span>
+            </div>
           </div>
+        )}
+        <div className={css.Corner} data-side="right">
+          <button type="button" className={css.Pill} onClick={onOpenSheet}>
+            {phase === 'waiting'
+              ? tr('table_games.invite', '+ Invite')
+              : tr('table_games.table_menu', 'Table')}
+          </button>
+        </div>
 
-          <div className={css.Felt} data-layout={layout} data-scene={!!scene}>
-            {scene ? (
+        <div className={css.Felt} data-layout={layout} data-scene={!!scene}>
+          {scene ? (
+            <>
+              {scene.framed && (
+                <img className={css.SceneBackdrop} src={barArt} alt="" draggable={false} />
+              )}
               <img
                 className={css.Scene}
                 src={barArt}
                 alt=""
                 draggable={false}
+                data-framed={scene.framed || undefined}
                 style={{
                   left: scene.left,
                   top: scene.top,
@@ -1134,232 +1074,230 @@ export function TentosTable({
                   height: scene.height,
                 }}
               />
-            ) : (
-              <div className={css.Rings} />
-            )}
-            {showTrucoResult && (
-              <TrucoMatchResult
-                table={table}
-                nameOf={nameOf}
-                avatarOf={avatarOf}
-                style={scene ? { ...px(scene.door), top: Math.max(112, scene.door.y) } : undefined}
-                actions={actions}
-              />
-            )}
-            {truco && phase === 'round_end' && (
-              <TrucoHandResult
-                key={table.round}
-                table={table}
-                actions={actions}
-                style={
-                  scene
-                    ? px({
-                        x: scene.door.x,
-                        y: Math.max(
-                          146,
-                          scene.seats[(Math.max(mySeat, 0) + seats / 2) % seats].y - 54
-                        ),
-                      })
-                    : undefined
-                }
-              />
-            )}
-            {((!scene && vira) || title || line || callout || trickLine) && (
-              <div
-                className={css.Center}
-                aria-live="polite"
-                style={scene ? px(scene.door) : undefined}
-              >
-                {!scene && vira && (
-                  <>
-                    <PlayingCard card={vira} />
-                    <div className={css.CenterLine}>{viraLabel}</div>
-                  </>
-                )}
-                {title && <div className={css.CenterTitle}>{title}</div>}
-                {line && <div className={css.CenterLine}>{line}</div>}
-                {callout && <div className={css.Callout}>{callout}</div>}
-                {trickLine && (
-                  <div className={css.Callout} data-quiet="true">
-                    {trickLine}
-                  </div>
-                )}
-                {trucoCenterActions && status && (
-                  <div className={css.TrucoCenterStatus}>{status}</div>
-                )}
-                {trucoCenterActions && actions.length > 0 && (
-                  <div className={css.TrucoCenterActions}>{actions}</div>
-                )}
-              </div>
-            )}
+            </>
+          ) : (
+            <div className={css.Rings} />
+          )}
+          {showTrucoResult && (
+            <TrucoMatchResult
+              table={table}
+              nameOf={nameOf}
+              avatarOf={avatarOf}
+              style={scene ? { ...px(scene.door), top: Math.max(112, scene.door.y) } : undefined}
+              actions={actions}
+            />
+          )}
+          {truco && phase === 'round_end' && (
+            <TrucoHandResult
+              key={table.round}
+              table={table}
+              actions={actions}
+              style={
+                scene
+                  ? px({
+                      x: scene.door.x,
+                      y: Math.max(
+                        146,
+                        scene.seats[(Math.max(mySeat, 0) + seats / 2) % seats].y - 54
+                      ),
+                    })
+                  : undefined
+              }
+            />
+          )}
+          {((!scene && vira) || title || line || callout || trickLine) && (
+            <div
+              className={css.Center}
+              aria-live="polite"
+              style={scene ? px(scene.door) : undefined}
+            >
+              {!scene && vira && (
+                <>
+                  <PlayingCard card={vira} />
+                  <div className={css.CenterLine}>{viraLabel}</div>
+                </>
+              )}
+              {title && <div className={css.CenterTitle}>{title}</div>}
+              {line && <div className={css.CenterLine}>{line}</div>}
+              {callout && <div className={css.Callout}>{callout}</div>}
+              {trickLine && (
+                <div className={css.Callout} data-quiet="true">
+                  {trickLine}
+                </div>
+              )}
+              {trucoCenterActions && status && (
+                <div className={css.TrucoCenterStatus}>{status}</div>
+              )}
+              {trucoCenterActions && actions.length > 0 && (
+                <div className={css.TrucoCenterActions}>{actions}</div>
+              )}
+            </div>
+          )}
 
-            {placedCards(felt).map(({ seat, card, latest, win, dim }) => (
-              <div
-                key={seat}
-                className={css.Placed}
-                data-scene={!!scene}
-                style={
-                  {
-                    ...playedAt(seat),
-                    '--card-w': `${scene ? scene.card + 13 : 44}px`,
-                    '--tilt': `${[-4, 3, -2, 4][seat % 4]}deg`,
-                  } as CSSProperties
-                }
+          {placedCards(felt).map(({ seat, card, latest, win, dim }) => (
+            <div
+              key={seat}
+              className={css.Placed}
+              data-scene={!!scene}
+              style={
+                {
+                  ...playedAt(seat),
+                  '--card-w': `${scene ? scene.card + 13 : 44}px`,
+                  '--tilt': `${[-4, 3, -2, 4][seat % 4]}deg`,
+                } as CSSProperties
+              }
+            >
+              {scene ? (
+                <div className={css.CardOnTable}>
+                  <PlayingCard card={card} win={win} />
+                </div>
+              ) : (
+                <PlayingCard card={card} win={win} dim={dim} />
+              )}
+              <span
+                className={css.PlacedName}
+                data-latest={latest}
+                data-win={win}
+                data-card-index={scene && seat === mySeat && !card.covered ? true : undefined}
               >
-                {scene ? (
-                  <div className={css.CardOnTable}>
-                    <PlayingCard card={card} win={win} />
-                  </div>
-                ) : (
-                  <PlayingCard card={card} win={win} dim={dim} />
+                {seat === mySeat
+                  ? tr('table_games.you', 'You')
+                  : nameOf(table.players[seat].userId)}
+                {scene && seat === mySeat && !card.covered && (
+                  <strong className={css.PlayedIndex} aria-hidden="true">
+                    {cardIndex(card)}
+                  </strong>
                 )}
-                <span
-                  className={css.PlacedName}
-                  data-latest={latest}
-                  data-win={win}
-                  data-card-index={scene && seat === mySeat && !card.covered ? true : undefined}
-                >
-                  {seat === mySeat
-                    ? tr('table_games.you', 'You')
-                    : nameOf(table.players[seat].userId)}
-                  {scene && seat === mySeat && !card.covered && (
-                    <strong className={css.PlayedIndex} aria-hidden="true">
-                      {cardIndex(card, deck)}
-                    </strong>
-                  )}
-                </span>
-              </div>
-            ))}
+              </span>
+            </div>
+          ))}
 
-            {Array.from({ length: seats }, (_, seat) => {
-              const player = table.players[seat];
-              if (!player)
-                return (
-                  // eslint-disable-next-line react/no-array-index-key
-                  <div key={`empty-${seat}`} className={css.Seat} style={seatAt(seat)}>
-                    <div className={css.Avatar} data-empty="true" />
-                    <div className={css.SeatSub}>{tr('games.table.empty', 'empty')}</div>
-                  </div>
-                );
+          {Array.from({ length: seats }, (_, seat) => {
+            const player = table.players[seat];
+            if (!player)
               return (
-                <Seat
-                  key={player.userId}
-                  table={table}
-                  player={player}
-                  seat={seat}
-                  name={nameOf(player.userId)}
-                  avatar={avatarOf(player.userId)}
-                  style={seatAt(seat)}
-                />
+                // eslint-disable-next-line react/no-array-index-key
+                <div key={`empty-${seat}`} className={css.Seat} style={seatAt(seat)}>
+                  <div className={css.Avatar} data-empty="true" />
+                  <div className={css.SeatSub}>{tr('games.table.empty', 'empty')}</div>
+                </div>
               );
-            })}
+            return (
+              <Seat
+                key={player.userId}
+                table={table}
+                player={player}
+                seat={seat}
+                name={nameOf(player.userId)}
+                avatar={avatarOf(player.userId)}
+                style={seatAt(seat)}
+              />
+            );
+          })}
 
-            {scene && vira && (
-              <div
-                className={css.SceneVira}
-                role="group"
-                aria-label={viraLabel}
-                title={viraLabel}
-                style={
-                  {
-                    ...px(scene.vira),
-                    '--card-w': `${scene.viraCard}px`,
-                    '--vira-extension': `${
-                      scene.viraCard * (deck === 'spanish' ? 319 / 208 : 1.4) * 0.85
-                    }px`,
-                  } as CSSProperties
-                }
-              >
-                <div className={css.ViraStack}>
-                  <div className={css.ViraFace}>
-                    <PlayingCard card={vira} />
-                  </div>
-                  <div className={css.ViraDeck} aria-hidden="true">
-                    <PlayingCard back />
-                    <PlayingCard back />
-                  </div>
+          {scene && vira && (
+            <div
+              className={css.SceneVira}
+              role="group"
+              aria-label={viraLabel}
+              title={viraLabel}
+              style={
+                {
+                  ...px(scene.vira),
+                  '--card-w': `${scene.viraCard}px`,
+                  '--vira-extension': `${scene.viraCard * 1.4 * 0.85}px`,
+                } as CSSProperties
+              }
+            >
+              <div className={css.ViraStack}>
+                <div className={css.ViraFace}>
+                  <PlayingCard card={vira} />
+                </div>
+                <div className={css.ViraDeck} aria-hidden="true">
+                  <PlayingCard back />
+                  <PlayingCard back />
                 </div>
               </div>
-            )}
-            {truco && phase === 'respond' && table.pending && (
-              <div
-                key={`${table.id}:${table.round}:${table.pending.value}`}
-                className={css.TrucoStrike}
-                style={
-                  scene
-                    ? px({
-                        x: scene.vira.x,
-                        y: scene.vira.y + Math.ceil(scene.viraCard * 0.68) + 20,
-                      })
-                    : undefined
-                }
-                aria-hidden="true"
-              >
-                <PlayingCard back />
-                <PlayingCard back />
-              </div>
-            )}
-          </div>
-          {fannedHand && handCards}
-          {truco && phase === 'play' && status && (
-            <div className={css.TrucoPlayStatus} role="status">
-              {status}
             </div>
           )}
-          {truco && phase === 'play' && (canRaise || actions.length > 0) && (
+          {truco && phase === 'respond' && table.pending && (
             <div
-              className={css.TrucoPlayActions}
-              style={{ '--hand-card-w': `${scene?.handCard ?? 52}px` } as CSSProperties}
+              key={`${table.id}:${table.round}:${table.pending.value}`}
+              className={css.TrucoStrike}
+              style={
+                scene
+                  ? px({
+                      x: scene.vira.x,
+                      y: scene.vira.y + Math.ceil(scene.viraCard * 0.68) + 20,
+                    })
+                  : undefined
+              }
+              aria-hidden="true"
             >
-              {actions}
-              {canRaise && (
-                <button
-                  type="button"
-                  className={css.TrucoAsk}
-                  disabled={busy}
-                  onClick={() => onAct({ type: 'raise' })}
-                >
-                  <RaiseCards />
-                  {nextRaise(table.value) === 3
-                    ? tr('table_games.truco_call_button', 'Call truco')
-                    : raiseRequest(nextRaise(table.value))}
-                </button>
-              )}
-            </div>
-          )}
-          {truco && (
-            <div className={css.TrucoOverlays} data-responding={phase === 'respond'}>
-              {phase === 'respond' && (
-                <TrucoCall
-                  key={`${table.id}:${table.version}`}
-                  table={table}
-                  busy={busy}
-                  nameOf={nameOf}
-                  avatarOf={avatarOf}
-                  onAct={onAct}
-                />
-              )}
-              <TrucoResults key={table.id} table={table} nameOf={nameOf} />
+              <PlayingCard back />
+              <PlayingCard back />
             </div>
           )}
         </div>
-
-        {!truco && (
-          <div className={css.Bar}>
-            {status && (
-              <div className={css.Status} data-mine={myTurn}>
-                {status}
-              </div>
-            )}
-            {(showHand || actions.length > 0) && (
-              <div className={css.BarRow}>
-                {handCards}
-                {actions.length > 0 && <div className={css.Actions}>{actions}</div>}
-              </div>
+        {fannedHand && handCards}
+        {truco && phase === 'play' && status && (
+          <div className={css.TrucoPlayStatus} role="status">
+            {status}
+          </div>
+        )}
+        {truco && phase === 'play' && (canRaise || actions.length > 0) && (
+          <div
+            className={css.TrucoPlayActions}
+            style={{ '--hand-card-w': `${scene?.handCard ?? 52}px` } as CSSProperties}
+          >
+            {actions}
+            {canRaise && (
+              <button
+                type="button"
+                className={css.TrucoAsk}
+                disabled={busy}
+                onClick={() => onAct({ type: 'raise' })}
+              >
+                <RaiseCards />
+                {nextRaise(table.value) === 3
+                  ? tr('table_games.truco_call_button', 'Call truco')
+                  : raiseRequest(nextRaise(table.value))}
+              </button>
             )}
           </div>
         )}
+        {truco && (
+          <div className={css.TrucoOverlays} data-responding={phase === 'respond'}>
+            {phase === 'respond' && (
+              <TrucoCall
+                key={`${table.id}:${table.version}`}
+                table={table}
+                busy={busy}
+                nameOf={nameOf}
+                avatarOf={avatarOf}
+                onAct={onAct}
+              />
+            )}
+            <TrucoResults key={table.id} table={table} nameOf={nameOf} />
+          </div>
+        )}
       </div>
-    </DeckContext.Provider>
+
+      {!truco && (
+        <div className={css.Bar}>
+          {status && (
+            <div className={css.Status} data-mine={myTurn}>
+              {status}
+            </div>
+          )}
+          {(showHand || actions.length > 0) && (
+            <div className={css.BarRow}>
+              {handCards}
+              {actions.length > 0 && <div className={css.Actions}>{actions}</div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

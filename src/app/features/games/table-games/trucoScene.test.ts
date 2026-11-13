@@ -6,12 +6,28 @@ describe('trucoScene', () => {
     expect([2, 3, 4, 6].map(hasScene)).toEqual([true, false, true, false]);
   });
 
-  it('covers a wide stage and keeps the table at the bottom', () => {
-    const s = trucoScene(1280, 620, 4, 0);
-    expect(s.width).toBeGreaterThanOrEqual(1280);
-    expect(s.height).toBeGreaterThanOrEqual(620);
-    expect(s.top + s.height).toBe(620);
-    expect(s.left).toBeLessThanOrEqual(0);
+  it('covers a tall stage and keeps the table at the bottom', () => {
+    const s = trucoScene(390, 630, 4, 0);
+    expect(s.framed).toBe(false);
+    expect(s.width).toBeGreaterThanOrEqual(390);
+    expect(s.top + s.height).toBe(630);
+  });
+
+  it.each([
+    [1504, 819],
+    [1214, 752],
+  ])('sees a wide stage from further back at %i × %i', (width, height) => {
+    const s = trucoScene(width, height, 4, 0);
+    expect(s.framed).toBe(true);
+    expect(s.top).toBe(0);
+    expect(s.left).toBeGreaterThanOrEqual(0);
+    // The partner's card and the vira land on the tabletop, between its back and front edge.
+    const tableBack = s.top + s.height * 0.75;
+    const tableFront = s.top + s.height * 0.98;
+    [s.played[2], s.vira].forEach((p) => {
+      expect(p.y).toBeGreaterThan(tableBack);
+      expect(p.y).toBeLessThan(tableFront);
+    });
   });
 
   it('puts the viewer at the camera and the others clockwise on the chairs', () => {
@@ -51,9 +67,6 @@ describe('trucoScene', () => {
     expect(scene.vira.x).toBe(Math.round(width / 2));
     expect(scene.vira.y).toBeGreaterThan(scene.played[3].y);
     expect(scene.vira.y + scene.viraCard * 0.68).toBeLessThan(height - scene.handCard * 1.54 - 12);
-    const tabletop = scene.top + scene.height * 0.75;
-    const farCardTop = scene.played[3].y - (scene.card + 13) * 0.53 - 12;
-    expect(farCardTop).toBeGreaterThanOrEqual(tabletop);
     expect(trucoScene(width, height, 4, 0).vira).toEqual(scene.vira);
   });
 
@@ -72,5 +85,14 @@ describe('trucoScene', () => {
     const card = s.played[0];
     const apart = Math.abs(card.x - 500) > s.card || s.seats[0].y - card.y > s.card * 0.9 + 36;
     expect(apart).toBe(true);
+  });
+
+  it.each([
+    [1214, 752],
+    [1280, 620],
+    [390, 630],
+  ])('keeps the center panel above the far seat at %i × %i', (width, height) => {
+    const s = trucoScene(width, height, 4, 0);
+    expect(s.seats[2].y - s.door.y).toBeGreaterThanOrEqual(Math.min(110, s.seats[2].y - 90));
   });
 });

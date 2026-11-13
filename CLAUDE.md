@@ -22,8 +22,8 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 - Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes
   none: it shows the view the API sends and posts the player's action. The credits wallet
   (`games/credits`) is the API's too, shared only between card games. The Games hub shows
-  card games, action games and idle RPGs in separate sections with direct game buttons, and the wallet
-  belongs inside the card-games section. Idle gold stays in the hero's save, with no credit
+  the card games, with the wallet, then every other game in one "Mais jogos" section, each tagged
+  with its genre. Idle gold stays in the hero's save, with no credit
   transfers. `games/legacy` only cleans up the old Matrix-room tables and
   can go once people have opened the app.
 - `games/idle` (Crônicas da Brasa) is the opposite: an idle RPG that runs in the browser. It saves in
@@ -131,6 +131,9 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but
   cannot move. Poll snapshots use `revision`; actions use the separate gameplay `version`,
   so spectator comments don't invalidate moves. See `../docs/table-games.md` for rules.
+- Every card game draws its cards with `games/cards/GameCard`: a flat white face, a bold corner
+  index and one big suit, sized by `--card-w`. Realistic decks (Paulista figures, a Spanish
+  deck) were tried in Truco and dropped: at table sizes they were hard to read.
 - Put logic you want to test in a plain `.ts` file next to the component and test it
   with vitest (`npx vitest run`). Vitest here doesn't import `.tsx` test targets well.
 - Scoped lint/format/type checks live in `scripts/check.sh`; run `npm run check:blazeroom`.

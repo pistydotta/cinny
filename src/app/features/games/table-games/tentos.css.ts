@@ -13,8 +13,6 @@ const MUTED = '#8f8d87';
 const LINE = '#2e3037';
 const SURFACE = '#141518';
 const RAISED = '#1b1c20';
-const CARD = '#f5f1e8';
-const RED = '#a3352b';
 const SERIF = "'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif";
 
 export const Screen = style({
@@ -603,51 +601,12 @@ export const Mark = style({
   },
 });
 
+// The card itself is games/cards; a Truco card that won its trick gets a gold ring.
 export const Card = style({
-  position: 'relative',
-  width: 'var(--card-w, 46px)',
-  height: 'calc(var(--card-w, 46px) * 1.4)',
-  borderRadius: 6,
-  background: CARD,
-  color: '#1b1b1d',
-  fontFamily: SERIF,
-  boxSizing: 'border-box',
-  padding: '4px 5px',
-  lineHeight: 1,
-  fontSize: 'calc(var(--card-w, 46px) * 0.34)',
-  flexShrink: 0,
-  transition: 'transform 120ms ease, opacity 120ms ease',
   selectors: {
-    '&[data-red="true"]': { color: RED },
-    '&[data-back="true"]': {
-      background: '#24252a',
-      border: `1px solid #6d5c36`,
-      backgroundImage: 'repeating-linear-gradient(45deg, transparent 0 5px, #2c2d33 5px 6px)',
-    },
-    '&[data-deck]': {
-      background: 'white center / 100% 100% no-repeat',
-      border: 0,
-      borderRadius: '6% / 4.3%',
-      boxShadow: '0 2px 4px #0006',
-    },
-    '&[data-deck="spanish"]': {
-      height: 'calc(var(--card-w, 46px) * 319 / 208)',
-      backgroundImage: 'var(--truco-art)',
-      backgroundSize: '1200% 500%',
-      borderRadius: '7% / 4.5%',
-    },
-    // Age the stark vector deck toward the warm ivory of the reference: a sepia wash and a
-    // faint inner frame, so the white reads as cream and the inks warm up.
-    '&[data-deck="paulista"]': {
-      filter: 'sepia(0.3) saturate(0.84) brightness(1.02)',
-      boxShadow: '0 2px 5px #0007, inset 0 0 0 1.5px #3a280c1f',
-    },
     '&[data-win="true"]': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
-    '&[data-dim="true"]': { opacity: 0.6 },
   },
 });
-export const CardSuit = style({ display: 'block', fontSize: '0.8em', marginTop: 2 });
-globalStyle(`${HandTricksList} ${Card}[data-deck="paulista"]`, { filter: 'none' });
 
 const trucoCardStrike = keyframes({
   '0%': {
@@ -692,13 +651,6 @@ globalStyle(`${TrucoStrike} > ${Card}:last-child`, {
   vars: { '--strike-x': '12px', '--strike-angle': '10deg' },
   animationDelay: '30ms',
 });
-export const CardBig = style({
-  position: 'absolute',
-  right: '12%',
-  bottom: '8%',
-  fontSize: '1.35em',
-});
-
 export const TrickResults = style({
   position: 'absolute',
   top: 52,
@@ -1062,6 +1014,29 @@ export const Scene = style({
   maxWidth: 'none',
   pointerEvents: 'none',
   userSelect: 'none',
+  selectors: {
+    // Seen from further back, the photo's edges fade into the backdrop instead of ending in a line.
+    '&[data-framed]': {
+      maskImage:
+        'linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, #000 90%, transparent)',
+      maskComposite: 'intersect',
+    },
+  },
+});
+// Around a photo seen from further back: the same bar, out of focus, as the room around the
+// table and the near side of it.
+export const SceneBackdrop = style({
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  maxWidth: 'none',
+  objectFit: 'cover',
+  objectPosition: '50% 100%',
+  filter: 'blur(18px) brightness(0.5) saturate(1.1)',
+  transform: 'scale(1.08)',
+  pointerEvents: 'none',
+  userSelect: 'none',
 });
 export const SceneVira = style({
   position: 'absolute',
@@ -1106,34 +1081,6 @@ globalStyle(`${ViraDeck} > ${Card}`, {
 globalStyle(`${ViraDeck} > ${Card}:first-child`, {
   transform: 'translate(2px, 3px)',
   boxShadow: '1px 0 0 #9f7654, 3px 1px 0 #d5b894, 6px 2px 5px #2b0d0799',
-});
-globalStyle(`${ViraDeck} > ${Card}[data-deck="paulista"]:last-child::after`, {
-  content: '""',
-  position: 'absolute',
-  inset: 2,
-  border: '3px solid #f2ddba',
-  borderRadius: 4,
-  boxShadow: 'inset 0 0 0 1px #d1a66f, inset 0 0 0 3px #1e3438',
-  background:
-    'repeating-linear-gradient(45deg, #e9b87538 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, #e9b87538 0 1px, transparent 1px 6px), radial-gradient(ellipse at center, #34585a, #16272c 75%)',
-});
-globalStyle(`${ViraDeck} > ${Card}[data-deck="paulista"]:last-child::before`, {
-  content: '"♦"',
-  position: 'absolute',
-  zIndex: 1,
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  display: 'grid',
-  placeItems: 'center',
-  width: '43%',
-  aspectRatio: '1',
-  border: '1px solid #dbb982',
-  borderRadius: '50%',
-  background: '#20373c',
-  boxShadow: '0 0 0 2px #20373c, inset 0 0 0 2px #20373c, inset 0 0 0 3px #b58c5a',
-  color: '#f1cc93',
-  fontSize: 'calc(var(--card-w) * 0.23)',
 });
 globalStyle(SCENE, { top: 0, overflow: 'hidden' });
 globalStyle(`${Stage}:has(${SCENE})`, { background: '#2b170b' });

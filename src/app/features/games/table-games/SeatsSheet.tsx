@@ -4,7 +4,6 @@ import { InvitePicker } from '../poker/InvitePicker';
 import { TableStatus } from '../poker/inviteCandidates';
 import { gameName, rulesText } from './text';
 import { isBotId } from './tentosView';
-import { TRUCO_DECKS, TrucoDeck } from './trucoDeck';
 import { GameTable } from './types';
 import * as css from './tentos.css';
 
@@ -17,7 +16,6 @@ type SeatsSheetProps = {
   nameOf: (userId: string) => string;
   /** Fodinha keeps rules, cancel and resign on its page: the sheet only holds seats and invites. */
   seatsOnly?: boolean;
-  deckPreference?: { value: TrucoDeck; onChange: (deck: TrucoDeck) => void };
 };
 
 /** Everything that isn't the game: seats, bots, invitations, rules and leaving. */
@@ -29,7 +27,6 @@ export function SeatsSheet({
   onClose,
   nameOf,
   seatsOnly,
-  deckPreference,
 }: SeatsSheetProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -84,44 +81,6 @@ export function SeatsSheet({
             ✕
           </button>
         </div>
-
-        {deckPreference && (
-          <div>
-            <p className={css.SectionLabel} id="truco-deck-label">
-              {tr('table_games.truco_deck', 'Deck')}
-            </p>
-            <div className={css.Choices} role="group" aria-labelledby="truco-deck-label">
-              {TRUCO_DECKS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={css.Pill}
-                  aria-pressed={deckPreference.value === option}
-                  onClick={() => deckPreference.onChange(option)}
-                >
-                  {option === 'paulista'
-                    ? tr('table_games.truco_deck_paulista', 'Paulista')
-                    : tr('table_games.truco_deck_spanish', 'Spanish')}
-                </button>
-              ))}
-            </div>
-            <p className={css.Muted}>
-              {tr('table_games.truco_deck_hint', 'This changes how you see the cards.')}{' '}
-              <a
-                href={
-                  deckPreference.value === 'spanish'
-                    ? 'https://commons.wikimedia.org/wiki/File:Baraja_espa%C3%B1ola_completa.png'
-                    : 'https://www.me.uk/cards/'
-                }
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: 'inherit' }}
-              >
-                {tr('table_games.truco_deck_credit', 'Artwork credits')}
-              </a>
-            </p>
-          </div>
-        )}
 
         <div>
           {Array.from({ length: seats }, (_, seat) => {

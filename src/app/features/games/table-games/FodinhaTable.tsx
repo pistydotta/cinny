@@ -2,6 +2,7 @@ import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import { tr } from '../../translation/tr';
 import { suitName, Suit } from '../poker/types';
 import * as poker from '../poker/table/pokerTable.css';
+import { GameCard } from '../cards/GameCard';
 import { FodinhaLayout, pct, seatPoints, tableCenter, toward } from './fodinhaLayout';
 import {
   handOrder,
@@ -35,36 +36,20 @@ function FodinhaCard({
   highlight?: boolean;
   dim?: boolean;
 }) {
-  const show = faceUp && !!card && !card.covered;
   const joker = card?.rank === '★';
-  let label = tr('games.table.face_down', 'Face-down card');
-  if (show && joker) label = tr('table_games.joker', 'Joker');
-  else if (show && card) {
-    label = tr('games.table.card', '{{rank}} of {{suit}}', {
+  const face = card &&
+    !card.covered && {
       rank: card.rank,
-      suit: suitName(card.suit as Suit),
-    });
-  }
-  return (
-    <div
-      className={poker.Card}
-      data-highlight={highlight || undefined}
-      data-dim={dim || undefined}
-      role="img"
-      aria-label={label}
-    >
-      <div className={poker.CardInner} data-face={show ? 'up' : 'down'}>
-        {show && card && (
-          <div className={poker.CardFront} data-red={['d', 'h', 'r'].includes(card.suit)}>
-            <span className={poker.CardRank}>{joker ? '★' : card.rank}</span>
-            {!joker && <span className={poker.CardCornerSuit}>{SUIT_SYMBOL[card.suit]}</span>}
-            <span className={poker.CardBigSuit}>{SUIT_SYMBOL[card.suit] ?? ''}</span>
-          </div>
-        )}
-        <div className={poker.CardBack} />
-      </div>
-    </div>
-  );
+      suit: SUIT_SYMBOL[card.suit] ?? '',
+      red: ['d', 'h', 'r'].includes(card.suit),
+      label: joker
+        ? tr('table_games.joker', 'Joker')
+        : tr('games.table.card', '{{rank}} of {{suit}}', {
+            rank: card.rank,
+            suit: suitName(card.suit as Suit),
+          }),
+    };
+  return <GameCard face={face || undefined} faceUp={faceUp} highlight={highlight} dim={dim} />;
 }
 
 function Avatar({ name, src }: { name: string; src?: string }) {

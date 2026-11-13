@@ -10,13 +10,11 @@ type TopUpButtonProps = {
   className: string;
 };
 
-// The server refuses a top-up while seated; hiding the button when chips are at tables is
-// only the courtesy, so a seated player with no chips left still gets the reason.
+// The server refuses a top-up while credits sit at a table. The button stays visible then,
+// disabled with the reason: hiding it left players with no idea where it went.
 export function TopUpButton({ atTables, topUp, className }: TopUpButtonProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-
-  if (atTables > 0) return null;
 
   const handleClick = async () => {
     setBusy(true);
@@ -31,9 +29,22 @@ export function TopUpButton({ atTables, topUp, className }: TopUpButtonProps) {
 
   return (
     <>
-      <button type="button" className={className} disabled={busy} onClick={handleClick}>
+      <button
+        type="button"
+        className={className}
+        disabled={busy || atTables > 0}
+        onClick={handleClick}
+      >
         {tr('games.wallet.top_up', 'Get more coins')}
       </button>
+      {atTables > 0 && (
+        <p className={css.Note}>
+          {tr(
+            'games.wallet.top_up_blocked',
+            'Finish or leave your card-game tables to get more coins.'
+          )}
+        </p>
+      )}
       {error && <p className={css.ErrorText}>{error}</p>}
     </>
   );

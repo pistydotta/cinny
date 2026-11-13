@@ -14,7 +14,7 @@ export const Hub = style({
 });
 
 export const HubInner = style({
-  maxWidth: 960,
+  maxWidth: 1440,
   margin: '0 auto',
   padding: '24px 16px 48px',
   display: 'flex',
@@ -60,8 +60,8 @@ export const Subtitle = style({
 export const WalletCard = style({
   display: 'flex',
   alignItems: 'center',
-  gap: 18,
-  padding: '20px 22px',
+  gap: 14,
+  padding: '12px 16px',
   borderRadius: 4,
   background: color.SurfaceVariant.Container,
   border: `1px solid ${color.SurfaceVariant.ContainerLine}`,
@@ -70,17 +70,17 @@ export const WalletCard = style({
 
 /* The coin is a minted illustration, not a control, so it keeps its gold. */
 export const BigCoin = style({
-  width: 64,
-  height: 64,
+  width: 40,
+  height: 40,
   borderRadius: '50%',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   background: 'radial-gradient(circle at 35% 30%, #fff1b8, #f5c84b 45%, #b8860b)',
   boxShadow:
-    'inset 0 0 0 4px rgba(120,80,0,0.3), inset 0 0 0 7px rgba(255,241,184,0.5), 0 8px 24px rgba(245,200,75,0.35)',
+    'inset 0 0 0 3px rgba(120,80,0,0.3), inset 0 0 0 5px rgba(255,241,184,0.5), 0 4px 14px rgba(245,200,75,0.3)',
   color: '#6b4500',
-  fontSize: 28,
+  fontSize: 18,
   fontWeight: 900,
   flexShrink: 0,
 });
@@ -93,7 +93,7 @@ export const WalletInfo = style({
 });
 
 export const WalletLabel = style({
-  fontSize: 13,
+  fontSize: 11,
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
@@ -101,7 +101,7 @@ export const WalletLabel = style({
 });
 
 export const WalletBalance = style({
-  fontSize: 34,
+  fontSize: 20,
   fontWeight: 800,
   color: color.Background.OnContainer,
   fontFamily: mono,
@@ -128,7 +128,7 @@ export const SectionTitle = style({
 
 export const Grid = style({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))',
   gap: 16,
 });
 
@@ -208,6 +208,20 @@ export const CardBody = style({
   gap: 6,
   padding: '16px 18px 18px',
   flexGrow: 1,
+});
+
+// What kind of game it is, above its name.
+export const GameGenre = style({
+  alignSelf: 'flex-start',
+  padding: '2px 8px',
+  borderRadius: 4,
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  color: color.Surface.OnContainer,
+  border: `1px solid ${color.Surface.ContainerLine}`,
+  background: color.Surface.ContainerHover,
 });
 
 export const GameName = style({

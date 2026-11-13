@@ -164,42 +164,15 @@ export function GamesHub({
           </div>
         </section>
 
-        <section className={css.GameSection} aria-labelledby="board-games-heading">
-          <h2 id="board-games-heading" className={css.SectionTitle}>
-            {tr('table_games.board_games', 'Board games')}
-          </h2>
-          <div className={css.Grid}>
-            <div className={css.GameCard} data-playable="true">
-              <img className={css.GameArtwork} src={chessArt} alt="" loading="lazy" />
-              <div className={css.CardBody}>
-                <span className={css.GameName}>{gameName('chess')}</span>
-                <span className={css.GameMeta}>
-                  {tr(
-                    'table_games.chess_meta',
-                    'Free · 2 players · watch and comment on live tables'
-                  )}
-                </span>
-                <button
-                  type="button"
-                  className={css.PlayButton}
-                  onClick={() => onOpenTableGame('chess')}
-                >
-                  {tr('games.hub.play', 'Play')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className={css.GameSection} aria-labelledby="action-games-heading">
+        <section className={css.GameSection} aria-labelledby="more-games-heading">
           <div>
-            <h2 id="action-games-heading" className={css.SectionTitle}>
-              {tr('games.hub.action_games', 'Action')}
+            <h2 id="more-games-heading" className={css.SectionTitle}>
+              {tr('games.hub.more_games', 'More games')}
             </h2>
             <p className={css.Subtitle}>
               {tr(
-                'games.hub.horde_currency',
-                'Runs pay gold for upgrades in this game. It is separate from card-game credits.'
+                'games.hub.more_games_currency',
+                'These don’t use card-game credits: each one keeps its own progress.'
               )}
             </p>
           </div>
@@ -207,6 +180,9 @@ export function GamesHub({
             <div className={css.GameCard} data-playable="true">
               <img className={css.GameArtwork} src={hordeArt} alt="" loading="lazy" />
               <div className={css.CardBody}>
+                <span className={css.GameGenre}>
+                  {tr('games.hub.horde_genre', 'Action · Megabonk-style')}
+                </span>
                 <span className={css.GameName}>BrazilianBonk</span>
                 <span className={css.GameMeta}>
                   {tr(
@@ -219,22 +195,7 @@ export function GamesHub({
                 </button>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section className={css.GameSection} aria-labelledby="idle-games-heading">
-          <div>
-            <h2 id="idle-games-heading" className={css.SectionTitle}>
-              {tr('games.hub.idle_games', 'Idle RPG')}
-            </h2>
-            <p className={css.Subtitle}>
-              {tr(
-                'games.hub.idle_currency',
-                'Your hero earns gold in this game. It is separate from card-game credits.'
-              )}
-            </p>
-          </div>
-          <div className={css.Grid}>
             <div className={css.GameCard} data-playable="true">
               <div className={css.IdleArt}>
                 {['⚔️', '🔮', '🏹', '🐉', '🗡️'].map((icon, i) => (
@@ -248,14 +209,36 @@ export function GamesHub({
                 ))}
               </div>
               <div className={css.CardBody}>
+                <span className={css.GameGenre}>{tr('games.hub.idle_genre', 'Idle RPG')}</span>
                 <span className={css.GameName}>{tr('games.idle.title', 'Ember Chronicles')}</span>
                 <span className={css.GameMeta}>
                   {tr(
                     'games.hub.idle_meta',
-                    'Idle RPG · 6 classes and 12 specializations, forge, rebirth and arena'
+                    '6 classes and 12 specializations, forge, rebirth and arena'
                   )}
                 </span>
                 <button type="button" className={css.PlayButton} onClick={onOpenIdle}>
+                  {tr('games.hub.play', 'Play')}
+                </button>
+              </div>
+            </div>
+
+            <div className={css.GameCard} data-playable="true">
+              <img className={css.GameArtwork} src={chessArt} alt="" loading="lazy" />
+              <div className={css.CardBody}>
+                <span className={css.GameGenre}>{tr('games.hub.chess_genre', 'Board game')}</span>
+                <span className={css.GameName}>{gameName('chess')}</span>
+                <span className={css.GameMeta}>
+                  {tr(
+                    'table_games.chess_meta',
+                    'Free · 2 players · watch and comment on live tables'
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className={css.PlayButton}
+                  onClick={() => onOpenTableGame('chess')}
+                >
                   {tr('games.hub.play', 'Play')}
                 </button>
               </div>
