@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Icon, IconButton, Icons, Scroll, Text, config, toRem } from 'folds';
-import { Page, PageContent, PageHeader } from '../../components/page';
+import { Box, Scroll, Text, config, toRem } from 'folds';
+import { Page, PageContent } from '../../components/page';
 import { MobileBackHeader } from '../home-overview/MobileBackHeader';
 import { tr } from '../translation/tr';
 import { FeedbackForm } from './FeedbackForm';
@@ -38,35 +38,17 @@ export function FeedbackPage() {
   );
 }
 
-export function FeedbackSettings({ requestClose }: { requestClose: () => void }) {
+// The feedback form as a settings section, on the Help & about tab.
+export function FeedbackSection() {
   return (
-    <Page>
-      <PageHeader outlined={false}>
-        <Box grow="Yes" gap="200">
-          <Box grow="Yes" alignItems="Center" gap="200">
-            <Text size="H3" truncate>
-              {tr('feedback.title', 'Help & feedback')}
-            </Text>
-          </Box>
-          <Box shrink="No">
-            <IconButton onClick={requestClose} variant="Surface">
-              <Icon src={Icons.Cross} />
-            </IconButton>
-          </Box>
-        </Box>
-      </PageHeader>
-      <Box grow="Yes">
-        <Scroll hideTrack visibility="Hover">
-          <PageContent>
-            <Box direction="Column" gap="400">
-              <Text size="T300" priority="400">
-                {intro()}
-              </Text>
-              <FeedbackForm />
-            </Box>
-          </PageContent>
-        </Scroll>
+    <Box direction="Column" gap="100">
+      <Box direction="Column" gap="100">
+        <Text size="L400">{tr('feedback.send_title', 'Send feedback')}</Text>
+        <Text size="T200" priority="300">
+          {intro()}
+        </Text>
       </Box>
-    </Page>
+      <FeedbackForm />
+    </Box>
   );
 }

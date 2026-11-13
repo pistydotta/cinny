@@ -45,7 +45,7 @@ function WelcomeRow({ item, onEncryption }: { item: WelcomeItem; onEncryption: (
       title={<ItemTitle>{tr('settings.language', 'Language')}</ItemTitle>}
       description={tr(
         'welcome.language_body',
-        'To change it, open Settings (your avatar, bottom left) > General > Language.'
+        'To change it, open Settings (your avatar, bottom left) > Appearance > Language.'
       )}
     />
   );

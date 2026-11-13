@@ -61,6 +61,10 @@ const cardFace = style({
   borderRadius: 'inherit',
   backfaceVisibility: 'hidden',
   WebkitBackfaceVisibility: 'hidden',
+  // Each face is its own 3D layer, and a tilted layer's outer edge is drawn without smoothing.
+  // A transparent ring around the face keeps that edge outside the card, so the card's own edge
+  // is smoothed like any other line in the layer.
+  outline: '1px solid transparent',
   boxShadow: '0 calc(var(--card-w, 46px) * 0.05) calc(var(--card-w, 46px) * 0.12) rgba(0,0,0,0.45)',
 });
 
@@ -71,7 +75,8 @@ export const CardFront = style([
     color: '#15171c',
     // The same letters in every game, whatever font the game's screen uses.
     fontFamily: 'InterVariable, Inter, sans-serif',
-    overflow: 'hidden',
+    // No overflow clip: on a 3D layer its rounded mask is drawn with jagged edges, and nothing on
+    // the face reaches past the corners anyway.
     selectors: {
       '&[data-red="true"]': { color: '#d42b2b' },
       [`${Card}[data-highlight="true"] &`]: {
@@ -83,9 +88,9 @@ export const CardFront = style([
 
 export const CardRank = style({
   position: 'absolute',
-  top: '5%',
-  left: '9%',
-  fontSize: 'calc(var(--card-w, 46px) * 0.4)',
+  top: '4%',
+  left: '8%',
+  fontSize: 'calc(var(--card-w, 46px) * 0.46)',
   fontWeight: 800,
   lineHeight: 1,
   letterSpacing: 'calc(var(--card-w, 46px) * -0.03)',
@@ -93,17 +98,17 @@ export const CardRank = style({
 
 export const CardCornerSuit = style({
   position: 'absolute',
-  top: '38%',
-  left: '10%',
-  fontSize: 'calc(var(--card-w, 46px) * 0.24)',
+  top: '37%',
+  left: '9%',
+  fontSize: 'calc(var(--card-w, 46px) * 0.3)',
   lineHeight: 1,
 });
 
 export const CardBigSuit = style({
   position: 'absolute',
-  right: '7%',
-  bottom: '3%',
-  fontSize: 'calc(var(--card-w, 46px) * 0.62)',
+  right: '5%',
+  bottom: '1%',
+  fontSize: 'calc(var(--card-w, 46px) * 0.86)',
   lineHeight: 1,
 });
 

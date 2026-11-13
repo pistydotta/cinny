@@ -13,6 +13,10 @@ import {
 } from '../../../components/AccountDataEditor';
 import { copyToClipboard } from '../../../utils/dom';
 import { AccountData } from './AccountData';
+import { SettingsSection , SectionTitle } from '../SettingsPage';
+import { HiddenEventsSetting } from '../general';
+import { ClearCacheSetting } from '../about';
+import { tr } from '../../translation/tr';
 
 type DeveloperToolsProps = {
   requestClose: () => void;
@@ -47,7 +51,7 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Developer Tools
+              {tr('settings.tab.advanced', 'Advanced')}
             </Text>
           </Box>
           <Box shrink="No">
@@ -61,8 +65,32 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
         <Scroll hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="700">
+              <SettingsSection
+                title={tr('settings.section.timeline', 'Timeline')}
+                description={tr(
+                  'settings.about_section.debug_timeline',
+                  'See what the app normally hides.'
+                )}
+              >
+                <HiddenEventsSetting />
+              </SettingsSection>
+              <SettingsSection
+                title={tr('settings.section.local_data', 'Local data')}
+                description={tr(
+                  'settings.about_section.local_data',
+                  "What's stored on this device."
+                )}
+              >
+                <ClearCacheSetting />
+              </SettingsSection>
               <Box direction="Column" gap="100">
-                <Text size="L400">Options</Text>
+                <SectionTitle
+                  title={tr('settings.section.developer', 'Developer')}
+                  description={tr(
+                    'settings.about_section.developer',
+                    'Tools for people working on the code.'
+                  )}
+                />
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
@@ -70,7 +98,7 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="Enable Developer Tools"
+                    title={tr('settings.developer_tools', 'Developer tools')}
                     after={
                       <Switch
                         variant="Primary"

@@ -31,6 +31,7 @@ import { SequenceCardStyle } from '../settings/styles.css';
 import { tr } from '../translation/tr';
 import { SELF_CHAT_SETTINGS, parseSelfChatHidden } from './selfChat';
 import { isSelfChatRoom } from './selfChatRoom';
+import { SectionTitle } from '../settings/SettingsPage';
 
 export const useSelfChatHidden = (): boolean =>
   parseSelfChatHidden(useAccountData(SELF_CHAT_SETTINGS)?.getContent());
@@ -154,7 +155,13 @@ export function SelfChatSetting() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">{tr('self_chat.setting_section', 'Chat with yourself')}</Text>
+      <SectionTitle
+        title={tr('self_chat.setting_section', 'Chat with yourself')}
+        description={tr(
+          'settings.about_section.self_chat',
+          'A chat just for you, for notes and links.'
+        )}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

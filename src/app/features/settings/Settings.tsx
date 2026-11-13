@@ -1,54 +1,32 @@
 import React, { useMemo, useState } from 'react';
-import {
-  Avatar,
-  Box,
-  Button,
-  config,
-  Icon,
-  IconButton,
-  Icons,
-  IconSrc,
-  MenuItem,
-  Overlay,
-  OverlayBackdrop,
-  OverlayCenter,
-  Text,
-} from 'folds';
+import { Icons, IconSrc, Overlay, OverlayBackdrop, OverlayCenter } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { General } from './general';
-import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { AppearanceSettings, ChatSettings, VoiceSettings } from './general';
 import { Account } from './account';
-import { useUserProfile } from '../../hooks/useUserProfile';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { UserAvatar } from '../../components/user-avatar';
-import { nameInitials } from '../../utils/common';
 import { Notifications } from './notifications';
-import { Devices } from './devices';
+import { Privacy } from './privacy';
 import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
 import { Admin } from './admin';
-import { FeedbackSettings } from '../feedback';
 import { tr } from '../translation/tr';
 import { useAdminRole } from '../admin/useAdminApi';
 import { AdminRole } from '../admin/adminApi';
-import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
+import { SettingsShell } from '../settings-shell';
 
 export enum SettingsPages {
-  GeneralPage,
   AccountPage,
+  AppearancePage,
+  ChatsPage,
   NotificationPage,
-  DevicesPage,
+  VoicePage,
+  PrivacyPage,
   EmojisStickersPage,
-  DeveloperToolsPage,
-  AboutPage,
+  AdvancedPage,
   AdminPage,
-  FeedbackPage,
+  AboutPage,
 }
 
 type SettingsMenuItem = {
@@ -62,46 +40,57 @@ const useSettingsMenuItems = (adminRole: AdminRole): SettingsMenuItem[] => {
   return useMemo(
     () => [
       {
-        page: SettingsPages.GeneralPage,
-        name: 'General',
-        icon: Icons.Setting,
-      },
-      {
         page: SettingsPages.AccountPage,
-        name: 'Account',
+        name: tr('settings.tab.account', 'Account'),
         icon: Icons.User,
       },
       {
+        page: SettingsPages.AppearancePage,
+        name: tr('settings.tab.appearance', 'Appearance'),
+        icon: Icons.Setting,
+      },
+      {
+        page: SettingsPages.ChatsPage,
+        name: tr('settings.tab.chats', 'Chats'),
+        icon: Icons.Message,
+      },
+      {
         page: SettingsPages.NotificationPage,
-        name: 'Notifications',
+        name: tr('settings.tab.notifications', 'Notifications'),
         icon: Icons.Bell,
       },
       {
-        page: SettingsPages.DevicesPage,
-        name: 'Devices',
-        icon: Icons.Monitor,
+        page: SettingsPages.VoicePage,
+        name: tr('settings.tab.voice', 'Voice & video'),
+        icon: Icons.Mic,
+      },
+      {
+        page: SettingsPages.PrivacyPage,
+        name: tr('settings.tab.privacy', 'Privacy & security'),
+        icon: Icons.Lock,
       },
       {
         page: SettingsPages.EmojisStickersPage,
-        name: 'Emojis & Stickers',
+        name: tr('settings.tab.emojis', 'Emojis & Stickers'),
         icon: Icons.Smile,
       },
       {
-        page: SettingsPages.DeveloperToolsPage,
-        name: 'Developer Tools',
+        page: SettingsPages.AdvancedPage,
+        name: tr('settings.tab.advanced', 'Advanced'),
         icon: Icons.Terminal,
       },
       ...(isServerAdmin
-        ? [{ page: SettingsPages.AdminPage, name: 'Admin', icon: Icons.ShieldUser }]
+        ? [
+            {
+              page: SettingsPages.AdminPage,
+              name: tr('settings.tab.admin', 'Admin'),
+              icon: Icons.ShieldUser,
+            },
+          ]
         : []),
       {
-        page: SettingsPages.FeedbackPage,
-        name: tr('feedback.title', 'Help & feedback'),
-        icon: Icons.Bulb,
-      },
-      {
         page: SettingsPages.AboutPage,
-        name: 'About',
+        name: tr('settings.tab.help_about', 'Help & about'),
         icon: Icons.Info,
       },
     ],
@@ -114,145 +103,54 @@ type SettingsProps = {
   requestClose: () => void;
 };
 export function Settings({ initialPage, requestClose }: SettingsProps) {
-  const mx = useMatrixClient();
-  const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId()!;
-  const profile = useUserProfile(userId);
-  const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
-    : undefined;
-
-  const screenSize = useScreenSizeContext();
-  const [activePage, setActivePage] = useState<SettingsPages | undefined>(() => {
-    if (initialPage) return initialPage;
-    return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
-  });
+  const [activePage, setActivePage] = useState<SettingsPages>(
+    initialPage ?? SettingsPages.AccountPage
+  );
+  const [logout, setLogout] = useState(false);
   const adminRole = useAdminRole();
   const menuItems = useSettingsMenuItems(adminRole);
 
-  const handlePageRequestClose = () => {
-    if (screenSize === ScreenSize.Mobile) {
-      setActivePage(undefined);
-      return;
-    }
-    requestClose();
-  };
-
   return (
-    <PageRoot
-      nav={
-        screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
-          <PageNav size="300">
-            <PageNavHeader outlined={false}>
-              <Box grow="Yes" gap="200">
-                <Avatar size="200" radii="300">
-                  <UserAvatar
-                    userId={userId}
-                    src={avatarUrl}
-                    renderFallback={() => <Text size="H6">{nameInitials(displayName)}</Text>}
-                  />
-                </Avatar>
-                <Text size="H4" truncate>
-                  Settings
-                </Text>
-              </Box>
-              <Box shrink="No">
-                {screenSize === ScreenSize.Mobile && (
-                  <IconButton onClick={requestClose} variant="Background">
-                    <Icon src={Icons.Cross} />
-                  </IconButton>
-                )}
-              </Box>
-            </PageNavHeader>
-            <Box grow="Yes" direction="Column">
-              <PageNavContent>
-                <div style={{ flexGrow: 1 }}>
-                  {menuItems.map((item) => (
-                    <MenuItem
-                      key={item.name}
-                      variant="Background"
-                      radii="400"
-                      aria-pressed={activePage === item.page}
-                      before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
-                      onClick={() => setActivePage(item.page)}
-                    >
-                      <Text
-                        style={{
-                          fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
-                        }}
-                        size="T300"
-                        truncate
-                      >
-                        {item.name}
-                      </Text>
-                    </MenuItem>
-                  ))}
-                </div>
-              </PageNavContent>
-              <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column">
-                <UseStateProvider initial={false}>
-                  {(logout, setLogout) => (
-                    <>
-                      <Button
-                        size="300"
-                        variant="Critical"
-                        fill="None"
-                        radii="Pill"
-                        before={<Icon src={Icons.Power} size="100" />}
-                        onClick={() => setLogout(true)}
-                      >
-                        <Text size="B400">Logout</Text>
-                      </Button>
-                      {logout && (
-                        <Overlay open backdrop={<OverlayBackdrop />}>
-                          <OverlayCenter>
-                            <FocusTrap
-                              focusTrapOptions={{
-                                onDeactivate: () => setLogout(false),
-                                clickOutsideDeactivates: true,
-                                escapeDeactivates: stopPropagation,
-                              }}
-                            >
-                              <LogoutDialog handleClose={() => setLogout(false)} />
-                            </FocusTrap>
-                          </OverlayCenter>
-                        </Overlay>
-                      )}
-                    </>
-                  )}
-                </UseStateProvider>
-              </Box>
-            </Box>
-          </PageNav>
-        )
-      }
+    <SettingsShell
+      tabs={menuItems}
+      activePage={activePage}
+      onSelect={setActivePage}
+      requestClose={requestClose}
+      onLogout={() => setLogout(true)}
     >
-      {activePage === SettingsPages.GeneralPage && (
-        <General requestClose={handlePageRequestClose} />
+      {activePage === SettingsPages.AccountPage && <Account requestClose={requestClose} />}
+      {activePage === SettingsPages.AppearancePage && (
+        <AppearanceSettings requestClose={requestClose} />
       )}
-      {activePage === SettingsPages.AccountPage && (
-        <Account requestClose={handlePageRequestClose} />
-      )}
+      {activePage === SettingsPages.ChatsPage && <ChatSettings requestClose={requestClose} />}
       {activePage === SettingsPages.NotificationPage && (
-        <Notifications requestClose={handlePageRequestClose} />
+        <Notifications requestClose={requestClose} />
       )}
-      {activePage === SettingsPages.DevicesPage && (
-        <Devices requestClose={handlePageRequestClose} />
-      )}
+      {activePage === SettingsPages.VoicePage && <VoiceSettings requestClose={requestClose} />}
+      {activePage === SettingsPages.PrivacyPage && <Privacy requestClose={requestClose} />}
       {activePage === SettingsPages.EmojisStickersPage && (
-        <EmojisStickers requestClose={handlePageRequestClose} />
+        <EmojisStickers requestClose={requestClose} />
       )}
-      {activePage === SettingsPages.DeveloperToolsPage && (
-        <DeveloperTools requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.FeedbackPage && (
-        <FeedbackSettings requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
+      {activePage === SettingsPages.AdvancedPage && <DeveloperTools requestClose={requestClose} />}
       {activePage === SettingsPages.AdminPage && (
-        <Admin requestClose={handlePageRequestClose} role={adminRole} />
+        <Admin requestClose={requestClose} role={adminRole} />
       )}
-    </PageRoot>
+      {activePage === SettingsPages.AboutPage && <About requestClose={requestClose} />}
+      {logout && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                onDeactivate: () => setLogout(false),
+                clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <LogoutDialog handleClose={() => setLogout(false)} />
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
+    </SettingsShell>
   );
 }

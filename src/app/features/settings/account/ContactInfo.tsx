@@ -5,6 +5,8 @@ import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 export function ContactInformation() {
   const mx = useMatrixClient();
@@ -22,7 +24,10 @@ export function ContactInformation() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Contact Information</Text>
+      <SectionTitle
+        title={tr('settings.section.contact', 'Contact information')}
+        description={tr('settings.about_section.contact', 'The email linked to your account.')}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

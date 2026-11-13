@@ -4,6 +4,7 @@ import * as navCss from '../../components/nav/styles.css';
 import * as sidebarCss from '../../components/sidebar/Sidebar.css';
 import * as pageCss from '../../components/page/style.css';
 import { forgeDark } from './palette';
+import './switch.css';
 
 // Forge restyles Cinny's shell from here, so the upstream style files stay untouched.
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
@@ -77,8 +78,7 @@ const emberPulse = keyframes({
   '0%, 100%': { opacity: 0.45 },
   '50%': { opacity: 0.85 },
 });
-// A long streak that glides the length of the divider; it fades in and out at the ends so it never
-// pokes past the thread, which lets us skip overflow clipping on the zero-width line.
+// A long streak that glides the length of the divider, fading in and out at the ends.
 const sparkGlide = keyframes({
   '0%': { transform: 'translateY(-340px)', opacity: 0 },
   '8%': { opacity: 1 },
@@ -100,6 +100,9 @@ const applyDivider = (themeClass: string, c: DividerColors) => {
     position: 'relative',
     borderColor: c.thread,
     pointerEvents: 'none',
+    // The streak travels the viewport's height, which runs past a shorter divider (the music bar
+    // sits below it); clip it to the divider's own length, with room at the sides for its blur.
+    clipPath: 'inset(0 -6px)',
   });
   // The thread's glow, a thin line riding the full height of the divider.
   globalStyle(dividerSel(themeClass, '::before'), {

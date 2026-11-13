@@ -15,6 +15,8 @@ import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
 import { withSearchParam } from '../../../pages/pathUtils';
 import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
 import { SettingTile } from '../../../components/setting-tile';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 type OtherDevicesProps = {
   devices: IMyDevice[];
@@ -104,7 +106,13 @@ export function OtherDevices({ devices, refreshDeviceList, showVerification }: O
   return devices.length > 0 ? (
     <>
       <Box direction="Column" gap="100">
-        <Text size="L400">Others</Text>
+        <SectionTitle
+          title={tr('settings.section.other_devices', 'Other devices')}
+          description={tr(
+            'settings.about_section.other_devices',
+            "Where else you're signed in. Sign out anything you don't recognize."
+          )}
+        />
         {authMetadata && (
           <SequenceCard
             className={SequenceCardStyle}

@@ -5,6 +5,8 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { copyToClipboard } from '../../../utils/dom';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 export function MatrixId() {
   const mx = useMatrixClient();
@@ -12,7 +14,13 @@ export function MatrixId() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Matrix ID</Text>
+      <SectionTitle
+        title="Matrix ID"
+        description={tr(
+          'settings.about_section.matrix_id',
+          "Your address on blazeroom; it's how people find you."
+        )}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

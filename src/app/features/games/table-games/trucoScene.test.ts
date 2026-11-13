@@ -8,7 +8,7 @@ describe('trucoScene', () => {
 
   it('covers a tall stage and keeps the table at the bottom', () => {
     const s = trucoScene(390, 630, 4, 0);
-    expect(s.framed).toBe(false);
+    expect(s.wide).toBe(false);
     expect(s.width).toBeGreaterThanOrEqual(390);
     expect(s.top + s.height).toBe(630);
   });
@@ -16,18 +16,41 @@ describe('trucoScene', () => {
   it.each([
     [1504, 819],
     [1214, 752],
-  ])('sees a wide stage from further back at %i × %i', (width, height) => {
+  ])('covers a wide stage with the whole photo at %i × %i', (width, height) => {
     const s = trucoScene(width, height, 4, 0);
-    expect(s.framed).toBe(true);
-    expect(s.top).toBe(0);
-    expect(s.left).toBeGreaterThanOrEqual(0);
-    // The partner's card and the vira land on the tabletop, between its back and front edge.
-    const tableBack = s.top + s.height * 0.75;
-    const tableFront = s.top + s.height * 0.98;
-    [s.played[2], s.vira].forEach((p) => {
-      expect(p.y).toBeGreaterThan(tableBack);
-      expect(p.y).toBeLessThan(tableFront);
-    });
+    expect(s.wide).toBe(true);
+    // No bare stage around the photo, and its proportions kept.
+    expect(s.left).toBeLessThanOrEqual(0);
+    expect(s.top).toBeLessThanOrEqual(0);
+    expect(s.left + s.width).toBeGreaterThanOrEqual(width);
+    expect(s.top + s.height).toBeGreaterThanOrEqual(height);
+    expect(s.width / s.height).toBeCloseTo(1672 / 941, 2);
+  });
+
+  it.each([
+    [1504, 819],
+    [1280, 620],
+    [984, 652],
+  ])('gathers the trick in the middle and the vira by the hand at %i × %i', (width, height) => {
+    const s = trucoScene(width, height, 4, 0);
+    const [mine, left, far, right] = s.played;
+    // The far card lies on the table, past its back edge.
+    expect(far.y).toBeGreaterThanOrEqual(s.top + s.height * 0.75);
+    // The four meet in the middle, each a step toward its player.
+    expect(far.x).toBe(Math.round(width / 2));
+    expect(mine.x).toBe(far.x);
+    expect(left.x).toBeLessThan(far.x);
+    expect(right.x).toBeGreaterThan(far.x);
+    expect(far.y).toBeLessThan(left.y);
+    expect(left.y).toBe(right.y);
+    expect(left.y).toBeLessThan(mine.y);
+    // The viewer's card clears their hand, held low but mostly showing.
+    const handTop = height - Math.ceil(s.handCard * 1.54) - 12 + s.handDrop;
+    expect(mine.y + (s.card + 13) * 0.62).toBeLessThanOrEqual(handTop);
+    expect(height - handTop).toBeGreaterThanOrEqual(s.handCard * 1.2);
+    // The vira stands right of the hand and the call buttons, inside the stage.
+    expect(s.vira.x - s.viraCard / 2).toBeGreaterThan(width / 2 + s.handCard * 1.65);
+    expect(s.vira.x + s.viraCard * 1.65).toBeLessThanOrEqual(width);
   });
 
   it('puts the viewer at the camera and the others clockwise on the chairs', () => {
@@ -61,7 +84,6 @@ describe('trucoScene', () => {
   it.each([
     [390, 630],
     [833, 745],
-    [1280, 620],
   ])('centers the vira between the far play and the viewer’s hand at %i × %i', (width, height) => {
     const scene = trucoScene(width, height, 4, 1);
     expect(scene.vira.x).toBe(Math.round(width / 2));

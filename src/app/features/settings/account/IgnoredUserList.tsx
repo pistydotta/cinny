@@ -8,6 +8,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { isUserId } from '../../../utils/matrix';
 import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useAlive } from '../../../hooks/useAlive';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 function IgnoreUserInput({ userList }: { userList: string[] }) {
   const mx = useMatrixClient();
@@ -134,7 +136,13 @@ export function IgnoredUserList() {
   return (
     <Box direction="Column" gap="100">
       <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-        <Text size="L400">Blocked Users</Text>
+        <SectionTitle
+          title={tr('settings.section.blocked', 'Blocked users')}
+          description={tr(
+            'settings.about_section.blocked',
+            "People who can't message or invite you."
+          )}
+        />
       </Box>
       <SequenceCard
         className={SequenceCardStyle}

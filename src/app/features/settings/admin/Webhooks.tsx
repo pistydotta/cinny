@@ -7,6 +7,8 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { tr } from '../../translation/tr';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { copyToClipboard } from '../../../utils/dom';
+import { SequenceCard } from '../../../components/sequence-card';
+import { SequenceCardStyle } from '../styles.css';
 
 const selectStyle = {
   width: '100%',
@@ -93,231 +95,244 @@ export function Webhooks() {
   };
   const reveal = (path: string) => setUrl(new URL(path, window.location.origin).href);
   return (
-    <Box direction="Column" gap="300" style={{ paddingTop: 24 }}>
-      <Text size="L400">{tr('webhooks.title', 'Webhooks')}</Text>
-      <Text size="T200">
-        {tr(
-          'webhooks.description',
-          'Send text and links from external tools into one chat. Only superadmins can manage webhooks. Anyone with its URL can post to that chat.'
-        )}
-      </Text>
-      {data && !data.configured && (
-        <Text size="T200">
-          {tr('webhooks.setup', 'An owner needs to configure the dedicated webhook bot first.')}
+    <Box direction="Column" gap="100">
+      <Box direction="Column" gap="100">
+        <Text size="L400">{tr('webhooks.title', 'Webhooks')}</Text>
+        <Text size="T200" priority="300">
+          {tr(
+            'webhooks.description',
+            'Send text and links from external tools into one chat. Only superadmins can manage webhooks. Anyone with its URL can post to that chat.'
+          )}
         </Text>
-      )}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          run(async () => {
-            reveal((await api.create(name.trim(), spaceId, roomId)).path);
-            setName('');
-          });
-        }}
+      </Box>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="300"
       >
-        <Box direction="Column" gap="200">
-          <label htmlFor={`${formId}-name`}>
-            <Text as="span" size="T200">
-              {tr('webhooks.name', 'Integration name')}
-            </Text>
-            <Input
-              id={`${formId}-name`}
-              value={name}
-              onChange={(event) => setName(event.currentTarget.value)}
-              maxLength={60}
-              required
-              disabled={busy || !data?.configured}
-            />
-          </label>
-          <label htmlFor={`${formId}-space`}>
-            <Text as="span" size="T200">
-              {tr('webhooks.server', 'Server')}
-            </Text>
-            <select
-              id={`${formId}-space`}
-              style={selectStyle}
-              value={spaceId}
-              required
-              disabled={busy || !data?.configured}
-              onChange={(event) => {
-                setSpaceId(event.target.value);
-                setRoomId('');
-              }}
-            >
-              <option value="">{tr('webhooks.choose_server', 'Choose a server')}</option>
-              {spaces.map((item) => (
-                <option key={item.roomId} value={item.roomId}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label htmlFor={`${formId}-room`}>
-            <Text as="span" size="T200">
-              {tr('webhooks.chat', 'Chat (unencrypted)')}
-            </Text>
-            <select
-              id={`${formId}-room`}
-              style={selectStyle}
-              value={roomId}
-              required
-              disabled={busy || !data?.configured || !spaceId}
-              onChange={(event) => setRoomId(event.target.value)}
-            >
-              <option value="">{tr('webhooks.choose_chat', 'Choose a chat')}</option>
-              {rooms.map(
-                (item) =>
-                  item && (
-                    <option key={item.roomId} value={item.roomId}>
-                      {item.name}
-                    </option>
-                  )
-              )}
-            </select>
-          </label>
-          <Button
-            type="submit"
-            size="400"
-            disabled={busy || !data?.configured || !name.trim() || !roomId}
-          >
-            <Text size="B400">{tr('webhooks.create', 'Create webhook')}</Text>
-          </Button>
-        </Box>
-      </form>
-      {url && (
-        <Box direction="Column" gap="200">
+        {data && !data.configured && (
           <Text size="T200">
-            {tr(
-              'webhooks.url_notice',
-              'Copy this URL now. It is only shown when created or rotated. Rotating invalidates the old URL.'
-            )}
+            {tr('webhooks.setup', 'An owner needs to configure the dedicated webhook bot first.')}
           </Text>
-          <Input
-            aria-label={tr('webhooks.url', 'Webhook URL')}
-            value={url}
-            readOnly
-            autoComplete="off"
-          />
-          <Box gap="200">
-            <Button
-              size="300"
-              onClick={() => {
-                copyToClipboard(url);
-                setStatus(tr('webhooks.copied', 'URL copied'));
-              }}
-            >
-              <Text size="B400">{tr('webhooks.copy', 'Copy URL')}</Text>
-            </Button>
-            <Button size="300" onClick={() => setUrl('')}>
-              <Text size="B400">{tr('webhooks.hide', 'Hide URL')}</Text>
-            </Button>
-          </Box>
-        </Box>
-      )}
-      {error && (
-        <Text size="T200" role="alert" style={{ color: color.Critical.Main }}>
-          {error}
-        </Text>
-      )}
-      {status && (
-        <Text size="T200" role="status">
-          {status}
-        </Text>
-      )}
-      {data?.webhooks.map((hook) => (
-        <Box
-          key={hook.id}
-          direction="Column"
-          gap="200"
-          style={{
-            padding: 12,
-            border: `1px solid ${color.Surface.ContainerLine}`,
-            borderRadius: 8,
+        )}
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(async () => {
+              reveal((await api.create(name.trim(), spaceId, roomId)).path);
+              setName('');
+            });
           }}
         >
-          <Text size="T300">
-            {hook.name} ·{' '}
-            {hook.enabled ? tr('webhooks.enabled', 'Enabled') : tr('webhooks.disabled', 'Disabled')}
-          </Text>
-          <Text size="T200">
-            {mx.getRoom(hook.space_id)?.name ?? hook.space_id} /{' '}
-            {mx.getRoom(hook.room_id)?.name ?? hook.room_id}
-          </Text>
-          <Text size="T200">
-            {tr('webhooks.last_used', 'Last successful delivery')}:{' '}
-            {hook.last_used_at
-              ? new Date(hook.last_used_at).toLocaleString()
-              : tr('webhooks.never', 'Never')}
-          </Text>
-          <Box gap="200" wrap="Wrap">
-            <Button
-              size="300"
-              disabled={busy || !hook.enabled || !data.configured}
-              onClick={() =>
-                run(async () => {
-                  await api.test(hook.id);
-                  setStatus(tr('webhooks.test_sent', 'Test message sent'));
-                })
-              }
-            >
-              <Text size="B400">{tr('webhooks.test', 'Send test')}</Text>
-            </Button>
-            <Button
-              size="300"
-              disabled={busy}
-              onClick={() => run(() => api.enabled(hook.id, !hook.enabled))}
-            >
-              <Text size="B400">
-                {hook.enabled ? tr('webhooks.disable', 'Disable') : tr('webhooks.enable', 'Enable')}
+          <Box direction="Column" gap="200">
+            <label htmlFor={`${formId}-name`}>
+              <Text as="span" size="T200">
+                {tr('webhooks.name', 'Integration name')}
               </Text>
-            </Button>
+              <Input
+                id={`${formId}-name`}
+                value={name}
+                onChange={(event) => setName(event.currentTarget.value)}
+                maxLength={60}
+                required
+                disabled={busy || !data?.configured}
+              />
+            </label>
+            <label htmlFor={`${formId}-space`}>
+              <Text as="span" size="T200">
+                {tr('webhooks.server', 'Server')}
+              </Text>
+              <select
+                id={`${formId}-space`}
+                style={selectStyle}
+                value={spaceId}
+                required
+                disabled={busy || !data?.configured}
+                onChange={(event) => {
+                  setSpaceId(event.target.value);
+                  setRoomId('');
+                }}
+              >
+                <option value="">{tr('webhooks.choose_server', 'Choose a server')}</option>
+                {spaces.map((item) => (
+                  <option key={item.roomId} value={item.roomId}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label htmlFor={`${formId}-room`}>
+              <Text as="span" size="T200">
+                {tr('webhooks.chat', 'Chat (unencrypted)')}
+              </Text>
+              <select
+                id={`${formId}-room`}
+                style={selectStyle}
+                value={roomId}
+                required
+                disabled={busy || !data?.configured || !spaceId}
+                onChange={(event) => setRoomId(event.target.value)}
+              >
+                <option value="">{tr('webhooks.choose_chat', 'Choose a chat')}</option>
+                {rooms.map(
+                  (item) =>
+                    item && (
+                      <option key={item.roomId} value={item.roomId}>
+                        {item.name}
+                      </option>
+                    )
+                )}
+              </select>
+            </label>
             <Button
-              size="300"
-              disabled={busy}
-              onClick={() => run(async () => reveal((await api.rotate(hook.id)).path))}
+              type="submit"
+              size="400"
+              disabled={busy || !data?.configured || !name.trim() || !roomId}
             >
-              <Text size="B400">{tr('webhooks.rotate', 'Rotate URL')}</Text>
-            </Button>
-            <Button
-              size="300"
-              variant="Critical"
-              disabled={busy}
-              onClick={() => setDeleteId(hook.id)}
-            >
-              <Text size="B400">{tr('webhooks.delete', 'Delete')}</Text>
+              <Text size="B400">{tr('webhooks.create', 'Create webhook')}</Text>
             </Button>
           </Box>
-          {deleteId === hook.id && (
-            <Box direction="Column" gap="200">
-              <Text size="T200">
-                {tr(
-                  'webhooks.delete_notice',
-                  'Delete this webhook permanently? Its URL will stop working. Posted messages stay in chat.'
-                )}
-              </Text>
-              <Box gap="200">
-                <Button
-                  size="300"
-                  variant="Critical"
-                  disabled={busy}
-                  onClick={() =>
-                    run(async () => {
-                      await api.remove(hook.id);
-                      setUrl('');
-                      setDeleteId(undefined);
-                    })
-                  }
-                >
-                  <Text size="B400">{tr('webhooks.confirm_delete', 'Confirm deletion')}</Text>
-                </Button>
-                <Button size="300" disabled={busy} onClick={() => setDeleteId(undefined)}>
-                  <Text size="B400">{tr('webhooks.cancel', 'Cancel')}</Text>
-                </Button>
-              </Box>
+        </form>
+        {url && (
+          <Box direction="Column" gap="200">
+            <Text size="T200">
+              {tr(
+                'webhooks.url_notice',
+                'Copy this URL now. It is only shown when created or rotated. Rotating invalidates the old URL.'
+              )}
+            </Text>
+            <Input
+              aria-label={tr('webhooks.url', 'Webhook URL')}
+              value={url}
+              readOnly
+              autoComplete="off"
+            />
+            <Box gap="200">
+              <Button
+                size="300"
+                onClick={() => {
+                  copyToClipboard(url);
+                  setStatus(tr('webhooks.copied', 'URL copied'));
+                }}
+              >
+                <Text size="B400">{tr('webhooks.copy', 'Copy URL')}</Text>
+              </Button>
+              <Button size="300" onClick={() => setUrl('')}>
+                <Text size="B400">{tr('webhooks.hide', 'Hide URL')}</Text>
+              </Button>
             </Box>
-          )}
-        </Box>
-      ))}
+          </Box>
+        )}
+        {error && (
+          <Text size="T200" role="alert" style={{ color: color.Critical.Main }}>
+            {error}
+          </Text>
+        )}
+        {status && (
+          <Text size="T200" role="status">
+            {status}
+          </Text>
+        )}
+        {data?.webhooks.map((hook) => (
+          <Box
+            key={hook.id}
+            direction="Column"
+            gap="200"
+            style={{
+              padding: 12,
+              border: `1px solid ${color.Surface.ContainerLine}`,
+              borderRadius: 8,
+            }}
+          >
+            <Text size="T300">
+              {hook.name} ·{' '}
+              {hook.enabled
+                ? tr('webhooks.enabled', 'Enabled')
+                : tr('webhooks.disabled', 'Disabled')}
+            </Text>
+            <Text size="T200">
+              {mx.getRoom(hook.space_id)?.name ?? hook.space_id} /{' '}
+              {mx.getRoom(hook.room_id)?.name ?? hook.room_id}
+            </Text>
+            <Text size="T200">
+              {tr('webhooks.last_used', 'Last successful delivery')}:{' '}
+              {hook.last_used_at
+                ? new Date(hook.last_used_at).toLocaleString()
+                : tr('webhooks.never', 'Never')}
+            </Text>
+            <Box gap="200" wrap="Wrap">
+              <Button
+                size="300"
+                disabled={busy || !hook.enabled || !data.configured}
+                onClick={() =>
+                  run(async () => {
+                    await api.test(hook.id);
+                    setStatus(tr('webhooks.test_sent', 'Test message sent'));
+                  })
+                }
+              >
+                <Text size="B400">{tr('webhooks.test', 'Send test')}</Text>
+              </Button>
+              <Button
+                size="300"
+                disabled={busy}
+                onClick={() => run(() => api.enabled(hook.id, !hook.enabled))}
+              >
+                <Text size="B400">
+                  {hook.enabled
+                    ? tr('webhooks.disable', 'Disable')
+                    : tr('webhooks.enable', 'Enable')}
+                </Text>
+              </Button>
+              <Button
+                size="300"
+                disabled={busy}
+                onClick={() => run(async () => reveal((await api.rotate(hook.id)).path))}
+              >
+                <Text size="B400">{tr('webhooks.rotate', 'Rotate URL')}</Text>
+              </Button>
+              <Button
+                size="300"
+                variant="Critical"
+                disabled={busy}
+                onClick={() => setDeleteId(hook.id)}
+              >
+                <Text size="B400">{tr('webhooks.delete', 'Delete')}</Text>
+              </Button>
+            </Box>
+            {deleteId === hook.id && (
+              <Box direction="Column" gap="200">
+                <Text size="T200">
+                  {tr(
+                    'webhooks.delete_notice',
+                    'Delete this webhook permanently? Its URL will stop working. Posted messages stay in chat.'
+                  )}
+                </Text>
+                <Box gap="200">
+                  <Button
+                    size="300"
+                    variant="Critical"
+                    disabled={busy}
+                    onClick={() =>
+                      run(async () => {
+                        await api.remove(hook.id);
+                        setUrl('');
+                        setDeleteId(undefined);
+                      })
+                    }
+                  >
+                    <Text size="B400">{tr('webhooks.confirm_delete', 'Confirm deletion')}</Text>
+                  </Button>
+                  <Button size="300" disabled={busy} onClick={() => setDeleteId(undefined)}>
+                    <Text size="B400">{tr('webhooks.cancel', 'Cancel')}</Text>
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        ))}
+      </SequenceCard>
     </Box>
   );
 }

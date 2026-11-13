@@ -44,6 +44,8 @@ import { createUploadAtom, UploadSuccess } from '../../../state/upload';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import { DescriptionField } from '../../profile-description/DescriptionField';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 type ProfileProps = {
   profile: UserProfile;
@@ -323,7 +325,10 @@ export function Profile() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Profile</Text>
+      <SectionTitle
+        title={tr('settings.section.profile', 'Profile')}
+        description={tr('settings.about_section.profile', 'How others see you.')}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

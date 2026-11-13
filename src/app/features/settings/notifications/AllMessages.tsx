@@ -14,6 +14,8 @@ import {
   useNotificationModeActions,
 } from '../../../hooks/useNotificationMode';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 const getAllMessageDefaultRule = (
   ruleId: RuleId,
@@ -82,7 +84,13 @@ export function AllMessagesNotifications() {
   return (
     <Box direction="Column" gap="100">
       <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-        <Text size="L400">All Messages</Text>
+        <SectionTitle
+          title={tr('settings.section.all_messages', 'All messages')}
+          description={tr(
+            'settings.about_section.all_messages',
+            'How each kind of chat notifies you.'
+          )}
+        />
         <Box gap="100">
           <Text size="T200">Badge: </Text>
           <Badge radii="300" variant="Secondary" fill="Solid">

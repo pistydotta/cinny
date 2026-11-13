@@ -45,6 +45,7 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../../utils/keyboard';
 import { TipIconButton } from '../../tooltips/TipIconButton';
 import { tr } from '../../translation/tr';
+import { SectionTitle } from '../SettingsPage';
 
 function GlobalPackSelector({
   packs,
@@ -423,7 +424,13 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
   return (
     <>
       <Box direction="Column" gap="100">
-        <Text size="L400">Favorite Packs</Text>
+        <SectionTitle
+          title={tr('settings.section.favorite_packs', 'Favorite packs')}
+          description={tr(
+            'settings.about_section.favorite_packs',
+            'Room packs you want to use everywhere.'
+          )}
+        />
         <SequenceCard
           className={SequenceCardStyle}
           variant="SurfaceVariant"

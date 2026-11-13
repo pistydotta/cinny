@@ -12,6 +12,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { PushNotificationsTile } from '../../push/PushNotifications';
 import { AndroidPushTile } from '../../android-app/AndroidPush';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 function EmailNotification() {
   const mx = useMatrixClient();
@@ -100,7 +102,10 @@ export function SystemNotification() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">System</Text>
+      <SectionTitle
+        title={tr('settings.section.system', 'System')}
+        description={tr('settings.about_section.system', 'Browser alerts, sound and email.')}
+      />
       <PushNotificationsTile />
       <AndroidPushTile />
       <SequenceCard

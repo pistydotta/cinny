@@ -11,6 +11,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { decryptMegolmKeyFile, encryptMegolmKeyFile } from '../../../../util/cryptE2ERoomKeys';
 import { useAlive } from '../../../hooks/useAlive';
 import { useFilePicker } from '../../../hooks/useFilePicker';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 function ExportKeys() {
   const mx = useMatrixClient();
@@ -303,7 +305,13 @@ function ImportKeysTile() {
 export function LocalBackup() {
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Local Backup</Text>
+      <SectionTitle
+        title={tr('settings.section.local_backup', 'Local backup')}
+        description={tr(
+          'settings.about_section.local_backup',
+          'Save your keys to a file to read old messages later.'
+        )}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

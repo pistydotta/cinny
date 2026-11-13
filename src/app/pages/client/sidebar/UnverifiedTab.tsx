@@ -78,7 +78,7 @@ function UnverifiedIndicator() {
       )}
       {settings && (
         <Modal500 requestClose={closeSettings}>
-          <Settings initialPage={SettingsPages.DevicesPage} requestClose={closeSettings} />
+          <Settings initialPage={SettingsPages.PrivacyPage} requestClose={closeSettings} />
         </Modal500>
       )}
     </>

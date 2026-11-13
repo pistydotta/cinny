@@ -8,6 +8,8 @@ import { ImagePack, ImageUsage } from '../../../plugins/custom-emoji';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 type UserPackProps = {
   onViewPack: (imagePack: ImagePack) => void;
@@ -31,7 +33,13 @@ export function UserPack({ onViewPack }: UserPackProps) {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Default Pack</Text>
+      <SectionTitle
+        title={tr('settings.section.default_pack', 'Your pack')}
+        description={tr(
+          'settings.about_section.default_pack',
+          'Your emojis and stickers, in every chat.'
+        )}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

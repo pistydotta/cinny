@@ -1,27 +1,54 @@
 import React from 'react';
-import { Box, Text, IconButton, Icon, Icons, Scroll, Button, config, toRem } from 'folds';
+import { Box, Text, IconButton, Icon, Icons, Scroll, Button, config } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import CinnySVG from '../../../../../public/res/svg/cinny.svg';
 import { clearCacheAndReload } from '../../../../client/initMatrix';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { sourceUrl } from '../../source/sourceUrl';
+import { SettingsRow, SettingsSection, SectionTitle } from '../SettingsPage';
+import { FeedbackSection } from '../../feedback/FeedbackPage';
+import { tr } from '../../translation/tr';
+
+export function ClearCacheSetting() {
+  const mx = useMatrixClient();
+  return (
+    <SettingsRow>
+      <SettingTile
+        title={tr('settings.clear_cache', 'Clear cache and reload')}
+        description={tr(
+          'settings.clear_cache_description',
+          'Clear all your locally stored data and reload from server.'
+        )}
+        after={
+          <Button
+            onClick={() => clearCacheAndReload(mx)}
+            variant="Secondary"
+            fill="Soft"
+            size="300"
+            radii="300"
+            outlined
+          >
+            <Text size="B300">{tr('settings.clear_cache_button', 'Clear cache')}</Text>
+          </Button>
+        }
+      />
+    </SettingsRow>
+  );
+}
 
 type AboutProps = {
   requestClose: () => void;
 };
 export function About({ requestClose }: AboutProps) {
-  const mx = useMatrixClient();
-
   return (
     <Page>
       <PageHeader outlined={false}>
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              About
+              {tr('settings.tab.help_about', 'Help & about')}
             </Text>
           </Box>
           <Box shrink="No">
@@ -35,81 +62,59 @@ export function About({ requestClose }: AboutProps) {
         <Scroll hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="700">
-              <Box gap="400">
-                <Box shrink="No">
-                  <img
-                    style={{ width: toRem(60), height: toRem(60) }}
-                    src={CinnySVG}
-                    alt="Cinny logo"
-                  />
-                </Box>
-                <Box direction="Column" gap="300">
-                  <Box direction="Column" gap="100">
-                    <Box gap="100" alignItems="End">
-                      <Text size="H3">Cinny</Text>
-                      <Text size="T200">v4.12.8</Text>
-                    </Box>
-                    <Text>Yet another matrix client.</Text>
-                  </Box>
-
-                  <Box gap="200" wrap="Wrap">
-                    <Button
-                      as="a"
-                      href={sourceUrl}
-                      rel="noreferrer noopener"
-                      target="_blank"
-                      variant="Secondary"
-                      fill="Soft"
-                      size="300"
-                      radii="300"
-                      before={<Icon src={Icons.Code} size="100" filled />}
-                    >
-                      <Text size="B300">Source Code</Text>
-                    </Button>
-                    <Button
-                      as="a"
-                      href="https://cinny.in/#sponsor"
-                      rel="noreferrer noopener"
-                      target="_blank"
-                      variant="Critical"
-                      fill="Soft"
-                      size="300"
-                      radii="300"
-                      before={<Icon src={Icons.Heart} size="100" filled />}
-                    >
-                      <Text size="B300">Support</Text>
-                    </Button>
-                  </Box>
-                </Box>
-              </Box>
-              <Box direction="Column" gap="100">
-                <Text size="L400">Options</Text>
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
+              <FeedbackSection />
+              <SettingsSection
+                title={tr('settings.section.about', 'About')}
+                description={tr('settings.about_section.about', 'The app and the code behind it.')}
+              >
+                <SettingsRow>
                   <SettingTile
-                    title="Clear Cache & Reload"
-                    description="Clear all your locally stored data and reload from server."
+                    title={tr('settings.about_version', 'blazeroom, built on Cinny v4.12.8')}
+                    description={tr(
+                      'settings.about_description',
+                      'A Matrix client, open source like Cinny.'
+                    )}
                     after={
-                      <Button
-                        onClick={() => clearCacheAndReload(mx)}
-                        variant="Secondary"
-                        fill="Soft"
-                        size="300"
-                        radii="300"
-                        outlined
-                      >
-                        <Text size="B300">Clear Cache</Text>
-                      </Button>
+                      <Box gap="200" wrap="Wrap">
+                        <Button
+                          as="a"
+                          href={sourceUrl}
+                          rel="noreferrer noopener"
+                          target="_blank"
+                          variant="Secondary"
+                          fill="Soft"
+                          size="300"
+                          radii="300"
+                          before={<Icon src={Icons.Code} size="100" filled />}
+                        >
+                          <Text size="B300">{tr('settings.source_code', 'Source code')}</Text>
+                        </Button>
+                        <Button
+                          as="a"
+                          href="https://cinny.in/#sponsor"
+                          rel="noreferrer noopener"
+                          target="_blank"
+                          variant="Critical"
+                          fill="Soft"
+                          size="300"
+                          radii="300"
+                          before={<Icon src={Icons.Heart} size="100" filled />}
+                        >
+                          <Text size="B300">{tr('settings.support_cinny', 'Support Cinny')}</Text>
+                        </Button>
+                      </Box>
                     }
                   />
-                </SequenceCard>
-              </Box>
+                </SettingsRow>
+              </SettingsSection>
               <Box direction="Column" gap="100">
-                <Text size="L400">Credits</Text>
+                <SectionTitle
+                  title={tr('settings.section.credits', 'Credits')}
+                  description={tr(
+                    'settings.about_section.credits',
+                    'Open projects blazeroom is built with.'
+                  )}
+                />
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"

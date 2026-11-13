@@ -15,6 +15,8 @@ import {
 } from '../../../hooks/useNotificationMode';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {
   highlight: true,
@@ -162,7 +164,10 @@ export function KeywordMessagesNotifications() {
   return (
     <Box direction="Column" gap="100">
       <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-        <Text size="L400">Keyword Messages</Text>
+        <SectionTitle
+          title={tr('settings.section.keywords', 'Keywords')}
+          description={tr('settings.about_section.keywords', 'Get notified when a word shows up.')}
+        />
         <Box gap="100">
           <Text size="T200">Badge: </Text>
           <Badge radii="300" variant="Success" fill="Solid">

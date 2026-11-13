@@ -6,6 +6,8 @@ import { SettingTile } from '../../../components/setting-tile';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useAccountDataCallback } from '../../../hooks/useAccountDataCallback';
 import { CutoutCard } from '../../../components/cutout-card';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 type AccountDataProps = {
   expand: boolean;
@@ -27,7 +29,13 @@ export function AccountData({ expand, onExpandToggle, onSelect }: AccountDataPro
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Account Data</Text>
+      <SectionTitle
+        title={tr('settings.section.account_data', 'Account data')}
+        description={tr(
+          'settings.about_section.account_data',
+          'The raw data the server keeps for your account.'
+        )}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

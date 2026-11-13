@@ -10,6 +10,8 @@ import { useCapabilities } from '../../../hooks/useCapabilities';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAlive } from '../../../hooks/useAlive';
 import { changePassword, changePasswordErrorMessage } from './changePassword';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 type PasswordForm = HTMLFormElement & {
   currentPasswordInput: HTMLInputElement;
@@ -141,7 +143,10 @@ export function Password() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Password</Text>
+      <SectionTitle
+        title={tr('settings.section.password', 'Password')}
+        description={tr('settings.about_section.password', 'Change the password you sign in with.')}
+      />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

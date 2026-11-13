@@ -27,6 +27,7 @@ import { feedbackTypeLabel } from '../../feedback/FeedbackForm';
 import { FeedbackItem, feedbackErrorMessage, splitFeedback } from '../../feedback/feedbackApi';
 import { useFeedbackApi } from '../../feedback/useFeedbackApi';
 import { tr } from '../../translation/tr';
+import { SectionTitle } from '../SettingsPage';
 
 const HeaderStyle: CSSProperties = {
   padding: `0 ${config.space.S400}`,
@@ -233,7 +234,13 @@ export function FeedbackList() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">{tr('feedback.title', 'Help & feedback')}</Text>
+      <SectionTitle
+        title={tr('feedback.title', 'Help & feedback')}
+        description={tr(
+          'settings.about_section.feedback_inbox',
+          'What people sent from the Help tab.'
+        )}
+      />
       {error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
           <b>{error}</b>

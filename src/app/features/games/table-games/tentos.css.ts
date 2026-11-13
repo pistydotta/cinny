@@ -99,7 +99,7 @@ export const TrucoOverlays = style({
   selectors: {
     '&[data-responding="true"]': {
       position: 'absolute',
-      top: 52,
+      top: 'var(--call-top, 52px)',
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 4,
@@ -251,11 +251,17 @@ export const TrucoPlayActions = style({
   bottom: 14,
   zIndex: 2,
   display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  gap: 6,
+  alignItems: 'center',
+  gap: 8,
   '@media': {
-    '(max-width: 580px)': { left: 'auto', right: 10, bottom: 106, alignItems: 'flex-end' },
+    '(max-width: 580px)': {
+      left: 'auto',
+      right: 10,
+      bottom: 106,
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: 6,
+    },
   },
 });
 export const TrucoAsk = style({
@@ -278,7 +284,28 @@ export const TrucoAsk = style({
     '&:active:enabled': { transform: 'translateY(1px)' },
     '&:focus-visible': { outline: '2px solid #ffe3ac', outlineOffset: 3 },
     '&:disabled': { opacity: 0.6, cursor: 'default' },
+    '&[aria-pressed="true"]': { borderColor: GOLD, color: GOLD },
   },
+});
+// Cover sits beside the call in the same shape, a shade darker so the call stays the one to look at.
+export const CoverButton = style([
+  TrucoAsk,
+  {
+    background: 'linear-gradient(165deg, #2a1713, #160c0a)',
+    borderColor: '#a8875f',
+    selectors: { '&:hover:enabled': { background: '#3a221b' } },
+  },
+]);
+// Cover's icon: one card face down, with the deck's back.
+export const CoverCard = style({
+  width: 16,
+  height: 22,
+  flexShrink: 0,
+  borderRadius: 3,
+  background:
+    'repeating-linear-gradient(45deg, #ffffff1f 0 1px, transparent 1px 3px), repeating-linear-gradient(-45deg, #ffffff1f 0 1px, transparent 1px 3px), linear-gradient(160deg, #b3202f, #7d1020)',
+  boxShadow: 'inset 0 0 0 1.5px #f6f2e8, inset 0 0 0 2px #d9b65b, 0 1px 3px #1a0e09aa',
+  transform: 'rotate(-8deg)',
 });
 export const RaiseCards = style({
   position: 'relative',
@@ -653,13 +680,14 @@ globalStyle(`${TrucoStrike} > ${Card}:last-child`, {
 });
 export const TrickResults = style({
   position: 'absolute',
-  top: 52,
+  // Above the doorway, where the hand's result shows, when the table is seen from further back.
+  top: 'var(--notice-top, 52px)',
   left: '50%',
-  transform: 'translateX(-50%)',
+  transform: 'translate(-50%, var(--notice-lift, 0%))',
   zIndex: 3,
   display: 'grid',
   gap: 6,
-  width: 'min(300px, calc(100% - 24px))',
+  width: 'min(320px, calc(100% - 24px))',
   pointerEvents: 'none',
   selectors: {
     [`${TrucoOverlays}[data-responding="true"] &`]: {
@@ -673,18 +701,23 @@ export const TrickResults = style({
 export const TrickNotice = style({
   display: 'flex',
   alignItems: 'center',
-  gap: 9,
-  padding: '6px 10px',
-  vars: { '--card-w': '25px' },
+  gap: 12,
+  padding: '8px 14px 8px 10px',
+  // The card that took the trick is the point of the notice, so it is shown at a readable size.
+  vars: { '--card-w': '50px' },
   background: '#1a100bf2',
   color: INK,
   border: '1px solid #896642',
   borderRadius: 9,
   boxShadow: '0 4px 12px #0005',
-  fontSize: 12,
+  fontSize: 13,
   overflowWrap: 'anywhere',
 });
-export const TrickNoticeTitle = style({ color: GOLD, fontSize: 11, fontWeight: 650 });
+globalStyle(`${TrickNotice} > ${Card}`, {
+  transform: 'rotate(-6deg)',
+  filter: `drop-shadow(0 0 6px ${GOLD}aa)`,
+});
+export const TrickNoticeTitle = style({ color: GOLD, fontSize: 12, fontWeight: 650 });
 export const TrickNoticeDetail = style({ color: '#d8c8b5', fontSize: 11 });
 
 export const Placed = style({
@@ -851,7 +884,7 @@ export const Hand = style({
     '&[data-fanned="true"]': {
       position: 'absolute',
       zIndex: 2,
-      bottom: 12,
+      bottom: 'var(--hand-bottom, 12px)',
       left: '50%',
       transform: 'translateX(-50%)',
       alignItems: 'flex-end',
@@ -1014,29 +1047,6 @@ export const Scene = style({
   maxWidth: 'none',
   pointerEvents: 'none',
   userSelect: 'none',
-  selectors: {
-    // Seen from further back, the photo's edges fade into the backdrop instead of ending in a line.
-    '&[data-framed]': {
-      maskImage:
-        'linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, #000 90%, transparent)',
-      maskComposite: 'intersect',
-    },
-  },
-});
-// Around a photo seen from further back: the same bar, out of focus, as the room around the
-// table and the near side of it.
-export const SceneBackdrop = style({
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  maxWidth: 'none',
-  objectFit: 'cover',
-  objectPosition: '50% 100%',
-  filter: 'blur(18px) brightness(0.5) saturate(1.1)',
-  transform: 'scale(1.08)',
-  pointerEvents: 'none',
-  userSelect: 'none',
 });
 export const SceneVira = style({
   position: 'absolute',
@@ -1073,6 +1083,13 @@ globalStyle(`${ViraFace} > ${Card}::after`, {
 export const ViraDeck = style({
   gridArea: '1 / 1',
   display: 'grid',
+});
+// By the viewer's hand on a wide table the deck stands upright, and the vira lies under it the
+// same way, swung out to the right from its foot so its corner index clears the deck.
+globalStyle(`${SceneVira}[data-upright] ${ViraStack}`, { paddingTop: 0, transform: 'none' });
+globalStyle(`${SceneVira}[data-upright] ${ViraFace}`, {
+  transformOrigin: 'bottom left',
+  transform: 'translate(calc(0.72 * var(--card-w)), calc(-0.2 * var(--card-w))) rotate(25deg)',
 });
 globalStyle(`${ViraDeck} > ${Card}`, {
   gridArea: '1 / 1',

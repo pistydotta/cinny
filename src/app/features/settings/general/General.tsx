@@ -20,15 +20,12 @@ import {
   MenuItem,
   PopOut,
   RectCords,
-  Scroll,
   Switch,
   Text,
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';
 import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
@@ -40,7 +37,8 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
-import { SequenceCardStyle } from '../styles.css';
+import { SettingsPage, SettingsRow, SettingsSection } from '../SettingsPage';
+import { SelfChatSetting } from '../../self-chat/SelfChatHiding';
 import { LanguageSetting } from '../../translation/LanguageSetting';
 import { TipIconButton } from '../../tooltips/TipIconButton';
 import { tr } from '../../translation/tr';
@@ -89,39 +87,30 @@ function PageZoomInput() {
   );
 }
 
-function Appearance() {
+function Theme() {
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
-  const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
 
   return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Appearance</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+    <SettingsSection
+      title={tr('settings.section.theme', 'Theme')}
+      description={tr('settings.about_section.theme', 'How blazeroom looks to you.')}
+    >
+      <SettingsRow>
         <ThemeModeSetting />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <DividerMotionSetting />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <SettingTile
-          title="Monochrome Mode"
+          title={tr('settings.monochrome', 'Monochrome mode')}
           after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
         />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Twitter Emoji"
-          after={<Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />}
-        />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile title="Page Zoom" after={<PageZoomInput />} />
-      </SequenceCard>
-    </Box>
+      </SettingsRow>
+      <SettingsRow>
+        <SettingTile title={tr('settings.page_zoom', 'Page zoom')} after={<PageZoomInput />} />
+      </SettingsRow>
+    </SettingsSection>
   );
 }
 
@@ -448,7 +437,7 @@ function SelectDateFormat() {
   return (
     <>
       <SettingTile
-        title="Date Format"
+        title={tr('settings.date_format', 'Date format')}
         description={customDateFormat ? dayjs().format(dateFormatString) : ''}
         after={<PresetDateFormat value={selectedDateFormat} onChange={handlePresetChange} />}
       />
@@ -463,53 +452,72 @@ function DateAndTime() {
   const [hour24Clock, setHour24Clock] = useSetting(settingsAtom, 'hour24Clock');
 
   return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Date & Time</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+    <SettingsSection
+      title={tr('settings.section.date_time', 'Date & time')}
+      description={tr('settings.about_section.date_time', 'How times and dates show in chats.')}
+    >
+      <SettingsRow>
         <SettingTile
-          title="24-Hour Time Format"
+          title={tr('settings.hour24', '24-hour clock')}
           after={<Switch variant="Primary" value={hour24Clock} onChange={setHour24Clock} />}
         />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <SelectDateFormat />
-      </SequenceCard>
-    </Box>
+      </SettingsRow>
+    </SettingsSection>
   );
 }
 
 function Editor() {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+
+  return (
+    <SettingsSection
+      title={tr('settings.section.editor', 'Editor')}
+      description={tr('settings.about_section.editor', 'How you write and send messages.')}
+    >
+      <SettingsRow>
+        <SettingTile
+          title={tr('settings.enter_newline', 'Enter for a new line')}
+          description={tr(
+            'settings.enter_newline_description',
+            '{{key}} + Enter sends the message and Enter starts a new line.',
+            { key: isMacOS() ? KeySymbol.Command : 'Ctrl' }
+          )}
+          after={<Switch variant="Primary" value={enterForNewline} onChange={setEnterForNewline} />}
+        />
+      </SettingsRow>
+      <SettingsRow>
+        <SettingTile
+          title={tr('settings.markdown', 'Markdown formatting')}
+          after={<Switch variant="Primary" value={isMarkdown} onChange={setIsMarkdown} />}
+        />
+      </SettingsRow>
+    </SettingsSection>
+  );
+}
+
+export function ActivityPrivacy() {
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
 
   return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Editor</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+    <SettingsSection
+      title={tr('settings.section.privacy', 'Privacy')}
+      description={tr('settings.about_section.privacy', 'What others see of your activity.')}
+    >
+      <SettingsRow>
         <SettingTile
-          title="ENTER for Newline"
-          description={`Use ${
-            isMacOS() ? KeySymbol.Command : 'Ctrl'
-          } + ENTER to send message and ENTER for newline.`}
-          after={<Switch variant="Primary" value={enterForNewline} onChange={setEnterForNewline} />}
-        />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Markdown Formatting"
-          after={<Switch variant="Primary" value={isMarkdown} onChange={setIsMarkdown} />}
-        />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Hide Typing & Read Receipts"
-          description="Turn off both typing status and read receipts to keep your activity private."
+          title={tr('settings.hide_activity', 'Hide typing and read receipts')}
+          description={tr(
+            'settings.hide_activity_description',
+            "Others won't see when you're typing or what you've read."
+          )}
           after={<Switch variant="Primary" value={hideActivity} onChange={setHideActivity} />}
         />
-      </SequenceCard>
-    </Box>
+      </SettingsRow>
+    </SettingsSection>
   );
 }
 
@@ -517,18 +525,26 @@ function Calls() {
   const [noiseSuppression, setNoiseSuppression] = useSetting(settingsAtom, 'callNoiseSuppression');
 
   return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Calls</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+    <SettingsSection
+      title={tr('settings.section.microphone', 'Microphone')}
+      description={tr(
+        'settings.about_section.microphone',
+        'How your voice reaches others in calls.'
+      )}
+    >
+      <SettingsRow>
         <SettingTile
-          title="Noise Suppression"
-          description="Filter background noise like keyboards, fans and voices from your microphone (RNNoise). Applies from the next call you join."
+          title={tr('settings.noise_suppression', 'Noise suppression')}
+          description={tr(
+            'settings.noise_suppression_description',
+            'Filter background noise like keyboards, fans and voices from your microphone (RNNoise). Applies from the next call you join.'
+          )}
           after={
             <Switch variant="Primary" value={noiseSuppression} onChange={setNoiseSuppression} />
           }
         />
-      </SequenceCard>
-    </Box>
+      </SettingsRow>
+    </SettingsSection>
   );
 }
 
@@ -670,11 +686,53 @@ function SelectMessageSpacing() {
   );
 }
 
-function Messages() {
+function MessageLook() {
   const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(
     settingsAtom,
     'legacyUsernameColor'
   );
+  const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+
+  return (
+    <SettingsSection
+      title={tr('settings.section.messages', 'Messages')}
+      description={tr('settings.about_section.messages', 'How messages look in chats.')}
+    >
+      <SettingsRow>
+        <SettingTile
+          title={tr('settings.message_layout', 'Message layout')}
+          after={<SelectMessageLayout />}
+        />
+      </SettingsRow>
+      <SettingsRow>
+        <SettingTile
+          title={tr('settings.message_spacing', 'Message spacing')}
+          after={<SelectMessageSpacing />}
+        />
+      </SettingsRow>
+      <SettingsRow>
+        <SettingTile
+          title={tr('settings.legacy_username_color', 'Legacy username colors')}
+          after={
+            <Switch
+              variant="Primary"
+              value={legacyUsernameColor}
+              onChange={setLegacyUsernameColor}
+            />
+          }
+        />
+      </SettingsRow>
+      <SettingsRow>
+        <SettingTile
+          title={tr('settings.twitter_emoji', 'Twitter emoji')}
+          after={<Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />}
+        />
+      </SettingsRow>
+    </SettingsSection>
+  );
+}
+
+function Timeline() {
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
     settingsAtom,
     'hideMembershipEvents'
@@ -686,32 +744,15 @@ function Messages() {
   const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
-  const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
 
   return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Messages</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile title="Message Layout" after={<SelectMessageLayout />} />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile title="Message Spacing" after={<SelectMessageSpacing />} />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+    <SettingsSection
+      title={tr('settings.section.timeline', 'Timeline')}
+      description={tr('settings.about_section.timeline', 'What shows up between messages.')}
+    >
+      <SettingsRow>
         <SettingTile
-          title="Legacy Username Color"
-          after={
-            <Switch
-              variant="Primary"
-              value={legacyUsernameColor}
-              onChange={setLegacyUsernameColor}
-            />
-          }
-        />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Hide Membership Change"
+          title={tr('settings.hide_membership', 'Hide joins and leaves')}
           after={
             <Switch
               variant="Primary"
@@ -720,10 +761,10 @@ function Messages() {
             />
           }
         />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <SettingTile
-          title="Hide Profile Change"
+          title={tr('settings.hide_profile_changes', 'Hide name and avatar changes')}
           after={
             <Switch
               variant="Primary"
@@ -732,77 +773,75 @@ function Messages() {
             />
           }
         />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <SettingTile
-          title="Disable Media Auto Load"
-          after={
-            <Switch
-              variant="Primary"
-              value={!mediaAutoLoad}
-              onChange={(v) => setMediaAutoLoad(!v)}
-            />
-          }
+          title={tr('settings.media_autoload', 'Load media automatically')}
+          after={<Switch variant="Primary" value={mediaAutoLoad} onChange={setMediaAutoLoad} />}
         />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <SettingTile
-          title="Url Preview"
+          title={tr('settings.url_preview', 'Link previews')}
           after={<Switch variant="Primary" value={urlPreview} onChange={setUrlPreview} />}
         />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      </SettingsRow>
+      <SettingsRow>
         <SettingTile
-          title="Url Preview in Encrypted Room"
+          title={tr('settings.enc_url_preview', 'Link previews in encrypted chats')}
           after={<Switch variant="Primary" value={encUrlPreview} onChange={setEncUrlPreview} />}
         />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Show Hidden Events"
-          after={
-            <Switch variant="Primary" value={showHiddenEvents} onChange={setShowHiddenEvents} />
-          }
-        />
-      </SequenceCard>
-    </Box>
+      </SettingsRow>
+    </SettingsSection>
   );
 }
 
-type GeneralProps = {
+export function HiddenEventsSetting() {
+  const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+
+  return (
+    <SettingsRow>
+      <SettingTile
+        title={tr('settings.hidden_events', 'Show hidden events')}
+        description={tr(
+          'settings.hidden_events_description',
+          'Show technical events in the timeline, like room changes the app normally hides.'
+        )}
+        after={<Switch variant="Primary" value={showHiddenEvents} onChange={setShowHiddenEvents} />}
+      />
+    </SettingsRow>
+  );
+}
+
+type PageProps = {
   requestClose: () => void;
 };
-export function General({ requestClose }: GeneralProps) {
+
+export function AppearanceSettings({ requestClose }: PageProps) {
   return (
-    <Page>
-      <PageHeader outlined={false}>
-        <Box grow="Yes" gap="200">
-          <Box grow="Yes" alignItems="Center" gap="200">
-            <Text size="H3" truncate>
-              General
-            </Text>
-          </Box>
-          <Box shrink="No">
-            <IconButton onClick={requestClose} variant="Surface">
-              <Icon src={Icons.Cross} />
-            </IconButton>
-          </Box>
-        </Box>
-      </PageHeader>
-      <Box grow="Yes">
-        <Scroll hideTrack visibility="Hover">
-          <PageContent>
-            <Box direction="Column" gap="700">
-              <LanguageSetting />
-              <Appearance />
-              <DateAndTime />
-              <Editor />
-              <Calls />
-              <Messages />
-            </Box>
-          </PageContent>
-        </Scroll>
-      </Box>
-    </Page>
+    <SettingsPage title={tr('settings.tab.appearance', 'Appearance')} requestClose={requestClose}>
+      <LanguageSetting />
+      <DateAndTime />
+      <Theme />
+      <MessageLook />
+    </SettingsPage>
+  );
+}
+
+export function ChatSettings({ requestClose }: PageProps) {
+  return (
+    <SettingsPage title={tr('settings.tab.chats', 'Chats')} requestClose={requestClose}>
+      <Editor />
+      <Timeline />
+      <SelfChatSetting />
+    </SettingsPage>
+  );
+}
+
+export function VoiceSettings({ requestClose }: PageProps) {
+  return (
+    <SettingsPage title={tr('settings.tab.voice', 'Voice & video')} requestClose={requestClose}>
+      <Calls />
+    </SettingsPage>
   );
 }

@@ -20,7 +20,7 @@ import {
   turnMs,
 } from './tentosView';
 import { GamePlayer, GameTable, TableCard, TrucoResponse, TrucoTrick } from './types';
-import { hasScene, trucoScene } from './trucoScene';
+import { hasScene, OWN_CARD, trucoScene } from './trucoScene';
 import * as css from './tentos.css';
 import { GameCard } from '../cards/GameCard';
 import barArt from '../art/truco-bar.webp';
@@ -823,14 +823,7 @@ export function TentosTable({
     if (!scene) return pct(ring[seat]);
     const point = scene.seats[seat];
     if (seat !== mySeat || (!fannedHand && phase !== 'round_end')) return px(point);
-    // Reserve the full three-card fan so the avatar stays in place as cards are played.
-    const fanHalfWidth = (3 * scene.handCard - 16) / 2;
-    const tiltedCardOverhang = Math.ceil(scene.handCard * 0.35);
-    const avatarAndGap = 38;
-    return px({
-      ...point,
-      x: Math.max(33, point.x - fanHalfWidth - tiltedCardOverhang - avatarAndGap),
-    });
+    return px(scene.nearHolding);
   };
   const playedAt = (seat: number): CSSProperties => {
     if (!scene) return pct(toward(center, ring[seat] ?? center, 0.56));
@@ -957,11 +950,12 @@ export function TentosTable({
         <button
           key="cover"
           type="button"
-          className={css.Pill}
+          className={css.CoverButton}
           aria-pressed={covered}
           disabled={busy}
           onClick={() => setCovered((c) => !c)}
         >
+          <span className={css.CoverCard} aria-hidden="true" />
           {tr('table_games.cover', 'Cover')}
         </button>
       );
@@ -981,7 +975,14 @@ export function TentosTable({
       data-many={hand.length > 7}
       data-fanned={fannedHand}
       data-play-turn={truco && myTurn && phase === 'play'}
-      style={scene ? ({ '--hand-card-w': `${scene.handCard}px` } as CSSProperties) : undefined}
+      style={
+        scene
+          ? ({
+              '--hand-card-w': `${scene.handCard}px`,
+              '--hand-bottom': `${12 - scene.handDrop}px`,
+            } as CSSProperties)
+          : undefined
+      }
     >
       {hand.map(({ card, index }, position) => {
         const offset = position - (hand.length - 1) / 2;
@@ -1057,24 +1058,18 @@ export function TentosTable({
 
         <div className={css.Felt} data-layout={layout} data-scene={!!scene}>
           {scene ? (
-            <>
-              {scene.framed && (
-                <img className={css.SceneBackdrop} src={barArt} alt="" draggable={false} />
-              )}
-              <img
-                className={css.Scene}
-                src={barArt}
-                alt=""
-                draggable={false}
-                data-framed={scene.framed || undefined}
-                style={{
-                  left: scene.left,
-                  top: scene.top,
-                  width: scene.width,
-                  height: scene.height,
-                }}
-              />
-            </>
+            <img
+              className={css.Scene}
+              src={barArt}
+              alt=""
+              draggable={false}
+              style={{
+                left: scene.left,
+                top: scene.top,
+                width: scene.width,
+                height: scene.height,
+              }}
+            />
           ) : (
             <div className={css.Rings} />
           )}
@@ -1142,7 +1137,14 @@ export function TentosTable({
               style={
                 {
                   ...playedAt(seat),
-                  '--card-w': `${scene ? scene.card + 13 : 44}px`,
+                  // Seen from the viewer's seat, their own card on a wide table is a little nearer.
+                  '--card-w': `${
+                    scene
+                      ? Math.round(
+                          (scene.card + 13) * (scene.wide && seat === mySeat ? OWN_CARD : 1)
+                        )
+                      : 44
+                  }px`,
                   '--tilt': `${[-4, 3, -2, 4][seat % 4]}deg`,
                 } as CSSProperties
               }
@@ -1198,6 +1200,7 @@ export function TentosTable({
           {scene && vira && (
             <div
               className={css.SceneVira}
+              data-upright={scene.wide || undefined}
               role="group"
               aria-label={viraLabel}
               title={viraLabel}
@@ -1224,14 +1227,7 @@ export function TentosTable({
             <div
               key={`${table.id}:${table.round}:${table.pending.value}`}
               className={css.TrucoStrike}
-              style={
-                scene
-                  ? px({
-                      x: scene.vira.x,
-                      y: scene.vira.y + Math.ceil(scene.viraCard * 0.68) + 20,
-                    })
-                  : undefined
-              }
+              style={scene ? px(scene.strike) : undefined}
               aria-hidden="true"
             >
               <PlayingCard back />
@@ -1267,7 +1263,21 @@ export function TentosTable({
           </div>
         )}
         {truco && (
-          <div className={css.TrucoOverlays} data-responding={phase === 'respond'}>
+          <div
+            className={css.TrucoOverlays}
+            data-responding={phase === 'respond'}
+            style={
+              // Seen from further back, the call and the trick notices sit by the doorway, in the
+              // middle of the scene, instead of up against the ceiling.
+              scene?.wide
+                ? ({
+                    '--call-top': `${Math.max(56, scene.door.y - 95)}px`,
+                    '--notice-top': `${Math.max(112, scene.door.y - 40)}px`,
+                    '--notice-lift': '-100%',
+                  } as CSSProperties)
+                : undefined
+            }
+          >
             {phase === 'respond' && (
               <TrucoCall
                 key={`${table.id}:${table.version}`}

@@ -36,6 +36,8 @@ import {
   generatePassword,
   loginDetails,
 } from '../../admin/adminApi';
+import { SectionTitle } from '../SettingsPage';
+import { tr } from '../../translation/tr';
 
 type Created = { userId: string; password: string };
 
@@ -255,28 +257,34 @@ export function Admin({ requestClose, role }: AdminProps) {
       <Box grow="Yes">
         <Scroll hideTrack visibility="Hover">
           <PageContent>
-            <Box direction="Column" gap="100">
+            <Box direction="Column" gap="700">
               {role.superadmin && <Webhooks />}
-              <Text size="L400">Accounts</Text>
-              <SequenceCard
-                className={SequenceCardStyle}
-                variant="SurfaceVariant"
-                direction="Column"
-                gap="400"
-              >
-                <CreateAccount role={role} onCreated={() => setReloadKey((k) => k + 1)} />
-              </SequenceCard>
-              <SequenceCard
-                className={SequenceCardStyle}
-                variant="SurfaceVariant"
-                direction="Column"
-                gap="400"
-              >
-                <UsersList reloadKey={reloadKey} />
-              </SequenceCard>
-              <Box style={{ paddingTop: config.space.S700 }} direction="Column">
-                <FeedbackList />
+              <Box direction="Column" gap="100">
+                <SectionTitle
+                  title={tr('settings.section.accounts', 'Accounts')}
+                  description={tr(
+                    'settings.about_section.accounts',
+                    'Create accounts and manage who uses the server.'
+                  )}
+                />
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <CreateAccount role={role} onCreated={() => setReloadKey((k) => k + 1)} />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <UsersList reloadKey={reloadKey} />
+                </SequenceCard>
               </Box>
+              <FeedbackList />
             </Box>
           </PageContent>
         </Scroll>

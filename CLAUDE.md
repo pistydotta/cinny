@@ -14,7 +14,7 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 
 - Keep our features in their own folders so upstream merges stay easy:
   `src/app/features/friends`, `invites`, `room-invite`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
-  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `forge-theme`, `pinned-chats`, `games`, `screen-share`
+  `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `app-background`, `forge-theme`, `settings-shell`, `app-update`, `pinned-chats`, `games`, `screen-share`
   (with `pages/client/games`),
   `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.

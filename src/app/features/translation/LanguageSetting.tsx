@@ -5,6 +5,7 @@ import { SettingTile } from '../../components/setting-tile';
 import { SequenceCardStyle } from '../settings/styles.css';
 import { getLanguage, Language, saveLanguage } from './language';
 import { tr } from './tr';
+import { SectionTitle } from '../settings/SettingsPage';
 
 const LANGUAGES: { id: Language; name: string }[] = [
   { id: 'pt', name: 'Português' },
@@ -24,7 +25,13 @@ export function LanguageSetting() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">{tr('settings.language', 'Language')}</Text>
+      <SectionTitle
+        title={tr('settings.language', 'Language')}
+        description={tr(
+          'settings.about_section.language',
+          "The language of the app's menus and text."
+        )}
+      />
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title={tr('settings.language_title', 'App Language')}
