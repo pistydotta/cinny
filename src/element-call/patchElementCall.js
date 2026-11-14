@@ -27,6 +27,16 @@ const DEVICES_ORIGINAL = 'yKe=new eY(`audio-output`,void 0),';
 const DEVICES_PATCHED =
   'yKe=new eY(`audio-output`,void 0),$blazeroomDevices=window.blazeroomDeviceSettings={audioInput:vKe,audioOutput:yKe},';
 
+// A short window (600px tall or less, like a laptop with the browser's bars) is Element Call's
+// "flat" mode, which always shows a watched share expanded with only the speaker's camera over
+// it: nobody sees their own camera and the sharer's covers the share. With someone else's share
+// in the spotlight (pe) it gets the same layout as a wide window: every camera beside the share,
+// or the share alone while the people are hidden. Without one, flat keeps its upstream layout.
+const FLAT_ORIGINAL =
+  'case`flat`:return xe.pipe(ZJ(e=>{switch(e){case`grid`:return Ce(!0);case`spotlight`:return Te(!0)}}))';
+const FLAT_PATCHED =
+  'case`flat`:return xe.pipe(ZJ(e=>{switch(e){case`grid`:return Ce(!0);case`spotlight`:return IJ([pe,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([t])=>t&&!window.blazeroomShares?.peopleHidden?.()),KJ(),ZJ(t=>t?Ce(!0):Te(!0)))}}))';
+
 const replaceOnce = (source, [original, patched, what]) => {
   const at = source.indexOf(original);
   if (at === -1) throw new Error(`Element Call bundle: ${what} text not found`);
@@ -41,6 +51,7 @@ const PATCHES = [
   [VOICE_ORIGINAL, VOICE_PATCHED, 'voice volume'],
   [EXPAND_ORIGINAL, EXPAND_PATCHED, 'expanded share'],
   [DEVICES_ORIGINAL, DEVICES_PATCHED, 'audio devices'],
+  [FLAT_ORIGINAL, FLAT_PATCHED, 'flat share'],
 ];
 
 // Throws so that upgrading Element Call fails the build instead of silently bringing the old
