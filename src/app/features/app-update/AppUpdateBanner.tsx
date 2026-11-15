@@ -58,7 +58,7 @@ export function AppUpdateBanner() {
         color: color.Primary.OnContainer,
       }}
     >
-      <Icon size="100" src={Icons.ArrowUp} />
+      <Icon size="100" src={Icons.ArrowTop} />
       <Text size="T300">{tr('app_update.available', 'A new version of blazeroom is out.')}</Text>
       <Button size="300" radii="300" variant="Primary" onClick={() => window.location.reload()}>
         <Text size="B300">{tr('app_update.reload', 'Update now')}</Text>
