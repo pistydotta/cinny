@@ -22,6 +22,9 @@ const ERRORS: Record<string, string> = {
   invalid_name: 'Choose a name for the table.',
   invalid_blinds: 'Those blinds are not allowed.',
   already_practicing: 'You already have a practice table.',
+  already_in_tournament: 'You already have a tournament open. Finish or leave it first.',
+  tournament_started: 'This tournament has already started.',
+  table_full: 'This tournament has no free seat left.',
   network: 'Could not reach the server. Check your connection.',
 };
 

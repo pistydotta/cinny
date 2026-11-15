@@ -139,10 +139,11 @@ type Confirm = { kind: 'leave' | 'close'; id: string };
 type PokerLobbyProps = {
   onOpenTable: (tableId: string) => void;
   onPractice: () => void;
+  onTournament: () => void;
   onBack?: () => void;
 };
 
-export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps) {
+export function PokerLobby({ onOpenTable, onPractice, onTournament, onBack }: PokerLobbyProps) {
   const mx = useMatrixClient();
   const api = useMemo(() => createPokerApi(() => mx.getAccessToken()), [mx]);
   const { list, refresh: refreshLobby } = useLobby();
@@ -171,6 +172,9 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
   const tables = (list?.tables ?? []).filter((t) => t.id !== list?.practiceId);
   const invites = list?.invites ?? [];
   const publicTables = list?.publicTables ?? [];
+  const tournaments = list?.tournaments ?? [];
+  const myTournament = tournaments.find((t) => t.ownerId === myId);
+  const otherTournaments = tournaments.filter((t) => t.ownerId !== myId);
 
   const refreshAll = () => Promise.all([refreshLobby(), refreshCredits()]);
 
@@ -201,6 +205,13 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
       await api.joinPublic(table.id);
       await refreshAll();
       onOpenTable(table.id);
+    });
+
+  const openTournament = (id: string, invited: boolean) =>
+    run(id, async () => {
+      if (invited) await api.accept(id);
+      await refreshAll();
+      onOpenTable(id);
     });
 
   const decline = (table: LobbyTable) =>
@@ -414,6 +425,64 @@ export function PokerLobby({ onOpenTable, onPractice, onBack }: PokerLobbyProps)
                 ))}
               </div>
             </>
+          )}
+
+          <h2 className={css.SectionTitle}>{tr('tourney.lobby.section', 'Tournaments')}</h2>
+          <div className={css.PracticeCard}>
+            <div className={css.TableIcon} style={{ background: '#a5701c' }}>
+              ♛
+            </div>
+            <div className={css.TableInfo}>
+              <span className={css.TableName}>
+                {tr('tourney.lobby.card', 'Tournament against a field of bots')}
+              </span>
+              <span className={css.TableMeta}>
+                {tr(
+                  'tourney.lobby.card_meta',
+                  '45 to 180 players, rising blinds and antes, prizes for the top 15%'
+                )}
+              </span>
+            </div>
+            <button
+              type="button"
+              className={css.SmallButton}
+              onClick={() => (myTournament ? onOpenTable(myTournament.id) : onTournament())}
+            >
+              {myTournament ? tr('games.lobby.resume', 'Resume') : tr('tourney.lobby.play', 'Play')}
+            </button>
+          </div>
+          {otherTournaments.length > 0 && (
+            <div className={css.TableList}>
+              {otherTournaments.map((t) => (
+                <div key={t.id} className={css.TableRow}>
+                  <div className={css.TableIcon}>♛</div>
+                  <div className={css.TableInfo}>
+                    <span className={css.TableName}>
+                      {tr('tourney.lobby.of', "{{name}}'s tournament", {
+                        name: friendDisplayName(mx, t.ownerId),
+                      })}
+                    </span>
+                    <span className={css.TableMeta}>
+                      {t.status === 'invited'
+                        ? tr('games.lobby.invite_from', 'Invite from {{name}}', {
+                            name: friendDisplayName(mx, t.invitedBy ?? t.ownerId),
+                          })
+                        : tr('tourney.lobby.joined', 'You are in')}
+                    </span>
+                  </div>
+                  <div className={css.RowActions}>
+                    <button
+                      type="button"
+                      className={css.SmallButton}
+                      disabled={busyId === t.id}
+                      onClick={() => openTournament(t.id, t.status === 'invited')}
+                    >
+                      {tr('games.lobby.open', 'Open')}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           <h2 className={css.SectionTitle}>{tr('games.lobby.practice', 'Practice')}</h2>

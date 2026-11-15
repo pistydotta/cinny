@@ -31,6 +31,7 @@ import {
   GAMES_PATH,
   GAMES_POKER_PATH,
   GAMES_POKER_PRACTICE_PATH,
+  GAMES_POKER_TOURNAMENT_PATH,
   GAMES_POKER_JOIN_PATH,
   GAMES_POKER_TABLE_PATH,
   GAMES_IDLE_PATH,
@@ -178,6 +179,7 @@ export const getGamesHordePath = (): string => GAMES_HORDE_PATH;
 export const getGamesTableGamePath = (kind: 'truco' | 'fodinha' | 'chess', tableId?: string): string =>
   `/games/${kind}/${tableId ? `table/${encodeURIComponent(tableId)}/` : ''}`;
 export const getGamesPokerPracticePath = (): string => GAMES_POKER_PRACTICE_PATH;
+export const getGamesPokerTournamentPath = (): string => GAMES_POKER_TOURNAMENT_PATH;
 export const getGamesPokerTablePath = (tableId: string): string =>
   generatePath(GAMES_POKER_TABLE_PATH, { tableId: encodeURIComponent(tableId) });
 export const getGamesPokerJoinPath = (token: string): string =>

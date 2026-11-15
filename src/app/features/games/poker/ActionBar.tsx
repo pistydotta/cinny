@@ -24,6 +24,8 @@ type ActionBarProps = {
   onShowCards: () => void;
   turnTimer?: TurnTimer;
   resolveAvatar?: (url: string) => string | undefined;
+  /** A bet size chosen outside the bar (the tournament coach); `pick` changes on every choice. */
+  suggestedRaise?: { amount: number; pick: number };
 };
 
 const POT_PRESETS: { key: string; label: string; fraction: number }[] = [
@@ -103,6 +105,7 @@ export function ActionBar({
   onShowCards,
   turnTimer,
   resolveAvatar,
+  suggestedRaise,
 }: ActionBarProps) {
   const [raiseTo, setRaiseTo] = useState(0);
   const [draft, setDraft] = useState<string>();
@@ -126,6 +129,12 @@ export function ActionBar({
     setDraft(undefined);
     setRaiseTo(clamp(value));
   };
+  const suggestedPick = suggestedRaise?.pick;
+  useEffect(() => {
+    if (suggestedRaise) pickRaise(suggestedRaise.amount);
+    // Only a new choice applies; the decision's own reset must not bring an old one back.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestedPick]);
 
   const potRaiseTo = (fraction: number) => {
     if (!legal) return minRaiseTo;

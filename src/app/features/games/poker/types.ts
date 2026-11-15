@@ -122,10 +122,157 @@ export type ViewResult = {
   byFold: boolean;
 };
 
+export type Street = 'preflop' | 'flop' | 'turn' | 'river';
+
+export type CoachAdvice = {
+  action: 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'shove';
+  /** Why, as a key the client turns into a sentence. */
+  key: string;
+  /** Total for the street, for a bet, raise or shove. */
+  amount?: number;
+};
+
+export type CoachSize = { key: string; purpose: string; amount: number; recommended: boolean };
+
+export type CoachTier = 'strong' | 'medium' | 'weak';
+
+/** The coach's read of the viewer's spot while they are on the clock. */
+export type CoachHint = {
+  hand: number;
+  seq: number;
+  street: Street;
+  position: string | null;
+  pot: number;
+  toCall: number;
+  stackBb: number;
+  effectiveBb: number;
+  spr: number | null;
+  opponents: number;
+  /** Against random hands, 0 to 1. */
+  equity: number;
+  /** After the flop: against the range that matters in this spot. */
+  versus: number | null;
+  tier: CoachTier | null;
+  potOdds: number | null;
+  chen: number | null;
+  texture: 'dry' | 'wet' | 'paired' | null;
+  pushFold: boolean;
+  sizes: CoachSize[];
+  advice: CoachAdvice;
+};
+
+export type CoachVerdict = { kind: 'good' | 'warn' | 'bad'; key: string; evLoss: number };
+
+export type ReviewDecision = {
+  street: Street;
+  position: string | null;
+  pot: number;
+  toCall: number;
+  action: 'fold' | 'check' | 'call' | 'bet' | 'raise';
+  amount: number;
+  equity: number;
+  versus: number | null;
+  potOdds: number | null;
+  chen: number | null;
+  advice: CoachAdvice;
+  verdict: CoachVerdict;
+};
+
+export type HandReview = {
+  hand: number;
+  cards: Card[];
+  board: Card[];
+  decisions: ReviewDecision[];
+  /** Chips won or lost in the hand. */
+  net: number;
+  showdown: boolean;
+};
+
+export type CoachStats = {
+  vpip: number;
+  pfr: number;
+  bets: number;
+  raises: number;
+  calls: number;
+  folds: number;
+  checks: number;
+  valueBets: number;
+  bluffs: number;
+  showdowns: number;
+  showdownWins: number;
+  good: number;
+  warn: number;
+  bad: number;
+  evLoss: number;
+};
+
+export type CostlyDecision = {
+  hand: number;
+  level: number;
+  street: Street;
+  cards: Card[];
+  board: Card[];
+  action: ReviewDecision['action'];
+  amount: number;
+  key: string;
+  evLoss: number;
+};
+
+export type TournamentReport = {
+  place: number | null;
+  prize: number;
+  hands: number;
+  /** Null without the coach. */
+  stats: CoachStats | null;
+  worst: CostlyDecision[];
+};
+
+export type TournamentBlinds = { smallBlind: number; bigBlind: number; ante: number };
+
+export type TournamentEntrant = {
+  userId: string;
+  name: string;
+  status: 'registered' | 'playing' | 'out';
+  place: number | null;
+  prize: number;
+};
+
+export type TournamentView = {
+  status: 'registering' | 'running' | 'finished';
+  field: number;
+  buyIn: number;
+  startStack: number;
+  /** 1-based. */
+  level: number;
+  handsPerLevel: number;
+  handsToNextLevel: number;
+  nextBlinds: TournamentBlinds;
+  remaining: number;
+  tables: number;
+  prizePool: number;
+  paidPlaces: number;
+  /** Prize per place, first place first. */
+  payouts: number[];
+  avgStack: number;
+  myRank: number | null;
+  leaders: { name: string; stack: number; me: boolean; atTable: boolean }[];
+  entrants: TournamentEntrant[];
+  me: {
+    status: TournamentEntrant['status'];
+    place: number | null;
+    prize: number;
+    coach: boolean;
+    hands: number;
+  } | null;
+  hint: CoachHint | null;
+  review: HandReview | null;
+  report: TournamentReport | null;
+};
+
 export type TableView = {
   id: string;
   name: string;
-  kind: 'friends' | 'practice';
+  kind: 'friends' | 'practice' | 'tournament';
   ownerId: string;
   isOwner: boolean;
   /** In everyone's lobby, anyone may join. */
@@ -134,6 +281,9 @@ export type TableView = {
   inviteAnyone: boolean;
   smallBlind: number;
   bigBlind: number;
+  ante?: number;
+  maxSeats?: number;
+  tournament?: TournamentView | null;
   minBuyIn: number;
   maxBuyIn: number;
   /** Grows with every change to the table; a view with a lower one is stale. */
@@ -178,6 +328,13 @@ export type TableMember = { userId: string; status: 'member' | 'invited' };
 
 export type LobbyList = {
   tables: LobbyTable[];
+  /** Tournaments I'm in or invited to. */
+  tournaments?: {
+    id: string;
+    ownerId: string;
+    status: 'member' | 'invited';
+    invitedBy: string | null;
+  }[];
   /** Public tables I'm not in yet. */
   publicTables: LobbyTable[];
   invites: (LobbyTable & { invitedBy: string })[];

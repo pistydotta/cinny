@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-poker-tournaments',
+    items: () => [
+      {
+        title: tr('whats_new.tournament_title', 'Poker tournaments'),
+        body: tr(
+          'whats_new.tournament_body',
+          'In Games > Poker you can play a tournament of 45 to 180 players against bots, alone or with friends at the same table: nine per table, rising blinds and antes, and coins for the top 15%.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-call-audio-menu',
     items: () => [
       {

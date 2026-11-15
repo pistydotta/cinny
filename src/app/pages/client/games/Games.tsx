@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { GamesHub, PokerLobby, PracticeScreen, TableScreen } from '../../../features/games';
+import {
+  GamesHub,
+  PokerLobby,
+  PracticeScreen,
+  TableScreen,
+  TournamentSetup,
+} from '../../../features/games';
 import { IdleGame } from '../../../features/games/idle';
 import { HordeGame } from '../../../features/games/horde';
 import { callEmbedAtom } from '../../../state/callEmbed';
@@ -18,6 +24,7 @@ import {
   getGamesTableGamePath,
   getGamesPokerPath,
   getGamesPokerPracticePath,
+  getGamesPokerTournamentPath,
   getGamesPokerTablePath,
   getHomePath,
 } from '../../pathUtils';
@@ -79,6 +86,7 @@ export function PokerLobbyPage() {
     <PokerLobby
       onBack={() => navigate(getGamesPath())}
       onPractice={() => navigate(getGamesPokerPracticePath())}
+      onTournament={() => navigate(getGamesPokerTournamentPath())}
       onOpenTable={(tableId) => navigate(getGamesPokerTablePath(tableId))}
     />
   );
@@ -89,12 +97,29 @@ export function PokerPracticePage() {
   return <PracticeScreen onBack={() => navigate(getGamesPokerPath())} />;
 }
 
+export function PokerTournamentPage() {
+  const navigate = useNavigate();
+  const open = useCallback(
+    (tableId: string) => navigate(getGamesPokerTablePath(tableId), { replace: true }),
+    [navigate]
+  );
+  return <TournamentSetup onBack={() => navigate(getGamesPokerPath())} onOpen={open} />;
+}
+
 export function PokerTablePage() {
   const navigate = useNavigate();
   const { tableId = '' } = useParams();
   const goBack = useCallback(() => navigate(getGamesPokerPath()), [navigate]);
+  const newTournament = useCallback(() => navigate(getGamesPokerTournamentPath()), [navigate]);
 
-  return <TableScreen key={tableId} tableId={decodeURIComponent(tableId)} onBack={goBack} />;
+  return (
+    <TableScreen
+      key={tableId}
+      tableId={decodeURIComponent(tableId)}
+      onBack={goBack}
+      onNewTournament={newTournament}
+    />
+  );
 }
 
 // Joining twice (a remount) is harmless: the API answers the same table either way.

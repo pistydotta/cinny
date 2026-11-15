@@ -208,6 +208,11 @@ export const Seat = style({
   transition: 'opacity 300ms, filter 300ms',
   selectors: {
     '[data-layout="portrait"] &': { vars: { '--avatar': '14cqmin', '--card-w': '9cqmin' } },
+    // Nine seats share the same felt, so everyone but the hero is drawn smaller.
+    '[data-seats="9"] &': { vars: { '--avatar': '8.2cqmin', '--card-w': '5.2cqmin' } },
+    '[data-seats="9"][data-layout="portrait"] &': {
+      vars: { '--avatar': '11.5cqmin', '--card-w': '7.4cqmin' },
+    },
     '&[data-hero="true"]': { vars: { '--avatar': '10.5cqmin', '--card-w': '10cqmin' }, zIndex: 4 },
     '[data-layout="portrait"] &[data-hero="true"]': {
       vars: { '--avatar': '15cqmin', '--card-w': '15cqmin' },
@@ -349,6 +354,8 @@ export const Plate = style({
   lineHeight: 1.2,
   selectors: {
     '[data-layout="portrait"] &': { minWidth: '21cqmin', padding: '0.6cqmin 2cqmin 0.8cqmin' },
+    '[data-seats="9"] &': { minWidth: '12.5cqmin', padding: '0.4cqmin 1.1cqmin 0.5cqmin' },
+    '[data-seats="9"][data-layout="portrait"] &': { minWidth: '18cqmin' },
     '[data-turn="true"] &': {
       background: 'linear-gradient(180deg, rgba(72,56,14,0.97), rgba(36,28,8,0.97))',
       boxShadow: `0 0 0 0.3cqmin ${GOLD}, 0 0 2.4cqmin 0.3cqmin rgba(245,200,75,0.45)`,

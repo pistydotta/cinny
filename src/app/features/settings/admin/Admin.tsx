@@ -28,6 +28,7 @@ import { useAdminApi } from '../../admin/useAdminApi';
 import { UsersList } from './UsersList';
 import { FeedbackList } from './FeedbackList';
 import { Webhooks } from './Webhooks';
+import { PokerCoach } from './PokerCoach';
 import {
   AdminRole,
   MIN_PASSWORD_LENGTH,
@@ -259,6 +260,7 @@ export function Admin({ requestClose, role }: AdminProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               {role.superadmin && <Webhooks />}
+              {role.superadmin && <PokerCoach />}
               <Box direction="Column" gap="100">
                 <SectionTitle
                   title={tr('settings.section.accounts', 'Accounts')}

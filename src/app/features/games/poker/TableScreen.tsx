@@ -25,10 +25,20 @@ import { formatAmount } from './controls/amounts';
 import { makePreAction, PreAction, PreActionKind, takePreAction } from './controls/preActions';
 import { usePokerSounds } from './controls/usePokerSounds';
 import { PokerSettings } from './controls/PokerSettings';
+import { TournamentBar, TournamentDetails } from './tournament/TournamentBar';
+import { CoachStrip, useCoachHidden } from './tournament/CoachStrip';
+import {
+  AbandonDialog,
+  ReportDialog,
+  tournamentTitle,
+  WaitingRoom,
+} from './tournament/TournamentDialogs';
 
 type TableScreenProps = {
   tableId: string;
   onBack: () => void;
+  /** Where "play another tournament" leads. */
+  onNewTournament?: () => void;
 };
 
 function Message({ text, onBack }: { text: string; onBack: () => void }) {
@@ -46,7 +56,7 @@ function Message({ text, onBack }: { text: string; onBack: () => void }) {
   );
 }
 
-export function TableScreen({ tableId, onBack }: TableScreenProps) {
+export function TableScreen({ tableId, onBack, onNewTournament }: TableScreenProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const userId = mx.getUserId() ?? '';
@@ -63,6 +73,11 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
   const [preferences, setPreferences] = useState(readPreferences);
   const [showSounds, setShowSounds] = useState(false);
   const [preAction, setPreAction] = useState<PreAction | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [confirmAbandon, setConfirmAbandon] = useState(false);
+  const [watching, setWatching] = useState(false);
+  const [coachHidden, setCoachHidden] = useCoachHidden();
+  const [suggestedRaise, setSuggestedRaise] = useState<{ amount: number; pick: number }>();
   const queued = useRef<PreAction | null>(null);
   const [actionPending, setActionPending] = useState(false);
   const pending = useRef(false);
@@ -232,18 +247,45 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
     return <Message text={tr('games.table.closed', 'This table was closed.')} onBack={onBack} />;
   }
 
+  const tournament = view?.tournament ?? null;
   const handOver = view?.phase === 'waiting' || view?.phase === 'complete';
-  const busted = seated && me.stack === 0 && view?.pendingChips === 0 && handOver;
+  const busted = !tournament && seated && me.stack === 0 && view?.pendingChips === 0 && handOver;
   const away = seated && me.away;
   const step = (view?.bigBlind ?? 0) * 5;
   // Dialogs cover the page, so they show the error themselves.
   const inDialog =
-    (pickedSeat !== undefined && !seated) || (busted && !away) || away || confirmClose;
+    (pickedSeat !== undefined && !seated) ||
+    (busted && !away) ||
+    away ||
+    confirmClose ||
+    confirmAbandon ||
+    tournament?.status === 'registering' ||
+    (!!tournament?.report && !watching);
 
   const leave = async () => {
-    if (!view) return;
-    const { value: reply } = await run('leave', () => api.leave(tableId), true);
-    if (reply && 'closed' in reply && view.kind === 'practice') onBack();
+    if (!view) return false;
+    const { ok, value: reply } = await run('leave', () => api.leave(tableId), true);
+    // Leaving a tournament is leaving its table for good, closed or not.
+    if (
+      ok &&
+      (view.kind === 'tournament' || (reply && 'closed' in reply && view.kind === 'practice'))
+    ) {
+      onBack();
+    }
+    return ok;
+  };
+
+  // Giving up a stack is asked twice; leaving a finished or unstarted tournament is not.
+  const leaveOrAsk = () => {
+    if (tournament?.status === 'running' && tournament.me?.status === 'playing') {
+      setError(undefined);
+      setConfirmAbandon(true);
+    } else leave();
+  };
+
+  const playAgain = async () => {
+    const { ok } = await run('leave', () => api.leave(tableId), true);
+    if (ok) (onNewTournament ?? onBack)();
   };
 
   const sit = async (seat: number, buyIn: number) => {
@@ -269,6 +311,10 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
       setError(errorText('unknown'));
     }
   };
+
+  let title = view?.name;
+  if (view?.kind === 'practice') title = tr('games.lobby.practice', 'Practice');
+  if (tournament) title = tournamentTitle(tournament.field);
 
   let subtitle = '';
   if (view) {
@@ -297,15 +343,13 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           <Icon size="200" src={Icons.ArrowLeft} />
         </button>
         <div className={css.TopTitle}>
-          <span className={css.TitleText}>
-            {view?.kind === 'practice' ? tr('games.lobby.practice', 'Practice') : view?.name}
-          </span>
+          <span className={css.TitleText}>{title}</span>
           <span className={css.SubtitleText}>{subtitle}</span>
         </div>
         <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
           <span className={css.Coin}>$</span>
           <span className={css.WalletValue}>{formatChips(balance ?? 0)}</span>
-          {seated && (
+          {seated && !tournament && (
             <span className={css.WalletMuted}>
               ·{' '}
               {tr('games.wallet.at_table', '{{chips}} at the table', {
@@ -355,16 +399,19 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           type="button"
           className={css.IconButton}
           aria-pressed={showHistory}
-          onClick={() => setShowHistory((v) => !v)}
+          onClick={() => {
+            setShowDetails(false);
+            setShowHistory((v) => !v);
+          }}
           aria-label={tr('games.table.history', 'Table history')}
         >
           <Icon size="200" src={Icons.RecentClock} />
         </button>
-        {seated && (
+        {(seated || tournament?.me) && (
           <button
             type="button"
             className={css.IconButton}
-            onClick={leave}
+            onClick={tournament ? leaveOrAsk : leave}
             aria-label={tr('games.action.leave', 'Leave the table')}
           >
             <Icon size="200" src={Icons.Power} />
@@ -390,6 +437,19 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
         </p>
       )}
 
+      {view && tournament && tournament.status !== 'registering' && (
+        <TournamentBar
+          view={view}
+          tournament={tournament}
+          heroId={userId}
+          detailsOpen={showDetails}
+          onDetails={() => {
+            setShowHistory(false);
+            setShowDetails((v) => !v);
+          }}
+        />
+      )}
+
       <div className={css.TableArea} ref={areaRef}>
         {view && (
           <div className={css.StageWrap} data-layout={layout}>
@@ -399,15 +459,18 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
               turnTimer={turnTimerFor(view, Date.now())}
               layout={layout}
               seatOffset={me?.seat ?? 0}
-              onSeatClick={me ? undefined : setPickedSeat}
+              onSeatClick={me || tournament ? undefined : setPickedSeat}
               resolveAvatar={resolveAvatar}
               unit={preferences.unit}
-              emptyLabel={tr('games.shared.pick_seat', 'Pick a seat to sit down')}
+              emptyLabel={
+                tournament ? undefined : tr('games.shared.pick_seat', 'Pick a seat to sit down')
+              }
             />
           </div>
         )}
 
         {view && showHistory && <HistoryDrawer log={view.log} />}
+        {tournament && showDetails && !showHistory && <TournamentDetails tournament={tournament} />}
 
         {!view && (
           <div className={css.Overlay}>
@@ -445,10 +508,49 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
           />
         )}
 
-        {away && (
+        {view && tournament?.status === 'registering' && !showInvite && (
+          <WaitingRoom
+            tournament={tournament}
+            isOwner={view.isOwner}
+            busy={actionPending}
+            error={error}
+            onStart={() => run('start', () => api.start(tableId))}
+            onRegister={() => run('register', () => api.register(tableId), true)}
+            onInvite={() => setShowInvite(true)}
+            onCopyLink={copyLink}
+            copied={copied}
+            onLeave={leave}
+          />
+        )}
+
+        {tournament?.report && !watching && !confirmAbandon && (
+          <ReportDialog
+            tournament={tournament}
+            report={tournament.report}
+            busy={actionPending}
+            error={error}
+            onWatch={tournament.status === 'running' ? () => setWatching(true) : undefined}
+            onLeave={leave}
+            onAgain={playAgain}
+          />
+        )}
+
+        {confirmAbandon && (
+          <AbandonDialog
+            error={error}
+            busy={actionPending}
+            onStay={() => setConfirmAbandon(false)}
+            onLeave={async () => {
+              if (!(await leave())) return;
+              setConfirmAbandon(false);
+            }}
+          />
+        )}
+
+        {away && !confirmAbandon && (
           <AwayDialog
             onBack={() => run('back', () => api.back(tableId))}
-            onLeave={leave}
+            onLeave={tournament ? leaveOrAsk : leave}
             error={error}
           />
         )}
@@ -456,7 +558,7 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
         {showInvite && (
           <InviteDialog
             access={access}
-            canChangeAccess={view?.isOwner ?? false}
+            canChangeAccess={(view?.isOwner ?? false) && view?.kind === 'friends'}
             loadStatus={loadInviteStatus}
             onInvite={async (userIds) => {
               await api.inviteMany(tableId, userIds);
@@ -477,8 +579,22 @@ export function TableScreen({ tableId, onBack }: TableScreenProps) {
         </p>
       )}
 
+      {view && tournament?.me?.coach && (
+        <CoachStrip
+          view={view}
+          format={(chips) => formatAmount(chips, preferences.unit, view.bigBlind)}
+          disabled={actionPending || !connected}
+          hidden={coachHidden}
+          onHidden={setCoachHidden}
+          onPick={(amount) =>
+            setSuggestedRaise((last) => ({ amount, pick: (last?.pick ?? 0) + 1 }))
+          }
+        />
+      )}
+
       {view && me && (
         <ActionBar
+          suggestedRaise={suggestedRaise}
           view={view}
           hero={me}
           connected={connected}

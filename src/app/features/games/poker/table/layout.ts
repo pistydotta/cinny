@@ -72,6 +72,56 @@ export const LAYOUTS: Record<TableLayout, LayoutSpec> = {
   },
 };
 
+const lerp = (a: Point, b: Point, t: number): Point => ({
+  x: a.x + (b.x - a.x) * t,
+  y: a.y + (b.y - a.y) * t,
+});
+
+// Bets and dealer buttons for a ring of seats: on the way to the middle, the button a step aside.
+const ring = (pot: Point, center: Point, seats: Point[]): LayoutSpec => ({
+  pot,
+  center,
+  seats,
+  bets: seats.map((seat) => lerp(seat, center, 0.4)),
+  dealer: seats.map((seat) => {
+    const towards = lerp(seat, center, 0.22);
+    const length = Math.hypot(center.x - seat.x, center.y - seat.y) || 1;
+    return {
+      x: towards.x - ((center.y - seat.y) / length) * 7,
+      y: towards.y + ((center.x - seat.x) / length) * 7,
+    };
+  }),
+});
+
+/** Nine seats, for tournaments: seat 0 at the bottom, then clockwise like the six. */
+const NINE: Record<TableLayout, LayoutSpec> = {
+  landscape: ring({ x: 50, y: 33 }, { x: 50, y: 48 }, [
+    { x: 50, y: 84 },
+    { x: 25, y: 80 },
+    { x: 8, y: 58 },
+    { x: 12, y: 27 },
+    { x: 35, y: 13 },
+    { x: 65, y: 13 },
+    { x: 88, y: 27 },
+    { x: 92, y: 58 },
+    { x: 75, y: 80 },
+  ]),
+  portrait: ring({ x: 50, y: 36 }, { x: 50, y: 48 }, [
+    { x: 50, y: 88 },
+    { x: 16, y: 77 },
+    { x: 12, y: 55 },
+    { x: 12, y: 33 },
+    { x: 30, y: 10 },
+    { x: 70, y: 10 },
+    { x: 88, y: 33 },
+    { x: 88, y: 55 },
+    { x: 84, y: 77 },
+  ]),
+};
+
+export const layoutFor = (layout: TableLayout, seats: number): LayoutSpec =>
+  seats > 6 ? NINE[layout] : LAYOUTS[layout];
+
 export const pct = (p: Point) => ({ left: `${p.x}%`, top: `${p.y}%` });
 
 /** Vector from `from` to `to` in container units, for CSS translate. */

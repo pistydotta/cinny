@@ -47,6 +47,15 @@ export const createPokerApi = (getToken: () => string | null, options: PokerApiO
         throw e;
       }
     },
+    async createTournament(input: {
+      field: number;
+      buyIn: number;
+      speed: 'turbo' | 'regular';
+    }): Promise<string> {
+      return (await json<{ id: string }>('/api/poker/tournaments', 'POST', input)).id;
+    },
+    register: (id: string) => play(`${table(id)}/register`),
+    start: (id: string) => play(`${table(id)}/start`),
     async invite(id: string, userId: string): Promise<void> {
       await request(`${table(id)}/invites`, 'POST', { userId });
     },

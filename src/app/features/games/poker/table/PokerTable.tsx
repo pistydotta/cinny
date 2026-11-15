@@ -8,10 +8,10 @@ import { formatAmount } from '../controls/amounts';
 
 import { PlayingCard } from './PlayingCard';
 import { ChipStack } from './Chips';
-import { LAYOUTS, offset, pct, TableLayout } from './layout';
+import { layoutFor, offset, pct, TableLayout } from './layout';
 import * as css from './pokerTable.css';
 
-const SEATS = [0, 1, 2, 3, 4, 5];
+const DEFAULT_SEATS = 6;
 const sameCard = (a: Card, b: Card) => a.rank === b.rank && a.suit === b.suit;
 export const RING_RADIUS = 48;
 export const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
@@ -125,13 +125,16 @@ export function PokerTable({
   unit = 'chips',
 }: PokerTableProps) {
   const amount = (chips: number) => formatAmount(chips, unit, view.bigBlind);
-  const layoutSpec = LAYOUTS[layout];
+  const seatCount = view.maxSeats ?? DEFAULT_SEATS;
+  const SEATS = Array.from({ length: seatCount }, (_, seat) => seat);
+  const layoutSpec = layoutFor(layout, seatCount);
+  const rotated = (seat: number) => (seat - seatOffset + seatCount * 2) % seatCount;
   // Rotate the table so `seatOffset` sits at the bottom.
   const spec = {
     ...layoutSpec,
-    seats: SEATS.map((seat) => layoutSpec.seats[(seat - seatOffset + 12) % 6]),
-    bets: SEATS.map((seat) => layoutSpec.bets[(seat - seatOffset + 12) % 6]),
-    dealer: SEATS.map((seat) => layoutSpec.dealer[(seat - seatOffset + 12) % 6]),
+    seats: SEATS.map((seat) => layoutSpec.seats[rotated(seat)]),
+    bets: SEATS.map((seat) => layoutSpec.bets[rotated(seat)]),
+    dealer: SEATS.map((seat) => layoutSpec.dealer[rotated(seat)]),
   };
   const { result, phase } = view;
 
@@ -192,6 +195,7 @@ export function PokerTable({
     <div
       className={css.Stage}
       data-layout={layout}
+      data-seats={seatCount}
       style={{ '--pot-x': `${spec.pot.x}%`, '--pot-y': `${spec.pot.y}%` } as CSSProperties}
     >
       <div className={css.Rail}>

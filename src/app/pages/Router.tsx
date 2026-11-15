@@ -37,6 +37,7 @@ import {
   GAMES_PATH,
   GAMES_POKER_PATH,
   GAMES_POKER_PRACTICE_PATH,
+  GAMES_POKER_TOURNAMENT_PATH,
   GAMES_POKER_JOIN_PATH,
   GAMES_POKER_TABLE_PATH,
   GAMES_IDLE_PATH,
@@ -95,6 +96,7 @@ import {
   PokerLobbyPage,
   PokerPracticePage,
   PokerTablePage,
+  PokerTournamentPage,
 } from './client/games';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { TableGamesPage } from '../features/games/table-games/TableGamesPage';
@@ -318,6 +320,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route path={GAMES_PATH} element={<GamesHubPage />} />
         <Route path={GAMES_POKER_PATH} element={<PokerLobbyPage />} />
         <Route path={GAMES_POKER_PRACTICE_PATH} element={<PokerPracticePage />} />
+        <Route path={GAMES_POKER_TOURNAMENT_PATH} element={<PokerTournamentPage />} />
         <Route path={GAMES_POKER_TABLE_PATH} element={<PokerTablePage />} />
         <Route path={GAMES_POKER_JOIN_PATH} element={<PokerJoinPage />} />
         <Route path={GAMES_IDLE_PATH} element={<IdleGamePage />} />

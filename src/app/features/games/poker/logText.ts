@@ -97,6 +97,12 @@ const LOG_EN: Record<string, string> = {
   mucks: '{{name}} mucks',
   won: '{{name}} wins {{chips}}',
   won_no_show: '{{name}} wins {{chips}} without showing',
+  antes: 'Everyone posts the ante of {{chips}}',
+  tourney_out: '{{name}} is out in place {{place}}',
+  tourney_moved: '{{name}} was moved to another table',
+  tourney_level: 'Level {{level}}: blinds {{small}}/{{big}}, ante {{ante}}',
+  tourney_itm: 'In the money: the last {{places}} are paid',
+  tourney_won: '{{name}} wins the tournament',
 };
 
 // An unknown key (a newer server) shows as itself rather than breaking the table.
