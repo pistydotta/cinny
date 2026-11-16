@@ -2476,7 +2476,8 @@
   },
   "app_update": {
     "available": "Saiu uma versão nova do blazeroom.",
-    "reload": "Atualizar agora"
+    "available_in_call": "Saiu uma versão nova do blazeroom. Atualize depois da chamada.",
+    "reload": "Atualizar"
   },
   "login": {
     "title": "Entrar no blazeroom",

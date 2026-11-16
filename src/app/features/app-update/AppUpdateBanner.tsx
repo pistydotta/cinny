@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Icon, Icons, Text, config, color } from 'folds';
+import { useAtomValue } from 'jotai';
+import { Box, Text, config, color } from 'folds';
+import { callEmbedAtom } from '../../state/callEmbed';
 import { tr } from '../translation/tr';
 import { publishedEntry, runningEntry } from './appVersion';
 
@@ -40,9 +42,14 @@ function useNewVersion(): boolean {
   return available;
 }
 
-/** A strip at the top when blazeroom was updated since this tab loaded: one click loads it. */
+/**
+ * A thin line at the top when blazeroom was updated since this tab loaded. Reloading would
+ * drop a call (and any screen share), so during one it only says so; the reload link comes back
+ * once the call is over.
+ */
 export function AppUpdateBanner() {
   const available = useNewVersion();
+  const inCall = !!useAtomValue(callEmbedAtom);
   if (!available) return null;
 
   return (
@@ -50,19 +57,41 @@ export function AppUpdateBanner() {
       shrink="No"
       alignItems="Center"
       justifyContent="Center"
-      gap="300"
+      gap="200"
       wrap="Wrap"
       style={{
-        padding: `${config.space.S200} ${config.space.S400}`,
-        background: color.Primary.Container,
-        color: color.Primary.OnContainer,
+        padding: `${config.space.S100} ${config.space.S300}`,
+        background: color.Background.Container,
+        color: color.Background.OnContainer,
+        borderBottom: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
       }}
     >
-      <Icon size="100" src={Icons.ArrowTop} />
-      <Text size="T300">{tr('app_update.available', 'A new version of blazeroom is out.')}</Text>
-      <Button size="300" radii="300" variant="Primary" onClick={() => window.location.reload()}>
-        <Text size="B300">{tr('app_update.reload', 'Update now')}</Text>
-      </Button>
+      <Text size="T200" priority="300">
+        {inCall
+          ? tr(
+              'app_update.available_in_call',
+              'A new version of blazeroom is out. Update after the call.'
+            )
+          : tr('app_update.available', 'A new version of blazeroom is out.')}
+      </Text>
+      {!inCall && (
+        <Text
+          as="button"
+          type="button"
+          size="T200"
+          onClick={() => window.location.reload()}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            color: color.Primary.Main,
+            textDecoration: 'underline',
+          }}
+        >
+          {tr('app_update.reload', 'Update')}
+        </Text>
+      )}
     </Box>
   );
 }
