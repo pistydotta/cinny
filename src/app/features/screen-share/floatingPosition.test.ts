@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clampPos, parsePos } from './floatingPosition';
+import { clampPos, clampWidth, parsePos } from './floatingPosition';
 
 const view = { width: 1000, height: 800 };
 const box = { width: 200, height: 180 };
@@ -25,5 +25,21 @@ describe('parsePos', () => {
     expect(parsePos(null)).toBeUndefined();
     expect(parsePos('nope')).toBeUndefined();
     expect(parsePos('{"x":"a","y":1}')).toBeUndefined();
+  });
+});
+
+describe('clampWidth', () => {
+  it('keeps a width that fits', () => {
+    expect(clampWidth(640, 1000)).toBe(640);
+  });
+
+  it('never goes below the minimum or past the window', () => {
+    expect(clampWidth(100, 1000)).toBe(280);
+    expect(clampWidth(2000, 1000)).toBe(984);
+    expect(clampWidth(2000, 3000)).toBe(1280);
+  });
+
+  it('keeps the minimum in a window narrower than it', () => {
+    expect(clampWidth(500, 200)).toBe(280);
   });
 });

@@ -1,19 +1,5 @@
-import React, { MouseEventHandler, useCallback, useRef, useState } from 'react';
-import {
-  Box,
-  Button,
-  config,
-  Icon,
-  Icons,
-  Menu,
-  MenuItem,
-  PopOut,
-  RectCords,
-  Spinner,
-  Text,
-  toRem,
-} from 'folds';
-import FocusTrap from 'focus-trap-react';
+import React, { useCallback, useRef, useState } from 'react';
+import { Box, Button, Icon, Icons, Spinner, Text, toRem } from 'folds';
 import { SequenceCard } from '../../components/sequence-card';
 import * as css from './styles.css';
 import {
@@ -26,11 +12,9 @@ import {
 } from './Controls';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
-import { stopPropagation } from '../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { TipIconButton } from '../tooltips/TipIconButton';
-import { tr } from '../translation/tr';
 import { AudioMenuArrow } from '../call-audio-settings';
+import { CallMoreMenu } from './CallMoreMenu';
 
 type CallControlsProps = {
   callEmbed: CallEmbed;
@@ -51,27 +35,6 @@ export function CallControls({ callEmbed }: CallControlsProps) {
   const { microphone, video, sound, screenshare, spotlight } = useCallControlState(
     callEmbed.control
   );
-
-  const [cords, setCords] = useState<RectCords>();
-
-  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setCords(evt.currentTarget.getBoundingClientRect());
-  };
-
-  const handleSpotlightClick = () => {
-    callEmbed.control.toggleSpotlight();
-    setCords(undefined);
-  };
-
-  const handleReactionsClick = () => {
-    callEmbed.control.toggleReactions();
-    setCords(undefined);
-  };
-
-  const handleSettingsClick = () => {
-    callEmbed.control.toggleSettings();
-    setCords(undefined);
-  };
 
   const handleMicrophoneToggle = useCallback(
     () => callEmbed.control.toggleMicrophone(),
@@ -120,71 +83,7 @@ export function CallControls({ callEmbed }: CallControlsProps) {
         <Box alignItems="Center" gap="Inherit" grow="Yes" direction={compact ? 'Column' : 'Row'}>
           <Box shrink="No" alignItems="Inherit" justifyContent="Inherit" gap="200">
             <ChatButton />
-            <PopOut
-              anchor={cords}
-              position="Top"
-              align="Center"
-              content={
-                <FocusTrap
-                  focusTrapOptions={{
-                    initialFocus: false,
-                    onDeactivate: () => setCords(undefined),
-                    clickOutsideDeactivates: true,
-                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                    escapeDeactivates: stopPropagation,
-                  }}
-                >
-                  <Menu>
-                    <Box direction="Column" style={{ padding: config.space.S100 }}>
-                      <MenuItem
-                        size="300"
-                        variant="Surface"
-                        radii="300"
-                        onClick={handleSpotlightClick}
-                      >
-                        <Text size="B300" truncate>
-                          {spotlight ? 'Grid View' : 'Spotlight View'}
-                        </Text>
-                      </MenuItem>
-                      <MenuItem
-                        size="300"
-                        variant="Surface"
-                        radii="300"
-                        onClick={handleReactionsClick}
-                      >
-                        <Text size="B300" truncate>
-                          Reactions
-                        </Text>
-                      </MenuItem>
-                      <MenuItem
-                        size="300"
-                        variant="Surface"
-                        radii="300"
-                        onClick={handleSettingsClick}
-                      >
-                        <Text size="B300" truncate>
-                          Settings
-                        </Text>
-                      </MenuItem>
-                    </Box>
-                  </Menu>
-                </FocusTrap>
-              }
-            >
-              <TipIconButton
-                label={tr('tips.more', 'More options')}
-                variant="Surface"
-                fill="Soft"
-                radii="400"
-                size="400"
-                onClick={handleOpenMenu}
-                outlined
-                aria-pressed={!!cords}
-              >
-                <Icon size="400" src={Icons.VerticalDots} />
-              </TipIconButton>
-            </PopOut>
+            <CallMoreMenu callEmbed={callEmbed} spotlight={spotlight} />
           </Box>
           <Box shrink="No" direction="Column">
             <Button

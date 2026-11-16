@@ -789,3 +789,40 @@ describe('previews of shares not being watched', () => {
     }
   });
 });
+
+describe('grid stand-ins', () => {
+  const person = (id: string) => ({ id, type: 'user' });
+  const people = [person('bob:0'), person('alice:0'), person('carol:0')];
+
+  it('puts a share not watched yet right after its sharer', () => {
+    const store = createShareStore({ grab: null });
+    const share = fakeVm('alice:0:screen-share');
+    const grid = store.gridShares(people, asVms([share]));
+    expect(grid.map((tile) => tile.id)).toEqual([
+      'bob:0',
+      'alice:0',
+      'blazeroom-share:alice:0:screen-share',
+      'carol:0',
+    ]);
+    expect(grid[2]).toMatchObject({ type: 'blazeroom share', shareId: 'alice:0:screen-share' });
+    // The same object every time, so the grid keeps the tile in place.
+    expect(store.gridShares(people, asVms([share]))[2]).toBe(grid[2]);
+  });
+
+  it('leaves out watched and own shares, and puts an unknown sharer last', () => {
+    const store = createShareStore({ grab: null });
+    const watched = fakeVm('alice:0:screen-share');
+    store.layoutShares(asVms([watched]));
+    store.watch(watched.id, 1);
+    const own = fakeVm('bob:0:screen-share', { local: true });
+    const stranger = fakeVm('dave:0:screen-share');
+    const grid = store.gridShares(people, asVms([watched, own, stranger]));
+    expect(grid.map((tile) => tile.id)).toEqual([
+      'bob:0',
+      'alice:0',
+      'carol:0',
+      'blazeroom-share:dave:0:screen-share',
+    ]);
+    expect(store.gridShares(people, [])).toBe(people);
+  });
+});

@@ -334,6 +334,40 @@ export const createShareStore = ({ grab = grabFrame, peekEveryMs = PEEK_EVERY_MS
     }
   };
 
+  // The people's grid with a stand-in tile for each share not watched yet, right after its
+  // sharer's own tile (a share's id starts with its sharer's). The stand-ins are kept per view
+  // model, so the grid sees the same object each time and keeps the tile where it is.
+  const standIns = new WeakMap();
+  const standIn = (vm) => {
+    let tile = standIns.get(vm);
+    if (!tile) {
+      tile = {
+        id: `blazeroom-share:${vm.id}`,
+        type: 'blazeroom share',
+        local: false,
+        shareId: vm.id,
+        userId: vm.userId,
+        displayName$: vm.displayName$,
+        mxcAvatarUrl$: vm.mxcAvatarUrl$ ?? vm.displayName$,
+      };
+      standIns.set(vm, tile);
+    }
+    return tile;
+  };
+  const gridShares = (people, shares) => {
+    const waiting = shares.filter((vm) => !vm.local && !entries.get(vm.id)?.watching);
+    if (waiting.length === 0) return people;
+    const grid = [...people];
+    waiting.forEach((vm) => {
+      let at = grid.length;
+      grid.forEach((tile, i) => {
+        if (tile.type === 'user' && vm.id.startsWith(`${tile.id}:`)) at = i + 1;
+      });
+      grid.splice(at, 0, standIn(vm));
+    });
+    return grid;
+  };
+
   const update = (id, change) => {
     const e = entries.get(id);
     if (!e) return;
@@ -372,6 +406,15 @@ export const createShareStore = ({ grab = grabFrame, peekEveryMs = PEEK_EVERY_MS
     },
     changes,
     layoutShares,
+    gridShares: (people, shares) => {
+      try {
+        return gridShares(people, shares);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('blazeroom screen share:', e);
+        return people;
+      }
+    },
 
     // Hiding the people also hides the sharer's small picture over the share. It only counts
     // while a share is watched: with nothing to watch the people are all there is.

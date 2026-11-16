@@ -52,6 +52,15 @@ export type ShareVm = {
   commitPlaybackVolume: () => void;
 };
 
+// The grid tile a share not watched yet takes; the patched bundle draws it as an empty box.
+export type ShareStandIn = {
+  id: string;
+  type: 'blazeroom share';
+  local: false;
+  shareId: string;
+  userId: string;
+};
+
 // Accepted by RxJS (combineLatest and friends) through the '@@observable' key.
 export type ShareChanges = {
   subscribe: (
@@ -65,6 +74,11 @@ export type ShareStore = {
   subscribe: (listener: () => void) => () => void;
   changes: ShareChanges;
   layoutShares: (vms: ShareVm[]) => ShareVm[];
+  /** The grid's tiles plus a stand-in after its sharer for each share not watched yet. */
+  gridShares: <T extends { id: string; type?: string }>(
+    people: T[],
+    shares: ShareVm[]
+  ) => (T | ShareStandIn)[];
   pipHidden: () => boolean;
   setPipHidden: (hidden: boolean) => void;
   peopleHidden: () => boolean;

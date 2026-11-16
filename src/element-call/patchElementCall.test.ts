@@ -7,12 +7,19 @@ const expand = 'ye.pipe(ZJ(e=>e?Te(!1):Ce(!1)))';
 const devices = 'yKe=new eY(`audio-output`,void 0),';
 const flat =
   'case`flat`:return xe.pipe(ZJ(e=>{switch(e){case`grid`:return Ce(!0);case`spotlight`:return Te(!0)}}))';
-const all = `${original}${voice}${expand}${devices}${flat}`;
+const narrow =
+  'case`narrow`:return Oe.pipe(ZJ(e=>e===null?IJ([le,fe],(e,t)=>e.length>uot||t.some(e=>e.type===`screen share`)?we:Se).pipe(lKe()):PJ(e)));';
+const grid =
+  'le=e.behavior(ne.pipe(ZJ(e=>{let t=e.map(e=>e.bin$.pipe(W(t=>[e,t])));return t.length===0?PJ([]):IJ(t,(...e)=>e.sort(([,e],[,t])=>e-t).map(([e])=>e))}),KJ(r9)))';
+const tile =
+  'return o.type===`ringing`?(0,B.jsx)(Kit,{ref:a,vm:o,displayName:s,mxcAvatarUrl:c,...i})';
+const six = `${original}${voice}${expand}${devices}${flat}${narrow}`;
+const all = `${six}${grid}${tile}`;
 
 describe('patchElementCall', () => {
   it("patches the layout's share list and each person's volume", () => {
     const patched = patchElementCall(
-      `before;${original}mid;${voice}mid;${expand}mid;${devices}mid;${flat}after`
+      `before;${original}mid;${voice}mid;${expand}mid;${devices}mid;${flat}mid;${narrow}mid;${grid}mid;${tile}after`
     );
     expect(patched).toContain('blazeroomShares');
     expect(patched).toContain('blazeroomShares?.pipHidden?.()?void 0:t');
@@ -20,10 +27,15 @@ describe('patchElementCall', () => {
     expect(patched).toContain('blazeroomVoices?.observeParticipant?.(n.userId,n,e)');
     expect(patched).not.toContain(original);
     expect(patched).not.toContain(voice);
-    expect(patched).toContain('peopleHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0))');
+    expect(patched).toContain('pipHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0))');
     expect(patched).toContain('window.blazeroomDeviceSettings={audioInput:vKe,audioOutput:yKe}');
-    expect(patched).toContain('peopleHidden?.()),KJ(),ZJ(t=>t?Ce(!0):Te(!0))');
+    expect(patched).toContain('pipHidden?.()),KJ(),ZJ(t=>t?Ce(!0):Te(!0))');
     expect(patched).not.toContain(flat);
+    expect(patched).toContain('ZJ(t=>t?Te(!0):Oe.pipe(');
+    expect(patched).not.toContain(narrow);
+    expect(patched).toContain('blazeroomShares?.gridShares?.(e,t)??e');
+    expect(patched).toContain('"data-blazeroom-share":o.shareId');
+    expect(patched).not.toContain(grid);
     expect(patched.startsWith('before;')).toBe(true);
     expect(patched.endsWith('after')).toBe(true);
   });
@@ -34,6 +46,11 @@ describe('patchElementCall', () => {
     expect(() => patchElementCall(`${original}${voice}`)).toThrow(/expanded share/);
     expect(() => patchElementCall(`${original}${voice}${expand}`)).toThrow(/audio devices/);
     expect(() => patchElementCall(`${original}${voice}${expand}${devices}`)).toThrow(/flat share/);
+    expect(() => patchElementCall(`${original}${voice}${expand}${devices}${flat}`)).toThrow(
+      /narrow share/
+    );
+    expect(() => patchElementCall(six)).toThrow(/grid share/);
+    expect(() => patchElementCall(`${six}${grid}`)).toThrow(/share tile/);
   });
 
   it('throws when the text appears twice', () => {
@@ -42,5 +59,8 @@ describe('patchElementCall', () => {
     expect(() => patchElementCall(`${all}${expand}`)).toThrow(/expanded share/);
     expect(() => patchElementCall(`${all}${devices}`)).toThrow(/audio devices/);
     expect(() => patchElementCall(`${all}${flat}`)).toThrow(/flat share/);
+    expect(() => patchElementCall(`${all}${narrow}`)).toThrow(/narrow share/);
+    expect(() => patchElementCall(`${all}${grid}`)).toThrow(/grid share/);
+    expect(() => patchElementCall(`${all}${tile}`)).toThrow(/share tile/);
   });
 });

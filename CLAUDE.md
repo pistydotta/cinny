@@ -147,7 +147,8 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   upstream style files. The wallpaper shows only behind the logged-out pages. Games screens
   still carry their own gold and serif styles until their redesign PRs.
 
-- Screen-share cards sit beside the call stage; the floating viewer reuses the same
+- An unwatched screen share is a stand-in tile in Element Call's grid (a bundle patch), with
+  Cinny's picture and Watch button drawn over it; the floating viewer reuses the same
   iframe. Placement must use viewport coordinates and inactive call rooms must not
   reposition it. Owner PC volume changes outgoing capture gain; viewer volume stays
   local. See `../docs/screen-sharing-ui.md` before changing these controls.

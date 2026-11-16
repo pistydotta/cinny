@@ -12,12 +12,15 @@ import { StateEvent } from '../../../types/matrix/room';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { CallMemberRenderer } from './CallMemberCard';
 import * as css from './styles.css';
-import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
-import { LiveCards } from '../screen-share/LiveCards';
+import { LiveTiles } from '../screen-share/LiveTiles';
 import { LiveOverlay } from '../screen-share/LiveOverlay';
 import { ShareBar } from '../screen-share/ShareBar';
+import { LiveCallBar } from '../screen-share/LiveCallBar';
+import * as shareCss from '../screen-share/styles.css';
+import { useShares } from '../screen-share/useShares';
+import { CallEmbed } from '../../plugins/call';
 
 function LivekitServerMissingMessage() {
   return (
@@ -125,6 +128,13 @@ function CallPrescreen() {
   );
 }
 
+// While a share is watched its overlay carries the call's buttons, so the bar under it goes.
+function BarUnlessWatching({ callEmbed }: { callEmbed: CallEmbed }) {
+  const { remotes } = useShares(callEmbed.control);
+  if (remotes.some((share) => share.watching)) return null;
+  return <LiveCallBar callEmbed={callEmbed} />;
+}
+
 type CallJoinedProps = {
   containerRef: RefObject<HTMLDivElement>;
   joined: boolean;
@@ -133,14 +143,14 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
   const callEmbed = useCallEmbed();
 
   return (
-    <Box grow="Yes" direction="Column">
+    <Box grow="Yes" direction="Column" className={shareCss.CallDark}>
       <Box grow="Yes" className={css.CallStage}>
         <Box grow="Yes" ref={containerRef} />
-        {callEmbed && joined && <LiveCards callEmbed={callEmbed} />}
+        {callEmbed && joined && <LiveTiles callEmbed={callEmbed} />}
         {callEmbed && joined && <LiveOverlay callEmbed={callEmbed} />}
       </Box>
       {callEmbed && joined && <ShareBar callEmbed={callEmbed} />}
-      {callEmbed && joined && <CallControls callEmbed={callEmbed} />}
+      {callEmbed && joined && <BarUnlessWatching callEmbed={callEmbed} />}
     </Box>
   );
 }

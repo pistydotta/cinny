@@ -1,47 +1,29 @@
-import { createVar, globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, toRem } from 'folds';
 
-// LiveCards sets it to the width of a person's tile in the call.
-export const tileWidthVar = createVar();
-
-// Shares waiting to be watched stand beside the call as tiles the size of a person's, stacked
-// and centered like the call's own column.
-export const Cards = style({
-  vars: { [tileWidthVar]: toRem(240) },
-  padding: config.space.S300,
-  width: `calc(${tileWidthVar} + 2 * ${config.space.S300})`,
-  flexShrink: 0,
-  overflowY: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  gap: config.space.S200,
-  '@media': {
-    'screen and (max-width: 700px)': {
-      width: '100%',
-      maxHeight: toRem(240),
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-    },
-  },
+// Over the call frame, where Element Call keeps an empty grid tile for each share not watched
+// yet; clipped to the frame, so a tile scrolled out of the grid is hidden here too.
+export const LiveTiles = style({
+  position: 'fixed',
+  zIndex: 2,
+  overflow: 'hidden',
+  pointerEvents: 'none',
 });
 
-// The whole tile is the watch button. The share's last picture fills it, blurred and darkened
-// so the badge, the Watch pill and the name read on any screen. Dark in every theme: it is video.
+// The whole tile is the watch button, on Element Call's tile and as round as the people's. The
+// share's last picture fills it, blurred and darkened so the badge, the Watch button and the
+// name read on any screen. Dark in every theme: it is video.
 export const LiveTile = style({
-  position: 'relative',
-  width: tileWidthVar,
-  maxWidth: '100%',
-  aspectRatio: '16 / 9',
-  flexShrink: 0,
+  position: 'absolute',
+  pointerEvents: 'auto',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   padding: 0,
   overflow: 'hidden',
   border: 'none',
-  borderRadius: config.radii.R400,
+  borderRadius: toRem(16),
   backgroundColor: '#1B1E23',
   color: '#F2F4F7',
   cursor: 'pointer',
@@ -54,7 +36,7 @@ export const LiveTile = style({
       transition: 'background-color 120ms ease-out',
     },
     '&:hover::after': { backgroundColor: 'rgba(10, 12, 16, 0.3)' },
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 2 },
+    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: -2 },
   },
 });
 
@@ -71,19 +53,40 @@ export const LiveTileShot = style({
 
 export const LiveTileIcon = style({ position: 'relative', zIndex: 1, opacity: 0.35 });
 
+// A round play button with the word under it, like a paused video: it reads as "press to watch"
+// at a glance. Warm cream, like the controls over a watched share; ember under the pointer.
 export const LiveTileWatch = style({
   position: 'absolute',
   zIndex: 1,
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
   gap: config.space.S100,
-  padding: `${config.space.S100} ${config.space.S300}`,
-  borderRadius: config.radii.Pill,
-  backgroundColor: color.Primary.Main,
-  color: color.Primary.OnMain,
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
-  selectors: { [`${LiveTile}:hover &`]: { transform: 'scale(1.04)' } },
+  color: '#F0D9BC',
+  textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
 });
+
+export const LiveTileDisc = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: toRem(48),
+  height: toRem(48),
+  borderRadius: '50%',
+  backgroundColor: 'rgba(240, 217, 188, 0.92)',
+  color: '#14161A',
+  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.45)',
+  transition: 'transform 120ms ease-out, background-color 120ms ease-out',
+  selectors: {
+    [`${LiveTile}:hover &, ${LiveTile}:focus-visible &`]: {
+      transform: 'scale(1.08)',
+      backgroundColor: '#FFA45C',
+    },
+  },
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+});
+// The play triangle's weight sits left of its box; nudge it to look centred.
+globalStyle(`${LiveTileDisc} svg`, { marginLeft: toRem(3) });
 
 export const LiveTileName = style({
   position: 'absolute',
@@ -117,14 +120,6 @@ export const LiveBadge = style({
   right: config.space.S200,
 });
 
-export const WatchControls = style({ minWidth: 0, maxWidth: '100%' });
-
-export const WatchRow = style({
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  rowGap: config.space.S200,
-});
-
 export const Controls = style({
   padding: `${config.space.S200} ${config.space.S400} 0`,
 });
@@ -134,11 +129,6 @@ export const Row = style({
   minHeight: toRem(36),
   flexWrap: 'wrap',
   rowGap: config.space.S100,
-});
-
-export const Name = style({
-  minWidth: 0,
-  maxWidth: toRem(100),
 });
 
 export const Slider = style({
@@ -198,7 +188,13 @@ export const FloatingCall = recipe({
   },
   variants: {
     watching: {
-      true: { width: 'min(400px, calc(100vw - 32px))' },
+      // A small window: its title bar (FloatingBar), then the live.
+      true: {
+        width: 'min(480px, calc(100vw - 32px), 96dvh)',
+        border: '1px solid #2A2E36',
+        background: '#090a0c',
+        boxShadow: '0 12px 40px rgba(0, 0, 0, 0.55)',
+      },
       false: {
         width: 'min(300px, calc(100vw - 32px))',
         borderRadius: 14,
@@ -209,37 +205,106 @@ export const FloatingCall = recipe({
     },
   },
 });
-// A bar of its own above the stage: the call iframe sits on top of the box, so anything
-// drawn over the stage would be hidden under it. The bar is also the drag handle.
-export const FloatingHeader = recipe({
-  base: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 2,
-    background: color.SurfaceVariant.Container,
-    borderBottom: `1px solid ${color.SurfaceVariant.ContainerLine}`,
-    cursor: 'grab',
-    touchAction: 'none',
-    userSelect: 'none',
-  },
-  variants: {
-    dragging: { true: { cursor: 'grabbing' }, false: {} },
-  },
-});
-export const FloatingGrip = style({ opacity: 0.6, pointerEvents: 'none' });
 export const FloatingStage = recipe({
   base: { width: '100%' },
   variants: {
     // Nothing to show while no share is watched; the iframe stays mounted, just out of sight.
-    watching: { true: { aspectRatio: '16 / 9' }, false: { height: 0 } },
+    watching: { true: { aspectRatio: '16 / 9', background: '#090a0c' }, false: { height: 0 } },
   },
 });
-export const FloatingControls = style({
-  maxHeight: 'min(220px, 30vh)',
-  overflowY: 'auto',
+// A small window: a title bar with who is live and the buttons, the share under it. The bar is
+// the box's own, outside the stage, so the call iframe never covers it; it is the drag handle.
+export const FloatingBar = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S200,
+  height: toRem(40),
+  padding: `0 ${config.space.S100} 0 ${config.space.S300}`,
+  backgroundColor: '#1C1F25',
+  boxShadow: 'inset 0 -1px 0 rgba(240, 217, 188, 0.08)',
+  color: '#F0D9BC',
+  cursor: 'grab',
+  touchAction: 'none',
+  userSelect: 'none',
 });
-globalStyle(`${FloatingControls} > ${WatchControls}`, { padding: config.space.S200 });
+
+export const FloatingWho = style({
+  flex: '1 1 auto',
+  minWidth: 0,
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S200,
+});
+
+export const FloatingButtons = style({ display: 'flex', flexShrink: 0, gap: 2 });
+
+// Soft square keys, like the watch screen's title bar.
+export const FloatingKey = style({
+  width: toRem(28),
+  height: toRem(28),
+  minWidth: 0,
+  padding: 0,
+  justifyContent: 'center',
+  transition: 'background-color 120ms ease-out, color 120ms ease-out',
+  selectors: {
+    '&&': { color: '#F0D9BC', backgroundColor: 'transparent' },
+    '&&:hover': { color: '#FFE6C8', backgroundColor: 'rgba(255, 164, 92, 0.18)' },
+  },
+});
+export const FloatingKeyOff = style({ selectors: { '&&&': { color: '#F2705E' } } });
+// Stop watching closes the window: red, like a window's close.
+export const FloatingKeyClose = style({
+  selectors: {
+    '&&&': { color: '#F2705E' },
+    '&&&:hover': { color: '#FFF4EC', backgroundColor: '#D9412B' },
+  },
+});
+
+// The resize corners, in a layer above the call iframe at the box's place. They show only as
+// the pointer's resize arrows, except a small grip in the bottom right, like a window's.
+export const FloatingChrome = style({
+  position: 'fixed',
+  zIndex: 52,
+  pointerEvents: 'none',
+});
+
+export const FloatingCorner = recipe({
+  base: {
+    pointerEvents: 'auto',
+    position: 'absolute',
+    width: toRem(18),
+    height: toRem(18),
+    touchAction: 'none',
+  },
+  variants: {
+    corner: {
+      nw: { top: -3, left: -3, cursor: 'nwse-resize' },
+      ne: { top: -3, right: -3, cursor: 'nesw-resize' },
+      sw: { bottom: -3, left: -3, cursor: 'nesw-resize' },
+      se: { bottom: -3, right: -3, cursor: 'nwse-resize' },
+    },
+  },
+});
+
+// Two short diagonal strokes, faint until the pointer is over the live or the grip itself.
+export const FloatingGrip = style({
+  position: 'absolute',
+  right: toRem(7),
+  bottom: toRem(7),
+  width: toRem(10),
+  height: toRem(10),
+  pointerEvents: 'none',
+  opacity: 0,
+  backgroundImage:
+    'linear-gradient(135deg, transparent 45%, rgba(240, 217, 188, 0.9) 45%, rgba(240, 217, 188, 0.9) 55%, transparent 55%), ' +
+    'linear-gradient(135deg, transparent 75%, rgba(240, 217, 188, 0.9) 75%, rgba(240, 217, 188, 0.9) 85%, transparent 85%)',
+  filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.9))',
+  transition: 'opacity 250ms ease-out',
+  selectors: { [`${FloatingChrome}:hover &`]: { opacity: 1 } },
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+});
+export const FloatingGripAwake = style({ opacity: 0.6 });
+
 export const OwnerVolume = style({ display: 'flex', flexDirection: 'column', gap: 4 });
 
 // The floating box while nothing is watched: a small room card instead of an empty stage.
@@ -370,109 +435,265 @@ export const GoToRoom = style({
   },
 });
 
-// Controls over the watched share in the call room, as loose round buttons with no bar behind
-// them: stop watching in the top right corner, like a window's close, and the sound at the bottom
-// right, like a video player's. The box matches the share; only the buttons take clicks.
-// Above the call iframe, which has no z-index there.
+// The watched share's controls, as small chips in its corners instead of a bar: who is live at
+// the top left, people/fullscreen/stop at the top right, the sound at the bottom right. The box
+// matches the share; only the chips take clicks. Above the call iframe.
 export const LiveOverlay = style({
   position: 'fixed',
   zIndex: 2,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  alignItems: 'flex-end',
-  padding: config.space.S300,
   pointerEvents: 'none',
 });
 
-// Too short for two ends (a phone on its side): everything in one row at the top.
-export const LiveOverlayCompact = style({
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
-  alignItems: 'flex-start',
-  gap: config.space.S200,
+export const LiveCorners = style({
+  position: 'absolute',
+  inset: 0,
 });
-
-export const LiveOverlayGroup = style({
-  pointerEvents: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  gap: config.space.S200,
-  transition: 'opacity 200ms ease-out',
-  selectors: {
-    [`${LiveOverlayCompact} &`]: { flexDirection: 'row', alignItems: 'center' },
-  },
+// Each group fades on its own: only the ones over the picture sleep (LiveOverlay).
+globalStyle(`${LiveCorners} > *`, {
+  transition: 'opacity 250ms ease-out',
   '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
 });
 
-// Out of the way: the buttons fade until the pointer or the keyboard reaches them.
-export const LiveOverlayDim = style({});
-globalStyle(`${LiveOverlayDim} ${LiveOverlayGroup}`, { opacity: 0.25 });
+// Asleep after the pointer rests; pointing at a chip or tabbing into one brings them back.
+export const LiveAsleep = style({
+  opacity: 0,
+  selectors: { '&:hover, &:focus-within': { opacity: 1 } },
+});
+
+// Warm ash and ember: the call's controls over a share, tied to the Forge palette.
+const ASH = {
+  icon: '#F0D9BC',
+  muted: '#B39A7C',
+  line: 'rgba(240, 217, 188, 0.35)',
+  off: '#F2705E',
+  on: '#FFA45C',
+  leave: '#D9412B',
+  leaveHover: '#E85238',
+  onLeave: '#FFF4EC',
+};
+
+// Keeps the controls readable on any picture.
+const shadow = 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.5))';
+
+// Always dark, whatever the theme: they sit on video, like the call's own name tags.
+const chip = {
+  pointerEvents: 'auto',
+  display: 'flex',
+  alignItems: 'center',
+  color: ASH.icon,
+  backgroundColor: 'rgba(16, 18, 22, 0.75)',
+  borderRadius: config.radii.R300,
+} as const;
+
+export const LiveChip = style(chip);
+
+export const LiveWho = style({
+  backgroundColor: 'transparent',
+  minWidth: 0,
+  gap: config.space.S200,
+  padding: `${config.space.S100} ${config.space.S300}`,
+});
+
+const pulse = keyframes({
+  '0%, 100%': { opacity: 1 },
+  '50%': { opacity: 0.35 },
+});
+
+export const LiveDot = style({
+  width: toRem(8),
+  height: toRem(8),
+  flexShrink: 0,
+  borderRadius: '50%',
+  backgroundColor: '#FF5A4F',
+  animation: `${pulse} 2s ease-in-out infinite`,
+  '@media': { '(prefers-reduced-motion: reduce)': { animation: 'none' } },
+});
+
+export const LiveTag = style({
+  flexShrink: 0,
+  color: ASH.muted,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+});
+
+export const LiveButtons = style({
+  display: 'flex',
+  flexShrink: 0,
+  gap: config.space.S200,
+});
+
+// Who is live and the share's own buttons, in one row. Over the picture's top edge when there's
+// no room above it: bare, with a shadow, fading while the pointer rests.
+export const LiveTop = style({
+  position: 'absolute',
+  top: config.space.S100,
+  left: config.space.S100,
+  right: config.space.S100,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: config.space.S300,
+  pointerEvents: 'none',
+});
+globalStyle(`${LiveTop} > ${LiveWho}`, { filter: shadow, maxWidth: '60%' });
+
+// With room above the picture it is a bar of its own, joined to the picture's top edge like a
+// window's title bar, with the buttons as soft square keys. It never fades: it covers nothing.
+export const LiveTopBar = style({
+  top: 'auto',
+  left: 0,
+  right: 0,
+  bottom: '100%',
+  height: toRem(44),
+  padding: `0 ${config.space.S200} 0 ${config.space.S100}`,
+  backgroundColor: '#1C1F25',
+  borderRadius: `${toRem(12)} ${toRem(12)} 0 0`,
+  boxShadow: 'inset 0 -1px 0 rgba(240, 217, 188, 0.08)',
+});
+globalStyle(`${LiveTopBar} > ${LiveWho}`, { filter: 'none' });
+globalStyle(`${LiveTopBar} ${LiveButtons}`, { gap: config.space.S100 });
+
+// Bare icons over the share: warm off-white with a shadow so they read on any picture, no chip behind.
+export const LiveChipButton = style({
+  justifyContent: 'center',
+  flexShrink: 0,
+  pointerEvents: 'auto',
+  filter: shadow,
+  // Doubled to beat folds' own variant colours.
+  selectors: {
+    '&&': { color: ASH.icon, backgroundColor: 'transparent' },
+    '&&:hover, &&[aria-pressed=true]': {
+      color: '#FFE6C8',
+      backgroundColor: 'rgba(255, 164, 92, 0.18)',
+    },
+  },
+});
+
+// A switched-off control (mic, sound, hidden people): coal red, still readable on video.
+export const LiveOff = style({ selectors: { '&&&': { color: ASH.off } } });
+// Something of yours that's on and shows to others (your share, the chat): ember.
+export const LiveOn = style({ selectors: { '&&&': { color: ASH.on } } });
+globalStyle(`${LiveTopBar} ${LiveChipButton}`, {
+  filter: 'none',
+  width: toRem(32),
+  height: toRem(32),
+  minWidth: 0,
+  padding: 0,
+  borderRadius: config.radii.R300,
+  transition: 'background-color 120ms ease-out',
+});
+globalStyle(`${LiveTopBar} ${LiveChipButton}:not(:hover)`, {
+  backgroundColor: 'rgba(240, 217, 188, 0.07) !important',
+});
+
+// The call's buttons along the share's bottom edge: centred, with the share's sound on the right.
+export const LiveCall = style({
+  position: 'absolute',
+  left: config.space.S300,
+  right: config.space.S300,
+  bottom: config.space.S300,
+  display: 'grid',
+  gridTemplateColumns: '1fr auto 1fr',
+  alignItems: 'center',
+  gap: config.space.S300,
+  pointerEvents: 'none',
+});
+
+// Under the picture, in the letterbox space, so nothing covers what's shared.
+export const LiveCallBelow = style({
+  top: `calc(100% + ${config.space.S200})`,
+  bottom: 'auto',
+});
+// The same row as the call's own bar when nothing is watched, so entering a live changes
+// nothing about the buttons.
+export const LiveCallDocked = style({
+  position: 'relative',
+  left: 'auto',
+  right: 'auto',
+  bottom: 'auto',
+  flexShrink: 0,
+  padding: `${config.space.S300} ${config.space.S300} ${config.space.S400}`,
+});
+
+// The call is always dark, like the video in it, so its cream buttons read in every theme.
+export const CallDark = style({ backgroundColor: '#14161A', color: '#F0D9BC' });
+
+// Each button floats on its own: it rises a little under the pointer.
+const floaty = `${LiveCallBelow} button, ${LiveCallDocked} button`;
+globalStyle(floaty, {
+  transition: 'transform 120ms ease-out, background-color 120ms ease-out',
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+});
 globalStyle(
-  `${LiveOverlayDim} ${LiveOverlayGroup}:hover, ${LiveOverlayDim} ${LiveOverlayGroup}:focus-within`,
+  `${LiveCallBelow} button:hover:not(:disabled), ${LiveCallDocked} button:hover:not(:disabled)`,
   {
-    opacity: 1,
+    transform: 'translateY(-2px)',
   }
 );
 
-// Each button springs in when the share opens, one after another (the delay is set inline).
-const springIn = keyframes({
-  '0%': { opacity: 0, transform: 'translateY(-0.75rem) scale(0.5)' },
-  '100%': { opacity: 1, transform: 'none' },
+export const LiveCallCenter = style({
+  gridColumn: 2,
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S500,
 });
 
-// Always dark, whatever the theme: they sit on video, like the call's own name tags.
-const floating = {
-  pointerEvents: 'auto',
-  animation: `${springIn} 550ms cubic-bezier(0.3, 1.6, 0.5, 1) both`,
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
-  '@media': { '(prefers-reduced-motion: reduce)': { animation: 'none' } },
-} as const;
+// Buttons that belong together (voice, video, chat) sit close; the groups stand apart.
+export const LiveCallGroup = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+});
 
-export const LiveFloat = style({
-  ...floating,
-  color: '#F2F4F7',
-  backgroundColor: 'rgba(16, 18, 22, 0.72)',
-  backdropFilter: 'blur(8px)',
+export const LiveArrow = style({
+  pointerEvents: 'auto',
+  filter: shadow,
+  marginLeft: toRem(-8),
   selectors: {
-    '&:hover': { backgroundColor: 'rgba(16, 18, 22, 0.92)' },
-    '&[aria-pressed=true]': { color: '#80C8FF' },
+    '&&': { color: ASH.muted, backgroundColor: 'transparent' },
+    '&&:hover, &&[aria-pressed=true]': {
+      color: ASH.icon,
+      backgroundColor: 'rgba(255, 164, 92, 0.18)',
+    },
   },
 });
 
-export const LiveFloatStop = style(floating);
-
-// The sound button opens its slider to the left on hover or focus, so it stays one round button.
-export const LiveVolume = style({
-  ...floating,
-  display: 'flex',
-  flexDirection: 'row-reverse',
-  alignItems: 'center',
-  borderRadius: config.radii.Pill,
-  color: '#F2F4F7',
-  backgroundColor: 'rgba(16, 18, 22, 0.72)',
-  backdropFilter: 'blur(8px)',
+export const LiveCallDivider = style({
+  width: 1,
+  height: toRem(20),
+  backgroundColor: ASH.line,
+  filter: shadow,
 });
 
-export const LiveVolumeButton = style({
-  color: 'inherit',
-  flexShrink: 0,
-  selectors: { '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.14)' } },
+// Leaving is the one solid shape on the share, so it is found at a glance.
+export const LiveLeave = style({
+  pointerEvents: 'auto',
+  marginLeft: config.space.S200,
+  filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6))',
+  selectors: {
+    '&&': { backgroundColor: ASH.leave, color: ASH.onLeave },
+    '&&:hover:not(:disabled)': { backgroundColor: ASH.leaveHover },
+  },
+});
+
+export const LiveSound = style({
+  gridColumn: 3,
+  justifySelf: 'end',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-end',
+  gap: config.space.S100,
+});
+
+export const LiveVolume = style({
+  pointerEvents: 'auto',
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+  filter: shadow,
 });
 
 export const LiveVolumeSlider = style({
-  width: 0,
-  margin: 0,
-  opacity: 0,
-  backgroundColor: 'rgba(255, 255, 255, 0.28)',
-  transition: 'width 180ms ease-out, margin 180ms ease-out, opacity 180ms ease-out',
-  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
-  selectors: {
-    [`${LiveVolume}:hover &, ${LiveVolume}:focus-within &`]: {
-      width: toRem(96),
-      margin: `0 ${config.space.S100} 0 ${config.space.S300}`,
-      opacity: 1,
-    },
-  },
+  width: toRem(72),
+  backgroundColor: 'rgba(240, 217, 188, 0.45)',
 });

@@ -18,7 +18,7 @@ const VOICE_PATCHED =
 // spotlight-landscape, ye whether Element Call's expand is on (ignored), KJ distinctUntilChanged.
 const EXPAND_ORIGINAL = 'ye.pipe(ZJ(e=>e?Te(!1):Ce(!1)))';
 const EXPAND_PATCHED =
-  'IJ([ye,window.blazeroomShares?.changes??PJ(0)]).pipe(W(()=>!!window.blazeroomShares?.peopleHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0)))';
+  'IJ([ye,window.blazeroomShares?.changes??PJ(0)]).pipe(W(()=>!!window.blazeroomShares?.pipHidden?.()),KJ(),ZJ(e=>e?Te(!0):Ce(!0)))';
 
 // Element Call's chosen mic and speaker settings, so a change from the app's audio menu applies
 // to the call in progress (setValue also saves them where the next call reads them). vKe and
@@ -35,7 +35,29 @@ const DEVICES_PATCHED =
 const FLAT_ORIGINAL =
   'case`flat`:return xe.pipe(ZJ(e=>{switch(e){case`grid`:return Ce(!0);case`spotlight`:return Te(!0)}}))';
 const FLAT_PATCHED =
-  'case`flat`:return xe.pipe(ZJ(e=>{switch(e){case`grid`:return Ce(!0);case`spotlight`:return IJ([pe,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([t])=>t&&!window.blazeroomShares?.peopleHidden?.()),KJ(),ZJ(t=>t?Ce(!0):Te(!0)))}}))';
+  'case`flat`:return xe.pipe(ZJ(e=>{switch(e){case`grid`:return Ce(!0);case`spotlight`:return IJ([pe,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([t])=>t&&!window.blazeroomShares?.pipHidden?.()),KJ(),ZJ(t=>t?Ce(!0):Te(!0)))}}))';
+
+// A narrow window (the floating viewer, a phone) is Element Call's "narrow" mode, which shows a
+// share as one tile among the cameras. While the share has to show alone (the floating viewer,
+// or the people hidden) it is expanded there too. Oe is the one-on-one portrait layout.
+const NARROW_ORIGINAL =
+  'case`narrow`:return Oe.pipe(ZJ(e=>e===null?IJ([le,fe],(e,t)=>e.length>uot||t.some(e=>e.type===`screen share`)?we:Se).pipe(lKe()):PJ(e)));';
+const NARROW_PATCHED =
+  'case`narrow`:return IJ([pe,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([t])=>!!t&&!!window.blazeroomShares?.pipHidden?.()),KJ(),ZJ(t=>t?Te(!0):Oe.pipe(ZJ(e=>e===null?IJ([le,fe],(e,t)=>e.length>uot||t.some(e=>e.type===`screen share`)?we:Se).pipe(lKe()):PJ(e)))));';
+
+// A share the person isn't watching yet takes a tile in the people's grid, right after its
+// sharer, as on Discord: blazeroomShares.gridShares adds a stand-in for it to the grid list (le),
+// and the grid tile (GridTile) draws the stand-in as an empty box Cinny covers with the share's
+// picture and Watch button (LiveTiles.tsx). j is the list of every share, Bit the animated div
+// the other tiles use, so the box moves with the grid.
+const GRID_ORIGINAL =
+  'le=e.behavior(ne.pipe(ZJ(e=>{let t=e.map(e=>e.bin$.pipe(W(t=>[e,t])));return t.length===0?PJ([]):IJ(t,(...e)=>e.sort(([,e],[,t])=>e-t).map(([e])=>e))}),KJ(r9)))';
+const GRID_PATCHED =
+  'le=e.behavior(IJ([ne.pipe(ZJ(e=>{let t=e.map(e=>e.bin$.pipe(W(t=>[e,t])));return t.length===0?PJ([]):IJ(t,(...e)=>e.sort(([,e],[,t])=>e-t).map(([e])=>e))})),j,window.blazeroomShares?.changes??PJ(0)]).pipe(W(([e,t])=>window.blazeroomShares?.gridShares?.(e,t)??e),KJ(r9)))';
+const TILE_ORIGINAL =
+  'return o.type===`ringing`?(0,B.jsx)(Kit,{ref:a,vm:o,displayName:s,mxcAvatarUrl:c,...i})';
+const TILE_PATCHED =
+  'return o.type===`blazeroom share`?(0,B.jsx)(Bit.div,{ref:a,className:i.className,style:i.style,"data-blazeroom-share":o.shareId}):o.type===`ringing`?(0,B.jsx)(Kit,{ref:a,vm:o,displayName:s,mxcAvatarUrl:c,...i})';
 
 const replaceOnce = (source, [original, patched, what]) => {
   const at = source.indexOf(original);
@@ -52,6 +74,9 @@ const PATCHES = [
   [EXPAND_ORIGINAL, EXPAND_PATCHED, 'expanded share'],
   [DEVICES_ORIGINAL, DEVICES_PATCHED, 'audio devices'],
   [FLAT_ORIGINAL, FLAT_PATCHED, 'flat share'],
+  [NARROW_ORIGINAL, NARROW_PATCHED, 'narrow share'],
+  [GRID_ORIGINAL, GRID_PATCHED, 'grid share'],
+  [TILE_ORIGINAL, TILE_PATCHED, 'share tile'],
 ];
 
 // Throws so that upgrading Element Call fails the build instead of silently bringing the old

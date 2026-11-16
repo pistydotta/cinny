@@ -28,8 +28,34 @@ const hideVolumeMenu = document.createElement('style');
 hideVolumeMenu.textContent =
   '[class*="_bottomRightButtons_"] > button[aria-haspopup],' +
   ' [class*="_bottomRightButtons_"] > button[class*="_expand_"]:not([aria-label="maximise"])' +
-  ' { display: none !important; }';
+  ' { display: none !important; }' +
+  // While Cinny's bar is over a watched share (LiveOverlay sets the flag) it names the presenter
+  // and has fullscreen, so the tile's own name tag and maximise would repeat it.
+  ' html[data-blazeroom-watching] [class*="_tile_"]:has(> [class*="_bottomRightButtons_"])' +
+  ' :is([class*="_nameTag_"], [class*="_bottomRightButtons_"])' +
+  ' { display: none !important; }' +
+  // The share is letterboxed inside the tile; without the tile's fill those strips vanish into
+  // the stage and only the picture shows, with Cinny's controls on it.
+  ' html[data-blazeroom-watching] [class*="_tile_"]:has(> [class*="_bottomRightButtons_"])' +
+  ' :is(video, [class*="_bg_"]) { background: transparent !important; }';
 (document.head ?? document.documentElement).appendChild(hideVolumeMenu);
+
+// Element Call's footer is never shown here (Cinny draws the call controls), but a pointer move
+// still "shows" it, and the layout makes room for it: a 24px header filler and a bottom inset
+// on the grids, which made the cameras jump when the pointer entered the call.
+const steadyLayout = document.createElement('style');
+steadyLayout.textContent =
+  '[class*="_inRoom_"] > [class*="_filler_"] { display: none !important; }' +
+  ' [class*="_fixedGrid_"], [class*="_scrollingGrid_"]' +
+  ' { --call-view-safe-area-inset-bottom: env(safe-area-inset-bottom) !important; }';
+(document.head ?? document.documentElement).appendChild(steadyLayout);
+
+// The grid tile of a share not watched yet (patchElementCall.js) is empty: Cinny draws the share's
+// picture over it. Dark and round like the other tiles, for the frame before Cinny catches up.
+const shareTile = document.createElement('style');
+shareTile.textContent =
+  '[data-blazeroom-share] { background: #1B1E23; border-radius: var(--cpd-space-4x, 16px); }';
+(document.head ?? document.documentElement).appendChild(shareTile);
 window.blazeroomShares = store;
 
 // Per-person mute and volume from the sidebar; the patched bundle reads it (voiceVolume.js).

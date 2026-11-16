@@ -28,8 +28,40 @@ export default mergeConfig(base, {
         return undefined;
       },
       configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (!/^localhost:\d+$/.test(req.headers.host ?? '')) {
+            next();
+            return;
+          }
+          if (req.url === '/local-share-demo') {
+            res.setHeader('Content-Type', 'text/html');
+            res.end(`<script>sessionStorage.setItem('blazeroom-local-share-demo', 'true');
+              location.replace('/');</script>`);
+            return;
+          }
+          if (req.url !== '/public/element-call/blazeroom/blazeroom-screenshare.js') {
+            next();
+            return;
+          }
+          const bridge = fs.readFileSync('src/element-call/blazeroom-screenshare.js', 'utf8');
+          res.setHeader('Content-Type', 'application/javascript');
+          res.setHeader('Cache-Control', 'no-store');
+          res.end(`import '/src/dev/localShareDemo.js';\n${bridge}`);
+        });
         server.middlewares.use(async (req, res, next) => {
           if (req.url.startsWith('/local-sfu/')) {
+            const requestOrigin = req.headers.origin;
+            if (/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(requestOrigin ?? '')) {
+              res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+              res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+              res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              res.setHeader('Vary', 'Origin');
+            }
+            if (req.method === 'OPTIONS') {
+              res.statusCode = 204;
+              res.end();
+              return;
+            }
             try {
               let body = '';
               // This runs in Node; no browser iterator polyfill is bundled.

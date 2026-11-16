@@ -1,5 +1,6 @@
 import React, { MouseEventHandler, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import classNames from 'classnames';
 import { Box, Icon, Icons, Menu, PopOut, RectCords, Text, config } from 'folds';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
@@ -32,11 +33,12 @@ export function VoiceSettingsDialog({ onClose }: { onClose: () => void }) {
 
 type AudioMenuArrowProps = {
   kind: 'input' | 'output';
+  className?: string;
 };
 
 // The small arrow beside the mic or headphone button, like Discord's: devices and volume
 // without opening the settings.
-export function AudioMenuArrow({ kind }: AudioMenuArrowProps) {
+export function AudioMenuArrow({ kind, className }: AudioMenuArrowProps) {
   const [cords, setCords] = useState<RectCords>();
   const [dialog, setDialog] = useState(false);
 
@@ -79,7 +81,7 @@ export function AudioMenuArrow({ kind }: AudioMenuArrowProps) {
         }
       >
         <TipIconButton
-          className={css.Arrow}
+          className={classNames(css.Arrow, className)}
           label={
             kind === 'input'
               ? tr('call_audio.input_options', 'Microphone options')
