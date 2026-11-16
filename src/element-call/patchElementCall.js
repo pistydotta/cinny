@@ -59,6 +59,14 @@ const TILE_ORIGINAL =
 const TILE_PATCHED =
   'return o.type===`blazeroom share`?(0,B.jsx)(Bit.div,{ref:a,className:i.className,style:i.style,"data-blazeroom-share":o.shareId}):o.type===`ringing`?(0,B.jsx)(Kit,{ref:a,vm:o,displayName:s,mxcAvatarUrl:c,...i})';
 
+// With two people in the call, Element Call puts the other one big and you small in a corner of
+// their tile. Without a camera on either side that is two avatars, one inside the other, so the
+// one-on-one layouts (Ee feeds both) give way to the grid: two cards the same size. A ringing
+// stand-in has no camera to watch and keeps the upstream layout.
+const ONE_ON_ONE_ORIGINAL = 'return PJ(null)})),De=Ee.pipe(';
+const ONE_ON_ONE_PATCHED =
+  'return PJ(null)}),ZJ(e=>e===null||!e.remote.videoEnabled$?PJ(e):IJ([e.local.videoEnabled$,e.remote.videoEnabled$]).pipe(W(([t,n])=>t||n?e:null),KJ()))),De=Ee.pipe(';
+
 const replaceOnce = (source, [original, patched, what]) => {
   const at = source.indexOf(original);
   if (at === -1) throw new Error(`Element Call bundle: ${what} text not found`);
@@ -77,6 +85,7 @@ const PATCHES = [
   [NARROW_ORIGINAL, NARROW_PATCHED, 'narrow share'],
   [GRID_ORIGINAL, GRID_PATCHED, 'grid share'],
   [TILE_ORIGINAL, TILE_PATCHED, 'share tile'],
+  [ONE_ON_ONE_ORIGINAL, ONE_ON_ONE_PATCHED, 'one-on-one'],
 ];
 
 // Throws so that upgrading Element Call fails the build instead of silently bringing the old

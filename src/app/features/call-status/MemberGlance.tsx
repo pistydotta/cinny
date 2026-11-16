@@ -1,6 +1,7 @@
 import { Box, config, Icon, Icons, Text } from 'folds';
 import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import React from 'react';
+import classNames from 'classnames';
 import { Room } from 'matrix-js-sdk';
 import { UserAvatar } from '../../components/user-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
@@ -26,7 +27,7 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
   const remainingCount = max && members.length > max ? members.length - max : 0;
 
   return (
-    <Box alignItems="Center">
+    <Box alignItems="Center" gap="200">
       {visibleMembers.map((callMember) => {
         const { userId } = callMember;
         if (!userId) return null;
@@ -39,7 +40,10 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
         return (
           <StackedAvatar
             key={callMember.memberId}
-            className={speakers.has(callMember.sender) ? css.SpeakerAvatarOutline : undefined}
+            className={classNames(
+              css.GlanceAvatar,
+              speakers.has(callMember.sender) && css.SpeakerAvatarOutline
+            )}
             title={name}
             as="button"
             variant="Background"

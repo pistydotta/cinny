@@ -398,6 +398,9 @@ export const SpeakerWave = recipe({
 export const Faces = style({ display: 'flex', alignItems: 'center', flexShrink: 0 });
 export const Face = recipe({
   base: {
+    // The Forge radii square off folds' Pill; faces are circles.
+    borderRadius: '50%',
+    overflow: 'hidden',
     boxShadow: `0 0 0 2px ${STEEL.card}`,
     transition: 'box-shadow 120ms, transform 120ms',
     selectors: { '& + &': { marginLeft: toRem(-8) } },
@@ -481,9 +484,10 @@ const ASH = {
   line: 'rgba(240, 217, 188, 0.35)',
   off: '#F2705E',
   on: '#FFA45C',
-  leave: '#D9412B',
-  leaveHover: '#E85238',
-  onLeave: '#FFF4EC',
+  // Leave wears the Watch button's oxblood and off-white (LiveTileWatch): quieter than a red.
+  leave: color.Primary.Main,
+  leaveHover: color.Primary.MainHover,
+  onLeave: '#EBDAD6',
 };
 
 // Keeps the controls readable on any picture.
@@ -587,18 +591,6 @@ export const LiveChipButton = style({
 export const LiveOff = style({ selectors: { '&&&': { color: ASH.off } } });
 // Something of yours that's on and shows to others (your share, the chat): ember.
 export const LiveOn = style({ selectors: { '&&&': { color: ASH.on } } });
-globalStyle(`${LiveTopBar} ${LiveChipButton}`, {
-  filter: 'none',
-  width: toRem(32),
-  height: toRem(32),
-  minWidth: 0,
-  padding: 0,
-  borderRadius: config.radii.R300,
-  transition: 'background-color 120ms ease-out',
-});
-globalStyle(`${LiveTopBar} ${LiveChipButton}:not(:hover)`, {
-  backgroundColor: 'rgba(240, 217, 188, 0.07) !important',
-});
 
 // The call's buttons along the share's bottom edge: centred, with the share's sound on the right.
 export const LiveCall = style({
@@ -710,4 +702,144 @@ export const LiveVolume = style({
 export const LiveVolumeSlider = style({
   width: toRem(72),
   backgroundColor: 'rgba(240, 217, 188, 0.45)',
+});
+
+// Over the picture the controls sit on smoked glass: bare icons with a shadow vanished on bright,
+// busy shares (a game's orange sky). The glass is dark enough for the cream icons on any colour.
+const glass = {
+  backgroundColor: 'rgba(14, 15, 18, 0.86)',
+  backdropFilter: 'blur(14px)',
+  WebkitBackdropFilter: 'blur(14px)',
+  border: '1px solid rgba(240, 217, 188, 0.16)',
+  boxShadow: '0 4px 18px rgba(0, 0, 0, 0.45)',
+} as const;
+
+const overTop = `${LiveTop}:not(${LiveTopBar})`;
+const KEY = {
+  icon: '#FFF1E0',
+  fill: 'rgba(240, 217, 188, 0.14)',
+  edge: 'rgba(240, 217, 188, 0.28)',
+  hover: 'rgba(255, 164, 92, 0.26)',
+  edgeHover: 'rgba(255, 164, 92, 0.6)',
+  fillOver: 'rgba(12, 13, 16, 0.82)',
+  hoverOver: 'rgba(52, 36, 26, 0.92)',
+};
+globalStyle(`${overTop} > ${LiveWho}`, {
+  ...glass,
+  filter: 'none',
+  pointerEvents: 'auto',
+  borderRadius: toRem(999),
+  padding: `${toRem(6)} ${config.space.S300}`,
+});
+// The share's own buttons (people, fullscreen, stop) sit straight on the bar with no key behind
+// them: a bright icon is the whole button, with a soft glow under the pointer. Over the picture a
+// shadow keeps the icon readable on any colour.
+const keySelector = (state = '') => `${LiveTop} ${LiveButtons} ${LiveChipButton}${state}`;
+globalStyle(keySelector(), {
+  filter: 'none',
+  width: toRem(32),
+  height: toRem(32),
+  minWidth: 0,
+  padding: 0,
+  color: '#FFF1E0 !important',
+  backgroundColor: 'transparent !important',
+  border: 'none',
+  borderRadius: config.radii.R300,
+  boxShadow: 'none',
+  transition: 'background-color 120ms ease-out, color 120ms ease-out',
+});
+globalStyle(keySelector(':hover'), {
+  color: '#FFFFFF !important',
+  backgroundColor: 'rgba(255, 241, 224, 0.12) !important',
+});
+globalStyle(keySelector(`${LiveOff}`), { color: `${ASH.off} !important` });
+globalStyle(`${overTop} ${LiveButtons} ${LiveChipButton}`, {
+  filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8))',
+});
+
+const overBottom = `${LiveCall}:not(${LiveCallBelow}):not(${LiveCallDocked})`;
+globalStyle(`${overBottom} ${LiveCallCenter}`, {
+  ...glass,
+  pointerEvents: 'auto',
+  padding: `${toRem(4)} ${toRem(6)}`,
+  borderRadius: toRem(14),
+});
+globalStyle(`${overBottom} ${LiveVolume}`, {
+  ...glass,
+  filter: 'none',
+  padding: `${toRem(3)} ${config.space.S200} ${toRem(3)} ${toRem(3)}`,
+  borderRadius: config.radii.R400,
+});
+globalStyle(
+  `${overBottom} ${LiveChipButton}, ${overBottom} ${LiveArrow}, ${overBottom} ${LiveCallDivider}`,
+  { filter: 'none' }
+);
+
+// Who is in the call, over the share's right edge, above the other controls (LivePeople).
+export const LivePeople = style({
+  position: 'absolute',
+  top: toRem(56),
+  bottom: toRem(72),
+  right: config.space.S200,
+  zIndex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  pointerEvents: 'none',
+});
+
+const slide = {
+  transition: 'opacity 160ms ease-out, transform 160ms ease-out',
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+} as const;
+
+// No backdrop: the faces float over the share on their own, each with a shadow to hold on
+// any picture.
+export const LivePeopleRail = style({
+  ...slide,
+  pointerEvents: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: toRem(10),
+  maxHeight: '100%',
+  padding: toRem(4),
+  overflow: 'hidden',
+  filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6))',
+});
+// The faces sit in a column here, not overlapping in a row as on the room card.
+globalStyle(`${LivePeopleRail} > *`, { marginLeft: '0 !important', flexShrink: 0 });
+
+export const LivePeopleMore = style({
+  fontSize: toRem(12),
+  fontWeight: 600,
+  color: ASH.icon,
+  textShadow: '0 1px 3px rgba(0, 0, 0, 0.9)',
+});
+
+// The rail's round key, dark like the top keys over the picture.
+const roundKey = {
+  '&&': {
+    width: toRem(28),
+    height: toRem(28),
+    borderRadius: '50%',
+    color: `${KEY.icon} !important`,
+    backgroundColor: `${KEY.fillOver} !important`,
+    border: `1px solid ${KEY.edge}`,
+  },
+  '&&:hover, &&:focus-visible': {
+    backgroundColor: `${KEY.hoverOver} !important`,
+    borderColor: KEY.edgeHover,
+  },
+} as const;
+
+// Brings the people column back: a small round key under the faces, styled like the top keys.
+export const LivePeopleAll = style({
+  selectors: roundKey,
+});
+
+export const LivePeopleClosed = style({
+  opacity: 0,
+  transform: 'translateX(16px)',
+  pointerEvents: 'none',
 });

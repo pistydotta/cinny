@@ -7,6 +7,7 @@ import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
 import { useShares } from './useShares';
 import { LiveCallButtons } from './LiveCallButtons';
+import { LivePeople } from './LivePeople';
 import { ENTER_FULL, EXIT_FULL, Glyph, PEOPLE } from './Glyph';
 import { saveVolume } from './watchRules';
 import * as css from './styles.css';
@@ -34,6 +35,11 @@ const sameRect = (a: Rect | null, b: Rect | null) =>
 
 // The bar hides this long after the pointer last moved over the share.
 const IDLE_MS = 2500;
+// The people list opens when the pointer comes this close to the share's right edge.
+const PEEK_EDGE = 0.14;
+const PEEK_EDGE_MIN = 72;
+// and closes this long after it leaves, so crossing the gap into the list doesn't drop it.
+const PEEK_CLOSE_MS = 220;
 
 // Element Call's spotlight tile: the parent of its corner buttons. Same origin, so readable.
 const shareTile = (callEmbed: CallEmbed): HTMLElement | null =>
@@ -115,6 +121,9 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
     };
   }, [active, callEmbed]);
 
+  // With the people column hidden, who is in the call shows at the share's right edge.
+  const rail = active && (peopleHidden || fullscreen);
+
   // Unwatching everything brings the people back for the next share.
   useEffect(() => {
     if (!active) store?.setPeopleHidden(false);
@@ -128,6 +137,22 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
     idleTimer.current = window.setTimeout(() => setAwake(false), IDLE_MS);
   }, []);
   useEffect(() => () => window.clearTimeout(idleTimer.current), []);
+
+  // Reaching the share's right edge opens who is in the call; pointing at the list keeps it.
+  const [peek, setPeek] = useState(false);
+  const peekTimer = useRef(0);
+  const openPeek = useCallback(() => {
+    window.clearTimeout(peekTimer.current);
+    setPeek(true);
+  }, []);
+  const closePeek = useCallback(() => {
+    window.clearTimeout(peekTimer.current);
+    peekTimer.current = window.setTimeout(() => setPeek(false), PEEK_CLOSE_MS);
+  }, []);
+  useEffect(() => () => window.clearTimeout(peekTimer.current), []);
+  useEffect(() => {
+    if (!active) setPeek(false);
+  }, [active]);
 
   // Fullscreen shows the share alone; leaving it puts the people back as they were.
   const peopleBefore = useRef(false);
@@ -177,7 +202,16 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
     };
     // Only movement over the share itself, not the rest of the call or the app, wakes them.
     const onMove = (evt: MouseEvent) => {
-      if (shareTile(callEmbed)?.contains(evt.target as Node)) wake();
+      const share = rectRef.current;
+      if (!share || !shareTile(callEmbed)?.contains(evt.target as Node)) {
+        closePeek();
+        return;
+      }
+      wake();
+      const x = callEmbed.iframe.getBoundingClientRect().left + evt.clientX;
+      const edge = Math.max(PEEK_EDGE_MIN, share.width * PEEK_EDGE);
+      if (x >= share.left + share.width - edge) openPeek();
+      else closePeek();
     };
     const onDouble = (evt: MouseEvent) => {
       if (shareTile(callEmbed)?.contains(evt.target as Node)) toggleFullscreen();
@@ -186,13 +220,15 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
     doc?.addEventListener('keydown', onKey);
     doc?.addEventListener('mousemove', onMove);
     doc?.addEventListener('dblclick', onDouble);
+    doc?.documentElement.addEventListener('mouseleave', closePeek);
     return () => {
+      doc?.documentElement.removeEventListener('mouseleave', closePeek);
       window.removeEventListener('keydown', onKey);
       doc?.removeEventListener('keydown', onKey);
       doc?.removeEventListener('mousemove', onMove);
       doc?.removeEventListener('dblclick', onDouble);
     };
-  }, [active, store, callEmbed, first, toggleFullscreen, wake]);
+  }, [active, store, callEmbed, first, toggleFullscreen, wake, openPeek, closePeek]);
   useEffect(() => {
     if (active) wake();
   }, [active, wake]);
@@ -283,6 +319,25 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
             ))}
           </div>
         </div>
+        {/* With the people column showing, the list would only repeat it. */}
+        {rail && (
+          <LivePeople
+            callEmbed={callEmbed}
+            open={peek}
+            onEnter={openPeek}
+            onLeave={closePeek}
+            onShowAll={() => {
+              // Fullscreen hides the column; leaving it brings the column back instead of what
+              // was before.
+              if (fullscreen) {
+                peopleBefore.current = false;
+                document.exitFullscreen().catch(() => undefined);
+              } else {
+                store.setPeopleHidden(false);
+              }
+            }}
+          />
+        )}
         <LiveCallButtons
           callEmbed={callEmbed}
           width={rect.width}

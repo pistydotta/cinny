@@ -16,7 +16,7 @@ import { SpeakerWaves } from './SpeakerWaves';
 import { useCallSpaceName } from './useCallSpaceName';
 import * as css from './styles.css';
 
-const nameOf = (room: Room, userId: string) =>
+export const nameOf = (room: Room, userId: string) =>
   getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
 
 // Who is in the call, in an order that stays put while they talk.
@@ -28,7 +28,7 @@ export const useCallPeople = (callEmbed: CallEmbed) => {
   return { people: order.current, speakers };
 };
 
-function Face({
+export function Face({
   room,
   userId,
   speaking,

@@ -13,13 +13,14 @@ const grid =
   'le=e.behavior(ne.pipe(ZJ(e=>{let t=e.map(e=>e.bin$.pipe(W(t=>[e,t])));return t.length===0?PJ([]):IJ(t,(...e)=>e.sort(([,e],[,t])=>e-t).map(([e])=>e))}),KJ(r9)))';
 const tile =
   'return o.type===`ringing`?(0,B.jsx)(Kit,{ref:a,vm:o,displayName:s,mxcAvatarUrl:c,...i})';
+const oneOnOne = 'return PJ(null)})),De=Ee.pipe(';
 const six = `${original}${voice}${expand}${devices}${flat}${narrow}`;
-const all = `${six}${grid}${tile}`;
+const all = `${six}${grid}${tile}${oneOnOne}`;
 
 describe('patchElementCall', () => {
   it("patches the layout's share list and each person's volume", () => {
     const patched = patchElementCall(
-      `before;${original}mid;${voice}mid;${expand}mid;${devices}mid;${flat}mid;${narrow}mid;${grid}mid;${tile}after`
+      `before;${original}mid;${voice}mid;${expand}mid;${devices}mid;${flat}mid;${narrow}mid;${grid}mid;${tile}mid;${oneOnOne}after`
     );
     expect(patched).toContain('blazeroomShares');
     expect(patched).toContain('blazeroomShares?.pipHidden?.()?void 0:t');
@@ -36,6 +37,8 @@ describe('patchElementCall', () => {
     expect(patched).toContain('blazeroomShares?.gridShares?.(e,t)??e');
     expect(patched).toContain('"data-blazeroom-share":o.shareId');
     expect(patched).not.toContain(grid);
+    expect(patched).toContain('W(([t,n])=>t||n?e:null)');
+    expect(patched).not.toContain(oneOnOne);
     expect(patched.startsWith('before;')).toBe(true);
     expect(patched.endsWith('after')).toBe(true);
   });
@@ -51,6 +54,7 @@ describe('patchElementCall', () => {
     );
     expect(() => patchElementCall(six)).toThrow(/grid share/);
     expect(() => patchElementCall(`${six}${grid}`)).toThrow(/share tile/);
+    expect(() => patchElementCall(`${six}${grid}${tile}`)).toThrow(/one-on-one/);
   });
 
   it('throws when the text appears twice', () => {
@@ -62,5 +66,6 @@ describe('patchElementCall', () => {
     expect(() => patchElementCall(`${all}${narrow}`)).toThrow(/narrow share/);
     expect(() => patchElementCall(`${all}${grid}`)).toThrow(/grid share/);
     expect(() => patchElementCall(`${all}${tile}`)).toThrow(/share tile/);
+    expect(() => patchElementCall(`${all}${oneOnOne}`)).toThrow(/one-on-one/);
   });
 });

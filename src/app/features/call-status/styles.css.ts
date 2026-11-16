@@ -1,4 +1,4 @@
-import { keyframes, style } from '@vanilla-extract/css';
+import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, toRem } from 'folds';
 
@@ -17,10 +17,18 @@ export const ControlDivider = style({
   height: toRem(16),
 });
 
+// The call bar's faces: true circles (the Forge radii square off folds' Pill) standing apart,
+// not stacked, so each one reads on its own.
+export const GlanceAvatar = style({
+  selectors: {
+    '&&': { borderRadius: '50%', overflow: 'hidden', outline: 'none', marginLeft: 0 },
+  },
+});
+globalStyle(`${GlanceAvatar} > *`, { borderRadius: '50%' });
+
 export const SpeakerAvatarOutline = style({
   boxShadow: `0 0 0 ${config.borderWidth.B600} ${color.Success.Main}`,
 });
-
 
 // The room's name is the only part of the pill that goes to the room, so it reads as a link.
 export const PillName = style({
