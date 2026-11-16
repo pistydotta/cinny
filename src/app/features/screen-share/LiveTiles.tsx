@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Badge, Icon, Icons, Text } from 'folds';
+import { Icon, Icons, Text } from 'folds';
 import { CallEmbed } from '../../plugins/call/CallEmbed';
 import { tr } from '../translation/tr';
 import { useShares } from './useShares';
@@ -16,6 +16,18 @@ const boxOf = (rect: DOMRect, dx = 0, dy = 0): Box => ({
   width: Math.round(rect.width),
   height: Math.round(rect.height),
 });
+// A play triangle with rounded corners, nudged right so its weight looks centred.
+function WatchPlay() {
+  return (
+    <svg width="10" height="11" viewBox="0 0 10 11" aria-hidden="true" style={{ marginLeft: 2 }}>
+      <path
+        d="M1.5 1.6v7.8c0 .8.9 1.3 1.6.9l6-3.9c.6-.4.6-1.3 0-1.7l-6-3.9C2.4.3 1.5.8 1.5 1.6z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 const sameBox = (a?: Box, b?: Box) =>
   !!a &&
   !!b &&
@@ -111,21 +123,22 @@ export function LiveTiles({ callEmbed }: { callEmbed: CallEmbed }) {
             ) : (
               <Icon className={css.LiveTileIcon} size="600" src={Icons.ScreenShare} />
             )}
-            <Badge className={css.LiveBadge} variant="Critical" fill="Solid" size="400">
-              <Text size="L400">{tr('screen_share.badge', 'Live')}</Text>
-            </Badge>
-            <span className={css.LiveTileWatch}>
-              <span className={css.LiveTileDisc}>
-                <Icon size="300" src={Icons.Play} filled />
-              </span>
+            <span className={css.LiveBadge}>
               <Text as="span" size="B300">
-                {tr('screen_share.watch', 'Watch')}
+                {tr('screen_share.badge', 'Live')}
               </Text>
             </span>
+            <span className={css.LiveTileFoot} />
             <span className={css.LiveTileName}>
-              <Icon size="50" src={Icons.ScreenShare} />
-              <Text as="span" size="T200" truncate>
+              <Icon size="100" src={Icons.ScreenShare} />
+              <Text as="span" size="T300" truncate>
                 {share.name}
+              </Text>
+            </span>
+            <span className={css.LiveTileWatch}>
+              <WatchPlay />
+              <Text as="span" size="B400">
+                {tr('screen_share.watch', 'Watch')}
               </Text>
             </span>
           </button>

@@ -53,53 +53,60 @@ export const LiveTileShot = style({
 
 export const LiveTileIcon = style({ position: 'relative', zIndex: 1, opacity: 0.35 });
 
-// A round play button with the word under it, like a paused video: it reads as "press to watch"
-// at a glance. Warm cream, like the controls over a watched share; ember under the pointer.
-export const LiveTileWatch = style({
+// Name bottom-left and Watch bottom-right on the tile itself, with no bar behind them: a soft
+// shade at the foot of the tile keeps both readable over any preview.
+export const LiveTileFoot = style({
   position: 'absolute',
   zIndex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: config.space.S100,
-  color: '#F0D9BC',
-  textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  height: '60%',
+  maxHeight: toRem(128),
+  background:
+    'linear-gradient(to top, rgba(10, 12, 16, 0.55), rgba(10, 12, 16, 0.25) 40%, rgba(10, 12, 16, 0))',
+  pointerEvents: 'none',
 });
-
-export const LiveTileDisc = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: toRem(48),
-  height: toRem(48),
-  borderRadius: '50%',
-  backgroundColor: 'rgba(240, 217, 188, 0.92)',
-  color: '#14161A',
-  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.45)',
-  transition: 'transform 120ms ease-out, background-color 120ms ease-out',
-  selectors: {
-    [`${LiveTile}:hover &, ${LiveTile}:focus-visible &`]: {
-      transform: 'scale(1.08)',
-      backgroundColor: '#FFA45C',
-    },
-  },
-  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
-});
-// The play triangle's weight sits left of its box; nudge it to look centred.
-globalStyle(`${LiveTileDisc} svg`, { marginLeft: toRem(3) });
 
 export const LiveTileName = style({
   position: 'absolute',
   zIndex: 1,
-  left: config.space.S200,
-  bottom: config.space.S200,
-  maxWidth: `calc(100% - 2 * ${config.space.S200})`,
+  left: config.space.S300,
+  // Centred on the Watch button beside it.
+  bottom: `calc(${config.space.S300} + ${toRem(6)})`,
+  // Leaves room for the Watch button on the right.
+  maxWidth: `calc(100% - ${toRem(140)})`,
   display: 'flex',
   alignItems: 'center',
   gap: config.space.S100,
-  padding: `2px ${config.space.S200}`,
-  borderRadius: config.radii.Pill,
-  backgroundColor: 'rgba(10, 12, 16, 0.6)',
+  fontWeight: 600,
+  textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+});
+
+// The tile's call to action, in Forge's oxblood (the primary colour, the same in both themes),
+// flat, with warm off-white text so it stays as quiet as the rest of the app. Lighter under the
+// pointer.
+export const LiveTileWatch = style({
+  position: 'absolute',
+  zIndex: 1,
+  right: config.space.S300,
+  bottom: config.space.S300,
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S200,
+  padding: `${toRem(7)} ${config.space.S400} ${toRem(7)} ${toRem(13)}`,
+  borderRadius: toRem(999),
+  backgroundColor: color.Primary.Main,
+  color: '#EBDAD6',
+  fontWeight: 600,
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+  transition: 'background-color 120ms ease-out',
+  selectors: {
+    [`${LiveTile}:hover &, ${LiveTile}:focus-visible &`]: {
+      backgroundColor: color.Primary.MainHover,
+    },
+  },
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
 });
 
 export const CompactCards = style({ padding: config.space.S200, minWidth: 0 });
@@ -113,11 +120,18 @@ export const CompactCard = style({
 
 export const LiveName = style({ minWidth: 0, maxWidth: '100%' });
 
+// Same oxblood and off-white as the Watch button, so the tile's two marks read as one set.
 export const LiveBadge = style({
   position: 'absolute',
   zIndex: 1,
-  top: config.space.S200,
-  right: config.space.S200,
+  top: config.space.S300,
+  left: config.space.S300,
+  padding: `${toRem(4)} ${toRem(12)}`,
+  borderRadius: toRem(999),
+  backgroundColor: color.Primary.Main,
+  color: '#EBDAD6',
+  fontWeight: 600,
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
 });
 
 export const Controls = style({
