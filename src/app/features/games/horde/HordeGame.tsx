@@ -28,20 +28,19 @@ import { PixelIcon } from './icons/PixelIcon';
 import { ReplayStart, decodeLog, runFrom } from './engine/replay';
 import { StatsPanel } from './StatsPanel';
 import { BuildPanel } from './BuildPanel';
+import { RunHud } from './RunHud';
+import '@fontsource/jersey-10/latin-400.css';
 import { Hud, HordeRunner } from './runner';
 import {
   achievementLabel,
   buildItemLabel,
   unlockName,
-  abilityLabel,
   characterLabel,
   choiceLabel,
   formatTime,
   keyLabel,
   keysOf,
   metaLabel,
-  passiveLabel,
-  shrineLabel,
   weaponLabel,
 } from './labels';
 import { Controls, loadControls, saveControls } from './controls';
@@ -52,7 +51,6 @@ import { useHordeProfile } from './useHordeProfile';
 import { firstRunHere, forgetRun, readRun, storeRun } from './savedRun';
 import * as css from './horde.css';
 import { tr } from '../../translation/tr';
-import { shortNumber } from './numbers';
 
 type Result = {
   won: boolean;
@@ -195,7 +193,7 @@ function FirstRunTip({ time, controls }: { time: number; controls: Controls }) {
   return <div className={css.Tip}>{tip}</div>;
 }
 
-function HordeRun({
+export function HordeRun({
   setup,
   rank,
   controls,
@@ -352,159 +350,7 @@ function HordeRun({
       <canvas ref={canvasRef} className={css.Canvas} />
       <div ref={overlayRef} className={css.Overlay} />
 
-      {hud && (
-        <>
-          <div className={css.HudTop}>
-            <div className={css.XpBar}>
-              <div className={css.XpFill} style={{ width: `${Math.min(1, hud.xp) * 100}%` }} />
-            </div>
-            <div className={css.HudRow}>
-              <span>{tr('games.horde.hud.level', 'Lv {{level}}', { level: hud.level })}</span>
-              <span className={css.Grow} />
-              <span className={css.Timer}>{formatTime(hud.time)}</span>
-              <span className={css.Grow} />
-              <span>💀 {hud.kills}</span>
-              <span>🪙 {hud.gold}</span>
-              <button
-                type="button"
-                className={css.HudButton}
-                onClick={() => runner?.setPaused(true)}
-                aria-label={tr('games.horde.pause', 'Pause')}
-              >
-                ⏸
-              </button>
-            </div>
-            <div className={css.Slots}>
-              {hud.weapons.map((w) => (
-                <span key={w.id} className={css.Slot} title={weaponLabel(w.id).name}>
-                  <PixelIcon art={weaponLabel(w.id).art} emoji={weaponLabel(w.id).icon} />
-                  <span className={css.SlotLevel}>{w.level}</span>
-                </span>
-              ))}
-              {hud.passives.map((p) => (
-                <span key={p.id} className={css.Slot} title={passiveLabel(p.id).name}>
-                  <PixelIcon art={passiveLabel(p.id).art} emoji={passiveLabel(p.id).icon} />
-                  <span className={css.SlotLevel}>{p.level}</span>
-                </span>
-              ))}
-            </div>
-            {hud.boss !== undefined && (
-              <div className={css.BossBar}>
-                <div className={css.BossFill} style={{ width: `${hud.boss * 100}%` }} />
-                {hud.bossHp && (
-                  <span className={css.BossText}>
-                    {tr('games.horde.boss_name', 'BOSS')} · {shortNumber(hud.bossHp.hp)} /{' '}
-                    {shortNumber(hud.bossHp.max)}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className={css.HudBottom}>
-            {hud.challenge && (
-              <span className={css.Objective}>
-                {tr('games.horde.challenge_hud', '⚔️ {{kills}} more in {{seconds}} s', {
-                  kills: hud.challenge.kills,
-                  seconds: Math.ceil(hud.challenge.seconds),
-                })}
-              </span>
-            )}
-            {hud.curse > 0 && (
-              <span className={css.Objective} data-curse>
-                {tr('games.horde.curse_hud', '☠️ Curse: {{seconds}} s', {
-                  seconds: Math.ceil(hud.curse),
-                })}
-              </span>
-            )}
-            {hud.shrine && <span className={css.Objective}>{shrineLabel(hud.shrine)}</span>}
-            <span className={css.Speed} data-fast={hud.speed > 9}>
-              {tr('games.horde.hud.speed', '{{speed}} m/s', { speed: hud.speed.toFixed(1) })}
-            </span>
-            {(hud.buffs.rage > 0 || hud.buffs.freeze > 0 || hud.buffs.star > 0) && (
-              <div className={css.Buffs}>
-                {hud.buffs.rage > 0 && (
-                  <span className={css.Buff}>😡 {Math.ceil(hud.buffs.rage)}</span>
-                )}
-                {hud.buffs.freeze > 0 && (
-                  <span className={css.Buff}>🧊 {Math.ceil(hud.buffs.freeze)}</span>
-                )}
-                {hud.buffs.star > 0 && (
-                  <span className={css.Buff}>⭐ {Math.ceil(hud.buffs.star)}</span>
-                )}
-              </div>
-            )}
-            <span>
-              {Math.ceil(hud.hp)} / {hud.maxHp}
-              {hud.overHp >= 1 && ` +${Math.floor(hud.overHp)}`}
-            </span>
-            <div className={css.HpBar}>
-              <div className={css.HpFill} style={{ width: `${(hud.hp / hud.maxHp) * 100}%` }} />
-            </div>
-            {hud.maxShield > 0 && (
-              <div className={css.ShieldBar}>
-                <div
-                  className={css.ShieldFill}
-                  style={{ width: `${(hud.shield / hud.maxShield) * 100}%` }}
-                />
-              </div>
-            )}
-          </div>
-
-          {!TOUCH && !hud.aiming && hud.phase === 'playing' && !hud.paused && (
-            <div className={css.AimHint}>
-              {tr('games.horde.aim_hint', 'Click to turn the camera with the mouse')}
-            </div>
-          )}
-
-          {!TOUCH && (
-            <div
-              className={css.AbilityChip}
-              data-ready={hud.ability >= 1}
-              title={`${abilityLabel(hero).name}: ${abilityLabel(hero).text}`}
-            >
-              <div
-                className={css.AbilityFill}
-                style={{ height: `${Math.min(1, hud.ability) * 100}%` }}
-              />
-              <PixelIcon art={abilityLabel(hero).art} emoji={abilityLabel(hero).icon} />
-              <span className={css.AbilityKey}>{keyLabel(controls.keys.ability[0])}</span>
-            </div>
-          )}
-
-          {TOUCH && (
-            <>
-              <button
-                type="button"
-                className={css.AbilityButton}
-                data-ready={hud.ability >= 1}
-                onPointerDown={() => runner?.pressAbility()}
-                aria-label={abilityLabel(hero).name}
-              >
-                <PixelIcon art={abilityLabel(hero).art} emoji={abilityLabel(hero).icon} />
-              </button>
-              <button
-                type="button"
-                className={css.JumpButton}
-                onPointerDown={() => runner?.holdJump(true)}
-                onPointerUp={() => runner?.holdJump(false)}
-                onPointerCancel={() => runner?.holdJump(false)}
-                onPointerLeave={() => runner?.holdJump(false)}
-              >
-                {tr('games.horde.jump', 'Jump')}
-              </button>
-              <button
-                type="button"
-                className={css.DashButton}
-                data-ready={hud.dash >= 1}
-                onPointerDown={() => runner?.pressDash()}
-              >
-                {tr('games.horde.dash', 'Dash')}
-              </button>
-            </>
-          )}
-        </>
-      )}
+      {hud && <RunHud hud={hud} hero={hero} controls={controls} runner={runner} />}
 
       {hud?.phase === 'choosing' && hud.choices && (
         <div className={css.Curtain}>

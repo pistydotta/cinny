@@ -6,7 +6,7 @@ import { EnemyKind } from '../engine/types';
 // low-poly look of an old console, and nothing to download. Feet stand on y = 0, front is +z.
 // Enemies get a dark outline and two frames of a walk; their themes are placeholders.
 
-const paint = (geometry: THREE.BufferGeometry, color: number): THREE.BufferGeometry => {
+export const paint = (geometry: THREE.BufferGeometry, color: number): THREE.BufferGeometry => {
   const flat = geometry.index ? geometry.toNonIndexed() : geometry;
   const { count } = flat.attributes.position;
   const c = new THREE.Color(color);
@@ -100,7 +100,7 @@ const hull = (part: THREE.BufferGeometry, thick: number): THREE.BufferGeometry =
 };
 
 // A model: `body` parts get the outline, `details` (eyes, glows) don't.
-const figure = (
+export const figure = (
   body: THREE.BufferGeometry[],
   details: THREE.BufferGeometry[] = [],
   thick = 0.045

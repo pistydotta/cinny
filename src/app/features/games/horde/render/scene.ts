@@ -5,13 +5,22 @@ import { auraRadius, runStats, urnCount, urnOrbit } from '../engine/run';
 import { MAP_HALF, heightAt, obstaclesOf } from '../engine/terrain';
 import { Forest, Planted } from './forest';
 import { ForestModel } from '../textures/forest';
-import { Enemy, EnemyKind, GameEvent, RunState, ShotKind, ShrineKind } from '../engine/types';
+import {
+  Enemy,
+  EnemyKind,
+  GameEvent,
+  PickupKind,
+  RunState,
+  ShotKind,
+  ShrineKind,
+} from '../engine/types';
 import { HERO_SPRITES } from '../sprites';
 import { Particles } from './particles';
 import { SpriteHero } from './spriteHero';
 import { buildTerrain } from './terrainMesh';
 import { Sky } from './sky';
 import { ball, box, cone, ENEMY_FRAMES, enemyGeometry, merge } from './models';
+import { glowTexture, PICKUP_GLOW, PICKUP_KINDS, pickupGeometry, xpScale, xpTint } from './pickups';
 
 // Draws a run with three.js. The engine knows nothing about this file: every frame the scene
 // reads the run's state and places things, and the events of each tick become effects.
@@ -55,6 +64,9 @@ const SHRINE_COLORS: Record<ShrineKind, number> = {
 const SHOT_KINDS: ShotKind[] = ['card', 'missile', 'axe', 'spit'];
 const SKY = 0x1a1326;
 const MAX_CORPSES = 48;
+// Drops drawn at most: gems, and each other kind.
+const MAX_PICKUPS_SHOWN = 420;
+const MAX_DROPS = 24;
 const CORPSE_SECONDS = 0.4;
 const POWERUP_COLORS: Partial<Record<string, number>> = {
   bomb: 0x2b2b30,
@@ -105,7 +117,12 @@ export class HordeScene {
 
   private shadows: THREE.InstancedMesh;
 
-  private pickups: THREE.InstancedMesh;
+  // One mesh per kind of drop, a glow on the ground under each, and the beams over chests.
+  private pickups = new Map<PickupKind, THREE.InstancedMesh>();
+
+  private pickupGlows: THREE.InstancedMesh;
+
+  private chestBeams: THREE.InstancedMesh;
 
   private zones: THREE.InstancedMesh;
 
@@ -297,11 +314,34 @@ export class HordeScene {
       MAX_HAZARDS
     );
     this.scene.add(this.warnFill, this.warnRing, this.fires, this.lanes);
-    this.pickups = instanced(
-      new THREE.OctahedronGeometry(0.3, 0),
-      new THREE.MeshLambertMaterial({ flatShading: true, emissive: 0x222222 }),
-      420
+    PICKUP_KINDS.forEach((kind) => {
+      let capacity = MAX_DROPS;
+      if (kind === 'xp') capacity = MAX_PICKUPS_SHOWN;
+      else if (kind === 'gold') capacity = 160;
+      const mesh = instanced(pickupGeometry(kind), this.glow, capacity);
+      this.pickups.set(kind, mesh);
+      this.scene.add(mesh);
+    });
+    const glowFlat = (vertical: boolean) =>
+      new THREE.MeshBasicMaterial({
+        map: glowTexture(vertical),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        fog: false,
+      });
+    this.pickupGlows = instanced(
+      new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      glowFlat(false),
+      MAX_PICKUPS_SHOWN
     );
+    this.chestBeams = instanced(
+      new THREE.CylinderGeometry(0.3, 0.5, 7, 10, 1, true).translate(0, 3.5, 0),
+      glowFlat(true),
+      MAX_DROPS
+    );
+    (this.chestBeams.material as THREE.MeshBasicMaterial).side = THREE.DoubleSide;
+    this.scene.add(this.pickupGlows, this.chestBeams);
     // A ballot box: the beige voting machine with its screen and keys.
     this.urns = instanced(
       merge([
@@ -324,7 +364,7 @@ export class HordeScene {
       })
     );
     this.aura.visible = false;
-    this.scene.add(this.shadows, this.zones, this.pickups, this.urns, this.aura);
+    this.scene.add(this.shadows, this.zones, this.urns, this.aura);
 
     this.buildShrines();
 
@@ -625,6 +665,10 @@ export class HordeScene {
         this.particles.smoke(event.x, y, event.z, 6, 0x5a4a44, event.radius * 0.4, 2);
         const share = Math.hypot(event.x - this.run.player.x, event.z - this.run.player.z);
         if (share < 12) this.shake = Math.max(this.shake, 0.25);
+      } else if (event.type === 'pickup' && event.kind !== 'xp') {
+        // Gems come in by the dozen; the rest sparkle when taken.
+        const y = this.ground(event.x, event.z) + 0.8;
+        this.particles.burst(event.x, y, event.z, 8, PICKUP_GLOW[event.kind], 4);
       } else if (event.type === 'bossPhase') {
         this.shake = Math.max(this.shake, 0.9);
         this.hold = 5;
@@ -879,33 +923,82 @@ export class HordeScene {
       mesh.instanceMatrix.needsUpdate = true;
     });
 
-    // Things to pick up.
-    const pickupCount = Math.min(run.pickups.length, 420);
-    for (let i = 0; i < pickupCount; i += 1) {
+    // Things to pick up: each kind floats and turns its own way over a pool of its light.
+    const dropCounts = new Map<PickupKind, number>();
+    let glows = 0;
+    let beams = 0;
+    const shownPickups = Math.min(run.pickups.length, MAX_PICKUPS_SHOWN);
+    for (let i = 0; i < shownPickups; i += 1) {
       const p = run.pickups[i];
-      let scale = 0.8 + Math.min(1.2, p.value * 0.06);
-      if (p.kind === 'xp') this.color.setHex(p.value >= 6 ? 0x7dff6a : 0x4ad2ff);
-      else if (p.kind === 'gold') this.color.setHex(0xffd23a);
-      else if (p.kind === 'heart') this.color.setHex(0xff4a6a);
-      else if (p.kind === 'magnet') this.color.setHex(0xffffff);
-      else if (p.kind === 'chest') this.color.setHex(0xff9a2a);
-      else this.color.setHex(POWERUP_COLORS[p.kind] ?? 0xffffff);
-      if (p.kind === 'chest') scale = 3;
-      else if (p.kind !== 'xp') scale = 1.5;
-      this.dummy.position.set(
-        p.x,
-        this.ground(p.x, p.z) + 0.5 + Math.sin(this.clock * 4 + p.id) * 0.12,
-        p.z
-      );
-      this.dummy.rotation.set(0, this.clock * 2.5 + p.id, 0);
-      this.dummy.scale.setScalar(scale);
-      this.dummy.updateMatrix();
-      this.pickups.setMatrixAt(i, this.dummy.matrix);
-      this.pickups.setColorAt(i, this.color);
+      const mesh = this.pickups.get(p.kind) as THREE.InstancedMesh;
+      const n = dropCounts.get(p.kind) ?? 0;
+      if (n < mesh.instanceMatrix.count) {
+        const ground = this.ground(p.x, p.z);
+        const phase = this.clock + p.id * 0.37;
+        let scale = 1.5;
+        let lift = 0.6 + Math.sin(phase * 3) * 0.1;
+        let turn = phase * 2;
+        let glow = PICKUP_GLOW[p.kind];
+        let glowSize = 1.6;
+        if (p.kind === 'xp') {
+          glow = xpTint(p.value);
+          scale = xpScale(p.value);
+          glowSize = 1.1 * scale;
+          lift = 0.45 * scale + Math.sin(phase * 4) * 0.08;
+          this.color.setHex(glow);
+          mesh.setColorAt(n, this.color);
+        } else if (p.kind === 'gold') {
+          // A coin spins fast on its edge, catching the light.
+          scale = 1.15;
+          turn = phase * 6;
+          glowSize = 1.2;
+        } else if (p.kind === 'heart') {
+          scale = 1.6 * (1 + Math.max(0, Math.sin(phase * 7)) * 0.12);
+          turn = Math.sin(phase * 1.5) * 0.9;
+          glowSize = 2;
+        } else if (p.kind === 'chest') {
+          scale = 1.7;
+          lift = 0.45 + Math.abs(Math.sin(phase * 2)) * 0.15;
+          turn = phase * 0.8;
+          glowSize = 3;
+          if (beams < MAX_DROPS) {
+            this.dummy.position.set(p.x, ground, p.z);
+            this.dummy.rotation.set(0, 0, 0);
+            this.dummy.scale.set(1, 1 + Math.sin(phase * 3) * 0.06, 1);
+            this.dummy.updateMatrix();
+            this.chestBeams.setMatrixAt(beams, this.dummy.matrix);
+            this.color.setHex(glow).multiplyScalar(0.35);
+            this.chestBeams.setColorAt(beams, this.color);
+            beams += 1;
+          }
+        }
+        this.dummy.position.set(p.x, ground + lift, p.z);
+        this.dummy.rotation.set(0, turn, 0);
+        this.dummy.scale.setScalar(scale);
+        this.dummy.updateMatrix();
+        mesh.setMatrixAt(n, this.dummy.matrix);
+        dropCounts.set(p.kind, n + 1);
+
+        this.dummy.position.set(p.x, ground + 0.06, p.z);
+        this.dummy.rotation.set(0, 0, 0);
+        this.dummy.scale.setScalar(glowSize * (1 + Math.sin(phase * 3) * 0.08));
+        this.dummy.updateMatrix();
+        this.pickupGlows.setMatrixAt(glows, this.dummy.matrix);
+        this.color.setHex(glow).multiplyScalar(p.kind === 'xp' ? 0.45 : 0.6);
+        this.pickupGlows.setColorAt(glows, this.color);
+        glows += 1;
+      }
     }
-    this.pickups.count = pickupCount;
-    this.pickups.instanceMatrix.needsUpdate = true;
-    if (this.pickups.instanceColor) this.pickups.instanceColor.needsUpdate = true;
+    this.pickups.forEach((mesh, kind) => {
+      mesh.count = dropCounts.get(kind) ?? 0;
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    });
+    [this.pickupGlows, this.chestBeams].forEach((mesh, i) => {
+      mesh.count = i === 0 ? glows : beams;
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    });
 
     // Ballot boxes in orbit, screens facing out.
     const stats = runStats(run);

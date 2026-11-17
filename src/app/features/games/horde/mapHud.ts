@@ -2,6 +2,8 @@ import { chestPrice } from './engine/data';
 import { MAP_HALF, heightAt } from './engine/terrain';
 import { RunState, ShrineKind } from './engine/types';
 import type { HordeScene } from './render/scene';
+import { pixelIconUrl } from './icons/pixelIconUrl';
+import { MiniMap } from './hud.css';
 
 // The map's part of the screen: a minimap in the corner (the ground's heights, the shrines and
 // chests not used yet, the boss, and the hero with the camera's heading) and the price over the
@@ -54,10 +56,7 @@ export class MapHud {
     }
     this.canvas.width = PIXELS;
     this.canvas.height = PIXELS;
-    this.canvas.style.cssText =
-      'position:absolute;right:12px;top:58px;width:clamp(88px,22vw,132px);aspect-ratio:1;' +
-      'border-radius:10px;border:2px solid rgba(0,0,0,.55);box-shadow:0 2px 8px rgba(0,0,0,.4);' +
-      'image-rendering:pixelated;pointer-events:none;opacity:.92';
+    this.canvas.className = MiniMap;
     overlay.appendChild(this.canvas);
   }
 
@@ -133,12 +132,17 @@ export class MapHud {
       if (!el) {
         el = document.createElement('div');
         el.style.cssText =
-          'position:absolute;pointer-events:none;transform:translate(-50%,-100%);' +
-          'font-size:13px;font-weight:900;text-shadow:0 2px 0 #000;white-space:nowrap';
+          'position:absolute;pointer-events:none;transform:translate(-50%,-100%);display:flex;' +
+          'align-items:center;gap:3px;font-size:15px;font-weight:700;white-space:nowrap;' +
+          'text-shadow:2px 2px 0 #1c1220,-1px -1px 0 #1c1220';
+        const coin = document.createElement('img');
+        coin.src = pixelIconUrl('hud:coin') ?? '';
+        coin.style.cssText = 'width:16px;height:16px;image-rendering:pixelated';
+        el.append(coin, document.createElement('span'));
         this.overlay.appendChild(el);
         this.tags.set(c.id, el);
       }
-      el.textContent = `🪙 ${price}`;
+      (el.lastChild as HTMLElement).textContent = `${price}`;
       el.style.color = run.gold >= price ? '#ffd23a' : '#ff7a7a';
       el.style.left = `${spot.x}px`;
       el.style.top = `${spot.y}px`;

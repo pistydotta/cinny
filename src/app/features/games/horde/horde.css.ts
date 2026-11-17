@@ -1,4 +1,5 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { PIXEL_FONT } from './hud.css';
 
 const GOLD = '#f5c84b';
 const LINE = 'rgba(255,255,255,0.10)';
@@ -181,7 +182,13 @@ export const Canvas = style({
   imageRendering: 'pixelated',
 });
 
-export const Overlay = style({ position: 'absolute', inset: 0, overflow: 'hidden' });
+// Damage numbers, warnings and tags over the scene share the HUD's pixel font.
+export const Overlay = style({
+  position: 'absolute',
+  inset: 0,
+  overflow: 'hidden',
+  fontFamily: PIXEL_FONT,
+});
 
 export const HudTop = style({
   position: 'absolute',

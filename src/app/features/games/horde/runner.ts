@@ -4,7 +4,7 @@ import { MetaSave, parseMeta } from './engine/meta';
 import { banish, choose, closeChest, reroll, runStats, skip, step } from './engine/run';
 import { ReplayRecorder, packInput } from './engine/replay';
 import { ReplayPlayer } from './engine/replayCheck';
-import { Stats } from './engine/stats';
+import { BOLETOS, Stats } from './engine/stats';
 import { weaponSpec } from './engine/weapons';
 import {
   Choice,
@@ -66,8 +66,8 @@ export type Hud = {
   aiming: boolean;
   rerolls: number;
   choices: Choice[] | undefined;
-  weapons: { id: WeaponId; level: number }[];
-  passives: { id: PassiveId; level: number }[];
+  weapons: { id: WeaponId; level: number; evolved: boolean }[];
+  passives: { id: PassiveId; level: number; max: number }[];
   boss: number | undefined;
   // The boss's health in points, for the numbers on its bar.
   bossHp: { hp: number; max: number } | undefined;
@@ -126,8 +126,8 @@ export const hudOf = (run: RunState, paused: boolean, aiming = false): Hud => {
     aiming,
     rerolls: run.rerolls,
     choices: run.choices,
-    weapons: run.weapons.map((w) => ({ id: w.id, level: w.level })),
-    passives: run.passives.map((p) => ({ id: p.id, level: p.level })),
+    weapons: run.weapons.map((w) => ({ id: w.id, level: w.level, evolved: !!w.evolved })),
+    passives: run.passives.map((p) => ({ id: p.id, level: p.level, max: BOLETOS[p.id].max })),
     boss: boss ? boss.hp / boss.maxHp : undefined,
     bossHp: boss ? { hp: Math.max(0, boss.hp), max: boss.maxHp } : undefined,
   };
