@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupHits } from './numbers';
+import { groupHits, shortNumber } from './numbers';
 
 describe('horde damage numbers', () => {
   it('adds up the hits on each enemy, biggest first, crit if any hit was', () => {
@@ -9,6 +9,19 @@ describe('horde damage numbers', () => {
     expect(grouped).toEqual([
       { id: 2, x: 2, z: 0, amount: 30, crit: false },
       { id: 1, x: 1, z: 0, amount: 12, crit: true },
+    ]);
+  });
+
+  it('shortens big numbers', () => {
+    expect([7.4, 999, 1000, 1250, 99960, 123456, 999600, 4500000].map(shortNumber)).toEqual([
+      '7',
+      '999',
+      '1k',
+      '1.3k',
+      '100k',
+      '123k',
+      '1M',
+      '4.5M',
     ]);
   });
 });

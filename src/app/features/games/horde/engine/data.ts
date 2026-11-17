@@ -11,7 +11,7 @@ import {
 
 // Bumped whenever the rules change what a run can reach. Each reported run carries it, so the
 // ranking can tell runs of the old rules from the new ones without deleting any.
-export const ENGINE_VERSION = 4;
+export const ENGINE_VERSION = 5;
 
 export const TICK = 1 / 60;
 export const ARENA_RADIUS = 70;

@@ -14,8 +14,8 @@ import {
   step,
 } from './run';
 import { weaponSpec } from './weapons';
-import { CharacterId, Enemy, GameEvent, Input, Mesa, RunState } from './types';
-import { MAP_HALF } from './terrain';
+import { CharacterId, Enemy, GameEvent, Input, RunState } from './types';
+import { MAP_HALF, heightAt } from './terrain';
 
 const IDLE: Input = { moveX: 0, moveZ: 0, jump: false, jumpHeld: false, dash: false };
 
@@ -234,12 +234,17 @@ describe('horde build: synergies', () => {
     const resting = addEnemy(run, { x: MAP_HALF - 0.6, pushX: 1 });
     step(run, IDLE, TICK);
     expect(resting.hp).toBe(1e6);
-    // Against the side of a mesa: stopped there, and hurt.
-    // A big mesa, beside the middle of a side (ramps start at the middle).
-    const mesa = run.map.mesas.find((m) => m.kind === 'mesa' && m.w >= 8 && m.d >= 8) as Mesa;
-    const thrown = addEnemy(run, { x: mesa.x - mesa.w - 0.7, z: mesa.z + mesa.d * 0.5, pushX: 40 });
+    // Against the face of a cliff: stopped there, and hurt.
+    let foot: { x: number; z: number } | undefined;
+    for (let z = -120; z <= 120 && !foot; z += 2) {
+      for (let x = -120; x <= 120 && !foot; x += 0.5) {
+        if (heightAt(run.map, x + 0.7, z) - heightAt(run.map, x, z) > 1.2) foot = { x, z };
+      }
+    }
+    if (!foot) throw new Error('no cliff on this map');
+    const thrown = addEnemy(run, { x: foot.x, z: foot.z, pushX: 40 });
     step(run, IDLE, TICK);
     expect(thrown.hp).toBeLessThan(1e6);
-    expect(thrown.x).toBeLessThan(mesa.x - mesa.w);
+    expect(thrown.x).toBe(foot.x);
   });
 });

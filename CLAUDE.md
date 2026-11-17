@@ -59,11 +59,16 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   when a number change moves it, update it on purpose. The old runaway bot (`bot.ts`) is the
   floor to compare with.
   Movement is 3D in the engine: the hero has `y` and a velocity, the ground is `engine/terrain.ts`,
-  Space jumps and Shift dodges. The map is a 200-unit square made from the run's seed
-  (`createMap`, kept in `RunState.map`): mesas with cliff sides and ramps (some with a second
-  mesa on top), ledges low enough to jump onto, pillars, and mountains past the edge.
-  `heightAt(map, x, z)` is the only height there is; the renderer draws the hills as a grid and
-  each block as a solid (`render/terrainMesh.ts`) so cliffs stay sharp. Ground steeper than
+  Space jumps and Shift dodges. The map is a 300-unit square of land generated
+  from the run's seed (`createMap`; `RunState.map` keeps only the numbers it is made from):
+  layered noise pressed into four levels (hollow, plain, plateau, high plateau) with cliffs
+  between them, spread into walkable slopes in places, and mountains past the edge. A layout
+  that could trap the hero, or leaves too little within reach, is thrown away for another.
+  `heightAt(map, x, z)` is the only height there is: it reads a 2-unit grid of heights, and the
+  renderer draws that same grid, triangle for triangle (`render/terrainMesh.ts`), textured by
+  slope and height with the PSX ground textures in `textures/`. Trees, boulders and logs
+  (`obstaclesOf`, grown from the map's own numbers) are circles that push the hero out
+  (`pushOut`); enemies and shots pass through them, and a jump clears a boulder. Ground steeper than
   `WALL_SLOPE` stops the hero (sliding along it) and an edge that steep drops it; enemies ignore
   cliffs and climb, as in Megabonk, but only bite at the hero's height, and one thrown into a cliff
   is hurt. Blessing totems sit on the highest tops, can be rare or epic (`blessingLevels`), and

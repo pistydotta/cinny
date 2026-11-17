@@ -1,5 +1,19 @@
 import { GameEvent } from './engine/types';
 
+// A number short enough to read in a fight: 950, 1.2k, 34k, 5.6M.
+export const shortNumber = (value: number): string => {
+  const n = Math.round(value);
+  if (n < 1000) return String(n);
+  const units = ['k', 'M', 'B', 'T'];
+  let scaled = n / 1000;
+  let unit = 0;
+  while (scaled >= 999.5 && unit < units.length - 1) {
+    scaled /= 1000;
+    unit += 1;
+  }
+  return `${scaled < 99.95 ? Number(scaled.toFixed(1)) : Math.round(scaled)}${units[unit]}`;
+};
+
 export type DamageNumber = { id: number; x: number; z: number; amount: number; crit: boolean };
 
 // The hits of one frame added up per enemy, biggest first: one number per enemy instead of a

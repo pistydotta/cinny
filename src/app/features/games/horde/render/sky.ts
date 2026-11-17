@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import { SKY_TEXTURES } from '../textures';
 
-// The sky over the arena and the light it gives: a run starts at sunset and ends deep in the night,
-// so the ten minutes show on screen; a boss turns the horizon red while it lives. Drawing only:
-// the engine never sees any of it.
+// The sky over the arena and the light it gives: a run starts in daylight, passes through sunset
+// and ends deep in the night, so the ten minutes show on screen; a boss turns the horizon red
+// while it lives. Drawing only: the engine never sees any of it.
 
 type Look = {
   zenith: number;
@@ -11,7 +12,9 @@ type Look = {
   sunPower: number;
   hemi: number;
   hemiPower: number;
-  stars: number;
+  // How much of the night sky shows through the day's, and the color the sky is washed with.
+  night: number;
+  tint: number;
 };
 
 // By run time, in seconds.
@@ -19,29 +22,44 @@ const LOOKS: [number, Look][] = [
   [
     0,
     {
+      zenith: 0x3f78c0,
+      horizon: 0xa9c9e6,
+      sun: 0xfff0d8,
+      sunPower: 2.8,
+      hemi: 0xd4e2ff,
+      hemiPower: 2.4,
+      night: 0,
+      tint: 0xffffff,
+    },
+  ],
+  [
+    180,
+    {
+      zenith: 0x3f78c0,
+      horizon: 0xa9c9e6,
+      sun: 0xfff0d8,
+      sunPower: 2.8,
+      hemi: 0xd4e2ff,
+      hemiPower: 2.4,
+      night: 0,
+      tint: 0xffffff,
+    },
+  ],
+  [
+    330,
+    {
       zenith: 0x3a2a62,
       horizon: 0xe0906a,
       sun: 0xffb070,
       sunPower: 2.6,
       hemi: 0xc8c0ff,
       hemiPower: 2.2,
-      stars: 0,
+      night: 0.35,
+      tint: 0xffa888,
     },
   ],
   [
-    240,
-    {
-      zenith: 0x1c1744,
-      horizon: 0x7a4a7a,
-      sun: 0xe0a0b0,
-      sunPower: 2.2,
-      hemi: 0xb0b4ff,
-      hemiPower: 2,
-      stars: 0.5,
-    },
-  ],
-  [
-    480,
+    500,
     {
       zenith: 0x0a0c24,
       horizon: 0x2c2c5e,
@@ -49,7 +67,8 @@ const LOOKS: [number, Look][] = [
       sunPower: 1.8,
       hemi: 0x8c9ad8,
       hemiPower: 1.8,
-      stars: 1,
+      night: 1,
+      tint: 0xffffff,
     },
   ],
 ];
@@ -67,67 +86,64 @@ export class Sky {
 
   private horizon = new THREE.Color();
 
+  private tint = new THREE.Color();
+
+  private night = { value: 0 };
+
   private dome: THREE.Mesh;
 
-  private stars: THREE.Points;
-
   private boss = 0;
+
+  // What has to be let go of with the scene.
+  readonly disposables: { dispose: () => void }[] = [];
 
   constructor(
     private scene: THREE.Scene,
     private hemi: THREE.HemisphereLight,
     private sun: THREE.DirectionalLight
   ) {
-    // A sphere colored from horizon to zenith in its shader, outside the fog.
+    const loader = new THREE.TextureLoader();
+    const picture = (url: string) => {
+      const texture = loader.load(url);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      // Unfiltered like the ground; no smaller copies, which would draw a seam where the sky's
+      // picture wraps around.
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      this.disposables.push(texture);
+      return texture;
+    };
+    // A sphere outside the fog, wearing the day's sky and the night's, one fading into the other,
+    // and melting into the horizon's color near the ground so far land and sky meet.
     const material = new THREE.ShaderMaterial({
       side: THREE.BackSide,
       depthWrite: false,
       fog: false,
-      uniforms: { zenith: { value: this.zenith }, horizon: { value: this.horizon } },
+      uniforms: {
+        day: { value: picture(SKY_TEXTURES.day) },
+        dark: { value: picture(SKY_TEXTURES.night) },
+        night: this.night,
+        tint: { value: this.tint },
+        horizon: { value: this.horizon },
+      },
       vertexShader:
-        'varying float h; void main() { h = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        'varying vec3 dir; void main() { dir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader:
         // The colors come in linear, like the rest of the scene, and go out in the screen's space.
-        'uniform vec3 zenith; uniform vec3 horizon; varying float h;\nvoid main() {\n' +
-        'gl_FragColor = vec4(mix(horizon, zenith, smoothstep(-0.05, 0.4, h)), 1.0);\n' +
+        'uniform sampler2D day; uniform sampler2D dark; uniform float night; uniform vec3 tint;\n' +
+        'uniform vec3 horizon; varying vec3 dir;\nvoid main() {\n' +
+        'vec3 d = normalize(dir);\n' +
+        'vec2 uv = vec2(atan(d.z, d.x) / 6.2831853 + 0.5, asin(clamp(d.y, -1.0, 1.0)) / 3.1415927 + 0.5);\n' +
+        'vec3 sky = mix(texture2D(day, uv).rgb, texture2D(dark, uv).rgb, night) * tint;\n' +
+        'gl_FragColor = vec4(mix(horizon, sky, smoothstep(-0.02, 0.28, d.y)), 1.0);\n' +
         '#include <colorspace_fragment>\n}',
     });
     this.dome = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 24, 12), material);
     this.dome.renderOrder = -1;
+    this.disposables.push(this.dome.geometry, material);
 
-    // Stars on the upper half, from a fixed pattern so every run has the same sky.
-    const points: number[] = [];
-    let seed = 7;
-    const next = () => {
-      seed = (seed * 16807) % 2147483647;
-      return seed / 2147483647;
-    };
-    for (let i = 0; i < 260; i += 1) {
-      const angle = next() * Math.PI * 2;
-      const up = 0.15 + next() * 0.85;
-      const flat = Math.sqrt(1 - up * up);
-      points.push(
-        Math.cos(angle) * flat * (RADIUS - 2),
-        up * (RADIUS - 2),
-        Math.sin(angle) * flat * (RADIUS - 2)
-      );
-    }
-    const starGeometry = new THREE.BufferGeometry();
-    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-    this.stars = new THREE.Points(
-      starGeometry,
-      new THREE.PointsMaterial({
-        color: 0xffffff,
-        size: 1.6,
-        sizeAttenuation: false,
-        transparent: true,
-        opacity: 0,
-        fog: false,
-        depthWrite: false,
-      })
-    );
-
-    this.root.add(this.dome, this.stars);
+    this.root.add(this.dome);
     this.scene.add(this.root);
     this.update(0, false, 0, new THREE.Vector3());
   }
@@ -148,8 +164,8 @@ export class Sky {
     this.sun.intensity = from.sunPower + (to.sunPower - from.sunPower) * t;
     mix(from.hemi, to.hemi, t, this.hemi.color);
     this.hemi.intensity = from.hemiPower + (to.hemiPower - from.hemiPower) * t;
-    (this.stars.material as THREE.PointsMaterial).opacity =
-      (from.stars + (to.stars - from.stars) * t) * 0.9;
+    this.night.value = from.night + (to.night - from.night) * t;
+    mix(from.tint, to.tint, t, this.tint);
 
     // The fog fades into the horizon, so far things melt into the sky.
     (this.scene.fog as THREE.Fog).color.copy(this.horizon).lerp(this.zenith, 0.35);

@@ -52,6 +52,7 @@ import { useHordeProfile } from './useHordeProfile';
 import { firstRunHere, forgetRun, readRun, storeRun } from './savedRun';
 import * as css from './horde.css';
 import { tr } from '../../translation/tr';
+import { shortNumber } from './numbers';
 
 type Result = {
   won: boolean;
@@ -390,6 +391,12 @@ function HordeRun({
             {hud.boss !== undefined && (
               <div className={css.BossBar}>
                 <div className={css.BossFill} style={{ width: `${hud.boss * 100}%` }} />
+                {hud.bossHp && (
+                  <span className={css.BossText}>
+                    {tr('games.horde.boss_name', 'BOSS')} · {shortNumber(hud.bossHp.hp)} /{' '}
+                    {shortNumber(hud.bossHp.max)}
+                  </span>
+                )}
               </div>
             )}
           </div>

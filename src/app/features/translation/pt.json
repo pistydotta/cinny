@@ -2093,6 +2093,8 @@
       "unmute": "🔇 Som desligado",
       "mute": "🔊 Som ligado",
       "boss_warning": "O CHEFE CHEGOU",
+      "boss_name": "CHEFE",
+      "crit": "CRÍT!",
       "evolution": {
         "missile": "Bomba Gigante",
         "missile_text": "Uma bomba única, lenta e enorme, que explode uma área inteira.",

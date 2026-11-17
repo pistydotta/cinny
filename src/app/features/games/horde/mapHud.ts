@@ -20,8 +20,9 @@ const SPAN = MAP_HALF + 4;
 const CHEST_TAG_RANGE = 28;
 
 const shade = (h: number): string => {
-  if (h > 9) return '#3a3446';
-  const v = Math.max(0, Math.min(1, (h + 1) / 10));
+  // The mountains around the square are dark; inside it, the higher the lighter.
+  if (h > 18) return '#3a3446';
+  const v = Math.max(0, Math.min(1, (h + 5) / 20));
   const r = Math.round(52 + v * 120);
   const g = Math.round(74 + v * 110);
   const b = Math.round(44 + v * 70);

@@ -214,31 +214,10 @@ export type Shrine = {
   kind?: ShrineKind;
 };
 
-// The map's raised blocks (engine/terrain.ts): a mesa is a rounded box with a flat top `h` high,
-// `w` and `d` its half sizes and `r` its corner radius; a ramp climbs from (x1, z1) at h1 to
-// (x2, z2) at h2.
-// `kind`: a big mesa, the smaller one on top of it, the step that leads up to that, a ledge low
-// enough to jump onto, or a pillar.
-export type MesaKind = 'mesa' | 'top' | 'step' | 'ledge' | 'pillar';
-export type Mesa = {
-  kind: MesaKind;
-  x: number;
-  z: number;
-  w: number;
-  d: number;
-  r: number;
-  h: number;
-};
-export type Ramp = {
-  x1: number;
-  z1: number;
-  x2: number;
-  z2: number;
-  width: number;
-  h1: number;
-  h2: number;
-};
-export type GameMap = { half: number; mesas: Mesa[]; ramps: Ramp[] };
+// The map (engine/terrain.ts): the land is generated from these numbers, so a save or a replay
+// only carries them. `ox` and `oz` are where in the noise this map was taken from; `soft` turns
+// every cliff into a slope, for the rare layout that would trap the hero otherwise.
+export type GameMap = { half: number; ox: number; oz: number; soft: boolean };
 
 // A chest standing on the map: standing on it opens it for gold, more for each one bought.
 export type MapChest = { id: number; x: number; z: number; charge: number; opened: boolean };

@@ -133,7 +133,9 @@ describe('horde bosses', () => {
     });
 
   it('every attack is shown before it lands', () => {
-    const run = quietRun();
+    // A seed where the boss's first picks include one that marks the ground: with an idle hero
+    // and only twenty seconds, some seeds open with volleys alone and kill the hero first.
+    const run = quietRun('lula', 2);
     boss(run);
     const events: GameEvent[] = [];
     let warned = false;

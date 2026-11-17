@@ -2,14 +2,16 @@
 import * as THREE from 'three';
 import { ENEMIES, MAX_ENEMIES, SHOT_HEIGHT, SHRINE_RADIUS } from '../engine/data';
 import { auraRadius, runStats, urnCount, urnOrbit } from '../engine/run';
-import { MAP_HALF, heightAt } from '../engine/terrain';
+import { MAP_HALF, heightAt, obstaclesOf } from '../engine/terrain';
+import { Forest, Planted } from './forest';
+import { ForestModel } from '../textures/forest';
 import { Enemy, EnemyKind, GameEvent, RunState, ShotKind, ShrineKind } from '../engine/types';
 import { HERO_SPRITES } from '../sprites';
 import { Particles } from './particles';
 import { SpriteHero } from './spriteHero';
 import { buildTerrain } from './terrainMesh';
 import { Sky } from './sky';
-import { ball, box, cone, enemyGeometry, grainTexture, merge } from './models';
+import { ball, box, cone, ENEMY_FRAMES, enemyGeometry, merge } from './models';
 
 // Draws a run with three.js. The engine knows nothing about this file: every frame the scene
 // reads the run's state and places things, and the events of each tick become effects.
@@ -34,6 +36,14 @@ const KINDS: EnemyKind[] = [
   'barrel',
   'pot',
 ];
+// Steps of the walk a second; the rest take 3.5.
+const STEP_RATES: Partial<Record<EnemyKind, number>> = {
+  runner: 7,
+  swarm: 11,
+  bomber: 7,
+  brute: 2.5,
+  boss: 2.2,
+};
 const MAX_HAZARDS = 120;
 const SHRINE_COLORS: Record<ShrineKind, number> = {
   blessing: 0x6ae6ff,
@@ -88,7 +98,8 @@ export class HordeScene {
 
   private glow = new THREE.MeshBasicMaterial({ vertexColors: true });
 
-  private enemyMeshes = new Map<EnemyKind, THREE.InstancedMesh>();
+  // One mesh per frame of each kind's walk.
+  private enemyMeshes = new Map<EnemyKind, THREE.InstancedMesh[]>();
 
   private shotMeshes = new Map<ShotKind, THREE.InstancedMesh>();
 
@@ -196,19 +207,23 @@ export class HordeScene {
     sun.position.set(-6, 10, 4);
     this.scene.add(hemi, sun);
     this.sky = new Sky(this.scene, hemi, sun);
+    this.disposables.push(...this.sky.disposables);
 
     this.buildGround();
     this.buildDecor();
     this.buildChests();
 
     KINDS.forEach((kind) => {
-      const mesh = instanced(
-        enemyGeometry(kind),
-        this.lit,
-        kind === 'boss' ? 6 : MAX_ENEMIES + 8 + MAX_CORPSES
+      const frames = kind === 'barrel' || kind === 'pot' ? 1 : ENEMY_FRAMES;
+      const meshes = Array.from({ length: frames }, (_, frame) =>
+        instanced(
+          enemyGeometry(kind, frame),
+          this.lit,
+          kind === 'boss' ? 6 : MAX_ENEMIES + 8 + MAX_CORPSES
+        )
       );
-      this.enemyMeshes.set(kind, mesh);
-      this.scene.add(mesh);
+      this.enemyMeshes.set(kind, meshes);
+      this.scene.add(...meshes);
     });
 
     const shotShapes: Record<ShotKind, THREE.BufferGeometry> = {
@@ -350,96 +365,75 @@ export class HordeScene {
   }
 
   private buildGround() {
-    const texture = grainTexture();
-    texture.repeat.set(90, 90);
-    const terrain = buildTerrain(this.run.map, texture);
+    const terrain = buildTerrain(this.run.map);
     this.scene.add(terrain.group);
-    this.disposables.push(...terrain.disposables, texture);
+    this.disposables.push(...terrain.disposables);
   }
 
   private buildDecor() {
-    const { map } = this.run;
-    const rocks = instanced(ball(0.5, 0x6a6672), this.lit, 220);
-    const tufts = instanced(cone(0.22, 0.6, 3, 0x6f9448, { at: [0, 0.3, 0] }), this.lit, 1200);
-    const trees = instanced(
-      merge([
-        box(0.5, 3, 0.5, 0x3a2c24, { at: [0, 1.5, 0] }),
-        cone(1.7, 3.2, 5, 0x24402e, { at: [0, 4.2, 0] }),
-        cone(1.2, 2.4, 5, 0x2e5238, { at: [0, 5.8, 0] }),
-      ]),
-      this.lit,
-      420
-    );
-    const place = (mesh: THREE.InstancedMesh, i: number, x: number, z: number, size: number) => {
-      this.dummy.position.set(x, this.ground(x, z), z);
-      this.dummy.rotation.set(0, hash(i, x) * 6, 0);
-      this.dummy.scale.setScalar(size);
-      this.dummy.updateMatrix();
-      mesh.setMatrixAt(mesh.count, this.dummy.matrix);
-      // eslint-disable-next-line no-param-reassign
-      mesh.count += 1;
-    };
-    [rocks, tufts, trees].forEach((mesh) => {
-      // eslint-disable-next-line no-param-reassign
-      mesh.count = 0;
+    const forest = new Forest();
+    const planted = (x: number, z: number, size: number, turn: number, sink = 0): Planted => ({
+      x,
+      y: this.ground(x, z) - sink * size,
+      z,
+      size,
+      turn,
     });
-    // Rocks and grass anywhere on the square, tops of the blocks included, never on a cliff face.
-    const scatter = (mesh: THREE.InstancedMesh, count: number, salt: number, size: number) => {
+    // The trees, boulders and logs the engine stops the hero at, each where the engine has it.
+    const obstacles = obstaclesOf(this.run.map);
+    const trees: ForestModel[] = ['tree1', 'tree2', 'tree3', 'tree4'];
+    trees.forEach((model, variant) =>
+      forest.add(
+        model,
+        obstacles
+          .filter((o) => o.kind === 'tree' && o.variant === variant)
+          .map((o) => planted(o.x, o.z, o.size, o.turn, 0.02))
+      )
+    );
+    // The boulder's model is as wide as the circle it blocks when drawn this much bigger.
+    forest.add(
+      'rock',
+      obstacles.filter((o) => o.kind === 'rock').map((o) => planted(o.x, o.z, o.size, o.turn, 0.12))
+    );
+    forest.add(
+      'log',
+      obstacles.filter((o) => o.kind === 'log').map((o) => planted(o.x, o.z, o.size, o.turn, 0.1))
+    );
+    // Pebbles and small plants anywhere on the square, never on a cliff face: only to look at.
+    const scatter = (model: ForestModel, count: number, salt: number, size: number) => {
+      const places: Planted[] = [];
       for (let i = 0; i < count; i += 1) {
         const x = (hash(i, salt) * 2 - 1) * (MAP_HALF - 3);
         const z = (hash(salt, i) * 2 - 1) * (MAP_HALF - 3);
         const h = this.ground(x, z);
         const steep =
           Math.abs(this.ground(x + 0.8, z) - h) + Math.abs(this.ground(x, z + 0.8) - h) > 0.6;
-        if (!steep && Math.hypot(x, z) > 3) place(mesh, i, x, z, size + hash(i + salt, 9) * 0.9);
+        if (!steep && Math.hypot(x, z) > 3) {
+          places.push(planted(x, z, size * (0.7 + hash(i + salt, 9) * 0.6), hash(i, x) * 6, 0.05));
+        }
       }
+      forest.add(model, places);
     };
-    scatter(rocks, 220, 11, 0.5);
-    scatter(tufts, 1200, 23, 0.6);
+    scatter('rock', 320, 11, 0.5);
+    scatter('grass', 2200, 23, 0.55);
+    scatter('reed', 700, 31, 1.1);
+    scatter('dandelion', 500, 43, 0.6);
+    scatter('lavender', 400, 53, 1);
     // A forest on the mountains around the square.
+    const rim: Planted[][] = [[], []];
     for (let i = 0; i < 420; i += 1) {
-      const along = (hash(i, 37) * 2 - 1) * (MAP_HALF + 30);
-      const out = MAP_HALF - 2 + hash(37, i) * 34;
+      const along = (hash(i, 37) * 2 - 1) * (MAP_HALF + 24);
+      const out = MAP_HALF - 2 + hash(37, i) * 26;
       const sign = hash(i, 71) < 0.5 ? -1 : 1;
       const onX = hash(71, i) < 0.5;
       const x = onX ? sign * out : along;
       const z = onX ? along : sign * out;
-      place(trees, i, x, z, 0.7 + hash(i, 5) * 1.1);
+      rim[i % 2].push(planted(x, z, 9 + hash(i, 5) * 6, hash(5, i) * 6, 0.03));
     }
-    // Torches on both sides of the top of every ramp, so climbs are easy to spot from afar.
-    const torches = instanced(
-      merge([
-        box(0.25, 1.6, 0.25, 0x3a2c24, { at: [0, 0.8, 0] }),
-        box(0.45, 0.3, 0.45, 0x4a4652, { at: [0, 1.65, 0] }),
-      ]),
-      this.lit,
-      map.ramps.length * 2
-    );
-    const flames = instanced(
-      cone(0.28, 0.7, 4, 0xff8a2a, { at: [0, 2.1, 0] }),
-      this.glow,
-      map.ramps.length * 2
-    );
-    torches.count = 0;
-    flames.count = 0;
-    map.ramps.forEach((r) => {
-      const length = Math.hypot(r.x2 - r.x1, r.z2 - r.z1);
-      const ax = (r.x2 - r.x1) / length;
-      const az = (r.z2 - r.z1) / length;
-      [-1, 1].forEach((sign) => {
-        const x = r.x2 - ax * 1.6 - az * sign * (r.width / 2 + 0.3);
-        const z = r.z2 - az * 1.6 + ax * sign * (r.width / 2 + 0.3);
-        this.dummy.position.set(x, r.h2, z);
-        this.dummy.rotation.set(0, 0, 0);
-        this.dummy.scale.setScalar(1);
-        this.dummy.updateMatrix();
-        torches.setMatrixAt(torches.count, this.dummy.matrix);
-        flames.setMatrixAt(flames.count, this.dummy.matrix);
-        torches.count += 1;
-        flames.count += 1;
-      });
-    });
-    this.scene.add(rocks, tufts, trees, torches, flames);
+    forest.add('tree3', rim[0]);
+    forest.add('tree4', rim[1]);
+    this.scene.add(forest.root);
+    this.disposables.push(...forest.disposables);
   }
 
   private buildChests() {
@@ -518,6 +512,12 @@ export class HordeScene {
       y: (-this.target.y * 0.5 + 0.5) * this.canvas.clientHeight,
       front: this.target.z < 1,
     };
+  }
+
+  // Where the hero is on the screen, `lift` above its feet (it may be in the air).
+  projectHero(lift: number): { x: number; y: number; front: boolean } {
+    const { player } = this.run;
+    return this.project(player.x, player.z, player.y - this.ground(player.x, player.z) + lift);
   }
 
   handle(events: GameEvent[]) {
@@ -720,7 +720,7 @@ export class HordeScene {
     this.clock += dt;
 
     // Enemies and their shadows.
-    const counts = new Map<EnemyKind, number>();
+    const counts = new Map<THREE.InstancedMesh, number>();
     let shadowCount = 0;
     const shadow = (x: number, z: number, radius: number) => {
       if (shadowCount >= MAX_ENEMIES + 16) return;
@@ -733,11 +733,14 @@ export class HordeScene {
     };
     for (let i = 0; i < run.enemies.length; i += 1) {
       const e = run.enemies[i];
-      const mesh = this.enemyMeshes.get(e.kind);
-      const index = counts.get(e.kind) ?? 0;
+      const frames = this.enemyMeshes.get(e.kind);
+      // Each enemy steps at its kind's pace, out of step with its neighbours.
+      const step = this.clock * (STEP_RATES[e.kind] ?? 3.5) + e.id * 0.37;
+      const mesh = frames && frames[Math.floor(step) % frames.length];
+      const index = (mesh && counts.get(mesh)) ?? 0;
       if (mesh && index < mesh.instanceMatrix.count) {
         this.placeEnemy(e, index, mesh);
-        counts.set(e.kind, index + 1);
+        counts.set(mesh, index + 1);
         shadow(e.x, e.z, e.radius * 1.1);
       }
     }
@@ -749,8 +752,8 @@ export class HordeScene {
       c.x += c.vx * dt;
       c.y += c.vy * dt;
       c.z += c.vz * dt;
-      const mesh = this.enemyMeshes.get(c.kind);
-      const index = counts.get(c.kind) ?? 0;
+      const mesh = this.enemyMeshes.get(c.kind)?.[0];
+      const index = (mesh && counts.get(mesh)) ?? 0;
       if (mesh && index < mesh.instanceMatrix.count) {
         const t = Math.min(1, c.age / CORPSE_SECONDS);
         this.dummy.position.set(c.x, c.y, c.z);
@@ -760,14 +763,16 @@ export class HordeScene {
         mesh.setMatrixAt(index, this.dummy.matrix);
         this.color.setRGB(2 - t, 1.6 - t, 1.6 - t);
         mesh.setColorAt(index, this.color);
-        counts.set(c.kind, index + 1);
+        counts.set(mesh, index + 1);
       }
     }
-    this.enemyMeshes.forEach((mesh, kind) => {
-      mesh.count = counts.get(kind) ?? 0;
-      mesh.instanceMatrix.needsUpdate = true;
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    });
+    this.enemyMeshes.forEach((frames) =>
+      frames.forEach((mesh) => {
+        mesh.count = counts.get(mesh) ?? 0;
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      })
+    );
     shadow(player.x, player.z, 0.6);
     this.shadows.count = shadowCount;
     this.shadows.instanceMatrix.needsUpdate = true;

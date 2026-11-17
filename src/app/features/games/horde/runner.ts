@@ -19,9 +19,10 @@ import {
 import type { CameraView, HordeScene } from './render/scene';
 import type { HordeAudio } from './audio/sound';
 import { effectiveVolume } from './audio/mix';
-import { groupHits } from './numbers';
+import { groupHits, shortNumber } from './numbers';
 import { bannerOf, eliteModLabel } from './labels';
 import { MapHud } from './mapHud';
+import { tr } from '../../translation/tr';
 
 // Plays a run on a canvas: reads the keys, the mouse and the touch stick, turns the camera,
 // steps the engine 60 times a second whatever the screen's refresh rate, and tells React only
@@ -68,6 +69,8 @@ export type Hud = {
   weapons: { id: WeaponId; level: number }[];
   passives: { id: PassiveId; level: number }[];
   boss: number | undefined;
+  // The boss's health in points, for the numbers on its bar.
+  bossHp: { hp: number; max: number } | undefined;
 };
 
 const storageKey = (userId: string) => `blazeroom.horde.v1:${userId}`;
@@ -126,6 +129,7 @@ export const hudOf = (run: RunState, paused: boolean, aiming = false): Hud => {
     weapons: run.weapons.map((w) => ({ id: w.id, level: w.level })),
     passives: run.passives.map((p) => ({ id: p.id, level: p.level })),
     boss: boss ? boss.hp / boss.maxHp : undefined,
+    bossHp: boss ? { hp: Math.max(0, boss.hp), max: boss.maxHp } : undefined,
   };
 };
 
@@ -199,6 +203,22 @@ export class HordeRunner {
 
   private flashEl: HTMLDivElement;
 
+  private heroBar: HTMLDivElement;
+
+  private heroHp: HTMLDivElement;
+
+  private heroShield: HTMLDivElement;
+
+  // Gold already shown as picked up, what is waiting to be shown and for how long.
+  private goldSeen = 0;
+
+  private goldDue = 0;
+
+  private goldWait = 0;
+
+  // The size of a full shield, as of the last HUD update.
+  private maxShield = 0;
+
   // Records every command for the server's check, or plays recorded ones when watching.
   private recorder: ReplayRecorder | undefined;
 
@@ -251,6 +271,19 @@ export class HordeRunner {
     this.flashEl.style.cssText =
       'position:absolute;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen';
     overlay.appendChild(this.flashEl);
+    // The hero's own bar, at its feet: health, and the shield over it.
+    this.heroBar = document.createElement('div');
+    this.heroBar.style.cssText =
+      'position:absolute;width:56px;height:7px;pointer-events:none;background:#16090b;' +
+      'border:1px solid #000;transform:translate(-50%,0);display:none';
+    this.heroHp = document.createElement('div');
+    this.heroHp.style.cssText = 'position:absolute;left:0;top:0;bottom:0;background:#f0281e';
+    this.heroShield = document.createElement('div');
+    this.heroShield.style.cssText =
+      'position:absolute;left:0;top:0;height:3px;background:#5ab8ff;display:none';
+    this.heroBar.append(this.heroHp, this.heroShield);
+    overlay.appendChild(this.heroBar);
+    this.goldSeen = run.gold;
     this.applySettings();
     this.knob = document.createElement('div');
     this.knob.style.cssText =
@@ -316,6 +349,7 @@ export class HordeRunner {
     this.knob.remove();
     this.releasePointer();
     this.flashEl.remove();
+    this.heroBar.remove();
     this.eliteTags.forEach((el) => el.remove());
     this.mapHud.dispose();
     this.sound.audio?.dispose();
@@ -419,7 +453,9 @@ export class HordeRunner {
   }
 
   private sendHud() {
-    this.onHud(hudOf(this.run, this.paused, this.locked));
+    const hud = hudOf(this.run, this.paused, this.locked);
+    this.maxShield = hud.maxShield;
+    this.onHud(hud);
   }
 
   // The mouse turns the camera only while captured. Asking needs a click or a key, which every
@@ -761,6 +797,46 @@ export class HordeRunner {
     });
   }
 
+  private placeHeroBar() {
+    const { player, phase } = this.run;
+    const at = this.scene.projectHero(-0.35);
+    const shown = at.front && phase !== 'dead' && phase !== 'won';
+    this.heroBar.style.display = shown ? 'block' : 'none';
+    if (!shown) return;
+    this.heroBar.style.left = `${at.x}px`;
+    this.heroBar.style.top = `${at.y}px`;
+    this.heroHp.style.width = `${Math.max(0, Math.min(1, player.hp / player.maxHp)) * 100}%`;
+    const shield = this.maxShield > 0 ? player.shield / this.maxShield : 0;
+    this.heroShield.style.display = shield > 0 ? 'block' : 'none';
+    this.heroShield.style.width = `${Math.min(1, shield) * 100}%`;
+  }
+
+  // Gold picked up rises from the hero as one number every little while, not one per coin.
+  private showGold(dt: number) {
+    const { gold } = this.run;
+    if (gold > this.goldSeen) this.goldDue += gold - this.goldSeen;
+    this.goldSeen = gold;
+    this.goldWait -= dt;
+    if (this.goldDue < 1 || this.goldWait > 0) return;
+    this.goldWait = 0.35;
+    const at = this.scene.projectHero(2.3);
+    const el = document.createElement('span');
+    el.textContent = `+${shortNumber(this.goldDue)}`;
+    this.goldDue = 0;
+    el.style.cssText =
+      `position:absolute;left:${at.x}px;top:${at.y}px;pointer-events:none;font-weight:900;` +
+      'font-size:16px;color:#ffd23a;text-shadow:0 2px 0 #000,0 0 4px #000;' +
+      'transform:translate(-50%,-50%)';
+    this.overlay.appendChild(el);
+    el.animate(
+      [
+        { transform: 'translate(-50%,-50%) scale(1.3)', opacity: 1 },
+        { transform: 'translate(-50%,-260%) scale(1)', opacity: 0 },
+      ],
+      { duration: 700, easing: 'ease-out' }
+    ).onfinish = () => el.remove();
+  }
+
   private showNumbers(events: GameEvent[]) {
     const hits = groupHits(events);
     for (let i = 0; i < hits.length; i += 1) {
@@ -768,7 +844,9 @@ export class HordeRunner {
       if (this.numbers < MAX_NUMBERS) {
         const at = this.scene.project(event.x, event.z, 1.8);
         const el = document.createElement('span');
-        el.textContent = String(event.amount);
+        el.textContent = event.crit
+          ? `${shortNumber(event.amount)} ${tr('games.horde.crit', 'CRIT!')}`
+          : shortNumber(event.amount);
         el.style.cssText =
           `position:absolute;left:${at.x}px;top:${at.y}px;pointer-events:none;font-weight:900;` +
           `font-size:${event.crit ? 22 : 14}px;color:${event.crit ? '#ffd23a' : '#fff'};` +
@@ -827,6 +905,8 @@ export class HordeRunner {
     }
     this.scene.render(this.paused ? 0 : dt, this.view);
     this.placeEliteTags();
+    this.placeHeroBar();
+    if (!this.paused && this.run.phase === 'playing') this.showGold(dt);
     this.mapHud.update(dt, this.view.yaw);
 
     if (this.run.phase !== phaseBefore && this.run.phase !== 'playing') {

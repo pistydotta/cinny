@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { TICK, chestPrice } from './data';
 import { blessingLevels, choose, createRun, step } from './run';
-import { MAP_HALF, heightAt, mesaTops } from './terrain';
-import { Input, Mesa, Ramp, RunState } from './types';
+import { LEVEL, MAP_HALF, Obstacle, heightAt, highSpots, landSurvey, obstaclesOf } from './terrain';
+import { Input, RunState } from './types';
 
 const IDLE: Input = { moveX: 0, moveZ: 0, jump: false, jumpHeld: false, dash: false };
 
@@ -31,8 +31,21 @@ const walk = (run: RunState, moveX: number, moveZ: number, ticks: number, jump =
   }
 };
 
-const bigMesa = (run: RunState): Mesa =>
-  run.map.mesas.find((m) => m.kind === 'mesa' && m.w >= 8 && m.d >= 8) as Mesa;
+// A cliff that faces west: level ground at its foot, and level ground a level higher a few steps
+// to the east.
+const findCliff = (run: RunState): { x: number; z: number; low: number; high: number } => {
+  for (let z = -120; z <= 120; z += 2) {
+    for (let x = -120; x <= 120; x += 1) {
+      const low = heightAt(run.map, x, z);
+      const high = heightAt(run.map, x + 6, z);
+      const level = (at: number, h: number) => Math.abs(heightAt(run.map, at, z) - h) < 0.5;
+      if (high - low > LEVEL * 0.8 && level(x - 3, low) && level(x + 9, high)) {
+        return { x, z, low, high };
+      }
+    }
+  }
+  throw new Error('no cliff on this map');
+};
 
 describe('horde map', () => {
   it('is the same map for the same seed, and another for another seed', () => {
@@ -40,62 +53,81 @@ describe('horde map', () => {
     expect(createRun(8, 'lula').map).not.toEqual(createRun(7, 'lula').map);
   });
 
-  it('has mesas with ramps, ledges and pillars, and an open start', () => {
-    for (let seed = 1; seed <= 20; seed += 1) {
+  it('has high and low ground, an open start, and nowhere the hero is stuck', () => {
+    for (let seed = 1; seed <= 12; seed += 1) {
       const { map } = createRun(seed, 'lula');
-      expect(map.mesas.filter((m) => m.kind === 'mesa').length).toBeGreaterThanOrEqual(4);
-      expect(map.mesas.filter((m) => m.kind === 'ledge').length).toBeGreaterThanOrEqual(6);
-      expect(map.ramps.length).toBeGreaterThanOrEqual(4);
-      for (let x = -12; x <= 12; x += 3) {
-        for (let z = -12; z <= 12; z += 3) expect(heightAt(map, x, z)).toBeLessThan(1.2);
+      let highest = -Infinity;
+      let lowest = Infinity;
+      for (let x = -130; x <= 130; x += 5) {
+        for (let z = -130; z <= 130; z += 5) {
+          highest = Math.max(highest, heightAt(map, x, z));
+          lowest = Math.min(lowest, heightAt(map, x, z));
+        }
       }
+      expect(highest).toBeGreaterThan(LEVEL * 1.5);
+      expect(lowest).toBeLessThan(-LEVEL * 0.4);
+      for (let x = -12; x <= 12; x += 3) {
+        for (let z = -12; z <= 12; z += 3) expect(Math.abs(heightAt(map, x, z))).toBeLessThan(1.5);
+      }
+      const survey = landSurvey(map);
+      expect(survey.traps).toBe(0);
+      expect(survey.openShare).toBeGreaterThan(0.8);
     }
   });
 
-  it('stops the hero at a cliff', () => {
+  it('is the same land again from the numbers of a saved map', () => {
+    const { map } = createRun(3, 'lula');
+    const loaded = JSON.parse(JSON.stringify(map));
+    for (let x = -140; x <= 140; x += 7) {
+      expect(heightAt(loaded, x, x * 0.6)).toBe(heightAt(map, x, x * 0.6));
+    }
+  });
+
+  it('stops the hero at a cliff, and lets it fall from the top', () => {
     const run = quietRun();
-    const mesa = bigMesa(run);
-    // West of the mesa, beside the middle of its side, walking east into it.
-    const z = mesa.z + mesa.d * 0.5;
-    standAt(run, mesa.x - mesa.w - 4, z);
+    const cliff = findCliff(run);
+    standAt(run, cliff.x - 2, cliff.z);
     walk(run, 1, 0, 120);
-    expect(run.player.x).toBeLessThan(mesa.x - mesa.w + 0.1);
-    expect(run.player.y).toBeLessThan(1.5);
-  });
-
-  it('walks up a ramp onto the mesa', () => {
-    const run = quietRun();
-    // The first ramp is a big mesa's, from the ground.
-    const [ramp] = run.map.ramps as [Ramp];
-    const length = Math.hypot(ramp.x2 - ramp.x1, ramp.z2 - ramp.z1);
-    const dx = (ramp.x2 - ramp.x1) / length;
-    const dz = (ramp.z2 - ramp.z1) / length;
-    standAt(run, ramp.x1 - dx * 3, ramp.z1 - dz * 3);
-    walk(run, dx, dz, 60 * 4);
-    expect(run.player.y).toBeGreaterThan(ramp.h2 - 0.3);
-    expect(run.player.grounded).toBe(true);
-  });
-
-  it('jumps onto a low ledge, and falls off its edge', () => {
-    const run = quietRun();
-    const ledge = run.map.mesas.find((m) => m.kind === 'ledge' && m.w >= 3) as Mesa;
-    standAt(run, ledge.x - ledge.w - 3, ledge.z);
-    walk(run, 1, 0, 60);
-    // Walking alone doesn't climb it.
-    expect(run.player.y).toBeLessThan(ledge.h - 0.5);
-    walk(run, 1, 0, 50, true);
-    expect(run.player.y).toBeGreaterThan(ledge.h - 0.3);
-    // Off the far side: in the air for a moment, then on the ground below.
-    walk(run, 0, 0, 30);
+    expect(run.player.x).toBeLessThan(cliff.x + 5);
+    expect(run.player.y).toBeLessThan(cliff.low + LEVEL * 0.5);
+    // From the top, walking west: off the edge, in the air for a moment, then on the ground below.
+    standAt(run, cliff.x + 9, cliff.z);
     let fell = false;
     for (let i = 0; i < 300; i += 1) {
-      step(run, { ...IDLE, moveX: 1 }, TICK);
+      step(run, { ...IDLE, moveX: -1 }, TICK);
       if (!run.player.grounded) fell = true;
-      if (run.player.x > ledge.x + ledge.w + 2) break;
+      if (run.player.x < cliff.x - 2) break;
     }
     expect(fell).toBe(true);
     walk(run, 0, 0, 30);
-    expect(run.player.y).toBeLessThan(ledge.h - 0.8);
+    expect(run.player.y).toBeLessThan(cliff.low + 1);
+  });
+
+  it('grows trees and boulders that stop the hero, with room between them', () => {
+    const run = quietRun();
+    const obstacles = obstaclesOf(run.map);
+    expect(obstacles.filter((o) => o.kind === 'tree').length).toBeGreaterThan(120);
+    expect(obstacles.filter((o) => o.kind === 'rock').length).toBeGreaterThan(20);
+    obstacles.forEach((a, i) => {
+      expect(Math.hypot(a.x, a.z)).toBeGreaterThan(12);
+      obstacles.slice(i + 1).forEach((b) => {
+        expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(a.r + b.r + 3);
+      });
+    });
+    // Shrines and chests stand clear of them.
+    const spots = [...createRun(5, 'lula').shrines, ...run.chests];
+    spots.forEach((s) =>
+      obstacles.forEach((o) => expect(Math.hypot(s.x - o.x, s.z - o.z)).toBeGreaterThan(o.r + 1.5))
+    );
+    // Walking east into a tree: stopped at its trunk, then around it.
+    const tree = obstacles.find((o) => o.kind === 'tree') as Obstacle;
+    standAt(run, tree.x - tree.r - 2, tree.z);
+    walk(run, 1, 0, 40);
+    expect(Math.hypot(run.player.x - tree.x, run.player.z - tree.z)).toBeGreaterThan(tree.r + 0.49);
+    expect(run.player.x).toBeLessThan(tree.x);
+    standAt(run, tree.x - tree.r - 2, tree.z + 0.3);
+    walk(run, 1, 0, 90);
+    expect(run.player.x).toBeGreaterThan(tree.x + tree.r);
   });
 
   it('keeps the hero inside the square', () => {
@@ -108,7 +140,7 @@ describe('horde map', () => {
   it('puts the best rewards on the high tops', () => {
     for (let seed = 1; seed <= 10; seed += 1) {
       const run = createRun(seed, 'lula');
-      const top = mesaTops(run.map)[0];
+      const top = highSpots(run.map)[0];
       const near = (x: number, z: number) => Math.hypot(x - top.x, z - top.z) < 4;
       expect(run.shrines.some((s) => s.kind === 'blessing' && near(s.x, s.z))).toBe(true);
       expect(run.chests.length).toBeGreaterThanOrEqual(6);

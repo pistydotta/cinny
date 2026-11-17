@@ -50,7 +50,16 @@ import {
   evasionChance,
   luckShare,
 } from './stats';
-import { MAP_HALF, clampToMap, createMap, groundSpot, heightAt, mesaTops } from './terrain';
+import {
+  MAP_HALF,
+  WALL_SLOPE,
+  clampToMap,
+  createMap,
+  groundSpot,
+  heightAt,
+  highSpots,
+  pushOut,
+} from './terrain';
 import { EVOLUTIONS, cooldownOf, weaponSpec } from './weapons';
 import {
   CharacterId,
@@ -275,11 +284,8 @@ export const createRun = (
   state.player.shield = stats.shield;
   // The best rewards sit on the high tops: blessing totems first, then chests. The rest of the
   // shrines and chests go on the open ground.
-  const tops = mesaTops(map);
-  const onTop = () => {
-    const m = tops.shift();
-    return m && { x: m.x, z: m.z };
-  };
+  const tops = highSpots(map);
+  const onTop = () => tops.shift();
   const kinds: ShrineKind[] = ['curse', 'gold', 'gold', 'heal', 'heal', 'challenge'];
   for (let i = 0; i < 4; i += 1) kinds.unshift('blessing');
   kinds.forEach((kind, id) => {
@@ -1179,7 +1185,8 @@ const moveEnemies = (
     // Enemies climb cliffs, but one thrown hard against a cliff stops there and is hurt by it.
     if (e.kind !== 'boss' && dhypot(e.pushX, e.pushZ) > SLAM_SPEED) {
       const rise = heightAt(state.map, e.x, e.z) - heightAt(state.map, fromX, fromZ);
-      if (rise > 1.2) {
+      // A cliff is ground that rises like a wall, the same that stops the hero.
+      if (rise > 0.4 && rise > dhypot(e.x - fromX, e.z - fromZ) * WALL_SLOPE) {
         e.x = fromX;
         e.z = fromZ;
         hurtEnemy(state, stats, e, dhypot(e.pushX, e.pushZ) * 1.5 * stats.damage, events);
@@ -1611,10 +1618,6 @@ const accelerate = (
   player.vz += dirZ * push;
 };
 
-// Ground steeper than this (rise over run) is a wall: it stops the hero unless already above it.
-// Ground falling away as steeply under a walking hero is an edge to fall from.
-const WALL_SLOPE = 1.1;
-
 // Whether the hero, with feet at `y`, can go from (x0, z0) to (x1, z1): not into ground that rises
 // like a wall above its feet.
 const canStep = (state: RunState, y: number, x0: number, z0: number, x1: number, z1: number) => {
@@ -1645,6 +1648,17 @@ const moveAcross = (state: RunState, x: number, z: number) => {
   } else {
     player.vx = 0;
     player.vz = 0;
+  }
+  // Trees and boulders push the hero out, and take the speed that went into them.
+  const free = pushOut(state.map, player.x, player.z, player.y, PLAYER_RADIUS);
+  if (free) {
+    player.x = free.x;
+    player.z = free.z;
+    const into = player.vx * free.nx + player.vz * free.nz;
+    if (into < 0) {
+      player.vx -= into * free.nx;
+      player.vz -= into * free.nz;
+    }
   }
 };
 

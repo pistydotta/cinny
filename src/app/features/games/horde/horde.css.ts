@@ -248,9 +248,10 @@ export const SlotLevel = style({
 });
 
 export const BossBar = style({
+  position: 'relative',
   alignSelf: 'center',
   width: 'min(520px, 90%)',
-  height: 14,
+  height: 20,
   borderRadius: 7,
   overflow: 'hidden',
   background: 'rgba(0,0,0,0.6)',
@@ -261,6 +262,19 @@ export const BossFill = style({
   height: '100%',
   background: 'linear-gradient(90deg, #ff3a2a, #ff9a3a)',
   transition: 'width 120ms linear',
+});
+
+export const BossText = style({
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 12,
+  fontWeight: 900,
+  letterSpacing: 1,
+  fontVariantNumeric: 'tabular-nums',
+  textShadow: '0 1px 0 #000, 0 0 3px #000',
 });
 
 export const HudBottom = style({
