@@ -11,7 +11,7 @@ import {
 
 // Bumped whenever the rules change what a run can reach. Each reported run carries it, so the
 // ranking can tell runs of the old rules from the new ones without deleting any.
-export const ENGINE_VERSION = 5;
+export const ENGINE_VERSION = 6;
 
 export const TICK = 1 / 60;
 export const ARENA_RADIUS = 70;
@@ -21,7 +21,10 @@ export const MAX_ENEMIES = 320;
 export const MAX_PICKUPS = 350;
 export const MAX_WEAPONS = 4;
 export const MAX_PASSIVES = 4;
-export const WEAPON_MAX_LEVEL = 6;
+// Weapons level up to 50; past the first levels each one gives two of the weapon's own stats
+// (`WEAPON_ROLLS`). At EVOLVE_LEVEL a weapon can evolve with its Boleto.
+export const WEAPON_MAX_LEVEL = 50;
+export const EVOLVE_LEVEL = 6;
 export const SHRINE_RADIUS = 2.6;
 export const SHRINE_SECONDS = 3;
 // Chests standing on the map: how many, how close to stand and for how long to buy one, and the
@@ -115,7 +118,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
   eneas: { weapon: 'missile', hp: 100, speed: 7.2 },
   lula: { weapon: 'card', hp: 100, speed: 7 },
   janja: { weapon: 'aura', hp: 130, speed: 6.6 },
-  bolsonaro: { weapon: 'urns', hp: 85, speed: 7.9 },
+  bolsonaro: { weapon: 'urns', hp: 100, speed: 7.9 },
 };
 export const CHARACTER_IDS = Object.keys(CHARACTERS) as CharacterId[];
 
@@ -142,10 +145,12 @@ export const META_IDS = Object.keys(META_UPGRADES) as MetaUpgradeId[];
 export const metaCost = (id: MetaUpgradeId, level: number): number =>
   Math.round(META_UPGRADES[id].baseCost * (level + 1) ** 1.5);
 
-export const xpToNext = (level: number): number => Math.floor(4 + level * 4 + level * level * 0.5);
+// Late levels come faster than they used to (0.3 instead of 0.5 on the square), so Boletos can
+// climb towards 99 and a long run keeps offering something.
+export const xpToNext = (level: number): number => Math.floor(4 + level * 4 + level * level * 0.3);
 
 // How much tougher enemies are `time` seconds into the run.
-export const enemyScale = (time: number): number => 1 + dpow(time / 60, 1.4) * 0.42;
+export const enemyScale = (time: number): number => 1 + dpow(time / 60, 1.9) * 0.42;
 
 // Enemies per second.
 export const spawnRate = (time: number): number => 1.4 + (time / 60) * 1.25;

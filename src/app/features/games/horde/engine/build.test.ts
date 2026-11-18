@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { ABILITY_COOLDOWN, SKIP_GOLD, TICK, xpToNext } from './data';
+import {
+  ABILITY_COOLDOWN,
+  EVOLVE_LEVEL,
+  SKIP_GOLD,
+  TICK,
+  WEAPON_MAX_LEVEL,
+  xpToNext,
+} from './data';
 import {
   BURN_BOLT,
   banish,
@@ -13,7 +20,7 @@ import {
   skip,
   step,
 } from './run';
-import { weaponSpec } from './weapons';
+import { ROLL_VALUES, WEAPON_ROLLS, weaponSpec } from './weapons';
 import { CharacterId, Enemy, GameEvent, Input, RunState } from './types';
 import { MAP_HALF, heightAt } from './terrain';
 
@@ -59,7 +66,7 @@ const levelUp = (run: RunState) => {
 };
 
 describe('horde build: offers', () => {
-  it('luck makes rare and epic offers likelier; epic gives three levels', () => {
+  it('luck makes rare and epic offers likelier; an epic Boleto gives three levels', () => {
     const lucky = quietRun();
     lucky.blessings.luck = 20;
     expect(epicChance(runStats(lucky))).toBeGreaterThan(epicChance(runStats(quietRun())));
@@ -69,13 +76,75 @@ describe('horde build: offers', () => {
       const run = quietRun('lula', seed);
       run.blessings.luck = 40;
       levelUp(run);
-      const found = (run.choices ?? []).filter(
-        (c) => (c.kind === 'weapon' || c.kind === 'passive') && c.rarity === 'epic'
-      );
+      const found = (run.choices ?? []).filter((c) => c.kind === 'passive' && c.rarity === 'epic');
       found.forEach((c) => expect('level' in c && c.level).toBe(3));
       epics += found.length;
     }
     expect(epics).toBeGreaterThan(0);
+  });
+
+  it('levels a weapon up to 50, each level after the first with two different rolls', () => {
+    const run = quietRun();
+    run.weapons = [{ id: 'axe', level: 1, cooldown: 0, angle: 0 }];
+    run.passives = [];
+    for (let i = 0; i < 400 && run.weapons[0].level < WEAPON_MAX_LEVEL; i += 1) {
+      levelUp(run);
+      const index = run.choices?.findIndex((c) => c.kind === 'weapon' && c.id === 'axe') ?? -1;
+      if (index >= 0) {
+        const offer = run.choices?.[index];
+        if (offer?.kind !== 'weapon') throw new Error('not a weapon');
+        expect(offer.bonuses).toHaveLength(2);
+        const [a, b] = offer.bonuses ?? [];
+        expect(a.stat).not.toBe(b.stat);
+        offer.bonuses?.forEach((bonus) => {
+          expect(WEAPON_ROLLS.axe).toContain(bonus.stat);
+          expect(bonus.value).toBeGreaterThanOrEqual(ROLL_VALUES[bonus.stat]);
+        });
+      }
+      choose(run, Math.max(0, index));
+    }
+    expect(run.weapons[0].level).toBe(WEAPON_MAX_LEVEL);
+    levelUp(run);
+    expect(run.choices?.some((c) => c.kind === 'weapon' && c.id === 'axe')).toBe(false);
+    // 49 levels of two rolls each, all on the weapon.
+    const rolls = Object.entries(run.weapons[0].bonus ?? {}).reduce(
+      (n, [stat, value]) => n + Math.round(value / ROLL_VALUES[stat as keyof typeof ROLL_VALUES]),
+      0
+    );
+    expect(rolls).toBeGreaterThanOrEqual(98);
+  });
+
+  it("a weapon's rolls change only that weapon", () => {
+    const stats = runStats(quietRun());
+    const plain = { id: 'missile' as const, level: 20, cooldown: 0, angle: 0 };
+    const rolled = {
+      ...plain,
+      bonus: { damage: 1, projectiles: 5, attackSpeed: 1, size: 0.5 },
+    };
+    const a = weaponSpec(plain, stats);
+    const b = weaponSpec(rolled, stats);
+    expect(b.damage).toBeCloseTo(a.damage * 2);
+    expect(b.count).toBe(a.count + 5);
+    expect(b.cooldown).toBeCloseTo(a.cooldown / 2);
+    expect(b.area).toBeCloseTo(a.area * 1.5);
+    // Past the evolution level, the weapon's own numbers stop growing: levels give rolls.
+    expect(weaponSpec({ ...plain, level: 50 }, stats)).toEqual(
+      weaponSpec({ ...plain, level: EVOLVE_LEVEL }, stats)
+    );
+  });
+
+  it("a weapon's crit rolls add to the hero's crit", () => {
+    const crits = (critChance: number) => {
+      const run = quietRun();
+      run.weapons = [{ id: 'aura', level: 1, cooldown: 0, angle: 0, bonus: { critChance } }];
+      addEnemy(run, { x: 1.5 });
+      const events: GameEvent[] = [];
+      for (let i = 0; i < 60 * 60; i += 1) events.push(...step(run, IDLE, TICK));
+      const hits = events.filter((e) => e.type === 'hit');
+      return hits.filter((e) => e.type === 'hit' && e.crit).length / hits.length;
+    };
+    expect(crits(0)).toBeLessThan(0.2);
+    expect(crits(0.6)).toBeGreaterThan(0.55);
   });
 
   it('offers the evolution once a weapon is maxed and its Boleto is in the build', () => {

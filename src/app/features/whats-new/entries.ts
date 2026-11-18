@@ -17,6 +17,21 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-brazilianbonk-weapons-50',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_levels_title',
+          'BrazilianBonk: weapons to level 50, Boletos to 99 and a new look'
+        ),
+        body: tr(
+          'whats_new.horde_levels_body',
+          "Weapons now level up to 50, and each level gives two of the weapon's own stats: damage, crit chance, crit damage, projectiles, attack speed, size and more. Boletos now go up to level 99 (or until their stat is at its limit), levels come faster late in a run, and enemies grow tougher to match. Drops got their own models (crystals, coins, hearts, chests) and the HUD was redrawn in pixel art. The mouse now stays captured while you play, also in the Windows app, until you press Esc."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-poker-tournaments',
     items: () => [
       {

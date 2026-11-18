@@ -314,6 +314,9 @@ export class HordeRunner {
 
     this.sendHud();
     this.frame = requestAnimationFrame(this.loop);
+    // The Play click a moment ago may still count as the gesture the browser wants: then the
+    // mouse is captured from the start, with no click on the scene.
+    if (!sound.watch) this.capturePointer();
   }
 
   // Keeps a run that isn't over, for "Continue run".

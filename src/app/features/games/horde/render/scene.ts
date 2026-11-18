@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { ENEMIES, MAX_ENEMIES, SHOT_HEIGHT, SHRINE_RADIUS } from '../engine/data';
 import { auraRadius, runStats, urnCount, urnOrbit } from '../engine/run';
+import { MAX_URNS } from '../engine/weapons';
 import { MAP_HALF, heightAt, obstaclesOf } from '../engine/terrain';
 import { Forest, Planted } from './forest';
 import { ForestModel } from '../textures/forest';
@@ -352,7 +353,7 @@ export class HordeScene {
         box(0.09, 0.07, 0.06, 0xff8a2a, { at: [0.2, -0.11, 0.38] }),
       ]),
       this.lit,
-      12
+      MAX_URNS
     );
     this.aura = new THREE.Mesh(
       flat,
@@ -1003,7 +1004,7 @@ export class HordeScene {
     // Ballot boxes in orbit, screens facing out.
     const stats = runStats(run);
     const urns = run.weapons.find((w) => w.id === 'urns');
-    const urnsShown = urns ? Math.min(12, urnCount(urns, stats)) : 0;
+    const urnsShown = urns ? Math.min(MAX_URNS, urnCount(urns, stats)) : 0;
     for (let i = 0; urns && i < urnsShown; i += 1) {
       const angle = urns.angle + (i / urnsShown) * Math.PI * 2;
       const x = player.x + Math.cos(angle) * urnOrbit(stats, urns);

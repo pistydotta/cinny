@@ -66,28 +66,28 @@ export type StatDef = {
 export const STATS: Record<StatId, StatDef> = {
   maxHp: { group: 'defense', base: 100, unit: 'number', whole: true },
   // Health back per minute.
-  regen: { group: 'defense', base: 0, unit: 'perMinute', max: 240 },
+  regen: { group: 'defense', base: 0, unit: 'perMinute', max: 900 },
   // How far over max health healing can go, as a share of max health.
   overheal: { group: 'defense', base: 0, unit: 'share', max: 1 },
-  shield: { group: 'defense', base: 0, unit: 'number', max: 400 },
+  shield: { group: 'defense', base: 0, unit: 'number', max: 1500 },
   armor: { group: 'defense', base: 0, unit: 'points', max: 400 },
   evasion: { group: 'defense', base: 0, unit: 'points', max: 400 },
   // Chance per hit to heal 1.
   lifesteal: { group: 'defense', base: 0, unit: 'share', max: 0.2 },
   // Damage back to whatever touches the hero.
-  thorns: { group: 'defense', base: 0, unit: 'number', max: 2000 },
+  thorns: { group: 'defense', base: 0, unit: 'number' },
 
   damage: { group: 'attack', base: 1, unit: 'multiplier' },
   critChance: { group: 'attack', base: 0.1, unit: 'share', max: 0.9 },
-  critDamage: { group: 'attack', base: 2, unit: 'multiplier', max: 10 },
+  critDamage: { group: 'attack', base: 2, unit: 'multiplier', max: 30 },
   // Fires this much more often: 0.5 is half again as often.
-  attackSpeed: { group: 'attack', base: 0, unit: 'share', max: 3 },
-  projectiles: { group: 'attack', base: 0, unit: 'number', max: 6, whole: true },
+  attackSpeed: { group: 'attack', base: 0, unit: 'share', max: 6 },
+  projectiles: { group: 'attack', base: 0, unit: 'number', max: 10, whole: true },
   ricochet: { group: 'attack', base: 0, unit: 'number', max: 6, whole: true },
 
-  size: { group: 'weapons', base: 1, unit: 'multiplier', max: 4 },
-  projectileSpeed: { group: 'weapons', base: 1, unit: 'multiplier', max: 3 },
-  duration: { group: 'weapons', base: 1, unit: 'multiplier', max: 3 },
+  size: { group: 'weapons', base: 1, unit: 'multiplier', max: 10 },
+  projectileSpeed: { group: 'weapons', base: 1, unit: 'multiplier', max: 5 },
+  duration: { group: 'weapons', base: 1, unit: 'multiplier', max: 6 },
   eliteDamage: { group: 'weapons', base: 1, unit: 'multiplier' },
   knockback: { group: 'weapons', base: 1, unit: 'multiplier', max: 4 },
   moveSpeed: { group: 'weapons', base: 7, unit: 'number', max: 20 },
@@ -98,7 +98,7 @@ export const STATS: Record<StatId, StatDef> = {
   // Tougher and more enemies for more experience and gold. 0.3 is 30% more.
   difficulty: { group: 'movement', base: 0, unit: 'share', max: 3 },
 
-  pickupRange: { group: 'economy', base: 3, unit: 'number', max: 30 },
+  pickupRange: { group: 'economy', base: 3, unit: 'number', max: 60 },
   xpGain: { group: 'economy', base: 1, unit: 'multiplier' },
   goldGain: { group: 'economy', base: 1, unit: 'multiplier' },
   eliteRate: { group: 'economy', base: 1, unit: 'multiplier', max: 4 },
@@ -119,38 +119,58 @@ export type Bonus = { stat: StatId; flat?: number; pct?: number; mult?: number }
 
 export type BoletoDef = Bonus & { max: number };
 
-export const BOLETOS: Record<PassiveId, BoletoDef> = {
-  might: { stat: 'damage', pct: 0.15, max: 5 },
-  haste: { stat: 'attackSpeed', flat: 0.12, max: 5 },
-  reach: { stat: 'size', pct: 0.12, max: 5 },
-  swift: { stat: 'moveSpeed', pct: 0.08, max: 5 },
-  vigor: { stat: 'maxHp', flat: 20, max: 5 },
-  magnet: { stat: 'pickupRange', pct: 0.35, max: 5 },
-  multi: { stat: 'projectiles', flat: 1, max: 2 },
-  regen: { stat: 'regen', flat: 15, max: 5 },
-  overheal: { stat: 'overheal', flat: 0.15, max: 5 },
-  shield: { stat: 'shield', flat: 15, max: 5 },
-  armor: { stat: 'armor', flat: 12, max: 5 },
-  evasion: { stat: 'evasion', flat: 12, max: 5 },
-  lifesteal: { stat: 'lifesteal', flat: 0.02, max: 5 },
-  thorns: { stat: 'thorns', flat: 10, max: 5 },
-  crit: { stat: 'critChance', flat: 0.06, max: 5 },
-  critdmg: { stat: 'critDamage', flat: 0.3, max: 5 },
-  ricochet: { stat: 'ricochet', flat: 1, max: 3 },
-  velocity: { stat: 'projectileSpeed', pct: 0.12, max: 5 },
-  duration: { stat: 'duration', pct: 0.12, max: 5 },
-  hunter: { stat: 'eliteDamage', pct: 0.15, max: 5 },
-  knockback: { stat: 'knockback', pct: 0.25, max: 5 },
-  extrajump: { stat: 'extraJumps', flat: 1, max: 2 },
-  jump: { stat: 'jumpHeight', pct: 0.08, max: 5 },
-  luck: { stat: 'luck', flat: 12, max: 5 },
-  curse: { stat: 'difficulty', flat: 0.15, max: 5 },
-  xp: { stat: 'xpGain', pct: 0.1, max: 5 },
-  gold: { stat: 'goldGain', pct: 0.15, max: 5 },
-  elites: { stat: 'eliteRate', pct: 0.2, max: 5 },
-  power: { stat: 'powerupPower', pct: 0.2, max: 5 },
-  fortune: { stat: 'powerupChance', pct: 0.3, max: 5 },
+// Boletos level to 99, or to the level where their stat reaches its cap from its base, when that
+// comes first: past it a level would add nothing, so it is never offered.
+export const BOLETO_MAX_LEVEL = 99;
+
+const levelsToCap = (bonus: Bonus): number => {
+  const { base, max } = STATS[bonus.stat];
+  if (max === undefined) return BOLETO_MAX_LEVEL;
+  let levels = BOLETO_MAX_LEVEL;
+  if (bonus.flat) levels = Math.ceil((max - base) / bonus.flat - 1e-9);
+  else if (bonus.pct && base > 0) levels = Math.ceil((max / base - 1) / bonus.pct - 1e-9);
+  return Math.max(1, Math.min(BOLETO_MAX_LEVEL, levels));
 };
+
+const BOLETO_BONUS: Record<PassiveId, Bonus> = {
+  might: { stat: 'damage', pct: 0.15 },
+  haste: { stat: 'attackSpeed', flat: 0.12 },
+  reach: { stat: 'size', pct: 0.2 },
+  swift: { stat: 'moveSpeed', pct: 0.08 },
+  vigor: { stat: 'maxHp', flat: 20 },
+  magnet: { stat: 'pickupRange', pct: 0.35 },
+  multi: { stat: 'projectiles', flat: 1 },
+  regen: { stat: 'regen', flat: 15 },
+  overheal: { stat: 'overheal', flat: 0.15 },
+  shield: { stat: 'shield', flat: 15 },
+  armor: { stat: 'armor', flat: 12 },
+  evasion: { stat: 'evasion', flat: 12 },
+  lifesteal: { stat: 'lifesteal', flat: 0.02 },
+  thorns: { stat: 'thorns', flat: 10 },
+  crit: { stat: 'critChance', flat: 0.06 },
+  critdmg: { stat: 'critDamage', flat: 0.3 },
+  ricochet: { stat: 'ricochet', flat: 1 },
+  velocity: { stat: 'projectileSpeed', pct: 0.12 },
+  duration: { stat: 'duration', pct: 0.12 },
+  hunter: { stat: 'eliteDamage', pct: 0.15 },
+  knockback: { stat: 'knockback', pct: 0.25 },
+  extrajump: { stat: 'extraJumps', flat: 1 },
+  jump: { stat: 'jumpHeight', pct: 0.08 },
+  luck: { stat: 'luck', flat: 12 },
+  curse: { stat: 'difficulty', flat: 0.15 },
+  xp: { stat: 'xpGain', pct: 0.1 },
+  gold: { stat: 'goldGain', pct: 0.15 },
+  elites: { stat: 'eliteRate', pct: 0.2 },
+  power: { stat: 'powerupPower', pct: 0.2 },
+  fortune: { stat: 'powerupChance', pct: 0.3 },
+};
+
+export const BOLETOS = Object.fromEntries(
+  (Object.keys(BOLETO_BONUS) as PassiveId[]).map((id) => [
+    id,
+    { ...BOLETO_BONUS[id], max: levelsToCap(BOLETO_BONUS[id]) },
+  ])
+) as Record<PassiveId, BoletoDef>;
 
 export const BOLETO_IDS = Object.keys(BOLETOS) as PassiveId[];
 
@@ -173,6 +193,8 @@ export const HERO_TRAITS: Record<CharacterId, Bonus[]> = {
   bolsonaro: [
     { stat: 'evasion', flat: 15 },
     { stat: 'jumpHeight', pct: 0.1 },
+    { stat: 'attackSpeed', flat: 0.15 },
+    { stat: 'eliteDamage', pct: 0.25 },
   ],
 };
 

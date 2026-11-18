@@ -3,6 +3,7 @@ import { BUFF_SECONDS, ELITE_EVERY, MOVE, TICK, xpToNext } from './data';
 import { choose, createRun, rareChance, runStats, step } from './run';
 import {
   BOLETOS,
+  BOLETO_MAX_LEVEL,
   BOLETO_IDS,
   STATS,
   STAT_IDS,
@@ -291,13 +292,35 @@ describe('horde stats: attack and weapons', () => {
     expect(second.hp).toBeLessThan(1e6);
   });
 
+  it('Boletos go to 99, or to where their stat reaches its cap', () => {
+    expect(BOLETOS.might.max).toBe(BOLETO_MAX_LEVEL);
+    expect(BOLETOS.vigor.max).toBe(BOLETO_MAX_LEVEL);
+    // Projectiles stop at 10, one a level.
+    expect(BOLETOS.multi.max).toBe(10);
+    (Object.keys(BOLETOS) as (keyof typeof BOLETOS)[]).forEach((id) => {
+      const def = BOLETOS[id];
+      expect(def.max).toBeGreaterThanOrEqual(1);
+      expect(def.max).toBeLessThanOrEqual(BOLETO_MAX_LEVEL);
+      const { max } = STATS[def.stat];
+      if (max === undefined) return;
+      // At its last level the stat reaches the cap, and the level before it doesn't.
+      const at = (levels: number) => {
+        const run = quietRun();
+        run.passives = [{ id, level: levels }];
+        return runStats(run)[def.stat];
+      };
+      if (def.max < BOLETO_MAX_LEVEL) expect(at(def.max)).toBeCloseTo(max);
+      if (def.max > 1 && def.max < BOLETO_MAX_LEVEL) expect(at(def.max - 1)).toBeLessThan(max);
+    });
+  });
+
   it('projectiles add shots and size grows areas', () => {
     const base = quietRun();
     const more = quietRun();
     bless(more, 'multi', 1);
     bless(more, 'reach', 5);
     expect(runStats(more).projectiles).toBe(runStats(base).projectiles + 1);
-    expect(runStats(more).size).toBeCloseTo(runStats(base).size * 1.6);
+    expect(runStats(more).size).toBeCloseTo(runStats(base).size * 2);
   });
 
   it('attack speed makes weapons fire sooner', () => {

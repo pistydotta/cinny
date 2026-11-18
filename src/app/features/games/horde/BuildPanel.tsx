@@ -1,8 +1,15 @@
 import React from 'react';
 import { BOLETOS } from './engine/stats';
 import { EVOLUTIONS, WeaponSpec } from './engine/weapons';
-import { CharacterId, OwnedWeapon, PassiveId } from './engine/types';
-import { abilityLabel, evolutionLabel, passiveLabel, weaponLabel } from './labels';
+import { WEAPON_MAX_LEVEL } from './engine/data';
+import { CharacterId, OwnedWeapon, PassiveId, WeaponStat } from './engine/types';
+import {
+  abilityLabel,
+  evolutionLabel,
+  formatWeaponBonus,
+  passiveLabel,
+  weaponLabel,
+} from './labels';
 import { PixelIcon } from './icons/PixelIcon';
 import * as css from './horde.css';
 import { tr } from '../../translation/tr';
@@ -35,9 +42,8 @@ export function BuildPanel({ hero, weapons, passives, onClose }: BuildPanelProps
                   <PixelIcon art={label.art} emoji={label.icon} />
                   <span className={css.Grow}>{label.name}</span>
                   <span className={css.StatNumber}>
-                    {weapon.evolved
-                      ? '★'
-                      : tr('games.horde.choice.level', 'Level {{level}}', { level: weapon.level })}
+                    {weapon.evolved && '★ '}
+                    {weapon.level}/{WEAPON_MAX_LEVEL}
                   </span>
                 </span>
                 <span className={css.StatHelp}>
@@ -52,6 +58,13 @@ export function BuildPanel({ hero, weapons, passives, onClose }: BuildPanelProps
                     }
                   )}
                 </span>
+                {weapon.bonus && Object.keys(weapon.bonus).length > 0 && (
+                  <span className={css.StatHelp}>
+                    {(Object.entries(weapon.bonus) as [WeaponStat, number][])
+                      .map(([stat, value]) => formatWeaponBonus({ stat, value }))
+                      .join(' · ')}
+                  </span>
+                )}
                 {!weapon.evolved && (
                   <span className={css.StatHelp}>
                     {tr('games.horde.build_evolves', 'Evolves at level 6 with: {{boleto}}', {

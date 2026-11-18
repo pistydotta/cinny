@@ -6,14 +6,16 @@ import {
   MetaUpgradeId,
   PassiveId,
   ShrineKind,
+  WeaponBonus,
   WeaponId,
+  WeaponStat,
 } from './engine/types';
 import { Action, Controls, fallbackKeyName } from './controls';
 import { BOLETOS } from './engine/stats';
 import { AchievementId } from './engine/achievements';
 import { WEAPON_IDS } from './engine/data';
 import { blessingLevels } from './engine/run';
-import { boletoLabel, formatBonus } from './statLabels';
+import { boletoLabel, formatBonus, statText } from './statLabels';
 import { tr } from '../../translation/tr';
 
 // `art` names the pixel-art icon (icons/pixelArt.ts); `icon` is its emoji, shown without one.
@@ -95,7 +97,7 @@ export const weaponLabel = (id: WeaponId): Label => ({ ...weaponText(id), art: `
 // The run's passives are Boletos, each named after the stat it raises.
 export const passiveLabel = (id: PassiveId): Label => boletoLabel(id);
 
-// The evolved form of each weapon (max level plus its Boleto).
+// The evolved form of each weapon (level 6 plus its Boleto).
 const evolutionText = (id: WeaponId): Label => {
   switch (id) {
     case 'missile':
@@ -169,6 +171,17 @@ export const evolutionLabel = (id: WeaponId): Label => ({
   art: `evolved:${id}`,
 });
 
+// The name of a stat a weapon's level can raise.
+export const weaponStatName = (stat: WeaponStat): string =>
+  stat === 'pierce' ? tr('games.horde.weapon_stat.pierce', 'Pierce') : statText(stat).name;
+
+// One roll of a weapon's level, like "+12% Damage" or "+1 Projectiles".
+export const formatWeaponBonus = ({ stat, value }: WeaponBonus): string => {
+  const name = weaponStatName(stat);
+  if (stat === 'projectiles' || stat === 'pierce') return `+${value} ${name}`;
+  return `+${Math.round(value * 100)}% ${name}`;
+};
+
 export const choiceLabel = (choice: Choice): Label & { tag: string } => {
   if (choice.kind === 'heal') {
     return {
@@ -214,7 +227,12 @@ export const choiceLabel = (choice: Choice): Label & { tag: string } => {
   if (choice.kind === 'evolve') {
     return { ...evolutionLabel(choice.id), tag: tr('games.horde.choice.evolve', 'Evolution') };
   }
-  const label = choice.kind === 'weapon' ? weaponLabel(choice.id) : passiveLabel(choice.id);
+  const named = choice.kind === 'weapon' ? weaponLabel(choice.id) : passiveLabel(choice.id);
+  // A weapon's level says what it adds; a new one keeps its description.
+  const label =
+    choice.kind === 'weapon' && choice.bonuses?.length
+      ? { ...named, text: choice.bonuses.map(formatWeaponBonus).join(' · ') }
+      : named;
   const level =
     choice.level === 1
       ? tr('games.horde.choice.new', 'New')
@@ -290,7 +308,7 @@ export const characterLabel = (id: CharacterId): Omit<Label, 'icon'> => {
         name: 'Bolsonaro',
         text: tr(
           'games.horde.character.bolsonaro_text',
-          'Fast and fragile. Starts with the Hacked Ballot Boxes.'
+          'Fast and hard on bosses. Starts with the Hacked Ballot Boxes.'
         ),
       };
     default:

@@ -166,7 +166,8 @@ const scoreChoice = (state: RunState, choice: Choice): number => {
       return 0.4;
     case 'weapon': {
       const owned = state.weapons.some((w) => w.id === choice.id);
-      return (owned ? 7 : 6) + (choice.rarity ? 1 : 0) - choice.level * 0.1;
+      // Levels past the evolution still pay, a little less each time.
+      return (owned ? 7 : 6) + (choice.rarity ? 1 : 0) - Math.min(choice.level, 20) * 0.1;
     }
     case 'passive': {
       if (choice.id === 'curse') return 0.1;

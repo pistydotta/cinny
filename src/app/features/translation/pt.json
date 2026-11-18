@@ -1910,7 +1910,7 @@
         "eneas_text": "Baixinho e furioso. Começa com a Bomba Atômica.",
         "lula_text": "Bate mais forte. Começa com a Carteira de Trabalho.",
         "janja_text": "Resistente e lenta. Começa com as Lágrimas Fascistas.",
-        "bolsonaro_text": "Rápido e frágil. Começa com as Urnas Hackeadas."
+        "bolsonaro_text": "Rápido e bom contra chefes. Começa com as Urnas Hackeadas."
       },
       "meta": {
         "vigor": "Couro grosso",
@@ -2235,7 +2235,10 @@
       "watch_summary": "{{name}}: {{time}}, {{kills}} inimigos derrotados",
       "rank_verified": "Conferida pelo replay",
       "watch": "Assistir esta partida",
-      "watch_error": "Não dá para assistir esta partida (ela foi jogada em outra versão do jogo)."
+      "watch_error": "Não dá para assistir esta partida (ela foi jogada em outra versão do jogo).",
+      "weapon_stat": {
+        "pierce": "Perfuração"
+      }
     }
   },
   "music_bot": {
@@ -2687,5 +2690,7 @@
   "poker_coach.by": "liberado por {{name}}",
   "poker_coach.no_such_user": "Essa conta não existe.",
   "poker_coach.invalid": "Escreva um usuário deste servidor, como @ana.",
-  "poker_coach.failed": "Não deu certo. Tente de novo."
+  "poker_coach.failed": "Não deu certo. Tente de novo.",
+  "whats_new.horde_levels_title": "BrazilianBonk: armas até o nível 50, Boletos até o 99 e visual novo",
+  "whats_new.horde_levels_body": "As armas agora sobem até o nível 50, e cada nível dá dois atributos da própria arma: dano, chance de crítico, dano crítico, projéteis, velocidade de ataque, tamanho e mais. Os Boletos agora vão até o nível 99 (ou até o atributo chegar no limite), os níveis vêm mais rápido no fim da partida e os inimigos ficam mais fortes para acompanhar. Os drops ganharam modelos próprios (cristais, moedas, corações, baús) e a HUD foi redesenhada em pixel art. O mouse agora fica preso enquanto você joga, também no app do Windows, até apertar Esc."
 }

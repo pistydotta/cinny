@@ -222,10 +222,24 @@ export type GameMap = { half: number; ox: number; oz: number; soft: boolean };
 // A chest standing on the map: standing on it opens it for gold, more for each one bought.
 export type MapChest = { id: number; x: number; z: number; charge: number; opened: boolean };
 
+// What a weapon's level-up can raise on that weapon alone. Crits add to the hero's own.
+export type WeaponStat =
+  | 'damage'
+  | 'critChance'
+  | 'critDamage'
+  | 'projectiles'
+  | 'attackSpeed'
+  | 'size'
+  | 'duration'
+  | 'pierce';
+
+export type WeaponBonus = { stat: WeaponStat; value: number };
+
 export type Choice =
-  | { kind: 'weapon'; id: WeaponId; level: number; rarity?: Rarity }
+  // A level of a weapon: a new one has no bonuses; every level after gives two.
+  | { kind: 'weapon'; id: WeaponId; level: number; rarity?: Rarity; bonuses?: WeaponBonus[] }
   | { kind: 'passive'; id: PassiveId; level: number; rarity?: Rarity }
-  // A weapon at max level with its Boleto in the build turns into its evolved form.
+  // A weapon at EVOLVE_LEVEL with its Boleto in the build turns into its evolved form.
   | { kind: 'evolve'; id: WeaponId }
   // A level of a Boleto that takes no slot, from a shrine (two or three when rare or epic).
   | { kind: 'blessing'; id: PassiveId; rarity?: Rarity }
@@ -238,8 +252,10 @@ export type OwnedWeapon = {
   cooldown: number;
   // Ballot boxes only: where the orbit is.
   angle: number;
-  // Turned into its evolved form (max level plus its Boleto).
+  // Turned into its evolved form (EVOLVE_LEVEL plus its Boleto).
   evolved?: boolean;
+  // What its level-ups added, summed per stat.
+  bonus?: Partial<Record<WeaponStat, number>>;
 };
 
 export type Player = {

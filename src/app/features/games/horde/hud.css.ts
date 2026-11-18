@@ -236,24 +236,24 @@ export const EmptySlot = style({
 
 globalStyle(`${Weapon} img, ${Boleto} img`, { width: 32, height: 32 });
 
-export const Pips = style({
+// The level of a weapon (up to 50) or a Boleto (up to 99), on its corner; gold once maxed.
+export const WeaponLevel = style({
   position: 'absolute',
-  left: 0,
-  right: 0,
-  bottom: -9,
-  display: 'flex',
-  justifyContent: 'center',
-  gap: 1,
-});
-
-export const Pip = style({
-  width: 4,
-  height: 4,
-  background: PANEL_DARK,
-  boxShadow: `0 0 0 1px ${INK}`,
+  right: -6,
+  bottom: -8,
+  minWidth: 18,
+  padding: '0 3px',
+  fontSize: 15,
+  lineHeight: '14px',
+  textAlign: 'center',
+  color: INK,
+  textShadow: 'none',
+  background: GOLD,
+  boxShadow: `0 0 0 2px ${INK}`,
   selectors: {
-    '&[data-on="true"]': { background: GOLD },
-    [`${Boleto} &[data-on="true"]`]: { background: GREEN },
+    [`${Weapon}[data-evolved="true"] &`]: { background: '#ff9a2e' },
+    '&[data-boleto]': { background: GREEN },
+    '&[data-boleto][data-max="true"]': { background: GOLD },
   },
 });
 

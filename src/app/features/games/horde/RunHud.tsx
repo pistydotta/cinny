@@ -29,16 +29,6 @@ function Icon({ art }: { art: string }) {
   return url ? <img src={url} alt="" draggable={false} /> : null;
 }
 
-function Pips({ level, max }: { level: number; max: number }) {
-  return (
-    <span className={css.Pips}>
-      {Array.from({ length: max }, (_, i) => (
-        <span key={i} className={css.Pip} data-on={i < level} />
-      ))}
-    </span>
-  );
-}
-
 // A buff with the seconds it has left, blinking in its last two.
 function Buff({ art, seconds }: { art: string; seconds: number }) {
   return (
@@ -112,7 +102,7 @@ export function RunHud({ hud, hero, controls, runner }: RunHudProps) {
                   data-evolved={w.evolved}
                 >
                   <PixelIcon art={label.art} emoji={label.icon} />
-                  {!w.evolved && <Pips level={w.level} max={WEAPON_MAX_LEVEL} />}
+                  <span className={css.WeaponLevel}>{w.level}</span>
                 </span>
               );
             })}
@@ -124,7 +114,9 @@ export function RunHud({ hud, hero, controls, runner }: RunHudProps) {
             {hud.passives.map((p) => (
               <span key={p.id} className={css.Boleto} title={passiveLabel(p.id).name}>
                 <PixelIcon art={passiveLabel(p.id).art} emoji={passiveLabel(p.id).icon} />
-                <Pips level={p.level} max={p.max} />
+                <span className={css.WeaponLevel} data-boleto data-max={p.level >= p.max}>
+                  {p.level}
+                </span>
               </span>
             ))}
             {Array.from({ length: emptyBoletos }, (_, i) => (

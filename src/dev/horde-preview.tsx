@@ -7,6 +7,7 @@ import { playFighter } from '../app/features/games/horde/engine/fighter';
 import { newMeta } from '../app/features/games/horde/engine/meta';
 import { DEFAULT_CONTROLS } from '../app/features/games/horde/controls';
 import { PickupKind } from '../app/features/games/horde/engine/types';
+import { xpToNext } from '../app/features/games/horde/engine/data';
 
 // Local look at a run in play (`/src/dev/horde-preview.html` under `npx vite`), with no login or API: a fighter bot plays to `?t=` seconds,
 // then one of every drop is laid around the hero.
@@ -15,6 +16,16 @@ const run = createRun(Number(params.get('seed') ?? 7), (params.get('hero') ?? 'e
 playFighter(run, Number(params.get('t') ?? 150));
 run.phase = 'playing';
 if (params.has('clean')) run.enemies.length = 0;
+// `?levelup` opens a level-up offer as soon as the run starts.
+if (params.has('levelup'))
+  run.pickups.push({
+    id: 89999,
+    kind: 'xp',
+    x: run.player.x,
+    z: run.player.z,
+    value: xpToNext(run.player.level),
+    pulled: false,
+  });
 const ring: [PickupKind, number][] = [
   ['xp', 1],
   ['xp', 4],

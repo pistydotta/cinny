@@ -34,6 +34,7 @@ import {
   SHOT_HEIGHT,
   WEAPON_IDS,
   WEAPON_MAX_LEVEL,
+  EVOLVE_LEVEL,
   enemyScale,
   spawnRate,
   xpToNext,
@@ -60,7 +61,15 @@ import {
   highSpots,
   pushOut,
 } from './terrain';
-import { EVOLUTIONS, cooldownOf, weaponSpec } from './weapons';
+import {
+  EVOLUTIONS,
+  WEAPON_ROLLS,
+  addBonuses,
+  cooldownOf,
+  rollValue,
+  weaponBonus,
+  weaponSpec,
+} from './weapons';
 import {
   CharacterId,
   Choice,
@@ -73,10 +82,12 @@ import {
   OwnedWeapon,
   PassiveId,
   PickupKind,
+  Rarity,
   RunState,
   Shot,
   ShrineKind,
   ShotKind,
+  WeaponBonus,
   WeaponId,
 } from './types';
 
@@ -337,13 +348,13 @@ export const epicChance = (stats: Stats): number => 0.02 + luckShare(stats.luck)
 
 const banKey = (choice: Choice): string => `${choice.kind}:${'id' in choice ? choice.id : ''}`;
 
-// Weapons at max level whose Boleto is in the build, not evolved yet.
+// Weapons at EVOLVE_LEVEL or past it whose Boleto is in the build, not evolved yet.
 export const evolutionsReady = (state: RunState): WeaponId[] =>
   state.weapons
     .filter(
       (w) =>
         !w.evolved &&
-        w.level >= WEAPON_MAX_LEVEL &&
+        w.level >= EVOLVE_LEVEL &&
         state.passives.some((p) => p.id === EVOLUTIONS[w.id])
     )
     .map((w) => w.id);
@@ -379,15 +390,33 @@ const offerPool = (state: RunState, ownedOnly = false): { item: Choice; weight: 
   );
 };
 
-// Luck may turn an offer rare or epic: more levels at once, up to the max.
+// Two different stats of the weapon for a level after its first, drawn from its rolls.
+const rollBonuses = (state: RunState, id: WeaponId, rarity?: Rarity): WeaponBonus[] => {
+  const left = [...WEAPON_ROLLS[id]];
+  const bonuses: WeaponBonus[] = [];
+  for (let i = 0; i < 2 && left.length > 0; i += 1) {
+    const stat = left.splice(Math.floor(state.rng.next() * left.length), 1)[0];
+    bonuses.push({ stat, value: rollValue(stat, rarity) });
+  }
+  return bonuses;
+};
+
+// Luck may turn an offer rare or epic. A Boleto then gets more levels at once, up to its max; a
+// weapon's level gets bigger rolls. A new weapon is always plain.
 const withRarity = (state: RunState, stats: Stats, choice: Choice): Choice => {
   if (choice.kind !== 'weapon' && choice.kind !== 'passive') return choice;
-  const max = choice.kind === 'weapon' ? WEAPON_MAX_LEVEL : BOLETOS[choice.id].max;
   const roll = state.rng.next();
+  let rarity: Rarity | undefined;
+  if (roll < epicChance(stats)) rarity = 'epic';
+  else if (roll < epicChance(stats) + rareChance(stats)) rarity = 'rare';
+  if (choice.kind === 'weapon') {
+    if (choice.level === 1) return choice;
+    return { ...choice, rarity, bonuses: rollBonuses(state, choice.id, rarity) };
+  }
   let extra = 0;
-  if (roll < epicChance(stats)) extra = 2;
-  else if (roll < epicChance(stats) + rareChance(stats)) extra = 1;
-  const level = Math.min(max, choice.level + extra);
+  if (rarity === 'epic') extra = 2;
+  else if (rarity === 'rare') extra = 1;
+  const level = Math.min(BOLETOS[choice.id].max, choice.level + extra);
   if (level === choice.level) return choice;
   return { ...choice, level, rarity: level - choice.level >= 2 ? 'epic' : 'rare' };
 };
@@ -438,8 +467,10 @@ const openChoices = (state: RunState) => {
 const applyChoice = (state: RunState, choice: Choice) => {
   if (choice.kind === 'weapon') {
     const owned = state.weapons.find((w) => w.id === choice.id);
-    if (owned) owned.level = choice.level;
-    else state.weapons.push({ id: choice.id, level: choice.level, cooldown: 0.3, angle: 0 });
+    if (owned) {
+      owned.level = choice.level;
+      addBonuses(owned, choice.bonuses ?? []);
+    } else state.weapons.push({ id: choice.id, level: choice.level, cooldown: 0.3, angle: 0 });
   } else if (choice.kind === 'passive') {
     const owned = state.passives.find((p) => p.id === choice.id);
     if (owned) owned.level = choice.level;
@@ -520,7 +551,9 @@ const openChest = (state: RunState, stats: Stats, events: GameEvent[]) => {
   for (let i = 0; i < count; i += 1) {
     const pool = offerPool(state, true);
     const evolution = pool.find((p) => p.item.kind === 'evolve');
-    const reward: Choice = evolution?.item ?? pickWeighted(state, pool, 1)[0] ?? { kind: 'gold' };
+    let reward: Choice = evolution?.item ?? pickWeighted(state, pool, 1)[0] ?? { kind: 'gold' };
+    if (reward.kind === 'weapon' && reward.level > 1)
+      reward = { ...reward, bonuses: rollBonuses(state, reward.id) };
     applyChoice(state, reward);
     rewards.push(reward);
     if (reward.kind === 'evolve') events.push({ type: 'evolve', id: reward.id });
@@ -820,8 +853,14 @@ const hurtEnemy = (
   from?: { x: number; z: number }
 ): void => {
   if (e.hp <= 0) return;
-  const crit = state.rng.next() < stats.critChance;
-  let dealt = crit ? amount * stats.critDamage : amount;
+  // A weapon's own crit rolls add to the hero's.
+  const owned = weapon && state.weapons.find((w) => w.id === weapon);
+  const critChance = owned
+    ? Math.min(0.95, stats.critChance + weaponBonus(owned, 'critChance'))
+    : stats.critChance;
+  const critDamage = owned ? stats.critDamage + weaponBonus(owned, 'critDamage') : stats.critDamage;
+  const crit = state.rng.next() < critChance;
+  let dealt = crit ? amount * critDamage : amount;
   if (e.kind === 'shield' && from) {
     // It faces the hero; a hit from that side mostly bounces off.
     const facing =
@@ -1482,7 +1521,7 @@ const runWeapons = (state: RunState, stats: Stats, grid: Grid, dt: number, event
     const weapon = state.weapons[i];
     if (weapon.id === 'urns') {
       const spec = weaponSpec(weapon, stats);
-      weapon.angle += (2.8 / cooldownOf(stats)) * dt;
+      weapon.angle += ((2.8 * (1 + weaponBonus(weapon, 'attackSpeed'))) / cooldownOf(stats)) * dt;
       for (let b = 0; b < spec.count; b += 1) {
         const angle = weapon.angle + (b / spec.count) * Math.PI * 2;
         const box = {

@@ -76,9 +76,11 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   the chests' prices; the camera pulls in front of cliffs. The bunny hop is Quake's
   air acceleration (strafe while turning gains speed, landing keeps it for a few ticks, a held key
   never jumps again); its numbers are `MOVE` in `engine/data.ts`, tested in `movement.test.ts`.
-  The camera orbits the hero with pointer lock (Esc releases it, which is the pause). The engine
-  never sees the camera: `runner.ts` turns keys plus camera angle into a world direction, rounded
-  to 1024 directions in `controls.ts` so a replay sends the same commands. Keys are configurable
+  The camera orbits the hero with pointer lock (Esc releases it, which is the pause); the
+  Windows app has to allow `pointerLock` in `desktop/main.js`, or the game falls back to
+  dragging. The engine never sees the camera: `runner.ts` turns keys plus camera angle into a
+  world direction, rounded to 1024 directions in `controls.ts` so a replay sends the same
+  commands. Keys are configurable
   (`controls.ts`, `ControlsPanel.tsx`), saved per browser by `KeyboardEvent.code`.
   Every hero number is a stat in `engine/stats.ts` (about 30, Megabonk's table without silver),
   added up one way: `(base + flat) * (1 + pct) * mult`, then a cap; armor, evasion and luck turn
@@ -94,11 +96,19 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   `HordeGamePage`) it plays at a fifth of the volume. Freeze frames, shakes and flashes are
   drawing-only and off with "reduce motion" (defaults to `prefers-reduced-motion`).
   Weapon numbers live in `engine/weapons.ts` (`weaponSpec`, read by the engine and the Build
-  screen) with the evolutions (`EVOLUTIONS`: max level plus one Boleto). Offers can be rare
-  (+2 levels) or epic (+3); chests (`openChest`) apply 1, 3 or 5 upgrades at once and wait in the
-  `chest` phase; banish and skip are counts bought like rerolls; each hero has an ability on Q
-  (`fireAbility`, `ABILITY_COOLDOWN`). The names of evolutions and abilities are descriptive
-  placeholders until the owners pick jokes for them.
+  screen) with the evolutions (`EVOLUTIONS`: `EVOLVE_LEVEL` 6 plus one Boleto). Weapons level to
+  `WEAPON_MAX_LEVEL` 50: a weapon's own numbers grow only to level 6, and every level after the
+  first rolls two different stats from `WEAPON_ROLLS` (damage, crits, projectiles, attack speed,
+  size, duration, pierce) into `OwnedWeapon.bonus`, for that weapon only; crit rolls add to the
+  hero's crit in `hurtEnemy`. The rolls are drawn with the offer, so the card shows them. A rare
+  or epic weapon level has bigger rolls; a rare Boleto offer gives +2 levels, an epic one +3.
+  Boletos level to `BOLETO_MAX_LEVEL` 99, or to where their stat reaches its cap (`levelsToCap`
+  in `engine/stats.ts`, so a level that adds nothing is never offered): change a cap and the
+  Boleto's max follows. The API's `checkBuild` takes levels up to 99 (`axe50`). Chests
+  (`openChest`) apply 1, 3 or 5 upgrades at once and wait in the `chest` phase; banish and
+  skip are counts bought like rerolls; each hero has an ability on Q (`fireAbility`,
+  `ABILITY_COOLDOWN`). The names of evolutions and abilities are descriptive placeholders until
+  the owners pick jokes for them.
   Enemies act in `enemyAct`/`bossAct` (`engine/run.ts`): every strong attack is first a
   `Hazard` on the ground (a filling circle, a lane, burning ground) that the renderer draws, and
   only then hurts. Horde set pieces run at `HORDE_EVENTS`; barrels and pots are enemies with
