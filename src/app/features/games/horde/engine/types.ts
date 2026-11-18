@@ -1,3 +1,4 @@
+import type { ItemId } from './items';
 import { Rng } from './rng';
 
 export type WeaponId = 'missile' | 'card' | 'aura' | 'urns' | 'nova' | 'bolt' | 'axe' | 'trail';
@@ -56,7 +57,18 @@ export type EnemyKind =
 // What makes an elite different, shown over its head.
 export type EliteMod = 'fast' | 'giant' | 'regen' | 'burning';
 
-export type ShrineKind = 'blessing' | 'curse' | 'gold' | 'heal' | 'challenge';
+// `camelo` sells a Muamba for gold (1 of 3), `agiota` lends a rare one for health and difficulty.
+// `treta` is optional difficulty: more enemies (and more experience and gold) for the rest of
+// the run, for whoever wants it.
+export type ShrineKind =
+  | 'blessing'
+  | 'curse'
+  | 'gold'
+  | 'heal'
+  | 'challenge'
+  | 'camelo'
+  | 'agiota'
+  | 'treta';
 
 export type HordeEventKind = 'ring' | 'stampede' | 'rain';
 
@@ -243,6 +255,8 @@ export type Choice =
   | { kind: 'evolve'; id: WeaponId }
   // A level of a Boleto that takes no slot, from a shrine (two or three when rare or epic).
   | { kind: 'blessing'; id: PassiveId; rarity?: Rarity }
+  // A Muamba, from the Camelô.
+  | { kind: 'item'; id: ItemId }
   | { kind: 'heal' }
   | { kind: 'gold' };
 
@@ -371,6 +385,24 @@ export type RunState = {
   daily?: string;
   // Picked up again after the page was closed: it pays, but stays out of the rankings.
   resumed?: boolean;
+  // Muambas carried, copies counted (engine/items.ts). Older saves have none.
+  items?: Partial<Record<ItemId, number>>;
+  // Camelô purchases so far: each costs more than the last.
+  cameloBought?: number;
+  // Camelô offers still waiting to be picked.
+  pendingItems?: number;
+  // Loans taken from the Agiota: each takes max health and adds difficulty.
+  debt?: number;
+  // Treta shrines taken: each adds difficulty until the end of the run.
+  tretas?: number;
+  // Item effects that keep time: seconds standing still, ground walked since the last gold,
+  // seconds until the vacuum pulls and the brother-in-law may punch again.
+  stillTime?: number;
+  walked?: number;
+  vacuumCd?: number;
+  brotherCd?: number;
+  // Item blasts waiting for this tick's grid (pepper, syrup, blackout).
+  itemBlasts?: { x: number; z: number; radius: number; damage: number }[];
   // The commands of the run so far, when they are being recorded (engine/replay.ts).
   replay?: ReplayLog;
   nextPotsAt: number;
@@ -396,6 +428,11 @@ export type GameEvent =
   | { type: 'kill'; x: number; z: number; kind: EnemyKind; elite: boolean }
   | { type: 'hurt'; amount: number }
   | { type: 'evade' }
+  // The Jeitinho Brasileiro saved the hero from a killing blow.
+  | { type: 'jeitinho' }
+  | { type: 'item'; id: ItemId }
+  // An item's blast (pepper, syrup, blackout): drawn lighter than a bomb's.
+  | { type: 'itemBlast'; x: number; z: number; radius: number }
   | { type: 'shieldBreak' }
   | { type: 'powerup'; kind: PickupKind }
   | { type: 'ability'; hero: CharacterId }

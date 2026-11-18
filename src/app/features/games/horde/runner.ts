@@ -5,6 +5,7 @@ import { banish, choose, closeChest, reroll, runStats, skip, step } from './engi
 import { ReplayRecorder, packInput } from './engine/replay';
 import { ReplayPlayer } from './engine/replayCheck';
 import { BOLETOS, Stats } from './engine/stats';
+import { ITEM_IDS, ItemId, cameloPrice } from './engine/items';
 import { weaponSpec } from './engine/weapons';
 import {
   Choice,
@@ -60,6 +61,12 @@ export type Hud = {
   curse: number;
   // The kind of the unused shrine the hero stands on.
   shrine: ShrineKind | undefined;
+  // What the next Camelô purchase costs.
+  cameloPrice: number;
+  // Treta shrines taken: the difficulty the player chose to add.
+  tretas: number;
+  // Muambas carried, with their copies.
+  items: { id: ItemId; count: number }[];
   // Horizontal speed, for the speedometer.
   speed: number;
   // Whether the mouse is captured and turns the camera.
@@ -122,6 +129,12 @@ export const hudOf = (run: RunState, paused: boolean, aiming = false): Hud => {
         !s.used &&
         (s.x - run.player.x) ** 2 + (s.z - run.player.z) ** 2 < SHRINE_RADIUS * SHRINE_RADIUS
     )?.kind,
+    cameloPrice: cameloPrice(run.cameloBought ?? 0),
+    tretas: run.tretas ?? 0,
+    items: ITEM_IDS.filter((id) => (run.items?.[id] ?? 0) > 0).map((id) => ({
+      id,
+      count: run.items?.[id] ?? 0,
+    })),
     speed: Math.hypot(run.player.vx, run.player.vz),
     aiming,
     rerolls: run.rerolls,
@@ -375,6 +388,10 @@ export class HordeRunner {
         spec: weaponSpec(weapon, stats),
       })),
       passives: this.run.passives.map((p) => ({ ...p })),
+      items: ITEM_IDS.filter((id) => (this.run.items?.[id] ?? 0) > 0).map((id) => ({
+        id,
+        count: this.run.items?.[id] ?? 0,
+      })),
     };
   }
 

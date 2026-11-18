@@ -15,6 +15,7 @@ import {
   weaponLabel,
 } from './labels';
 import { HERO_SPRITES } from './sprites';
+import { itemLabel } from './itemLabels';
 import { shortNumber } from './numbers';
 import { tr } from '../../translation/tr';
 import * as css from './hud.css';
@@ -123,6 +124,24 @@ export function RunHud({ hud, hero, controls, runner }: RunHudProps) {
               <span key={i} className={css.EmptySlot} data-kind="boleto" />
             ))}
           </div>
+          {hud.items.length > 0 && (
+            <div className={css.ItemRow}>
+              {hud.items.map(({ id, count }) => {
+                const item = itemLabel(id);
+                return (
+                  <span
+                    key={id}
+                    className={css.Item}
+                    data-rarity={item.rarity}
+                    title={`${item.name}: ${item.text}`}
+                  >
+                    {item.icon}
+                    {count > 1 && <span className={css.ItemCount}>{count}</span>}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -177,7 +196,15 @@ export function RunHud({ hud, hero, controls, runner }: RunHudProps) {
             })}
           </span>
         )}
-        {hud.shrine && <span className={css.Tag}>{shrineLabel(hud.shrine)}</span>}
+        {hud.tretas > 0 && (
+          <span className={css.Tag} data-curse>
+            {tr('games.horde.treta_hud', 'Treta ×{{count}}: +{{percent}}% difficulty', {
+              count: hud.tretas,
+              percent: Math.round(hud.tretas * 15),
+            })}
+          </span>
+        )}
+        {hud.shrine && <span className={css.Tag}>{shrineLabel(hud.shrine, hud.cameloPrice)}</span>}
         {(hud.buffs.rage > 0 || hud.buffs.freeze > 0 || hud.buffs.star > 0) && (
           <div className={css.Buffs}>
             {hud.buffs.rage > 0 && <Buff art="stat:damage" seconds={hud.buffs.rage} />}

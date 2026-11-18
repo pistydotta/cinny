@@ -3,6 +3,8 @@ import { BOLETOS } from './engine/stats';
 import { EVOLUTIONS, WeaponSpec } from './engine/weapons';
 import { WEAPON_MAX_LEVEL } from './engine/data';
 import { CharacterId, OwnedWeapon, PassiveId, WeaponStat } from './engine/types';
+import { ItemId } from './engine/items';
+import { itemLabel, rarityName } from './itemLabels';
 import {
   abilityLabel,
   evolutionLabel,
@@ -18,6 +20,7 @@ type BuildPanelProps = {
   hero: CharacterId;
   weapons: { weapon: OwnedWeapon; spec: WeaponSpec }[];
   passives: { id: PassiveId; level: number }[];
+  items: { id: ItemId; count: number }[];
   onClose: () => void;
 };
 
@@ -25,7 +28,7 @@ const round = (value: number) => String(Math.round(value * 10) / 10);
 
 // The run's build: each weapon with its numbers now and what it evolves with, the Boletos, and
 // the hero's ability.
-export function BuildPanel({ hero, weapons, passives, onClose }: BuildPanelProps) {
+export function BuildPanel({ hero, weapons, passives, items, onClose }: BuildPanelProps) {
   const ability = abilityLabel(hero);
   return (
     <>
@@ -95,6 +98,26 @@ export function BuildPanel({ hero, weapons, passives, onClose }: BuildPanelProps
               </div>
             );
           })}
+          {items.length > 0 && (
+            <>
+              <h3 className={css.StatGroupTitle}>{tr('games.horde.build_items', 'Muambas')}</h3>
+              {items.map(({ id, count }) => {
+                const item = itemLabel(id);
+                return (
+                  <div key={id} className={css.BuildRow}>
+                    <span className={css.StatLine}>
+                      <span>{item.icon}</span>
+                      <span className={css.Grow}>{item.name}</span>
+                      <span className={css.StatNumber}>×{count}</span>
+                    </span>
+                    <span className={css.StatHelp}>
+                      {rarityName(item.rarity)} · {item.text}
+                    </span>
+                  </div>
+                );
+              })}
+            </>
+          )}
           <h3 className={css.StatGroupTitle}>{tr('games.horde.build_ability', 'Ability')}</h3>
           <div className={css.BuildRow}>
             <span className={css.StatLine}>

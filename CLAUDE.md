@@ -59,7 +59,7 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   when a number change moves it, update it on purpose. The old runaway bot (`bot.ts`) is the
   floor to compare with.
   Movement is 3D in the engine: the hero has `y` and a velocity, the ground is `engine/terrain.ts`,
-  Space jumps and Shift dodges. The map is a 300-unit square of land generated
+  Space jumps and Shift dodges. The map is a 400-unit square of land generated
   from the run's seed (`createMap`; `RunState.map` keeps only the numbers it is made from):
   layered noise pressed into four levels (hollow, plain, plateau, high plateau) with cliffs
   between them, spread into walkable slopes in places, and mountains past the edge. A layout
@@ -114,7 +114,14 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   `Hazard` on the ground (a filling circle, a lane, burning ground) that the renderer draws, and
   only then hurts. Horde set pieces run at `HORDE_EVENTS`; barrels and pots are enemies with
   `prop` (no kill, no xp, not aimed at). Shrines have kinds (blessing, curse, gold, heal,
-  challenge). Winning unlocks difficulty tiers; each run reports its `tier` (`horde_runs.tier`).
+  challenge, camelo, agiota, treta: optional difficulty, +15% each until the end of the run;
+  27 shrines and 16 map chests), each with its own model (`render/shrines.ts`). Every material
+  gets PS1 vertex snapping and 15-bit dithered color through `render/psx.ts`
+  (`onBeforeCompile`, so lighting and fog stay three.js's own). Items are Muambas
+  (`engine/items.ts`, `../docs/brazilianbonk-items.md`): the Camelô sells them, the Agiota lends them; stat items add
+  to `runStats`, special ones act through `itemCount` where the engine does, so a run without
+  items plays as before. Winning unlocks difficulty tiers; each run reports its `tier`
+  (`horde_runs.tier`).
   Achievements (`engine/achievements.ts`) are read from totals the API keeps over a player's
   runs (`totalKills`, `heroes`, `bestTier` in the profile), so old runs count; unfinished ones
   lock some weapons and Boletos (`lockedContent`, `RunState.locked`). Mastery comes from kills

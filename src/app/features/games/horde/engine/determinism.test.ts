@@ -6,6 +6,6 @@ import { scriptedFingerprint } from './recorded';
 // change moves it, update it on purpose, like the regression test.
 describe('horde determinism', () => {
   it('ends a scripted run in the same exact state', () => {
-    expect(scriptedFingerprint()).toMatchInlineSnapshot(`"a91722cd:10800:820"`);
+    expect(scriptedFingerprint()).toMatchInlineSnapshot(`"73ffaf1:10800:813"`);
   });
 });

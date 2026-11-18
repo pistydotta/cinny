@@ -16,6 +16,7 @@ import { AchievementId } from './engine/achievements';
 import { WEAPON_IDS } from './engine/data';
 import { blessingLevels } from './engine/run';
 import { boletoLabel, formatBonus, statText } from './statLabels';
+import { itemLabel, rarityName } from './itemLabels';
 import { tr } from '../../translation/tr';
 
 // `art` names the pixel-art icon (icons/pixelArt.ts); `icon` is its emoji, shown without one.
@@ -226,6 +227,17 @@ export const choiceLabel = (choice: Choice): Label & { tag: string } => {
   }
   if (choice.kind === 'evolve') {
     return { ...evolutionLabel(choice.id), tag: tr('games.horde.choice.evolve', 'Evolution') };
+  }
+  if (choice.kind === 'item') {
+    const item = itemLabel(choice.id);
+    return {
+      icon: item.icon,
+      name: item.name,
+      text: item.text,
+      tag: tr('games.horde.choice.item', 'Muamba · {{rarity}}', {
+        rarity: rarityName(item.rarity),
+      }),
+    };
   }
   const named = choice.kind === 'weapon' ? weaponLabel(choice.id) : passiveLabel(choice.id);
   // A weapon's level says what it adds; a new one keeps its description.
@@ -503,8 +515,23 @@ export const eliteModLabel = (mod: EliteMod): string => {
 };
 
 // What a shrine is, shown while the hero stands on it.
-export const shrineLabel = (kind: ShrineKind): string => {
+// `price` is the Camelô's next price, shown on its label.
+export const shrineLabel = (kind: ShrineKind, price = 0): string => {
   switch (kind) {
+    case 'camelo':
+      return tr('games.horde.shrine.camelo', 'Camelô: pick 1 of 3 Muambas for {{price}} gold', {
+        price,
+      });
+    case 'treta':
+      return tr(
+        'games.horde.shrine.treta',
+        'Treta: +15% difficulty until the end (more enemies, more experience and gold)'
+      );
+    case 'agiota':
+      return tr(
+        'games.horde.shrine.agiota',
+        'Agiota: a rare Muamba now; -10% max health and +10% difficulty until the end'
+      );
     case 'curse':
       return tr(
         'games.horde.shrine.curse',
@@ -544,6 +571,15 @@ export const bannerOf = (event: GameEvent): { text: string; color: string } | un
     return {
       text: tr('games.horde.event.rain', 'BLASTS FALLING! Watch the circles'),
       color: '#ffb03a',
+    };
+  }
+  if (event.type === 'jeitinho') {
+    return { text: tr('games.horde.jeitinho', 'JEITINHO BRASILEIRO!'), color: '#7dff6a' };
+  }
+  if (event.type === 'item') {
+    return {
+      text: tr('games.horde.agiota_gave', 'Agiota: {{item}}', { item: itemLabel(event.id).name }),
+      color: '#3fdf7a',
     };
   }
   if (event.type === 'shrineDone') {

@@ -1,3 +1,4 @@
+import { ITEMS } from './items';
 import { BOLETOS } from './stats';
 import { TICK } from './data';
 import { auraRadius, choose, closeChest, step, urnOrbit, runStats } from './run';
@@ -178,6 +179,12 @@ const scoreChoice = (state: RunState, choice: Choice): number => {
     }
     case 'evolve':
       return 12;
+    case 'item': {
+      // A Muamba: the rarer, the better, and never more difficulty.
+      const { rarity, bonuses } = ITEMS[choice.id];
+      if (bonuses?.some((b) => b.stat === 'difficulty')) return 0.5;
+      return { common: 4.5, uncommon: 5, rare: 6, legendary: 7 }[rarity];
+    }
     default: {
       // A blessing: the same taste, with no slot to spend.
       const rank = GOOD_BOLETOS.indexOf(choice.id);

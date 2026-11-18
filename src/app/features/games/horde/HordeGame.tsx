@@ -29,6 +29,7 @@ import { ReplayStart, decodeLog, runFrom } from './engine/replay';
 import { StatsPanel } from './StatsPanel';
 import { BuildPanel } from './BuildPanel';
 import { RunHud } from './RunHud';
+import { ITEMS } from './engine/items';
 import '@fontsource/jersey-10/latin-400.css';
 import { Hud, HordeRunner } from './runner';
 import {
@@ -356,9 +357,13 @@ export function HordeRun({
         <div className={css.Curtain}>
           <div className={css.Panel}>
             <h2 className={css.PanelTitle}>
-              {hud.choices[0]?.kind === 'blessing'
-                ? tr('games.horde.choose_blessing', 'Shrine: choose a blessing')
-                : tr('games.horde.choose', 'Choose an upgrade')}
+              {hud.choices[0]?.kind === 'blessing' &&
+                tr('games.horde.choose_blessing', 'Shrine: choose a blessing')}
+              {hud.choices[0]?.kind === 'item' &&
+                tr('games.horde.choose_item', 'Camelô: pick a Muamba')}
+              {hud.choices[0]?.kind !== 'blessing' &&
+                hud.choices[0]?.kind !== 'item' &&
+                tr('games.horde.choose', 'Choose an upgrade')}
             </h2>
             <div className={css.Cards}>
               {hud.choices.map((choice, index) => {
@@ -373,6 +378,11 @@ export function HordeRun({
                   choice.kind === 'blessing'
                 ) {
                   rarity = choice.rarity;
+                } else if (choice.kind === 'item') {
+                  // Muambas wear the offer colors: rare like a rare level, legendary like epic.
+                  const { rarity: item } = ITEMS[choice.id];
+                  if (item === 'rare') rarity = 'rare';
+                  else if (item === 'legendary') rarity = 'epic';
                 }
                 return (
                   // The same offer can come again after a reroll, in another place.

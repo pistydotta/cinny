@@ -265,6 +265,46 @@ export const EvolvedStar = style({
   height: 18,
 });
 
+// The Muambas: small tiles that wrap, edged in their rarity's color, with the copies counted.
+export const ItemRow = style({ display: 'flex', flexWrap: 'wrap', gap: 6, maxWidth: 184 });
+
+export const Item = style([
+  pixelBox(PANEL, PANEL_LIGHT, PANEL_DARK, '#8a8a9a'),
+  {
+    position: 'relative',
+    width: 28,
+    height: 28,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 16,
+    textShadow: 'none',
+    selectors: {
+      '&[data-rarity="uncommon"]': {
+        boxShadow: `0 -2px 0 0 ${GREEN}, 0 2px 0 0 ${GREEN}, -2px 0 0 0 ${GREEN}, 2px 0 0 0 ${GREEN}`,
+      },
+      '&[data-rarity="rare"]': {
+        boxShadow: '0 -2px 0 0 #4aa8ff, 0 2px 0 0 #4aa8ff, -2px 0 0 0 #4aa8ff, 2px 0 0 0 #4aa8ff',
+      },
+      '&[data-rarity="legendary"]': {
+        boxShadow: `0 -2px 0 0 ${GOLD}, 0 2px 0 0 ${GOLD}, -2px 0 0 0 ${GOLD}, 2px 0 0 0 ${GOLD}, 0 0 8px 0 rgba(255,210,58,0.6)`,
+      },
+    },
+  },
+]);
+
+export const ItemCount = style({
+  position: 'absolute',
+  right: -5,
+  bottom: -6,
+  padding: '0 2px',
+  fontSize: 13,
+  lineHeight: '12px',
+  color: INK,
+  background: CREAM,
+  boxShadow: `0 0 0 2px ${INK}`,
+});
+
 // --- The top middle: the clock, kills and gold, and the boss ------------------------------
 
 export const Center = style({

@@ -16,6 +16,26 @@ const run = createRun(Number(params.get('seed') ?? 7), (params.get('hero') ?? 'e
 playFighter(run, Number(params.get('t') ?? 150));
 run.phase = 'playing';
 if (params.has('clean')) run.enemies.length = 0;
+// `?items` gives a few Muambas; `?camelo` opens the Camelô's offer at once.
+if (params.has('items')) {
+  run.items = { whey: 2, coffee: 1, backpack: 1, kite: 1, jeitinho: 1, pepper: 1, cachaca: 3 };
+}
+if (params.has('camelo')) run.pendingItems = 1;
+// `?shrines` puts one shrine of each kind in a ring in front of the hero.
+if (params.has('shrines')) {
+  const kinds = ['blessing', 'curse', 'gold', 'heal', 'challenge', 'camelo', 'agiota', 'treta'];
+  run.shrines = kinds.map((kind, i) => {
+    const a = Math.PI + ((i - 3.5) / 8) * 2.4;
+    return {
+      id: i,
+      x: run.player.x + Math.sin(a) * 13,
+      z: run.player.z + Math.cos(a) * 13,
+      charge: 0,
+      used: false,
+      kind: kind as never,
+    };
+  });
+}
 // `?levelup` opens a level-up offer as soon as the run starts.
 if (params.has('levelup'))
   run.pickups.push({

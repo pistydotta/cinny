@@ -11,7 +11,7 @@ import { GameMap } from './types';
 // and both the engine and the renderer read that same surface: what you see is where you stand.
 
 // Half the side of the playable square.
-export const MAP_HALF = 150;
+export const MAP_HALF = 200;
 // The side of a square of the height grid.
 export const CELL = 2;
 // The grid goes on past the square, over the mountains.

@@ -11,7 +11,7 @@ import {
 
 // Bumped whenever the rules change what a run can reach. Each reported run carries it, so the
 // ranking can tell runs of the old rules from the new ones without deleting any.
-export const ENGINE_VERSION = 7;
+export const ENGINE_VERSION = 8;
 
 export const TICK = 1 / 60;
 export const ARENA_RADIUS = 70;
@@ -29,7 +29,7 @@ export const SHRINE_RADIUS = 2.6;
 export const SHRINE_SECONDS = 3;
 // Chests standing on the map: how many, how close to stand and for how long to buy one, and the
 // price of the first. Each one bought makes the next dearer.
-export const MAP_CHESTS = 9;
+export const MAP_CHESTS = 16;
 export const MAP_CHEST_RADIUS = 1.8;
 export const MAP_CHEST_SECONDS = 0.8;
 export const MAP_CHEST_PRICE = 15;
@@ -208,6 +208,9 @@ export const HORDE_EVENTS: { at: number; kind: HordeEventKind }[] = [
 // Difficulty tiers unlocked by winning: each adds this much Difficulty.
 export const TIER_DIFFICULTY = 0.5;
 export const MAX_TIER = 3;
+
+// Difficulty each Treta shrine adds, until the end of the run.
+export const TRETA_DIFFICULTY = 0.15;
 
 // Seconds a cursed shrine makes the horde tougher, and by how much.
 export const CURSE_SECONDS = 60;

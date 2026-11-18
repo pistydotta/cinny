@@ -31,6 +31,7 @@ import {
   MAP_CHEST_RADIUS,
   MAP_CHEST_SECONDS,
   chestPrice,
+  TRETA_DIFFICULTY,
   SHOT_HEIGHT,
   WEAPON_IDS,
   WEAPON_MAX_LEVEL,
@@ -40,6 +41,19 @@ import {
   xpToNext,
 } from './data';
 import { datan2, dcos, dhypot, dsin, sq } from './dmath';
+import {
+  AGIOTA_DIFFICULTY,
+  AGIOTA_HP,
+  AGIOTA_LEGENDARY,
+  ITEMS,
+  ITEM_NUMBERS as IN,
+  ItemId,
+  MAX_ITEM_BLASTS,
+  cameloPrice,
+  drawItem,
+  itemBonuses,
+  itemCount,
+} from './items';
 import { createRng } from './rng';
 import {
   BOLETOS,
@@ -145,6 +159,56 @@ export const NO_META: MetaBonuses = {
 export const passiveLevel = (state: RunState, id: PassiveId): number =>
   state.passives.find((p) => p.id === id)?.level ?? 0;
 
+// What the items that depend on the moment add: kills, chests, standing still, health left,
+// the air, speed, and the Agiota's loans.
+const situationalBonuses = (state: RunState): Bonus[] => {
+  const out: Bonus[] = [];
+  if (!state.items && !state.debt) return out;
+  const { player } = state;
+  const card = itemCount(state, 'creditcard');
+  if (card > 0) {
+    out.push({ stat: 'damage', pct: IN.creditcardDamage * card * state.chestsBought });
+  }
+  const feijoada = itemCount(state, 'feijoada');
+  if (feijoada > 0) {
+    out.push({
+      stat: 'maxHp',
+      flat: feijoada * Math.min(IN.feijoadaMax, IN.feijoadaHp * state.kills),
+    });
+  }
+  const miles = itemCount(state, 'miles');
+  if (miles > 0) {
+    out.push({ stat: 'damage', pct: miles * Math.min(IN.milesMax, IN.milesDamage * state.kills) });
+  }
+  const kite = itemCount(state, 'kite');
+  if (kite > 0 && !player.grounded) out.push({ stat: 'damage', pct: IN.kiteDamage * kite });
+  const tenure = itemCount(state, 'tenure');
+  if (tenure > 0) {
+    const still = Math.min(IN.tenureMax, IN.tenureRate * (state.stillTime ?? 0));
+    out.push({ stat: 'damage', pct: still * tenure });
+  }
+  const health = player.maxHp > 0 ? player.hp / player.maxHp : 1;
+  const monthend = itemCount(state, 'monthend');
+  if (monthend > 0) out.push({ stat: 'damage', pct: IN.monthendMax * monthend * (1 - health) });
+  const friday = itemCount(state, 'friday');
+  if (friday > 0 && health < IN.fridayBelow) {
+    out.push({ stat: 'damage', pct: IN.fridayDamage * friday });
+  }
+  const scooter = itemCount(state, 'scooter');
+  if (scooter > 0) {
+    const fast = Math.min(1, dhypot(player.vx, player.vz) / 12);
+    out.push({ stat: 'attackSpeed', flat: IN.scooterMax * scooter * fast });
+  }
+  const debt = state.debt ?? 0;
+  if (debt > 0) {
+    let hp = 1;
+    for (let i = 0; i < debt; i += 1) hp *= AGIOTA_HP;
+    out.push({ stat: 'maxHp', mult: hp });
+    out.push({ stat: 'difficulty', flat: AGIOTA_DIFFICULTY * debt });
+  }
+  return out;
+};
+
 // The hero's stats right now: hero, permanent upgrades, Boletos, blessings and powerups.
 export const runStats = (state: RunState): Stats => {
   const char = CHARACTERS[state.character];
@@ -159,7 +223,9 @@ export const runStats = (state: RunState): Stats => {
   if (state.time < (state.curseUntil ?? 0)) {
     temporary.push({ stat: 'difficulty', flat: CURSE_DIFFICULTY });
   }
-  return computeStats({
+  if (state.tretas) temporary.push({ stat: 'difficulty', flat: TRETA_DIFFICULTY * state.tretas });
+  temporary.push(...itemBonuses(state), ...situationalBonuses(state));
+  const stats = computeStats({
     character: state.character,
     hp: char.hp,
     speed: char.speed,
@@ -168,6 +234,10 @@ export const runStats = (state: RunState): Stats => {
     blessings: state.blessings,
     temporary,
   });
+  // Barriga de Chope: damage from the max health just added up.
+  const belly = itemCount(state, 'belly');
+  if (belly > 0) stats.damage *= 1 + IN.bellyDamage * belly * (stats.maxHp / 100);
+  return stats;
 };
 
 // Difficulty pays: more experience and gold for the tougher horde.
@@ -295,16 +365,27 @@ export const createRun = (
   state.player.shield = stats.shield;
   // The best rewards sit on the high tops: blessing totems first, then chests. The rest of the
   // shrines and chests go on the open ground.
-  const tops = highSpots(map);
+  const tops = highSpots(map, 12);
   const onTop = () => tops.shift();
-  const kinds: ShrineKind[] = ['curse', 'gold', 'gold', 'heal', 'heal', 'challenge'];
-  for (let i = 0; i < 4; i += 1) kinds.unshift('blessing');
+  // The map is big: rewards all over it, and Treta shrines for who wants a harder run.
+  const kinds: ShrineKind[] = [];
+  const add = (kind: ShrineKind, n: number) => {
+    for (let i = 0; i < n; i += 1) kinds.push(kind);
+  };
+  add('blessing', 6);
+  add('curse', 2);
+  add('gold', 3);
+  add('heal', 3);
+  add('challenge', 2);
+  add('camelo', 4);
+  add('agiota', 2);
+  add('treta', 5);
   kinds.forEach((kind, id) => {
-    const spot = (kind === 'blessing' && id < 3 && onTop()) || groundSpot(map, rng, 16);
+    const spot = (kind === 'blessing' && id < 4 && onTop()) || groundSpot(map, rng, 16);
     if (spot) state.shrines.push({ id, x: spot.x, z: spot.z, charge: 0, used: false, kind });
   });
   for (let id = 0; id < MAP_CHESTS; id += 1) {
-    const spot = (id < 4 && onTop()) || groundSpot(map, rng, 20);
+    const spot = (id < 6 && onTop()) || groundSpot(map, rng, 20);
     if (spot) state.chests.push({ id, x: spot.x + 2.5, z: spot.z, charge: 0, opened: false });
   }
   for (let i = 0; i < 12; i += 1) placeProp(state, 'barrel');
@@ -394,7 +475,8 @@ const offerPool = (state: RunState, ownedOnly = false): { item: Choice; weight: 
 const rollBonuses = (state: RunState, id: WeaponId, rarity?: Rarity): WeaponBonus[] => {
   const left = rollStats(id);
   const bonuses: WeaponBonus[] = [];
-  for (let i = 0; i < 2 && left.length > 0; i += 1) {
+  const rolls = 2 + itemCount(state, 'gambiarra');
+  for (let i = 0; i < rolls && left.length > 0; i += 1) {
     const stat = left.splice(Math.floor(state.rng.next() * left.length), 1)[0];
     bonuses.push({ stat, value: rollValue(id, stat, rarity) });
   }
@@ -456,9 +538,26 @@ export const blessingLevels = (choice: Choice): number => {
   return choice.rarity === 'rare' ? 2 : 1;
 };
 
+// The Camelô's stall: three different Muambas, rarer ones likelier with luck.
+const rollItems = (state: RunState): Choice[] => {
+  const { luck } = runStats(state);
+  const picked: ItemId[] = [];
+  for (let i = 0; i < 3; i += 1) {
+    const id = drawItem(state.rng, luck, (item) => !picked.includes(item));
+    if (id) picked.push(id);
+  }
+  return picked.map((id) => ({ kind: 'item', id }));
+};
+
+const giveItem = (state: RunState, id: ItemId) => {
+  if (!state.items) state.items = {};
+  state.items[id] = (state.items[id] ?? 0) + 1;
+};
+
 const openChoices = (state: RunState) => {
   if (state.phase !== 'playing') return;
   if (state.pendingBlessings > 0) state.choices = rollBlessings(state);
+  else if ((state.pendingItems ?? 0) > 0) state.choices = rollItems(state);
   else if (state.pendingChoices > 0) state.choices = rollChoices(state);
   else return;
   state.phase = 'choosing';
@@ -480,6 +579,8 @@ const applyChoice = (state: RunState, choice: Choice) => {
     if (owned) owned.evolved = true;
   } else if (choice.kind === 'blessing') {
     state.blessings[choice.id] = (state.blessings[choice.id] ?? 0) + blessingLevels(choice);
+  } else if (choice.kind === 'item') {
+    giveItem(state, choice.id);
   } else if (choice.kind === 'heal') {
     state.player.hp = Math.min(state.player.maxHp, state.player.hp + state.player.maxHp * 0.3);
   } else {
@@ -488,8 +589,17 @@ const applyChoice = (state: RunState, choice: Choice) => {
   syncMaxHp(state, runStats(state));
 };
 
-const closeOffer = (state: RunState, wasBlessing: boolean) => {
-  if (wasBlessing) state.pendingBlessings -= 1;
+// Which queue an offer came from, told by its first choice.
+type OfferKind = 'blessing' | 'item' | 'level';
+const offerKindOf = (choices: Choice[] | undefined): OfferKind => {
+  const kind = choices?.[0]?.kind;
+  if (kind === 'blessing') return 'blessing';
+  return kind === 'item' ? 'item' : 'level';
+};
+
+const closeOffer = (state: RunState, offer: OfferKind) => {
+  if (offer === 'blessing') state.pendingBlessings -= 1;
+  else if (offer === 'item') state.pendingItems = Math.max(0, (state.pendingItems ?? 0) - 1);
   else state.pendingChoices -= 1;
   state.choices = undefined;
   state.phase = 'playing';
@@ -499,8 +609,9 @@ const closeOffer = (state: RunState, wasBlessing: boolean) => {
 export const choose = (state: RunState, index: number): boolean => {
   const choice = state.phase === 'choosing' ? state.choices?.[index] : undefined;
   if (!choice) return false;
+  const offer = offerKindOf(state.choices);
   applyChoice(state, choice);
-  closeOffer(state, choice.kind === 'blessing');
+  closeOffer(state, offer);
   return true;
 };
 
@@ -528,7 +639,7 @@ export const skip = (state: RunState): boolean => {
   if (state.phase !== 'choosing' || state.skips <= 0 || !state.choices) return false;
   state.skips -= 1;
   state.gold += SKIP_GOLD;
-  closeOffer(state, state.choices[0]?.kind === 'blessing');
+  closeOffer(state, offerKindOf(state.choices));
   return true;
 };
 
@@ -575,8 +686,9 @@ export const closeChest = (state: RunState): boolean => {
 export const reroll = (state: RunState): boolean => {
   if (state.phase !== 'choosing' || state.rerolls <= 0) return false;
   state.rerolls -= 1;
-  state.choices =
-    state.choices?.[0]?.kind === 'blessing' ? rollBlessings(state) : rollChoices(state);
+  const offer = offerKindOf(state.choices);
+  if (offer === 'blessing') state.choices = rollBlessings(state);
+  else state.choices = offer === 'item' ? rollItems(state) : rollChoices(state);
   return true;
 };
 
@@ -842,6 +954,58 @@ const healPlayer = (state: RunState, stats: Stats, amount: number) => {
   }
 };
 
+// Queues an item's blast for this tick's grid (see `runItemBlasts`).
+const queueBlast = (state: RunState, x: number, z: number, radius: number, damage: number) => {
+  if (!state.itemBlasts) state.itemBlasts = [];
+  if (state.itemBlasts.length < MAX_ITEM_BLASTS) state.itemBlasts.push({ x, z, radius, damage });
+};
+
+// What the Muambas do to one hit: more damage in some cases, and, for a weapon's own hit (not an
+// item's blast, so blasts never chain), a chance of a blast or a punch from the brother-in-law.
+const itemHit = (
+  state: RunState,
+  e: Enemy,
+  amount: number,
+  wasCrit: boolean,
+  fromWeapon: boolean
+): { dealt: number; crit: boolean } => {
+  const { rng, player } = state;
+  let dealt = amount;
+  let crit = wasCrit;
+  const shades = itemCount(state, 'shades');
+  if (shades > 0 && e.hp >= e.maxHp * IN.shadesAbove) dealt *= 1 + IN.shadesDamage * shades;
+  const knife = itemCount(state, 'knife');
+  if (knife > 0 && sq(e.x - player.x) + sq(e.z - player.z) < IN.knifeReach * IN.knifeReach) {
+    dealt *= 1 + IN.knifeDamage * knife;
+  }
+  const belt = itemCount(state, 'belt');
+  if (belt > 0 && rng.next() < IN.beltChance * belt) {
+    dealt *= IN.beltDamage;
+    crit = true;
+  }
+  if (!fromWeapon) return { dealt, crit };
+  const syrup = itemCount(state, 'syrup');
+  if (syrup > 0 && crit && rng.next() < Math.min(1, IN.syrupChance * syrup)) {
+    queueBlast(state, e.x, e.z, 2, dealt * IN.syrupDamage);
+  }
+  const pepper = itemCount(state, 'pepper');
+  if (pepper > 0 && rng.next() < Math.min(1, IN.pepperChance * pepper)) {
+    queueBlast(state, e.x, e.z, IN.pepperRadius, dealt * IN.pepperDamage);
+  }
+  const blackout = itemCount(state, 'blackout');
+  if (blackout > 0 && rng.next() < Math.min(1, IN.blackoutChance * blackout)) {
+    queueBlast(state, e.x, e.z, IN.blackoutRadius, dealt * IN.blackoutDamage);
+  }
+  const brother = itemCount(state, 'brotherinlaw');
+  if (brother > 0 && (state.brotherCd ?? 0) <= 0 && rng.next() < IN.brotherChance * brother) {
+    state.brotherCd = IN.brotherCooldown;
+    // A punch for a share of the hero's health, never the last point.
+    player.hp = Math.max(Math.min(player.hp, 1), player.hp * (1 - IN.brotherPunch));
+    state.gold += IN.insuranceGold * itemCount(state, 'insurance');
+  }
+  return { dealt, crit };
+};
+
 const hurtEnemy = (
   state: RunState,
   stats: Stats,
@@ -860,8 +1024,13 @@ const hurtEnemy = (
     ? Math.min(0.95, stats.critChance + weaponBonus(owned, 'critChance'))
     : stats.critChance;
   const critDamage = owned ? stats.critDamage + weaponBonus(owned, 'critDamage') : stats.critDamage;
-  const crit = state.rng.next() < critChance;
+  let crit = state.rng.next() < critChance;
   let dealt = crit ? amount * critDamage : amount;
+  if (state.items) {
+    const hit = itemHit(state, e, dealt, crit, !!weapon);
+    dealt = hit.dealt;
+    crit = hit.crit;
+  }
   if (e.kind === 'shield' && from) {
     // It faces the hero; a hit from that side mostly bounces off.
     const facing =
@@ -923,45 +1092,6 @@ const breakProp = (state: RunState, stats: Stats, prop: Enemy, events: GameEvent
   }
 };
 
-const reapEnemies = (state: RunState, stats: Stats, events: GameEvent[]) => {
-  const { rng } = state;
-  let anyDead = false;
-  for (let i = 0; i < state.enemies.length; i += 1) {
-    const e = state.enemies[i];
-    if (e.hp <= 0 && e.prop) {
-      anyDead = true;
-      breakProp(state, stats, e, events);
-    } else if (e.hp <= 0) {
-      anyDead = true;
-      state.kills += 1;
-      // A bomber that dies before reaching the hero still goes off, a bit weaker.
-      if (e.kind === 'bomber' && !e.act) blastAt(state, e.x, e.z, 2.4, e.damage * 0.6, 0.6);
-      events.push({ type: 'kill', x: e.x, z: e.z, kind: e.kind, elite: e.elite });
-      addPickup(state, 'xp', e.x, e.z, e.xp);
-      const roll = rng.next();
-      if (roll < 0.1) {
-        addPickup(state, 'gold', e.x + 0.6, e.z, Math.ceil((1 + rng.next() * 2) * goldMult(stats)));
-      } else if (roll < 0.108) addPickup(state, 'heart', e.x + 0.6, e.z, 0);
-      else if (roll < 0.111) addPickup(state, 'magnet', e.x + 0.6, e.z, 0);
-      const powerup = POWERUP_CHANCE * stats.powerupChance * (1 + luckShare(stats.luck));
-      if (rng.next() < powerup) {
-        addPickup(state, POWERUPS[Math.floor(rng.next() * POWERUPS.length)], e.x - 0.6, e.z, 0);
-      }
-      if (e.kind === 'boss') {
-        state.bossAlive = false;
-        state.gold += Math.round(40 * goldMult(stats));
-        // Every gem and coin on the map comes at once: the payoff of a boss.
-        state.pickups.forEach((p) => {
-          if (p.kind === 'xp' || p.kind === 'gold') p.pulled = true;
-        });
-        addPickup(state, 'chest', e.x, e.z + 1, 0);
-        if (e.elite) state.phase = 'won';
-      } else if (e.elite) addPickup(state, 'chest', e.x, e.z + 0.8, 0);
-    }
-  }
-  if (anyDead) keep(state.enemies, (e) => e.hp > 0);
-};
-
 const fireHostile = (state: RunState, e: Enemy, angle: number, speed: number, damage: number) => {
   state.shots.push({
     id: newId(state),
@@ -1019,6 +1149,16 @@ const hurtPlayer = (
   player.hp -= left;
   player.invuln = 0.6;
   events.push({ type: 'hurt', amount: Math.round(shown) });
+  const insurance = itemCount(state, 'insurance');
+  if (insurance > 0) state.gold += Math.round(IN.insuranceGold * insurance * goldMult(stats));
+  if (player.hp <= 0 && itemCount(state, 'jeitinho') > 0 && state.items) {
+    // Jeitinho Brasileiro: time stops, the hero gets up, and one copy is spent.
+    state.items.jeitinho = itemCount(state, 'jeitinho') - 1;
+    player.hp = player.maxHp * IN.jeitinhoHp;
+    player.invuln = IN.jeitinhoSeconds;
+    state.buffs.freeze = Math.max(state.buffs.freeze, IN.jeitinhoSeconds);
+    events.push({ type: 'jeitinho' });
+  }
   if (player.hp <= 0) {
     player.hp = 0;
     state.phase = 'dead';
@@ -1516,6 +1656,19 @@ const fireWeapon = (
   return spec.cooldown;
 };
 
+// The item blasts queued by this tick's hits go off: each hurts everything in its circle.
+const runItemBlasts = (state: RunState, stats: Stats, grid: Grid, events: GameEvent[]) => {
+  const blasts = state.itemBlasts;
+  if (!blasts || blasts.length === 0) return;
+  state.itemBlasts = [];
+  blasts.forEach((b) => {
+    eachNear(grid, b.x, b.z, b.radius, (e) => {
+      if (!e.prop) hurtEnemy(state, stats, e, b.damage, events);
+    });
+    events.push({ type: 'itemBlast', x: b.x, z: b.z, radius: b.radius });
+  });
+};
+
 const runWeapons = (state: RunState, stats: Stats, grid: Grid, dt: number, events: GameEvent[]) => {
   const { player } = state;
   for (let i = 0; i < state.weapons.length; i += 1) {
@@ -1923,6 +2076,22 @@ const activateShrine = (
     applyPowerup(state, stats, 'goldrain', grid, events);
   } else if (kind === 'heal') {
     healPlayer(state, stats, player.maxHp);
+  } else if (kind === 'camelo') {
+    state.gold -= cameloPrice(state.cameloBought ?? 0);
+    state.cameloBought = (state.cameloBought ?? 0) + 1;
+    state.pendingItems = (state.pendingItems ?? 0) + 1;
+  } else if (kind === 'treta') {
+    state.tretas = (state.tretas ?? 0) + 1;
+  } else if (kind === 'agiota') {
+    // A rare Muamba now (sometimes a legendary one); the loan is paid until the end of the run.
+    const rarity = state.rng.next() < AGIOTA_LEGENDARY ? 'legendary' : 'rare';
+    const id = drawItem(state.rng, stats.luck, (item) => ITEMS[item].rarity === rarity);
+    if (id) {
+      giveItem(state, id);
+      events.push({ type: 'item', id });
+    }
+    state.debt = (state.debt ?? 0) + 1;
+    syncMaxHp(state, runStats(state));
   } else {
     state.challenge = {
       until: state.time + CHALLENGE_SECONDS,
@@ -1999,13 +2168,17 @@ const collectPickups = (
   for (let i = 0; i < state.shrines.length; i += 1) {
     const shrine = state.shrines[i];
     if (!shrine.used) {
+      // The Camelô only sells to who has the gold.
+      const afford = shrine.kind !== 'camelo' || state.gold >= cameloPrice(state.cameloBought ?? 0);
       const inside =
-        sq(shrine.x - player.x) + sq(shrine.z - player.z) < SHRINE_RADIUS * SHRINE_RADIUS;
+        afford && sq(shrine.x - player.x) + sq(shrine.z - player.z) < SHRINE_RADIUS * SHRINE_RADIUS;
       shrine.charge = inside
         ? shrine.charge + dt / SHRINE_SECONDS
         : Math.max(0, shrine.charge - dt / SHRINE_SECONDS);
       if (shrine.charge >= 1) {
-        shrine.used = true;
+        // The Camelô keeps selling (dearer each time); the hero has to step off and back on.
+        if (shrine.kind === 'camelo') shrine.charge = -1;
+        else shrine.used = true;
         activateShrine(state, stats, shrine.kind ?? 'blessing', grid, events);
         events.push({ type: 'shrine', x: shrine.x, z: shrine.z });
       }
@@ -2023,7 +2196,8 @@ const collectPickups = (
       chest.charge = near && state.gold >= price ? chest.charge + dt / MAP_CHEST_SECONDS : 0;
       if (chest.charge >= 1 && state.phase === 'playing') {
         chest.opened = true;
-        state.gold -= price;
+        const free = state.rng.next() < IN.keycopyChance * itemCount(state, 'keycopy');
+        if (!free) state.gold -= price;
         state.chestsBought += 1;
         events.push({ type: 'chestBuy', x: chest.x, z: chest.z, price });
         openChest(state, stats, events);
@@ -2035,6 +2209,37 @@ const collectPickups = (
 
 // Timers of the defense stats and powerups: the shield fills after a while without a hit,
 // overheal fades, lifesteal's budget comes back.
+// The Muambas that keep time: standing still, ground walked, the vacuum, the brother-in-law.
+const tickItems = (state: RunState, stats: Stats, dt: number) => {
+  if (!state.items) return;
+  const { player } = state;
+  const speed = dhypot(player.vx, player.vz);
+  state.stillTime = speed < 0.5 ? (state.stillTime ?? 0) + dt : 0;
+  state.brotherCd = Math.max(0, (state.brotherCd ?? 0) - dt);
+  const hammock = itemCount(state, 'hammock');
+  if (hammock > 0 && state.stillTime >= IN.hammockAfter) {
+    healPlayer(state, stats, player.maxHp * IN.hammockHeal * hammock * dt);
+  }
+  const bag = itemCount(state, 'deliverybag');
+  if (bag > 0) {
+    state.walked = (state.walked ?? 0) + speed * dt;
+    while (state.walked >= IN.deliveryStep) {
+      state.walked -= IN.deliveryStep;
+      state.gold += Math.round(bag * goldMult(stats));
+    }
+  }
+  const vacuum = itemCount(state, 'vacuum');
+  if (vacuum > 0) {
+    state.vacuumCd = (state.vacuumCd ?? IN.vacuumEvery) - dt * vacuum;
+    if (state.vacuumCd <= 0) {
+      state.vacuumCd = IN.vacuumEvery;
+      state.pickups.forEach((p) => {
+        if (p.kind === 'xp') p.pulled = true;
+      });
+    }
+  }
+};
+
 const tickDefense = (state: RunState, stats: Stats, dt: number) => {
   const { player, buffs } = state;
   buffs.rage = Math.max(0, buffs.rage - dt);
@@ -2100,6 +2305,81 @@ const fireAbility = (state: RunState, stats: Stats, grid: Grid, events: GameEven
   }
 };
 
+// What the Muambas do on a kill: a heart, a second gem, a rocket.
+const itemKill = (state: RunState, stats: Stats, e: Enemy) => {
+  const { rng } = state;
+  const pastel = itemCount(state, 'pastel');
+  if (pastel > 0 && rng.next() < IN.pastelChance * pastel) {
+    addPickup(state, 'heart', e.x, e.z - 0.6, 0);
+  }
+  const pyramid = itemCount(state, 'pyramid');
+  if (pyramid > 0 && rng.next() < Math.min(1, IN.pyramidChance * pyramid)) {
+    addPickup(state, 'xp', e.x + 0.4, e.z + 0.4, e.xp);
+  }
+  const fireworks = itemCount(state, 'fireworks');
+  if (fireworks > 0 && rng.next() < Math.min(1, IN.fireworksChance * fireworks)) {
+    const [target] = nearestEnemies(state, 1, 16);
+    if (target) {
+      firePlayerShot(
+        state,
+        stats,
+        'missile',
+        datan2(target.z - e.z, target.x - e.x),
+        14 * stats.projectileSpeed,
+        {
+          radius: 0.4,
+          // A rocket grows with the hero's level, like a weapon would.
+          damage: (20 + 3 * state.player.level) * stats.damage,
+          pierce: 0,
+          life: 1.5,
+          blast: 2 * stats.size,
+        },
+        { x: e.x, z: e.z }
+      );
+    }
+  }
+};
+
+const reapEnemies = (state: RunState, stats: Stats, events: GameEvent[]) => {
+  const { rng } = state;
+  let anyDead = false;
+  for (let i = 0; i < state.enemies.length; i += 1) {
+    const e = state.enemies[i];
+    if (e.hp <= 0 && e.prop) {
+      anyDead = true;
+      breakProp(state, stats, e, events);
+    } else if (e.hp <= 0) {
+      anyDead = true;
+      state.kills += 1;
+      // A bomber that dies before reaching the hero still goes off, a bit weaker.
+      if (e.kind === 'bomber' && !e.act) blastAt(state, e.x, e.z, 2.4, e.damage * 0.6, 0.6);
+      events.push({ type: 'kill', x: e.x, z: e.z, kind: e.kind, elite: e.elite });
+      addPickup(state, 'xp', e.x, e.z, e.xp);
+      if (state.items) itemKill(state, stats, e);
+      const roll = rng.next();
+      if (roll < 0.1) {
+        addPickup(state, 'gold', e.x + 0.6, e.z, Math.ceil((1 + rng.next() * 2) * goldMult(stats)));
+      } else if (roll < 0.108) addPickup(state, 'heart', e.x + 0.6, e.z, 0);
+      else if (roll < 0.111) addPickup(state, 'magnet', e.x + 0.6, e.z, 0);
+      const powerup = POWERUP_CHANCE * stats.powerupChance * (1 + luckShare(stats.luck));
+      if (rng.next() < powerup) {
+        addPickup(state, POWERUPS[Math.floor(rng.next() * POWERUPS.length)], e.x - 0.6, e.z, 0);
+      }
+      if (e.kind === 'boss') {
+        state.bossAlive = false;
+        state.gold += Math.round(40 * goldMult(stats));
+        // Every gem and coin on the map comes at once: the payoff of a boss.
+        state.pickups.forEach((p) => {
+          if (p.kind === 'xp' || p.kind === 'gold') p.pulled = true;
+        });
+        addPickup(state, 'chest', e.x, e.z + 1, 0);
+        if (e.elite) state.phase = 'won';
+      } else if (e.elite) addPickup(state, 'chest', e.x, e.z + 0.8, 0);
+    }
+  }
+  if (anyDead) keep(state.enemies, (e) => e.hp > 0);
+};
+
 // Advances the run by one tick. The same state and the same inputs always give the same result.
 export const step = (state: RunState, input: Input, dt: number): GameEvent[] => {
   const events: GameEvent[] = [];
@@ -2108,6 +2388,7 @@ export const step = (state: RunState, input: Input, dt: number): GameEvent[] => 
   state.time += dt;
   const stats = runStats(state);
   tickDefense(state, stats, dt);
+  tickItems(state, stats, dt);
 
   movePlayer(state, input, stats, dt, events);
   spawnWave(state, stats, dt, events);
@@ -2117,6 +2398,7 @@ export const step = (state: RunState, input: Input, dt: number): GameEvent[] => 
   runHazards(state, stats, dt, events);
   runWeapons(state, stats, grid, dt, events);
   moveShots(state, stats, grid, dt, events);
+  runItemBlasts(state, stats, grid, events);
   reapEnemies(state, stats, events);
   collectPickups(state, stats, grid, dt, events);
   tickShrines(state, events);

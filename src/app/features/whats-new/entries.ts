@@ -17,6 +17,21 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-brazilianbonk-muambas',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.horde_muambas_title',
+          'BrazilianBonk: Muambas, a bigger map and Treta shrines'
+        ),
+        body: tr(
+          'whats_new.horde_muambas_body',
+          'The game now has items: 42 Muambas, from Unlabeled Whey to the Jeitinho Brasileiro. The Camelô sells them for gold (pick 1 of 3, dearer each time) and the Agiota lends a rare one now, paid with health and difficulty until the end of the run. The map is a third bigger, with more chests and shrines, each shrine with its own model, and Treta shrines add difficulty (and experience and gold) for who wants it. The graphics got the PS1 wobble and dithered color.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-brazilianbonk-weapons-50',
     items: () => [
       {

@@ -84,7 +84,7 @@ describe('horde map', () => {
   });
 
   it('stops the hero at a cliff, and lets it fall from the top', () => {
-    const run = quietRun();
+    const run = quietRun(6);
     const cliff = findCliff(run);
     standAt(run, cliff.x - 2, cliff.z);
     walk(run, 1, 0, 120);

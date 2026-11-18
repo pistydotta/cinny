@@ -22,6 +22,8 @@ import { buildTerrain } from './terrainMesh';
 import { Sky } from './sky';
 import { ball, box, cone, ENEMY_FRAMES, enemyGeometry, merge } from './models';
 import { glowTexture, PICKUP_GLOW, PICKUP_KINDS, pickupGeometry, xpScale, xpTint } from './pickups';
+import { EMBLEM_HEIGHT, ShrineModel, shrineModel } from './shrines';
+import { psxSnap, psxifyAll } from './psx';
 
 // Draws a run with three.js. The engine knows nothing about this file: every frame the scene
 // reads the run's state and places things, and the events of each tick become effects.
@@ -61,6 +63,10 @@ const SHRINE_COLORS: Record<ShrineKind, number> = {
   gold: 0xffd23a,
   heal: 0x5aff8a,
   challenge: 0xff5a3a,
+  // The Camelô's orange tarp, the Agiota's green of money.
+  camelo: 0xff9a2e,
+  agiota: 0x2fbf5a,
+  treta: 0xff2040,
 };
 const SHOT_KINDS: ShotKind[] = ['card', 'missile', 'axe', 'spit'];
 const SKY = 0x1a1326;
@@ -141,7 +147,13 @@ export class HordeScene {
 
   private aura: THREE.Mesh;
 
-  private shrines: { crystal: THREE.Mesh; ring: THREE.Mesh }[] = [];
+  private shrines: {
+    emblem: THREE.Mesh;
+    ring: THREE.Mesh;
+    beam: THREE.Mesh;
+    glow: THREE.Mesh;
+    height: number;
+  }[] = [];
 
   private rings: { mesh: THREE.Mesh; age: number; radius: number }[] = [];
 
@@ -402,6 +414,8 @@ export class HordeScene {
     this.particles = new Particles(this.scene);
     this.disposables.push(this.lit, this.glow, flat, boltGeometry);
     this.camera.position.set(0, 6, 9);
+    // Every material drawn the PS1 way: vertices snapped to the screen, 15-bit dithered color.
+    psxifyAll(this.scene);
     this.resize();
   }
 
@@ -496,42 +510,54 @@ export class HordeScene {
   }
 
   private buildShrines() {
-    const base = merge(
-      [
-        new THREE.CylinderGeometry(1.1, 1.4, 0.5, 6).translate(0, 0.25, 0),
-        new THREE.CylinderGeometry(0.35, 0.5, 1.4, 5).translate(0, 1.2, 0),
-      ].map((g) => {
-        const flat = g.toNonIndexed();
-        const colors = new Float32Array(flat.attributes.position.count * 3).fill(0.42);
-        flat.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        flat.deleteAttribute('uv');
-        return flat;
-      })
-    );
-    const crystalGeometry = new THREE.OctahedronGeometry(0.55, 0);
-    const ringGeometry = new THREE.RingGeometry(SHRINE_RADIUS - 0.18, SHRINE_RADIUS, 24).rotateX(
+    const models = new Map<ShrineKind, ShrineModel>();
+    const ringGeometry = new THREE.RingGeometry(SHRINE_RADIUS - 0.18, SHRINE_RADIUS, 32).rotateX(
       -Math.PI / 2
     );
-    this.disposables.push(base, crystalGeometry, ringGeometry);
+    const beamGeometry = new THREE.CylinderGeometry(0.25, 0.45, 16, 8, 1, true).translate(0, 8, 0);
+    const beamTexture = glowTexture(true);
+    this.disposables.push(ringGeometry, beamGeometry, beamTexture);
     this.run.shrines.forEach((shrine) => {
+      const kind = shrine.kind ?? 'blessing';
+      let model = models.get(kind);
+      if (!model) {
+        model = shrineModel(kind);
+        models.set(kind, model);
+        this.disposables.push(model.body, model.glow, model.emblem);
+      }
       const y = this.ground(shrine.x, shrine.z);
-      const pillar = new THREE.Mesh(base, this.lit);
-      pillar.position.set(shrine.x, y, shrine.z);
-      const color = SHRINE_COLORS[shrine.kind ?? 'blessing'];
-      const crystal = new THREE.Mesh(crystalGeometry, new THREE.MeshBasicMaterial({ color }));
-      crystal.position.set(shrine.x, y + 2.7, shrine.z);
+      const turn = hash(shrine.id, 9) * Math.PI * 2;
+      const body = new THREE.Mesh(model.body, this.lit);
+      const glow = new THREE.Mesh(model.glow, this.glow);
+      [body, glow].forEach((mesh) => {
+        mesh.position.set(shrine.x, y, shrine.z);
+        mesh.rotation.y = turn;
+      });
+      const emblem = new THREE.Mesh(model.emblem, this.glow);
+      emblem.position.set(shrine.x, y + EMBLEM_HEIGHT[kind], shrine.z);
+      const color = SHRINE_COLORS[kind];
       const ring = new THREE.Mesh(
         ringGeometry,
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false })
+      );
+      ring.position.set(shrine.x, y + 0.08, shrine.z);
+      // A column of light in the shrine's color, to find it from across the map.
+      const beam = new THREE.Mesh(
+        beamGeometry,
         new THREE.MeshBasicMaterial({
-          color,
+          map: beamTexture,
+          color: new THREE.Color(color).multiplyScalar(0.22),
           transparent: true,
-          opacity: 0.5,
           depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          side: THREE.DoubleSide,
+          fog: false,
         })
       );
-      ring.position.set(shrine.x, y + 0.25, shrine.z);
-      this.scene.add(pillar, crystal, ring);
-      this.shrines.push({ crystal, ring });
+      // From the emblem up, so the shrine itself stays clear.
+      beam.position.set(shrine.x, y + EMBLEM_HEIGHT[kind] + 0.6, shrine.z);
+      this.scene.add(body, glow, emblem, ring, beam);
+      this.shrines.push({ emblem, ring, beam, glow, height: y + EMBLEM_HEIGHT[kind] });
     });
   }
 
@@ -540,6 +566,8 @@ export class HordeScene {
     const height = this.canvas.clientHeight || 1;
     const scale = Math.min(1, RENDER_HEIGHTS[this.quality] / height);
     this.renderer.setSize(Math.round(width * scale), Math.round(height * scale), false);
+    // Vertices snap to half the pixels drawn: coarse enough to wobble, fine enough to read.
+    psxSnap.value.set(Math.round((width * scale) / 4), Math.round((height * scale) / 4));
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
@@ -670,6 +698,13 @@ export class HordeScene {
         // Gems come in by the dozen; the rest sparkle when taken.
         const y = this.ground(event.x, event.z) + 0.8;
         this.particles.burst(event.x, y, event.z, 8, PICKUP_GLOW[event.kind], 4);
+      } else if (event.type === 'itemBlast') {
+        // An item's pop: sparks, no smoke and no shake, there can be a dozen a tick.
+        const y = this.ground(event.x, event.z) + 0.6;
+        this.particles.burst(event.x, y, event.z, 5, 0xffb03a, 5);
+      } else if (event.type === 'jeitinho') {
+        const { x, z } = this.run.player;
+        this.particles.burst(x, this.ground(x, z) + 1.2, z, 60, 0x7dff6a, 10);
       } else if (event.type === 'bossPhase') {
         this.shake = Math.max(this.shake, 0.9);
         this.hold = 5;
@@ -1041,11 +1076,19 @@ export class HordeScene {
     // Shrines.
     run.shrines.forEach((shrine, i) => {
       const shown = this.shrines[i];
-      shown.crystal.visible = !shrine.used;
-      shown.crystal.rotation.y = this.clock * 1.5;
-      shown.crystal.scale.setScalar(1 + shrine.charge * 0.8);
-      shown.ring.visible = !shrine.used;
-      (shown.ring.material as THREE.MeshBasicMaterial).opacity = 0.35 + shrine.charge * 0.65;
+      // A Camelô that just sold starts below zero (see collectPickups).
+      const charge = Math.max(0, shrine.charge);
+      const open = !shrine.used;
+      shown.emblem.visible = open;
+      shown.ring.visible = open;
+      shown.beam.visible = open;
+      // A used shrine goes dark: its runes, water and fire are out.
+      shown.glow.visible = open;
+      shown.emblem.rotation.y = this.clock * 1.5 + i;
+      shown.emblem.position.y = shown.height + Math.sin(this.clock * 2 + i) * 0.15;
+      shown.emblem.scale.setScalar(1 + charge * 0.8);
+      (shown.ring.material as THREE.MeshBasicMaterial).opacity = 0.35 + charge * 0.65;
+      shown.beam.scale.set(1 + charge * 0.6, 1, 1 + charge * 0.6);
     });
 
     // Map chests: gone once bought, swelling while being bought.

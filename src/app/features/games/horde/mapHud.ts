@@ -15,6 +15,9 @@ const SHRINE_DOTS: Record<ShrineKind, string> = {
   gold: '#ffd23a',
   heal: '#6aff8a',
   challenge: '#ff6a6a',
+  camelo: '#ff9a2e',
+  agiota: '#3fbf6a',
+  treta: '#ff2a4a',
 };
 // Minimap pixels per side, and the map units shown around it (a bit past the square).
 const PIXELS = 132;
