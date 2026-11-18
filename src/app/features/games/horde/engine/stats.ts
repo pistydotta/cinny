@@ -79,9 +79,9 @@ export const STATS: Record<StatId, StatDef> = {
 
   damage: { group: 'attack', base: 1, unit: 'multiplier' },
   critChance: { group: 'attack', base: 0.1, unit: 'share', max: 0.9 },
-  critDamage: { group: 'attack', base: 2, unit: 'multiplier', max: 30 },
+  critDamage: { group: 'attack', base: 2, unit: 'multiplier', max: 12 },
   // Fires this much more often: 0.5 is half again as often.
-  attackSpeed: { group: 'attack', base: 0, unit: 'share', max: 6 },
+  attackSpeed: { group: 'attack', base: 0, unit: 'share', max: 4 },
   projectiles: { group: 'attack', base: 0, unit: 'number', max: 10, whole: true },
   ricochet: { group: 'attack', base: 0, unit: 'number', max: 6, whole: true },
 
@@ -133,8 +133,8 @@ const levelsToCap = (bonus: Bonus): number => {
 };
 
 const BOLETO_BONUS: Record<PassiveId, Bonus> = {
-  might: { stat: 'damage', pct: 0.15 },
-  haste: { stat: 'attackSpeed', flat: 0.12 },
+  might: { stat: 'damage', pct: 0.1 },
+  haste: { stat: 'attackSpeed', flat: 0.1 },
   reach: { stat: 'size', pct: 0.2 },
   swift: { stat: 'moveSpeed', pct: 0.08 },
   vigor: { stat: 'maxHp', flat: 20 },
@@ -147,8 +147,8 @@ const BOLETO_BONUS: Record<PassiveId, Bonus> = {
   evasion: { stat: 'evasion', flat: 12 },
   lifesteal: { stat: 'lifesteal', flat: 0.02 },
   thorns: { stat: 'thorns', flat: 10 },
-  crit: { stat: 'critChance', flat: 0.06 },
-  critdmg: { stat: 'critDamage', flat: 0.3 },
+  crit: { stat: 'critChance', flat: 0.05 },
+  critdmg: { stat: 'critDamage', flat: 0.2 },
   ricochet: { stat: 'ricochet', flat: 1 },
   velocity: { stat: 'projectileSpeed', pct: 0.12 },
   duration: { stat: 'duration', pct: 0.12 },

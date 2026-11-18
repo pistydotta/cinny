@@ -98,10 +98,11 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   Weapon numbers live in `engine/weapons.ts` (`weaponSpec`, read by the engine and the Build
   screen) with the evolutions (`EVOLUTIONS`: `EVOLVE_LEVEL` 6 plus one Boleto). Weapons level to
   `WEAPON_MAX_LEVEL` 50: a weapon's own numbers grow only to level 6, and every level after the
-  first rolls two different stats from `WEAPON_ROLLS` (damage, crits, projectiles, attack speed,
-  size, duration, pierce) into `OwnedWeapon.bonus`, for that weapon only; crit rolls add to the
-  hero's crit in `hurtEnemy`. The rolls are drawn with the offer, so the card shows them. A rare
-  or epic weapon level has bigger rolls; a rare Boleto offer gives +2 levels, an epic one +3.
+  first rolls two different stats from that weapon's `WEAPON_ROLLS` (each weapon has its own
+  values, tuned so no weapon runs away; check with the dummies before changing them) into
+  `OwnedWeapon.bonus`, for that weapon only; crit rolls add to the hero's crit in `hurtEnemy`.
+  The rolls are drawn with the offer, so the card shows them. A rare or epic weapon level has
+  bigger rolls; a rare Boleto offer gives +2 levels, an epic one +3.
   Boletos level to `BOLETO_MAX_LEVEL` 99, or to where their stat reaches its cap (`levelsToCap`
   in `engine/stats.ts`, so a level that adds nothing is never offered): change a cap and the
   Boleto's max follows. The API's `checkBuild` takes levels up to 99 (`axe50`). Chests

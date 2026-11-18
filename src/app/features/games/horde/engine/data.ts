@@ -11,7 +11,7 @@ import {
 
 // Bumped whenever the rules change what a run can reach. Each reported run carries it, so the
 // ranking can tell runs of the old rules from the new ones without deleting any.
-export const ENGINE_VERSION = 6;
+export const ENGINE_VERSION = 7;
 
 export const TICK = 1 / 60;
 export const ARENA_RADIUS = 70;
@@ -145,15 +145,19 @@ export const META_IDS = Object.keys(META_UPGRADES) as MetaUpgradeId[];
 export const metaCost = (id: MetaUpgradeId, level: number): number =>
   Math.round(META_UPGRADES[id].baseCost * (level + 1) ** 1.5);
 
-// Late levels come faster than they used to (0.3 instead of 0.5 on the square), so Boletos can
-// climb towards 99 and a long run keeps offering something.
-export const xpToNext = (level: number): number => Math.floor(4 + level * 4 + level * level * 0.3);
+// Experience to the next level. The horde is big (`spawnRate`), so each level asks for more; a
+// veteran's run still reaches the 40s, enough for Boletos and weapons to climb.
+export const xpToNext = (level: number): number => Math.floor(6 + level * 6 + level * level * 0.5);
 
-// How much tougher enemies are `time` seconds into the run.
-export const enemyScale = (time: number): number => 1 + dpow(time / 60, 1.9) * 0.42;
+// How much tougher enemies are `time` seconds into the run. The linear part makes the first
+// minutes bite; the power keeps up with the builds of the late game.
+export const enemyScale = (time: number): number =>
+  1 + (time / 60) * 0.12 + dpow(time / 60, 1.85) * 0.42;
 
-// Enemies per second.
-export const spawnRate = (time: number): number => 1.4 + (time / 60) * 1.25;
+// Enemies per second. The horde also grows with the hero's level, so a strong build always has
+// a crowd to cut through.
+export const spawnRate = (time: number, level = 1): number =>
+  (2 + (time / 60) * 1.5) * (1 + (level - 1) * 0.015);
 
 // Seconds between elites, before Elite Rate.
 export const ELITE_EVERY = 45;

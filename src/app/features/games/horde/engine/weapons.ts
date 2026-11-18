@@ -22,35 +22,67 @@ export type WeaponSpec = {
   speed: number;
 };
 
-// What each weapon's level-ups can raise. Two different ones are drawn for every level after the
-// first; weapons that fire once (the aura, the wave, the trail) have no projectiles to add.
-export const WEAPON_ROLLS: Record<WeaponId, WeaponStat[]> = {
-  missile: ['damage', 'critChance', 'critDamage', 'projectiles', 'attackSpeed', 'size'],
-  card: ['damage', 'critChance', 'critDamage', 'projectiles', 'attackSpeed', 'pierce'],
-  aura: ['damage', 'critChance', 'critDamage', 'attackSpeed', 'size'],
-  urns: ['damage', 'critChance', 'critDamage', 'projectiles', 'attackSpeed', 'size'],
-  nova: ['damage', 'critChance', 'critDamage', 'attackSpeed', 'size'],
-  bolt: ['damage', 'critChance', 'critDamage', 'projectiles', 'attackSpeed', 'pierce'],
-  axe: ['damage', 'critChance', 'critDamage', 'projectiles', 'attackSpeed', 'size', 'duration'],
-  trail: ['damage', 'critChance', 'critDamage', 'attackSpeed', 'size', 'duration'],
+// What each weapon's level-ups can raise, and how much one roll gives. Two different stats are
+// drawn for every level after the first. The values differ per weapon so that, level for level,
+// no weapon runs away from the others: stats multiply each other, so a weapon whose damage
+// already grows with its count or its chains gets smaller rolls (see the balance doc for the
+// table they were tuned against). Projectiles and pierce are whole numbers.
+export const WEAPON_ROLLS: Record<WeaponId, Partial<Record<WeaponStat, number>>> = {
+  missile: {
+    damage: 0.09,
+    critChance: 0.03,
+    critDamage: 0.11,
+    projectiles: 1,
+    attackSpeed: 0.08,
+    size: 0.12,
+  },
+  card: {
+    damage: 0.09,
+    critChance: 0.03,
+    critDamage: 0.11,
+    projectiles: 1,
+    attackSpeed: 0.08,
+    pierce: 1,
+  },
+  aura: { damage: 0.11, critChance: 0.03, critDamage: 0.11, attackSpeed: 0.08, size: 0.12 },
+  urns: {
+    damage: 0.22,
+    critChance: 0.04,
+    critDamage: 0.15,
+    projectiles: 1,
+    attackSpeed: 0.12,
+    size: 0.1,
+  },
+  nova: { damage: 0.13, critChance: 0.03, critDamage: 0.11, attackSpeed: 0.1, size: 0.12 },
+  bolt: { damage: 0.12, critChance: 0.03, critDamage: 0.11, attackSpeed: 0.1, pierce: 1 },
+  axe: {
+    damage: 0.11,
+    critChance: 0.03,
+    critDamage: 0.11,
+    projectiles: 1,
+    attackSpeed: 0.08,
+    size: 0.12,
+    duration: 0.1,
+  },
+  trail: {
+    damage: 0.1,
+    critChance: 0.03,
+    critDamage: 0.09,
+    attackSpeed: 0.07,
+    size: 0.1,
+    duration: 0.06,
+  },
 };
 
-// How much one roll gives, before rarity. Projectiles and pierce are whole numbers.
-export const ROLL_VALUES: Record<WeaponStat, number> = {
-  damage: 0.12,
-  critChance: 0.04,
-  critDamage: 0.15,
-  projectiles: 1,
-  attackSpeed: 0.08,
-  size: 0.12,
-  duration: 0.1,
-  pierce: 1,
-};
+export const rollStats = (id: WeaponId): WeaponStat[] =>
+  Object.keys(WEAPON_ROLLS[id]) as WeaponStat[];
+
+const isWhole = (stat: WeaponStat) => stat === 'projectiles' || stat === 'pierce';
 
 // A rare level gives half again as much, an epic one twice (whole stats: one more on epic).
-export const rollValue = (stat: WeaponStat, rarity?: Rarity): number => {
-  const base = ROLL_VALUES[stat];
-  if (stat === 'projectiles' || stat === 'pierce') return base + (rarity === 'epic' ? 1 : 0);
+export const rollValue = (id: WeaponId, stat: WeaponStat, rarity?: Rarity): number => {
+  const base = WEAPON_ROLLS[id][stat] ?? 0;
+  if (isWhole(stat)) return base + (rarity === 'epic' ? 1 : 0);
   if (rarity === 'epic') return base * 2;
   return rarity === 'rare' ? base * 1.5 : base;
 };
@@ -123,7 +155,7 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
     case 'missile':
       // Evolved: one huge, slow bomb.
       return {
-        damage: (16 + 5 * lv) * dmg * (evo ? 4 : 1),
+        damage: (16 + 5 * lv) * dmg * (evo ? 1.7 : 1),
         cooldown: (evo ? 2.2 : 1.7 - lv * 0.07) * cd,
         count: evo
           ? 1 + Math.floor(stats.projectiles / 2)
@@ -136,7 +168,7 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
     case 'card':
       // Evolved: a fan of cards.
       return {
-        damage: (15 + 5 * lv) * dmg,
+        damage: (22 + 5 * lv) * dmg * (evo ? 1.4 : 1),
         cooldown: (evo ? 0.9 : 0.78) * cd,
         count: (evo ? 7 : 1 + Math.floor(lv / 3)) + stats.projectiles,
         area: 0.4,
@@ -146,7 +178,7 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
       };
     case 'aura':
       return {
-        damage: (4 + 3 * lv) * dmg * (evo ? 1.3 : 1),
+        damage: (4 + 3 * lv) * dmg * (evo ? 1.6 : 1),
         cooldown: 0.5 * cd,
         count: 1,
         area: auraRadius(weapon, stats),
@@ -156,7 +188,7 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
       };
     case 'urns':
       return {
-        damage: (8 + 4.5 * lv) * dmg,
+        damage: (8 + 4.5 * lv) * dmg * (evo ? 1.7 : 1),
         cooldown: evo ? 1 * cd : 0,
         count: urnCount(weapon, stats),
         area: urnOrbit(stats, weapon),
@@ -166,7 +198,7 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
       };
     case 'nova':
       return {
-        damage: (12 + 7 * lv) * dmg * (evo ? 1.3 : 1),
+        damage: (12 + 7 * lv) * dmg * (evo ? 1.6 : 1),
         cooldown: (3.2 - lv * 0.15) * cd,
         count: 1,
         area: novaRadius(weapon, stats),
@@ -175,9 +207,9 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
         speed: 0,
       };
     case 'bolt':
-      // Evolved: twice the strikes, harder.
+      // Evolved: twice the strikes.
       return {
-        damage: (16 + 9 * lv) * dmg * (evo ? 1.6 : 1),
+        damage: (16 + 9 * lv) * dmg,
         cooldown: (1.4 - lv * 0.08) * cd,
         count: (1 + stats.projectiles) * (evo ? 2 : 1),
         area: 15,
@@ -187,7 +219,7 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
       };
     case 'axe':
       return {
-        damage: (14 + 6 * lv) * dmg * (evo ? 1.3 : 1),
+        damage: (14 + 6 * lv) * dmg * (evo ? 1.5 : 1),
         cooldown: (1.5 - lv * 0.06) * cd,
         count: 1 + (lv >= 3 ? 1 : 0) + (lv >= 6 ? 1 : 0) + stats.projectiles + (evo ? 2 : 0),
         area: 1.1 * size,
@@ -198,10 +230,10 @@ const baseSpec = (weapon: OwnedWeapon, stats: Stats): WeaponSpec => {
     default:
       // The fire trail.
       return {
-        damage: (1 + 2.2 * lv) * dmg * (evo ? 1.5 : 1),
+        damage: (1 + 2.2 * lv) * dmg * (evo ? 1.1 : 1),
         cooldown: 0.45 * cd,
         count: 1,
-        area: 1.7 * size * (evo ? 1.5 : 1),
+        area: 1.7 * size * (evo ? 1.3 : 1),
         pierce: -1,
         life: (2.4 + 0.3 * lv) * stats.duration * (evo ? 1.3 : 1),
         speed: 0,

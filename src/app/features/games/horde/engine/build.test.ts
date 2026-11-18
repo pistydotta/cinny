@@ -20,7 +20,7 @@ import {
   skip,
   step,
 } from './run';
-import { ROLL_VALUES, WEAPON_ROLLS, weaponSpec } from './weapons';
+import { WEAPON_ROLLS, rollStats, weaponSpec } from './weapons';
 import { CharacterId, Enemy, GameEvent, Input, RunState } from './types';
 import { MAP_HALF, heightAt } from './terrain';
 
@@ -97,8 +97,8 @@ describe('horde build: offers', () => {
         const [a, b] = offer.bonuses ?? [];
         expect(a.stat).not.toBe(b.stat);
         offer.bonuses?.forEach((bonus) => {
-          expect(WEAPON_ROLLS.axe).toContain(bonus.stat);
-          expect(bonus.value).toBeGreaterThanOrEqual(ROLL_VALUES[bonus.stat]);
+          expect(rollStats('axe')).toContain(bonus.stat);
+          expect(bonus.value).toBeGreaterThanOrEqual(WEAPON_ROLLS.axe[bonus.stat] ?? 1);
         });
       }
       choose(run, Math.max(0, index));
@@ -108,7 +108,8 @@ describe('horde build: offers', () => {
     expect(run.choices?.some((c) => c.kind === 'weapon' && c.id === 'axe')).toBe(false);
     // 49 levels of two rolls each, all on the weapon.
     const rolls = Object.entries(run.weapons[0].bonus ?? {}).reduce(
-      (n, [stat, value]) => n + Math.round(value / ROLL_VALUES[stat as keyof typeof ROLL_VALUES]),
+      (n, [stat, value]) =>
+        n + Math.round(value / (WEAPON_ROLLS.axe[stat as keyof typeof WEAPON_ROLLS.axe] ?? 1)),
       0
     );
     expect(rolls).toBeGreaterThanOrEqual(98);

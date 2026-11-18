@@ -19,13 +19,13 @@ describe('horde regression', () => {
     }).toMatchInlineSnapshot(`
       {
         "boletos": "",
-        "gold": 38,
+        "gold": 59,
         "hp": 100,
-        "kills": 275,
-        "level": 4,
+        "kills": 409,
+        "level": 5,
         "phase": "playing",
         "time": 120,
-        "weapons": "card2,urns2",
+        "weapons": "card1,nova2,bolt1,aura1",
       }
     `);
   });

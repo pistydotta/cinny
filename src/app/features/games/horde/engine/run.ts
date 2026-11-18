@@ -63,7 +63,7 @@ import {
 } from './terrain';
 import {
   EVOLUTIONS,
-  WEAPON_ROLLS,
+  rollStats,
   addBonuses,
   cooldownOf,
   rollValue,
@@ -392,11 +392,11 @@ const offerPool = (state: RunState, ownedOnly = false): { item: Choice; weight: 
 
 // Two different stats of the weapon for a level after its first, drawn from its rolls.
 const rollBonuses = (state: RunState, id: WeaponId, rarity?: Rarity): WeaponBonus[] => {
-  const left = [...WEAPON_ROLLS[id]];
+  const left = rollStats(id);
   const bonuses: WeaponBonus[] = [];
   for (let i = 0; i < 2 && left.length > 0; i += 1) {
     const stat = left.splice(Math.floor(state.rng.next() * left.length), 1)[0];
-    bonuses.push({ stat, value: rollValue(stat, rarity) });
+    bonuses.push({ stat, value: rollValue(id, stat, rarity) });
   }
   return bonuses;
 };
@@ -790,7 +790,8 @@ const spawnWave = (state: RunState, stats: Stats, dt: number, events: GameEvent[
     if (countProps(state) < 40) for (let i = 0; i < 4; i += 1) placeProp(state, 'pot');
   }
   const calm = state.time < (state.calmUntil ?? 0) ? 0.25 : 1;
-  state.spawnBudget += spawnRate(state.time) * (1 + stats.difficulty / 2) * calm * dt;
+  state.spawnBudget +=
+    spawnRate(state.time, state.player.level) * (1 + stats.difficulty / 2) * calm * dt;
   const props = countProps(state);
   while (state.spawnBudget >= 1) {
     state.spawnBudget -= 1;
@@ -1494,7 +1495,7 @@ const fireWeapon = (
           'card',
           aim,
           spec.speed,
-          { radius: 0.35, damage: spec.damage * 0.6, pierce: 0, life: spec.life },
+          { radius: 0.35, damage: spec.damage * 0.9, pierce: 0, life: spec.life },
           from
         );
       }
@@ -1522,6 +1523,8 @@ const runWeapons = (state: RunState, stats: Stats, grid: Grid, dt: number, event
     if (weapon.id === 'urns') {
       const spec = weaponSpec(weapon, stats);
       weapon.angle += ((2.8 * (1 + weaponBonus(weapon, 'attackSpeed'))) / cooldownOf(stats)) * dt;
+      // Attack speed lets the boxes hit the same enemy again sooner, not only spin faster.
+      const again = 0.4 / (1 + weaponBonus(weapon, 'attackSpeed'));
       for (let b = 0; b < spec.count; b += 1) {
         const angle = weapon.angle + (b / spec.count) * Math.PI * 2;
         const box = {
@@ -1530,7 +1533,7 @@ const runWeapons = (state: RunState, stats: Stats, grid: Grid, dt: number, event
         };
         eachNear(grid, box.x, box.z, 0.8, (e) => {
           if (e.urnCd > 0) return;
-          e.urnCd = 0.4;
+          e.urnCd = again;
           hurtEnemy(state, stats, e, spec.damage, events, 6, 'urns', box);
         });
       }

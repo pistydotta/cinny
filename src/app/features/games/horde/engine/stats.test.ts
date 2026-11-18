@@ -78,11 +78,11 @@ describe('horde stats: adding up', () => {
       passives: [{ id: 'might' as const, level: 2 }],
       blessings: { might: 1 },
     };
-    // Three levels of +15% add up to +45%.
-    expect(computeStats(base).damage).toBeCloseTo(1.45);
-    // Five levels of the permanent +5% multiply on top: 1.45 * 1.25.
+    // Three levels of +10% add up to +30%.
+    expect(computeStats(base).damage).toBeCloseTo(1.3);
+    // Five levels of the permanent +5% multiply on top: 1.3 * 1.25.
     expect(computeStats({ ...base, meta: { ...base.meta, might: 5 } }).damage).toBeCloseTo(
-      1.45 * 1.25
+      1.3 * 1.25
     );
   });
 
@@ -240,9 +240,9 @@ describe('horde stats: attack and weapons', () => {
       bless(run, 'crit', 100);
       bless(run, 'critdmg', 2);
     });
-    // Lula's aura level 1: 7 damage, times 1.12, times 2.6 on a crit.
+    // Lula's aura level 1: 7 damage, times 1.12, times 2.4 on a crit.
     expect(events[0].crit).toBe(true);
-    expect(events[0].amount).toBe(Math.round(7 * 1.12 * 2.6));
+    expect(events[0].amount).toBe(Math.round(7 * 1.12 * 2.4));
   });
 
   it('elite damage only against elites and bosses', () => {

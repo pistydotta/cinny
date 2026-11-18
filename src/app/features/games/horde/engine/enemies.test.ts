@@ -81,7 +81,7 @@ describe('horde enemies', () => {
       return 1e6 - shield.hp;
     };
     expect(lost('card')).toBeGreaterThan(0);
-    expect(lost('card')).toBeCloseTo(20 * 1.12 * SHIELD_FRONT, 0);
+    expect(lost('card')).toBeCloseTo(27 * 1.12 * SHIELD_FRONT, 0);
     expect(lost('nova')).toBeCloseTo(19 * 1.12, 0);
     expect(lost('card', true)).toBeCloseTo(50, 0);
   });
