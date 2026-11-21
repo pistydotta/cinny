@@ -20,6 +20,7 @@ import {
 } from './sidebar';
 import { CreateTab } from './sidebar/CreateTab';
 import { AboutTab } from '../../features/about/AboutTab';
+import { PlaybookTab } from '../../features/playbook';
 
 export function SidebarNav() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -38,6 +39,7 @@ export function SidebarNav() {
             <SidebarStack>
               <ExploreTab />
               <GamesTab />
+              <PlaybookTab />
               <CreateTab />
             </SidebarStack>
           </Scroll>

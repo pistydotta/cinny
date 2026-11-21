@@ -100,6 +100,7 @@ import {
 } from './client/games';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { TableGamesPage } from '../features/games/table-games/TableGamesPage';
+import { playbookRoutes } from '../features/playbook';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
 import { getMxIdServer } from '../utils/matrix';
@@ -318,6 +319,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         </Route>
         <Route path={CREATE_PATH} element={<Create />} />
         <Route path={GAMES_PATH} element={<GamesHubPage />} />
+        {playbookRoutes}
         <Route path={GAMES_POKER_PATH} element={<PokerLobbyPage />} />
         <Route path={GAMES_POKER_PRACTICE_PATH} element={<PokerPracticePage />} />
         <Route path={GAMES_POKER_TOURNAMENT_PATH} element={<PokerTournamentPage />} />
