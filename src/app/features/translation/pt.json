@@ -2436,7 +2436,9 @@
       "fold_now": "Desistir agora",
       "fold_now_hint": "Abandonar esta mão imediatamente. Não é possível desfazer.",
       "hint": "Acontece uma vez, na sua vez. Desmarque para cancelar. Pagar nunca ultrapassa o limite escolhido; uma nova rodada ou desconexão limpa a seleção.",
-      "fold_short": "Desistir"
+      "fold_short": "Desistir",
+      "selected": "Na sua vez: {{action}}",
+      "slot": "Seus botões de ação aparecem aqui na sua vez"
     },
     "audio": {
       "title": "Sons do poker",
@@ -2794,6 +2796,8 @@
   "poker_coach.failed": "Não deu certo. Tente de novo.",
   "whats_new.horde_levels_title": "BrazilianBonk: armas até o nível 50, Boletos até o 99 e visual novo",
   "whats_new.horde_levels_body": "As armas agora sobem até o nível 50, e cada nível dá dois atributos da própria arma: dano, chance de crítico, dano crítico, projéteis, velocidade de ataque, tamanho e mais. Os Boletos agora vão até o nível 99 (ou até o atributo chegar no limite), os níveis vêm mais rápido no fim da partida e os inimigos ficam mais fortes para acompanhar. Os drops ganharam modelos próprios (cristais, moedas, corações, baús) e a HUD foi redesenhada em pixel art. O mouse agora fica preso enquanto você joga, também no app do Windows, até apertar Esc.",
+  "whats_new.poker_preactions_title": "Poker: sem cliques errados quando chega sua vez",
+  "whats_new.poker_preactions_body": "As ações escolhidas antes da sua vez agora são caixas de seleção numa linha própria, longe de onde aparecem os botões Desistir, Pagar e Aumentar. Botões que acabaram de aparecer ignoram cliques por um instante, então um clique feito para outra coisa não desiste nem paga mais.",
   "whats_new.horde_muambas_title": "BrazilianBonk: Muambas, mapa maior e altares da Treta",
   "whats_new.horde_muambas_body": "O jogo agora tem itens: 42 Muambas, do Whey Sem Selo ao Jeitinho Brasileiro. O Camelô vende por ouro (escolha 1 de 3, cada vez mais caro) e o Agiota empresta uma rara na hora, paga com vida e dificuldade até o fim da partida. O mapa ficou um terço maior, com mais baús e altares, cada altar com seu próprio modelo, e os altares da Treta somam dificuldade (e XP e ouro) para quem quiser. Os gráficos ganharam a tremidinha e as cores pontilhadas do PS1.",
   "playbook.error.load": "Não deu pra carregar este mapa. Tente de novo em instantes.",

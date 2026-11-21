@@ -17,6 +17,21 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-poker-preaction-misclicks',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.poker_preactions_title',
+          'Poker: no more misclicks when your turn comes'
+        ),
+        body: tr(
+          'whats_new.poker_preactions_body',
+          'Actions chosen before your turn are now checkboxes in their own row, away from where the Fold, Call and Raise buttons appear. Buttons that just appeared ignore clicks for a moment, so a click meant for something else no longer folds or calls.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-brazilianbonk-muambas',
     items: () => [
       {

@@ -33,6 +33,10 @@ const controlsBlock = {
 const focusRing = {
   '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
 } as const;
+// A control that just appeared ignores clicks for a moment (clickGuard.ts) and looks it.
+const arming = {
+  '&[data-arming="true"]': { opacity: 0.55, cursor: 'default' },
+} as const;
 
 export const Bar = style({
   flexShrink: 0,
@@ -150,7 +154,23 @@ export const Link = style({
 
 export const Divider = style({ height: 1, background: '#1f232b', flexShrink: 0 });
 
-export const Row = style({ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' });
+/* The block under the header while the viewer is in the hand: the queued-action toggles over
+   an empty slot before their turn, the sizing row over the buttons on it. The toggles never
+   sit where the buttons will appear, and the bar keeps about the same height either way. */
+export const Dock = style({
+  ...controlsBlock,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+  '@media': { [MOBILE]: { gap: 10, maxWidth: 'none' } },
+});
+export const Toggles = style({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: 8,
+  minHeight: CONTROL,
+});
 export const RowLabel = style({ flex: 1, fontSize: 12, color: MUTED, whiteSpace: 'nowrap' });
 
 /* Raise sizing: presets | slider | amount, on one centre line. On a phone the presets take
@@ -315,6 +335,7 @@ const button = style({
   transition: 'background 120ms, border-color 120ms, opacity 120ms, transform 80ms',
   selectors: {
     '&:active:not(:disabled)': { transform: 'translateY(1px)' },
+    ...arming,
     '&:disabled': { opacity: 0.4, cursor: 'default' },
     ...focusRing,
   },
@@ -387,7 +408,6 @@ export const Chip = style({
   cursor: 'pointer',
   selectors: {
     '&:hover:not(:disabled)': { borderColor: '#3b404b' },
-    '&[aria-pressed="true"]': { borderColor: GOLD_RING, background: GOLD_SOFT, color: '#ead19a' },
     '&:disabled': { opacity: 0.4, cursor: 'default' },
     ...focusRing,
   },
@@ -407,8 +427,66 @@ export const Danger = style({
   cursor: 'pointer',
   selectors: {
     '&:hover:not(:disabled)': { color: '#e39a91', background: 'rgba(201, 128, 120, 0.08)' },
+    ...arming,
     '&:disabled': { opacity: 0.4 },
     ...focusRing,
   },
 });
-export const Hint = style({ flexBasis: '100%', fontSize: 11, color: MUTED, lineHeight: 1.5 });
+
+/* Queued actions are checkboxes, not buttons: a square box and no fill, so they never read
+   as the solid action buttons that take their place on the turn. */
+export const Toggle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 7,
+  height: 32,
+  padding: '0 10px 0 8px',
+  borderRadius: 8,
+  border: `1px solid ${LINE}`,
+  background: 'transparent',
+  color: '#cfc9bb',
+  fontSize: 12,
+  whiteSpace: 'nowrap',
+  cursor: 'pointer',
+  selectors: {
+    '&:hover:not(:disabled)': { borderColor: '#3b404b' },
+    '&[aria-checked="true"]': { borderColor: GOLD_RING, background: GOLD_SOFT, color: '#ead19a' },
+    ...arming,
+    '&:disabled': { opacity: 0.4, cursor: 'default' },
+    ...focusRing,
+  },
+});
+export const Box = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 14,
+  height: 14,
+  flexShrink: 0,
+  borderRadius: 4,
+  border: '1.5px solid #5a5e68',
+  boxSizing: 'border-box',
+  color: GOLD_TEXT,
+  selectors: {
+    [`${Toggle}[aria-checked="true"] &`]: { borderColor: GOLD, background: GOLD },
+  },
+});
+/* Where the action buttons appear on the turn: nothing to click there before it. */
+export const Slot = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: 44,
+  padding: '0 12px',
+  borderRadius: RADIUS,
+  border: `1px dashed ${LINE}`,
+  boxSizing: 'border-box',
+  color: MUTED,
+  fontSize: 12,
+  textAlign: 'center',
+  lineHeight: 1.3,
+  selectors: {
+    '&[data-queued="true"]': { borderColor: GOLD_RING, color: '#ead19a' },
+  },
+  '@media': { [MOBILE]: { height: 46 } },
+});
