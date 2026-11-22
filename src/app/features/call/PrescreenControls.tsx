@@ -9,6 +9,7 @@ import { useCallEmbed, useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallPreferences } from '../../state/hooks/callPreferences';
 import { switchingToCallAtom, useSwitchCall } from '../call-switch/useSwitchCall';
 import { AudioMenuArrow } from '../call-audio-settings';
+import { tr } from '../translation/tr';
 
 type PrescreenControlsProps = {
   canJoin?: boolean;
@@ -66,7 +67,7 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
             )
           }
         >
-          <Text size="B400">Join</Text>
+          <Text size="B400">{tr('call_view.join', 'Join')}</Text>
         </Button>
       </Box>
     </SequenceCard>

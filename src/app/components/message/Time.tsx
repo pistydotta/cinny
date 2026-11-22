@@ -1,6 +1,8 @@
 import React, { ComponentProps } from 'react';
 import { Text, as } from 'folds';
 import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import { messageDateFormat } from '../../features/clock-format/messageDate';
+import { tr } from '../../features/translation/tr';
 
 export type TimeProps = {
   compact?: boolean;
@@ -31,9 +33,9 @@ export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
     } else if (today(ts)) {
       time = formattedTime;
     } else if (yesterday(ts)) {
-      time = `Yesterday ${formattedTime}`;
+      time = `${tr('timeline.yesterday', 'Yesterday')} ${formattedTime}`;
     } else {
-      time = `${timeDayMonYear(ts, dateFormatString)} ${formattedTime}`;
+      time = `${timeDayMonYear(ts, messageDateFormat(ts, dateFormatString))} ${formattedTime}`;
     }
 
     return (

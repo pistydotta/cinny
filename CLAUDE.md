@@ -16,7 +16,7 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   `src/app/features/friends`, `invites`, `room-invite`, `admin`, `settings/admin`, `word-swap`, `home-direct`,
   `encryption-setup`, `room-nav-reorder`, `invite-to-server`, `translation`, `whats-new`, `home-overview`, `feedback`, `push`, `desktop-download`, `android-app`, `app-prompt`, `tooltips`, `profile-description`, `call-indicator`, `coffee`, `about`, `self-chat`, `first-login`, `register-page`, `auth-card`, `app-background`, `forge-theme`, `settings-shell`, `app-update`, `pinned-chats`, `games`, `screen-share`
   (with `pages/client/games`),
-  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `call-audio-settings`, `room-nav/CallMemberAvatars.tsx` and
+  `space-autojoin`, `call-rejoin`, `call-switch`, `call-notify`, `call-member-card`, `call-audio-settings`, `clock-format`, `room-nav/CallMemberAvatars.tsx` and
   `room-nav/callMembers.ts`, `src/element-call`, `src/app/utils/blazeroomApi.ts`.
   Touch upstream files only to plug them in, with as few lines as you can.
 - Poker rules live in the blazeroom API, which deals, bets and pays. The client in `games` computes

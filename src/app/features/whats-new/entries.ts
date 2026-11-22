@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-clock24-translations',
+    items: () => [
+      {
+        title: tr('whats_new.clock24_title', '24-hour clock and translated screens'),
+        body: tr(
+          'whats_new.clock24_body',
+          'Messages now show 15:07 instead of 03:07 PM, and dates from this year leave the year out. If you prefer the 12-hour clock, switch it back in Settings > Appearance > Date & time. The call join screen and the login footer are in Portuguese too.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-poker-preaction-misclicks',
     items: () => [
       {

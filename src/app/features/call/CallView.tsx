@@ -21,11 +21,12 @@ import { LiveCallBar } from '../screen-share/LiveCallBar';
 import * as shareCss from '../screen-share/styles.css';
 import { useShares } from '../screen-share/useShares';
 import { CallEmbed } from '../../plugins/call';
+import { tr } from '../translation/tr';
 
 function LivekitServerMissingMessage() {
   return (
     <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
-      Your homeserver does not support calling.
+      {tr('call_view.no_livekit', 'Your homeserver does not support calling.')}
     </Text>
   );
 }
@@ -33,7 +34,10 @@ function LivekitServerMissingMessage() {
 function WebRTCMissingError() {
   return (
     <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
-      Your browser does not support WebRTC, which is required for calling.
+      {tr(
+        'call_view.no_webrtc',
+        'Your browser does not support WebRTC, which is required for calling.'
+      )}
     </Text>
   );
 }
@@ -59,7 +63,7 @@ function JoinMessage({
 
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      Voice chat’s empty — Be the first to hop in!
+      {tr('call_view.empty', 'Voice chat’s empty — Be the first to hop in!')}
     </Text>
   );
 }
@@ -67,7 +71,7 @@ function JoinMessage({
 function NoPermissionMessage() {
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      You don&#39;t have permission to join!
+      {tr('call_view.no_permission', 'You don’t have permission to join!')}
     </Text>
   );
 }
@@ -100,11 +104,11 @@ function CallPrescreen() {
           {hasParticipant && (
             <Header size="300">
               <Box grow="Yes" alignItems="Center">
-                <Text size="L400">Participant</Text>
+                <Text size="L400">{tr('call_view.participants', 'Participant')}</Text>
               </Box>
               <Badge variant="Critical" fill="Solid" size="400">
                 <Text as="span" size="L400" truncate>
-                  {callMembers.length} Live
+                  {tr('call_view.n_live', '{{n}} Live', { n: callMembers.length })}
                 </Text>
               </Badge>
             </Header>

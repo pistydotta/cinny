@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { migratePortugueseClock } from '../features/clock-format/portugueseClock';
 
 const STORAGE_KEY = 'settings';
 export type DateFormat =
@@ -104,6 +105,7 @@ export const setSettings = (settings: Settings) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 };
 
+migratePortugueseClock();
 const baseSettings = atom<Settings>(getSettings());
 export const settingsAtom = atom<Settings, [Settings], undefined>(
   (get) => get(baseSettings),

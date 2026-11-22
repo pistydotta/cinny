@@ -696,7 +696,8 @@
     "subtitle": "Boas-vindas ao blazeroom.",
     "language_body": "Para mudar, abra Configurações (seu avatar, no canto inferior esquerdo) > Aparência > Idioma.",
     "built_on": "Feito com",
-    "source_code": "Código-fonte"
+    "source_code": "Código-fonte",
+    "powered_by_matrix": "Feito sobre o Matrix"
   },
   "whats_new": {
     "horde_map_title": "BrazilianBonk: mapa novo, maior e com relevo",
@@ -918,6 +919,25 @@
     "placeholder": "Aparece no seu cartão de perfil",
     "save": "Salvar",
     "failed": "Não foi possível salvar. Tente de novo."
+  },
+  "call_view": {
+    "join": "Entrar na chamada",
+    "empty": "Ninguém na chamada ainda. Entre e chame a galera.",
+    "no_permission": "Você não tem permissão para entrar nesta chamada.",
+    "no_livekit": "O servidor não tem suporte a chamadas.",
+    "no_webrtc": "Seu navegador não tem WebRTC, que as chamadas precisam.",
+    "participants": "Na chamada",
+    "n_live": "{{n}} ao vivo",
+    "mic_off": "Desligar microfone",
+    "mic_on": "Ligar microfone",
+    "sound_off": "Desligar som",
+    "sound_on": "Ligar som",
+    "camera_off": "Desligar câmera",
+    "camera_on": "Ligar câmera",
+    "screenshare_off": "Parar de compartilhar a tela",
+    "screenshare_on": "Compartilhar a tela",
+    "chat_off": "Fechar chat",
+    "chat_on": "Abrir chat"
   },
   "call_indicator": {
     "label": "Chamada em andamento"
@@ -2834,6 +2854,8 @@
   "whats_new.horde_levels_body": "As armas agora sobem até o nível 50, e cada nível dá dois atributos da própria arma: dano, chance de crítico, dano crítico, projéteis, velocidade de ataque, tamanho e mais. Os Boletos agora vão até o nível 99 (ou até o atributo chegar no limite), os níveis vêm mais rápido no fim da partida e os inimigos ficam mais fortes para acompanhar. Os drops ganharam modelos próprios (cristais, moedas, corações, baús) e a HUD foi redesenhada em pixel art. O mouse agora fica preso enquanto você joga, também no app do Windows, até apertar Esc.",
   "whats_new.poker_preactions_title": "Poker: sem cliques errados quando chega sua vez",
   "whats_new.poker_preactions_body": "As ações escolhidas antes da sua vez agora são caixas de seleção numa linha própria, longe de onde aparecem os botões Desistir, Pagar e Aumentar. Botões que acabaram de aparecer ignoram cliques por um instante, então um clique feito para outra coisa não desiste nem paga mais.",
+  "whats_new.clock24_title": "Relógio de 24 horas e telas traduzidas",
+  "whats_new.clock24_body": "As mensagens agora mostram 15:07 em vez de 03:07 PM, e datas deste ano aparecem sem o ano. Quem prefere o relógio de 12 horas pode voltar em Configurações > Aparência > Data e hora. A tela de entrar na chamada e o rodapé do login também estão em português.",
   "whats_new.horde_muambas_title": "BrazilianBonk: Muambas, mapa maior e altares da Treta",
   "whats_new.horde_muambas_body": "O jogo agora tem itens: 42 Muambas, do Whey Sem Selo ao Jeitinho Brasileiro. O Camelô vende por ouro (escolha 1 de 3, cada vez mais caro) e o Agiota empresta uma rara na hora, paga com vida e dificuldade até o fim da partida. O mapa ficou um terço maior, com mais baús e altares, cada altar com seu próprio modelo, e os altares da Treta somam dificuldade (e XP e ouro) para quem quiser. Os gráficos ganharam a tremidinha e as cores pontilhadas do PS1.",
   "playbook.error.load": "Não deu pra carregar este mapa. Tente de novo em instantes.",

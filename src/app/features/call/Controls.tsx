@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, IconButton, Icons, Line, Text, Tooltip, TooltipProvider } from 'folds';
+import { tr } from '../translation/tr';
 import { useAtom } from 'jotai';
 import * as css from './styles.css';
 import { callChatAtom } from '../../state/callEmbed';
@@ -18,14 +19,18 @@ type MicrophoneButtonProps = {
 export function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
   const [micState, toggleMic] = useAsyncCallback(onToggle);
   const loading = micState.status === AsyncStatus.Loading;
-  
+
   return (
     <TooltipProvider
       position="Top"
       delay={500}
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Turn Off Microphone' : 'Turn On Microphone'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.mic_off', 'Turn Off Microphone')
+              : tr('call_view.mic_on', 'Turn On Microphone')}
+          </Text>
         </Tooltip>
       }
     >
@@ -58,7 +63,11 @@ export function SoundButton({ enabled, onToggle }: SoundButtonProps) {
       delay={500}
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Turn Off Sound' : 'Turn On Sound'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.sound_off', 'Turn Off Sound')
+              : tr('call_view.sound_on', 'Turn On Sound')}
+          </Text>
         </Tooltip>
       }
     >
@@ -97,7 +106,11 @@ export function VideoButton({ enabled, onToggle }: VideoButtonProps) {
       delay={500}
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Stop Camera' : 'Start Camera'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.camera_off', 'Stop Camera')
+              : tr('call_view.camera_on', 'Start Camera')}
+          </Text>
         </Tooltip>
       }
     >
@@ -134,7 +147,11 @@ export function ScreenShareButton({ enabled, onToggle }: ScreenShareButtonProps)
       delay={500}
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Stop Screenshare' : 'Start Screenshare'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.screenshare_off', 'Stop Screenshare')
+              : tr('call_view.screenshare_on', 'Start Screenshare')}
+          </Text>
         </Tooltip>
       }
     >
@@ -164,7 +181,9 @@ export function ChatButton() {
       delay={500}
       tooltip={
         <Tooltip>
-          <Text size="T200">{chat ? 'Close Chat' : 'Open Chat'}</Text>
+          <Text size="T200">
+            {chat ? tr('call_view.chat_off', 'Close Chat') : tr('call_view.chat_on', 'Open Chat')}
+          </Text>
         </Tooltip>
       }
     >
