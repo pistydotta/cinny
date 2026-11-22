@@ -154,6 +154,8 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but
   cannot move. Poll snapshots use `revision`; actions use the separate gameplay `version`,
   so spectator comments don't invalidate moves. See `../docs/table-games.md` for rules.
+  The Truco table's scene (the bar photo behind the table) is the owners' and stays as it is
+  in any redesign; only the controls drawn over it (buttons, labels, seats) may change.
 - Every card game draws its cards with `games/cards/GameCard`: a flat white face, a bold corner
   index and one big suit, sized by `--card-w`. Realistic decks (Paulista figures, a Spanish
   deck) were tried in Truco and dropped: at table sizes they were hard to read.
@@ -167,7 +169,10 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
 - The only look is Forge (`features/forge-theme`), in a light and a dark mode; the Cinny themes
   are gone. Theme ids stay `light-theme` and `dark-theme`, and the palette lives in `palette.ts`,
   where a test checks contrast. Cinny's shell is restyled from `shell.css.ts` instead of editing
-  upstream style files. The wallpaper shows only behind the logged-out pages. Games screens
+  upstream style files. Roles folds has no slot for are in `forgeColor` (`forgeColor.css.ts`):
+  `Ember` for focus rings, links, the selected row and switch/slider fills, and `Text.Secondary`/
+  `Text.Faint` for dimmer text. Use them instead of a new hex or an opacity; filled buttons stay
+  the wine `Primary`. The wallpaper shows only behind the logged-out pages. Games screens
   still carry their own gold and serif styles until their redesign PRs.
 
 - An unwatched screen share is a stand-in tile in Element Call's grid (a bundle patch), with

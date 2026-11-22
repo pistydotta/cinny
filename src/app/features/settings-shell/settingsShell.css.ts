@@ -1,7 +1,8 @@
-import { createVar, globalStyle, style } from '@vanilla-extract/css';
+import { globalStyle, style } from '@vanilla-extract/css';
 import { color, config, toRem } from 'folds';
 import { PageContent, PageContentCenter, PageHeader } from '../../components/page/style.css';
 import { SequenceCard } from '../../components/sequence-card/style.css';
+import { forgeColor } from '../forge-theme/forgeColor.css';
 
 const line = (strength: number) =>
   `color-mix(in srgb, ${color.Surface.OnContainer} ${strength}%, transparent)`;
@@ -175,9 +176,7 @@ globalStyle(`${section} > div:first-child:not(${seq}) > p:first-child`, {
 // Each section's title column carries its number and, for the section in view (marked by the
 // shell as you scroll), an ember thread down its length; the others step back a little.
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-const ember = createVar();
-globalStyle('body', { vars: { [ember]: color.Primary.Main } });
-globalStyle('body.dark-theme', { vars: { [ember]: '#D8613F' } });
+const ember = forgeColor.Ember.Main;
 
 globalStyle(`${Body} .${PageContent} > div`, { counterReset: 'settings-section' });
 globalStyle(section, { counterIncrement: 'settings-section' });

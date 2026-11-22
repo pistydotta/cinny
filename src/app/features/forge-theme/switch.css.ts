@@ -1,5 +1,6 @@
-import { createVar, globalStyle } from '@vanilla-extract/css';
+import { globalStyle } from '@vanilla-extract/css';
 import { color } from 'folds';
+import { forgeColor } from './forgeColor.css';
 
 // Forge's switch: a see-through track. Off is an empty ring on the left; on slides a filled
 // ember dot to the right and then draws its check, so the state reads by shape, not only colour.
@@ -9,11 +10,8 @@ const line = (strength: number) =>
 
 const track = 'body button[type=button][role=switch][aria-checked]';
 const on = 'body button[type=button][role=switch][aria-checked=true]';
-// Dark mode's wine primary is too deep to read on the dark card, so the dot takes the divider
-// spark's brighter ember there.
-const ember = createVar();
-globalStyle('body', { vars: { [ember]: color.Primary.Main } });
-globalStyle('body.dark-theme', { vars: { [ember]: '#D8613F' } });
+// The dot is ember, not the wine primary: wine is too deep to read on the dark card.
+const ember = forgeColor.Ember.Main;
 
 const slide = 'cubic-bezier(0.3, 1.3, 0.5, 1)';
 
@@ -31,7 +29,7 @@ globalStyle(track, {
 });
 globalStyle(`${track}:hover`, { borderColor: line(50) });
 globalStyle(`${track}:focus-visible`, {
-  outline: `2px solid ${color.Primary.Main}`,
+  outline: `2px solid ${ember}`,
   outlineOffset: '2px',
 });
 globalStyle(`${track}:disabled`, { opacity: 0.45, cursor: 'not-allowed' });

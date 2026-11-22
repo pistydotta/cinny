@@ -26,16 +26,18 @@ export const forgeDark = {
     OnContainer: '#ECEEF0',
   },
 
+  // A step lighter than light mode's wine: #66241E sat at 1.6:1 on the dark panel, so a
+  // selected or filled control barely showed.
   Primary: {
-    Main: '#66241E',
-    MainHover: '#742C25',
-    MainActive: '#82342C',
-    MainLine: '#541D18',
+    Main: '#8E3326',
+    MainHover: '#9A3A2C',
+    MainActive: '#A6412F',
+    MainLine: '#7A2B23',
     OnMain: '#FFFFFF',
-    Container: '#24110F',
-    ContainerHover: '#2D1512',
-    ContainerActive: '#361916',
-    ContainerLine: '#401E1A',
+    Container: '#2B1A1A',
+    ContainerHover: '#341F1E',
+    ContainerActive: '#3D2421',
+    ContainerLine: '#472A26',
     OnContainer: '#EBCBC5',
   },
 
@@ -92,7 +94,7 @@ export const forgeDark = {
   },
 
   Other: {
-    FocusRing: 'rgba(255, 255, 255, 0.5)',
+    FocusRing: '#E06A52',
     Shadow: 'rgba(0, 0, 0, 0.6)',
     Overlay: 'rgba(0, 0, 0, 0.7)',
   },
@@ -189,8 +191,22 @@ export const forgeLight: typeof forgeDark = {
   },
 
   Other: {
-    FocusRing: 'rgba(0, 0, 0, 0.5)',
+    FocusRing: '#B84A30',
     Shadow: 'rgba(0, 0, 0, 0.2)',
     Overlay: 'rgba(0, 0, 0, 0.5)',
   },
+};
+
+// Roles folds has no slot for. Ember is the bright accent for things that are not filled
+// buttons: links, focus rings, the selected-row bar, switch and slider fills. It replaces the
+// one-off embers features had picked to get the wine to show on dark. Text.Secondary and
+// Text.Faint are the dimmer inks, so features stop fading text with opacity.
+export const forgeExtraDark = {
+  Ember: { Main: '#E06A52', OnMain: '#0C0D0F' },
+  Text: { Secondary: '#A3A9B0', Faint: '#8A9099' },
+};
+
+export const forgeExtraLight: typeof forgeExtraDark = {
+  Ember: { Main: '#B84A30', OnMain: '#FFFFFF' },
+  Text: { Secondary: '#5C636B', Faint: '#6B7178' },
 };

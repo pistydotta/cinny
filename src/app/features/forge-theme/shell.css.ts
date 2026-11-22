@@ -4,6 +4,7 @@ import * as navCss from '../../components/nav/styles.css';
 import * as sidebarCss from '../../components/sidebar/Sidebar.css';
 import * as pageCss from '../../components/page/style.css';
 import { forgeDark } from './palette';
+import { forgeColor } from './forgeColor.css';
 import './switch.css';
 
 // Forge restyles Cinny's shell from here, so the upstream style files stay untouched.
@@ -12,7 +13,7 @@ const mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 // The open room or page: a raised row with an ember bar on its left edge.
 globalStyle(`[aria-selected=true]:has(.${navCss.NavLink})`, {
   backgroundColor: color.Background.ContainerActive,
-  boxShadow: `inset 2px 0 0 ${color.Primary.Main}`,
+  boxShadow: `inset 2px 0 0 ${forgeColor.Ember.Main}`,
 });
 
 globalStyle(`.${navCss.NavCategoryHeader} p`, {
@@ -155,12 +156,13 @@ const applyDivider = (themeClass: string, c: DividerColors) => {
   globalStyle(staticSel(themeClass, '::after'), { animation: 'none', opacity: 0 });
 };
 
-// Dark mode: a bright ember over near black, in the wine accent.
+// Dark mode: a bright ember over near black, in the wine accent. The core is ember lifted a touch.
+const sparkCore = `color-mix(in srgb, ${forgeColor.Ember.Main} 85%, white)`;
 applyDivider('.dark-theme', {
   thread: `color-mix(in srgb, ${color.Primary.Main} 55%, transparent)`,
   glow: `linear-gradient(to bottom, transparent, ${color.Primary.Main} 18%, ${color.Primary.MainActive} 50%, ${color.Primary.Main} 82%, transparent)`,
-  spark: `linear-gradient(to bottom, transparent, ${color.Primary.MainActive} 26%, #E06A52 44%, #E6775D 50%, #E06A52 56%, ${color.Primary.MainActive} 74%, transparent)`,
-  halo: '#E6775D',
+  spark: `linear-gradient(to bottom, transparent, ${color.Primary.MainActive} 26%, ${forgeColor.Ember.Main} 44%, ${sparkCore} 50%, ${forgeColor.Ember.Main} 56%, ${color.Primary.MainActive} 74%, transparent)`,
+  halo: sparkCore,
 });
 // Light mode: red clashes on the near-white page, so the divider is neutral grey. The line itself
 // stays light and thin; a darker, shorter grey streak travels over it, the reverse of dark mode.

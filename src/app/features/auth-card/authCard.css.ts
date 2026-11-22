@@ -1,15 +1,15 @@
 import { globalStyle, style } from '@vanilla-extract/css';
 import { DefaultReset, color, config, toRem } from 'folds';
+import { forgeColor } from '../forge-theme/forgeColor.css';
 
 // Hairlines take the card's text color at low strength, so they hold up in every theme.
 const line = (strength: number) =>
   `color-mix(in srgb, ${color.Surface.OnContainer} ${strength}%, transparent)`;
 
-// The login card's own red, a step brighter than the theme's primary so it reads on the
-// dark card.
-const brand = '#993C1D';
-const brandHover = '#86331A';
-const onBrand = '#FAECE7';
+// The card's button is the theme's wine; focus marks are ember, like everywhere else.
+const focus = forgeColor.Ember.Main;
+// The logo's tile: a pale wine paper behind the mark in both modes.
+const logoPaper = '#FAECE7';
 
 // Doubled class (&&) so these win over folds' own classes whatever order the CSS loads in.
 export const Card = style({
@@ -36,7 +36,7 @@ export const LogoTile = style({
   width: toRem(48),
   height: toRem(48),
   borderRadius: toRem(12),
-  background: onBrand,
+  background: logoPaper,
 });
 
 export const Logo = style([DefaultReset, { width: toRem(28), height: toRem(28) }]);
@@ -76,7 +76,7 @@ export const Field = style({
       boxShadow: `inset 0 0 0 1px ${line(22)}`,
     },
     '&&:hover': { boxShadow: `inset 0 0 0 1px ${line(35)}` },
-    '&&:focus-within': { boxShadow: `inset 0 0 0 1.5px ${brand}` },
+    '&&:focus-within': { boxShadow: `inset 0 0 0 1.5px ${focus}` },
   },
 });
 
@@ -88,11 +88,12 @@ export const Submit = style({
     '&&': {
       height: toRem(36),
       borderRadius: toRem(18),
-      backgroundColor: brand,
-      color: onBrand,
+      backgroundColor: color.Primary.Main,
+      color: color.Primary.OnMain,
       boxShadow: 'none',
     },
-    '&&:hover, &&:focus-visible': { backgroundColor: brandHover },
+    '&&:hover': { backgroundColor: color.Primary.MainHover },
+    '&&:focus-visible': { outline: `2px solid ${focus}`, outlineOffset: 2 },
   },
 });
 
@@ -114,7 +115,7 @@ export const Secondary = style({
   cursor: 'pointer',
   selectors: {
     '&:hover': { borderColor: line(35), color: color.Surface.OnContainer, textDecoration: 'none' },
-    '&:focus-visible': { outline: `2px solid ${brand}`, outlineOffset: 2 },
+    '&:focus-visible': { outline: `2px solid ${focus}`, outlineOffset: 2 },
   },
 });
 
