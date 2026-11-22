@@ -57,21 +57,33 @@ function EmailNotification() {
 
   return (
     <SettingTile
-      title="Email Notification"
+      title={tr('notification_settings.email', 'Email Notification')}
       description={
         <>
           {result && !result.email && (
             <Text as="span" style={{ color: color.Critical.Main }} size="T200">
-              Your account does not have any email attached.
+              {tr(
+                'notification_settings.email_missing',
+                'Your account does not have any email attached.'
+              )}
             </Text>
           )}
-          {result && result.email && <>Send notification to your email. {`("${result.email}")`}</>}
+          {result &&
+            result.email &&
+            tr(
+              'notification_settings.email_desc_with',
+              'Send notification to your email. ("{{email}}")',
+              {
+                email: result.email,
+              }
+            )}
           {result === null && (
             <Text as="span" style={{ color: color.Critical.Main }} size="T200">
-              Unexpected Error!
+              {tr('notification_settings.email_error', 'Unexpected Error!')}
             </Text>
           )}
-          {result === undefined && 'Send notification to your email.'}
+          {result === undefined &&
+            tr('notification_settings.email_desc', 'Send notification to your email.')}
         </>
       }
       after={
@@ -115,22 +127,33 @@ export function SystemNotification() {
         gap="400"
       >
         <SettingTile
-          title="Desktop Notifications"
+          title={tr('notification_settings.desktop', 'Desktop Notifications')}
           description={
             notifPermission === 'denied' ? (
               <Text as="span" style={{ color: color.Critical.Main }} size="T200">
                 {'Notification' in window
-                  ? 'Notification permission is blocked. Please allow notification permission from browser address bar.'
-                  : 'Notifications are not supported by the system.'}
+                  ? tr(
+                      'notification_settings.desktop_blocked',
+                      'Notification permission is blocked. Please allow notification permission from browser address bar.'
+                    )
+                  : tr(
+                      'notification_settings.desktop_unsupported',
+                      'Notifications are not supported by the system.'
+                    )}
               </Text>
             ) : (
-              <span>Show desktop notifications when message arrive.</span>
+              <span>
+                {tr(
+                  'notification_settings.desktop_desc',
+                  'Show desktop notifications when message arrive.'
+                )}
+              </span>
             )
           }
           after={
             notifPermission === 'prompt' ? (
               <Button size="300" radii="300" onClick={requestNotificationPermission}>
-                <Text size="B300">Enable</Text>
+                <Text size="B300">{tr('notification_settings.enable', 'Enable')}</Text>
               </Button>
             ) : (
               <Switch
@@ -149,8 +172,11 @@ export function SystemNotification() {
         gap="400"
       >
         <SettingTile
-          title="Notification Sound"
-          description="Play sound when new message arrive."
+          title={tr('notification_settings.sound', 'Notification Sound')}
+          description={tr(
+            'notification_settings.sound_desc',
+            'Play sound when new message arrive.'
+          )}
           after={<Switch value={isNotificationSounds} onChange={setIsNotificationSounds} />}
         />
       </SequenceCard>

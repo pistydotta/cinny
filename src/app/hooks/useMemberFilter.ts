@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { RoomMember } from 'matrix-js-sdk';
 import { Membership } from '../../types/matrix/room';
+import { tr } from '../features/translation/tr';
 
 export const MembershipFilter = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -25,23 +26,23 @@ export const useMembershipFilterMenu = (): MembershipFilterItem[] =>
   useMemo(
     () => [
       {
-        name: 'Joined',
+        name: tr('members.filter_joined', 'Joined'),
         filterFn: MembershipFilter.filterJoined,
       },
       {
-        name: 'Invited',
+        name: tr('members.filter_invited', 'Invited'),
         filterFn: MembershipFilter.filterInvited,
       },
       {
-        name: 'Left',
+        name: tr('members.filter_left', 'Left'),
         filterFn: MembershipFilter.filterLeaved,
       },
       {
-        name: 'Kicked',
+        name: tr('members.filter_kicked', 'Kicked'),
         filterFn: MembershipFilter.filterKicked,
       },
       {
-        name: 'Banned',
+        name: tr('members.filter_banned', 'Banned'),
         filterFn: MembershipFilter.filterBanned,
       },
     ],

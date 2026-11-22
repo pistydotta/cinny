@@ -99,7 +99,7 @@ function KeywordInput() {
         disabled={addingKeyword}
       >
         {addingKeyword && <Spinner variant="Secondary" size="300" />}
-        <Text size="B400">Save</Text>
+        <Text size="B400">{tr('account_settings.save', 'Save')}</Text>
       </Button>
     </Box>
   );
@@ -169,7 +169,7 @@ export function KeywordMessagesNotifications() {
           description={tr('settings.about_section.keywords', 'Get notified when a word shows up.')}
         />
         <Box gap="100">
-          <Text size="T200">Badge: </Text>
+          <Text size="T200">{tr('notification_settings.badge', 'Badge:')} </Text>
           <Badge radii="300" variant="Success" fill="Solid">
             <Text size="L400">1</Text>
           </Badge>
@@ -182,8 +182,11 @@ export function KeywordMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="Select Keyword"
-          description="Set a notification preference for message containing given keyword."
+          title={tr('notification_settings.select_keyword', 'Select Keyword')}
+          description={tr(
+            'notification_settings.select_keyword_desc',
+            'Set a notification preference for message containing given keyword.'
+          )}
         >
           <KeywordInput />
         </SettingTile>

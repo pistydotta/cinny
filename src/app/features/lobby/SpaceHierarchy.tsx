@@ -18,6 +18,7 @@ import { RoomType, StateEvent } from '../../../types/matrix/room';
 import { SequenceCard } from '../../components/sequence-card';
 import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
+import { tr } from '../translation/tr';
 
 type SpaceHierarchyProps = {
   summary: IHierarchyRoom | undefined;
@@ -217,10 +218,10 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
                 gap="100"
               >
                 <Text size="H5" align="Center">
-                  No Rooms
+                  {tr('lobby.no_rooms', 'No Rooms')}
                 </Text>
                 <Text align="Center" size="T300" priority="300">
-                  This space does not contains rooms yet.
+                  {tr('lobby.no_rooms_desc', 'This space does not contains rooms yet.')}
                 </Text>
               </Box>
             </SequenceCard>

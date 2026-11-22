@@ -5,6 +5,7 @@ import { MatrixId } from './MatrixId';
 import { Password } from './Password';
 import { Profile } from './Profile';
 import { ContactInformation } from './ContactInfo';
+import { tr } from '../../translation/tr';
 
 type AccountProps = {
   requestClose: () => void;
@@ -16,7 +17,7 @@ export function Account({ requestClose }: AccountProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Account
+              {tr('settings.tab.account', 'Account')}
             </Text>
           </Box>
           <Box shrink="No">

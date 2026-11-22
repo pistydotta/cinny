@@ -1,5 +1,9 @@
 import { style } from '@vanilla-extract/css';
 import { color } from 'folds';
+import { forgeColor } from '../forge-theme/forgeColor.css';
+
+// Slider fill, thumb and focus ring: ember reads on the dark panel, the wine doesn't.
+const ember = forgeColor.Ember.Main;
 
 export const Volume = style({
   display: 'grid',
@@ -35,7 +39,7 @@ export const Slider = style({
   background: 'transparent',
   cursor: 'pointer',
   ':focus-visible': {
-    outline: `2px solid ${color.Primary.Main}`,
+    outline: `2px solid ${ember}`,
     outlineOffset: 3,
     borderRadius: 6,
   },
@@ -44,7 +48,7 @@ export const Slider = style({
     '&::-webkit-slider-runnable-track': {
       height: 4,
       borderRadius: 999,
-      background: `linear-gradient(to right, ${color.Primary.Main} var(--voice-volume, 100%), ${color.Surface.ContainerLine} var(--voice-volume, 100%))`,
+      background: `linear-gradient(to right, ${ember} var(--voice-volume, 100%), ${color.Surface.ContainerLine} var(--voice-volume, 100%))`,
     },
     '&::-webkit-slider-thumb': {
       appearance: 'none',
@@ -52,22 +56,22 @@ export const Slider = style({
       width: 12,
       height: 12,
       borderRadius: '50%',
-      background: color.Primary.Main,
+      background: ember,
       border: `2px solid ${color.Surface.Container}`,
       marginTop: -4,
-      boxShadow: `0 0 0 1px ${color.Primary.Main}`,
+      boxShadow: `0 0 0 1px ${ember}`,
     },
     '&::-moz-range-track': {
       height: 4,
       borderRadius: 999,
       background: color.Surface.ContainerLine,
     },
-    '&::-moz-range-progress': { height: 4, borderRadius: 999, background: color.Primary.Main },
+    '&::-moz-range-progress': { height: 4, borderRadius: 999, background: ember },
     '&::-moz-range-thumb': {
       width: 10,
       height: 10,
       borderRadius: '50%',
-      background: color.Primary.Main,
+      background: ember,
       border: `2px solid ${color.Surface.Container}`,
     },
   },

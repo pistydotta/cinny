@@ -92,7 +92,7 @@ export function AllMessagesNotifications() {
           )}
         />
         <Box gap="100">
-          <Text size="T200">Badge: </Text>
+          <Text size="T200">{tr('notification_settings.badge', 'Badge:')} </Text>
           <Badge radii="300" variant="Secondary" fill="Solid">
             <Text size="L400">1</Text>
           </Badge>
@@ -105,7 +105,7 @@ export function AllMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="1-to-1 Chats"
+          title={tr('notification_settings.direct', '1-to-1 Chats')}
           after={<AllMessagesModeSwitcher pushRules={pushRules} ruleId={RuleId.DM} oneToOne />}
         />
       </SequenceCard>
@@ -116,7 +116,7 @@ export function AllMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="1-to-1 Chats (Encrypted)"
+          title={tr('notification_settings.direct_encrypted', '1-to-1 Chats (Encrypted)')}
           after={
             <AllMessagesModeSwitcher
               pushRules={pushRules}
@@ -134,7 +134,7 @@ export function AllMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="Rooms"
+          title={tr('notification_settings.rooms', 'Rooms')}
           after={<AllMessagesModeSwitcher pushRules={pushRules} ruleId={RuleId.Message} />}
         />
       </SequenceCard>
@@ -145,7 +145,7 @@ export function AllMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="Rooms (Encrypted)"
+          title={tr('notification_settings.rooms_encrypted', 'Rooms (Encrypted)')}
           after={
             <AllMessagesModeSwitcher
               pushRules={pushRules}

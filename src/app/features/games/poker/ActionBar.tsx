@@ -225,6 +225,9 @@ export function ActionBar({
   const checkCallArm = useArmed(keys.checkCall);
   const raiseArm = useArmed(keys.raise);
   const queueArm = useArmed(queueKey(view, canQueue, cost));
+  // The sizing row takes the toggles' place when the turn comes: a click aimed at "Check only"
+  // would otherwise land on a preset or the slider and change the bet.
+  const sizingArm = useArmed(keys.fold);
   const queueLabels: Record<PreActionKind, string> = {
     fold: tr('poker_controls.queue.fold_short', 'Fold'),
     'check-fold': tr('poker_controls.queue.check_fold', 'Check / fold'),
@@ -373,7 +376,7 @@ export function ActionBar({
       {legal && (
         <div className={bar.Dock}>
           {canSize && (
-            <div className={bar.Sizing}>
+            <div className={bar.Sizing} data-arming={!sizingArm.armed}>
               <div
                 className={bar.Presets}
                 role="group"

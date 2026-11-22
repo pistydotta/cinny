@@ -67,16 +67,17 @@ export const ServerChipText = style({
   whiteSpace: 'nowrap',
 });
 
+// Tripled, to also outrank the shell's text-field rule (two classes).
 export const Field = style({
   selectors: {
-    '&&': {
+    '&&&': {
       height: toRem(40),
       borderRadius: toRem(8),
       backgroundColor: 'transparent',
       boxShadow: `inset 0 0 0 1px ${line(22)}`,
     },
-    '&&:hover': { boxShadow: `inset 0 0 0 1px ${line(35)}` },
-    '&&:focus-within': { boxShadow: `inset 0 0 0 1.5px ${focus}` },
+    '&&&:hover': { boxShadow: `inset 0 0 0 1px ${line(35)}` },
+    '&&&:focus-within': { boxShadow: `inset 0 0 0 1.5px ${focus}` },
   },
 });
 

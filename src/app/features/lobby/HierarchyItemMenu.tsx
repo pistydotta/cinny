@@ -70,7 +70,9 @@ function SuggestMenuItem({
       disabled={toggleState.status === AsyncStatus.Loading}
     >
       <Text as="span" size="T300" truncate>
-        {content.suggested ? 'Unset Suggested' : 'Set Suggested'}
+        {content.suggested
+          ? tr('lobby.unset_suggested', 'Unset Suggested')
+          : tr('lobby.set_suggested', 'Set Suggested')}
       </Text>
     </MenuItem>
   );
@@ -114,7 +116,7 @@ function RemoveMenuItem({
       disabled={removeState.status === AsyncStatus.Loading}
     >
       <Text as="span" size="T300" truncate>
-        Remove
+        {tr('lobby.remove', 'Remove')}
       </Text>
     </MenuItem>
   );
@@ -149,7 +151,7 @@ function InviteMenuItem({
         disabled={disabled || !room}
       >
         <Text as="span" size="T300" truncate>
-          Invite
+          {tr('menu.invite', 'Invite')}
         </Text>
       </MenuItem>
       {invitePrompt && room && (
@@ -190,7 +192,7 @@ function SettingsMenuItem({
   return (
     <MenuItem onClick={handleSettings} size="300" radii="300" disabled={disabled}>
       <Text as="span" size="T300" truncate>
-        Settings
+        {tr('lobby.settings', 'Settings')}
       </Text>
     </MenuItem>
   );
@@ -278,7 +280,9 @@ export function HierarchyItemMenu({
                         }}
                       >
                         <Text as="span" size="T300" truncate>
-                          {pinned ? 'Unpin from Sidebar' : 'Pin to Sidebar'}
+                          {pinned
+                            ? tr('lobby.unpin_sidebar', 'Unpin from Sidebar')
+                            : tr('lobby.pin_sidebar', 'Pin to Sidebar')}
                         </Text>
                       </MenuItem>
                     )}
@@ -302,7 +306,7 @@ export function HierarchyItemMenu({
                               aria-pressed={promptLeave}
                             >
                               <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                                Leave
+                                {tr('lobby.leave', 'Leave')}
                               </Text>
                             </MenuItem>
                             {promptLeave &&

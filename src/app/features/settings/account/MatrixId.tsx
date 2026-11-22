@@ -15,7 +15,7 @@ export function MatrixId() {
   return (
     <Box direction="Column" gap="100">
       <SectionTitle
-        title="Matrix ID"
+        title={tr('account_settings.matrix_id', 'Matrix ID')}
         description={tr(
           'settings.about_section.matrix_id',
           "Your address on blazeroom; it's how people find you."
@@ -31,7 +31,7 @@ export function MatrixId() {
           title={userId}
           after={
             <Chip variant="Secondary" radii="Pill" onClick={() => copyToClipboard(userId)}>
-              <Text size="T200">Copy</Text>
+              <Text size="T200">{tr('account_settings.copy', 'Copy')}</Text>
             </Chip>
           }
         />

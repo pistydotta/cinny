@@ -134,7 +134,7 @@ export function SpecialMessagesNotifications() {
           )}
         />
         <Box gap="100">
-          <Text size="T200">Badge: </Text>
+          <Text size="T200">{tr('notification_settings.badge', 'Badge:')} </Text>
           <Badge radii="300" variant="Success" fill="Solid">
             <Text size="L400">1</Text>
           </Badge>
@@ -147,7 +147,9 @@ export function SpecialMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title={`Mention User ID ("${userId}")`}
+          title={tr('notification_settings.mention_user_id', 'Mention User ID ("{{userId}}")', {
+            userId,
+          })}
           after={
             <MentionModeSwitcher
               pushRules={pushRules}
@@ -164,7 +166,17 @@ export function SpecialMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title={`Contains Displayname ${displayName ? `("${displayName}")` : ''}`}
+          title={
+            displayName
+              ? tr(
+                  'notification_settings.contains_display_name_with',
+                  'Contains Displayname ("{{name}}")',
+                  {
+                    name: displayName,
+                  }
+                )
+              : tr('notification_settings.contains_display_name', 'Contains Displayname')
+          }
           after={
             <MentionModeSwitcher
               pushRules={pushRules}
@@ -181,7 +193,9 @@ export function SpecialMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title={`Contains Username ("${getMxIdLocalPart(userId)}")`}
+          title={tr('notification_settings.contains_username', 'Contains Username ("{{name}}")', {
+            name: getMxIdLocalPart(userId) ?? userId,
+          })}
           after={
             <MentionModeSwitcher
               pushRules={pushRules}
@@ -198,7 +212,7 @@ export function SpecialMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="Mention @room"
+          title={tr('notification_settings.mention_room', 'Mention @room')}
           after={
             <MentionModeSwitcher
               pushRules={pushRules}
@@ -215,7 +229,7 @@ export function SpecialMessagesNotifications() {
         gap="400"
       >
         <SettingTile
-          title="Contains @room"
+          title={tr('notification_settings.contains_room', 'Contains @room')}
           after={
             <MentionModeSwitcher
               pushRules={pushRules}

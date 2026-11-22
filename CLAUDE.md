@@ -177,7 +177,12 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   and z-indexes left in `features/**/*.css.ts` (outside `games/` for now): a count may only go
   down, so lower its ceiling when you remove some, and reach for a token instead of adding one.
   `shell.css.ts` gives everything focusable an ember keyboard ring at zero specificity; a control
-  that sets `outline: none` must draw its own visible focus instead. The wallpaper shows only behind the logged-out pages. Games screens
+  that sets `outline: none` must draw its own visible focus instead.
+  Filled buttons are the wine Primary, never green: the shell repaints folds' Success Button and
+  IconButton as Primary through their class names (`foldsClasses.ts`, checked by a test against
+  folds 2.7.2), so use `variant="Primary"` in new code and leave Success to badges and status.
+  folds Input and TextArea in a neutral variant are one field (raised surface, hairline, ember
+  ring); pick one of a few options with `forge-theme/Segmented`, and fill sliders with ember. The wallpaper shows only behind the logged-out pages. Games screens
   still carry their own gold and serif styles until their redesign PRs.
 
 - An unwatched screen share is a stand-in tile in Element Call's grid (a bundle patch), with

@@ -72,8 +72,12 @@ function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
     <Header className={css.MembersDrawerHeader} variant="Background" size="600">
       <Box grow="Yes" alignItems="Center" gap="200">
         <Box grow="Yes" alignItems="Center" gap="200">
-          <Text title={`${room.getJoinedMemberCount()} Members`} size="H5" truncate>
-            {`${millify(room.getJoinedMemberCount())} Members`}
+          <Text
+            title={tr('members.n_members', '{{n}} Members', { n: room.getJoinedMemberCount() })}
+            size="H5"
+            truncate
+          >
+            {tr('members.n_members', '{{n}} Members', { n: millify(room.getJoinedMemberCount()) })}
           </Text>
         </Box>
         <Box shrink="No" alignItems="Center">
@@ -83,7 +87,7 @@ function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>Close</Text>
+                <Text>{tr('settings.close', 'Close')}</Text>
               </Tooltip>
             }
           >
@@ -328,7 +332,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                   ref={searchInputRef}
                   onChange={handleSearchChange}
                   style={{ paddingRight: config.space.S200 }}
-                  placeholder="Type name..."
+                  placeholder={tr('members.search', 'Type name...')}
                   variant="Surface"
                   size="400"
                   radii="400"
@@ -349,9 +353,12 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         }}
                         after={<Icon size="50" src={Icons.Cross} />}
                       >
-                        <Text size="B300">{`${result.items.length || 'No'} ${
-                          result.items.length === 1 ? 'Result' : 'Results'
-                        }`}</Text>
+                        <Text size="B300">
+                          {result.items.length === 0 && tr('members.no_results', 'No Results')}
+                          {result.items.length === 1 && tr('members.one_result', '1 Result')}
+                          {result.items.length > 1 &&
+                            tr('members.n_results', '{{n}} Results', { n: result.items.length })}
+                        </Text>
                       </Chip>
                     )
                   }
@@ -367,7 +374,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                 radii="Pill"
                 outlined
                 size="300"
-                aria-label="Scroll to Top"
+                aria-label={tr('tips.scroll_top', 'Scroll to top')}
               >
                 <Icon src={Icons.ChevronTop} size="300" />
               </TipIconButton>
@@ -375,7 +382,9 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
 
             {!fetchingMembers && !result && processMembers.length === 0 && (
               <Text style={{ padding: config.space.S300 }} align="Center">
-                {`No "${membershipFilter.name}" Members`}
+                {tr('members.none_in_filter', 'No "{{filter}}" Members', {
+                  filter: membershipFilter.name,
+                })}
               </Text>
             )}
 

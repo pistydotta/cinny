@@ -54,14 +54,14 @@ function ChangePassword() {
     <SettingTile
       title={
         <Text as="span" size="L400">
-          Change Password
+          {tr('account_settings.change_password', 'Change Password')}
         </Text>
       }
-      description="Other devices stay signed in."
+      description={tr('account_settings.other_devices', 'Other devices stay signed in.')}
     >
       <Box as="form" onSubmit={handleSubmit} direction="Column" gap="200">
         <Box direction="Column" gap="100">
-          <Text size="L400">Current Password</Text>
+          <Text size="L400">{tr('account_settings.current_password', 'Current Password')}</Text>
           <PasswordInput
             name="currentPasswordInput"
             autoComplete="current-password"
@@ -76,7 +76,7 @@ function ChangePassword() {
           {(match, doMatch, passRef, confPassRef) => (
             <>
               <Box direction="Column" gap="100">
-                <Text size="L400">New Password</Text>
+                <Text size="L400">{tr('account_settings.new_password', 'New Password')}</Text>
                 <PasswordInput
                   ref={passRef}
                   name="passwordInput"
@@ -90,7 +90,9 @@ function ChangePassword() {
                 />
               </Box>
               <Box direction="Column" gap="100">
-                <Text size="L400">Confirm New Password</Text>
+                <Text size="L400">
+                  {tr('account_settings.confirm_password', 'Confirm New Password')}
+                </Text>
                 <PasswordInput
                   ref={confPassRef}
                   style={{ color: match ? undefined : color.Critical.Main }}
@@ -118,12 +120,12 @@ function ChangePassword() {
             before={changing ? <Spinner size="200" variant="Success" fill="Solid" /> : undefined}
           >
             <Text as="span" size="B400">
-              Change Password
+              {tr('account_settings.change_password', 'Change Password')}
             </Text>
           </Button>
           {changeState.status === AsyncStatus.Success && (
             <Text size="T200" style={{ color: color.Success.Main }}>
-              Password changed.
+              {tr('account_settings.password_changed', 'Password changed.')}
             </Text>
           )}
         </Box>

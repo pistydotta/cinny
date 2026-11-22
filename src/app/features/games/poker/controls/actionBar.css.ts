@@ -161,8 +161,8 @@ export const Dock = style({
   ...controlsBlock,
   display: 'flex',
   flexDirection: 'column',
-  gap: 12,
-  '@media': { [MOBILE]: { gap: 10, maxWidth: 'none' } },
+  gap: 16,
+  '@media': { [MOBILE]: { gap: 14, maxWidth: 'none' } },
 });
 export const Toggles = style({
   display: 'flex',
@@ -177,6 +177,8 @@ export const RowLabel = style({ flex: 1, fontSize: 12, color: MUTED, whiteSpace:
    their own row and the slider and amount share the next. */
 export const Sizing = style({
   ...controlsBlock,
+  // Just appeared where the toggles were: deaf to the pointer while it arms (clickGuard.ts).
+  selectors: { '&[data-arming="true"]': { opacity: 0.55, pointerEvents: 'none' } },
   display: 'grid',
   gridTemplateColumns: 'auto minmax(110px, 1fr) auto',
   gridTemplateAreas: '"presets slider amount"',

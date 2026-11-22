@@ -1,6 +1,10 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, toRem } from 'folds';
+import { forgeColor } from '../forge-theme/forgeColor.css';
+
+// Slider thumbs and focus rings: ember reads on the dark panel, the wine doesn't.
+const ember = forgeColor.Ember.Main;
 
 // Over the call frame, where Element Call keeps an empty grid tile for each share not watched
 // yet; clipped to the frame, so a tile scrolled out of the grid is hidden here too.
@@ -36,7 +40,7 @@ export const LiveTile = style({
       transition: 'background-color 120ms ease-out',
     },
     '&:hover::after': { backgroundColor: 'rgba(10, 12, 16, 0.3)' },
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: -2 },
+    '&:focus-visible': { outline: `2px solid ${ember}`, outlineOffset: -2 },
   },
 });
 
@@ -161,7 +165,7 @@ const thumb = {
   height: toRem(14),
   borderRadius: '50%',
   border: 'none',
-  backgroundColor: color.Primary.Main,
+  backgroundColor: ember,
 } as const;
 
 globalStyle(`${Slider}::-webkit-slider-thumb`, thumb);
@@ -448,7 +452,7 @@ export const GoToRoom = style({
   cursor: 'pointer',
   selectors: {
     '&:hover': { background: color.Primary.ContainerHover },
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 2 },
+    '&:focus-visible': { outline: `2px solid ${ember}`, outlineOffset: 2 },
   },
 });
 

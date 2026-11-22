@@ -453,7 +453,7 @@ export function Lobby() {
                       radii="Pill"
                       outlined
                       size="300"
-                      aria-label="Scroll to Top"
+                      aria-label={tr('tips.scroll_top', 'Scroll to top')}
                     >
                       <Icon src={Icons.ChevronTop} size="300" />
                     </TipIconButton>
@@ -529,7 +529,7 @@ export function Lobby() {
                         radii="Pill"
                         before={<Spinner variant="Secondary" fill="Soft" size="100" />}
                       >
-                        <Text size="L400">Reordering</Text>
+                        <Text size="L400">{tr('lobby.reordering', 'Reordering')}</Text>
                       </Chip>
                     </Box>
                   )}

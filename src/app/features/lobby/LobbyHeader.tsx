@@ -38,6 +38,7 @@ import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { tr } from '../translation/tr';
 
 type LobbyMenuProps = {
   powerLevels: IPowerLevels;
@@ -87,7 +88,7 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
             disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
+              {tr('menu.invite', 'Invite')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -97,7 +98,7 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Space Settings
+              {tr('menu.space_settings', 'Space Settings')}
             </Text>
           </MenuItem>
         </Box>
@@ -116,7 +117,7 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
                   aria-pressed={promptLeave}
                 >
                   <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                    Leave Space
+                    {tr('menu.leave_space', 'Leave Space')}
                   </Text>
                 </MenuItem>
                 {promptLeave && (
@@ -213,7 +214,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>Members</Text>
+                  <Text>{tr('lobby.members', 'Members')}</Text>
                 </Tooltip>
               }
             >
@@ -234,7 +235,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>More Options</Text>
+                <Text>{tr('tips.more', 'More options')}</Text>
               </Tooltip>
             }
           >

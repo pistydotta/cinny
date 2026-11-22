@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
+import { tr } from '../../translation/tr';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SystemNotification } from './SystemNotification';
 import { AllMessagesNotifications } from './AllMessages';
@@ -16,7 +17,7 @@ export function Notifications({ requestClose }: NotificationsProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Notifications
+              {tr('settings.tab.notifications', 'Notifications')}
             </Text>
           </Box>
           <Box shrink="No">

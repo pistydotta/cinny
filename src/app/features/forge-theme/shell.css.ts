@@ -5,7 +5,8 @@ import * as sidebarCss from '../../components/sidebar/Sidebar.css';
 import * as pageCss from '../../components/page/style.css';
 import { forgeDark } from './palette';
 import { forgeColor } from './forgeColor.css';
-import { forgeFont, forgeShadowDark, forgeShadowLight } from './tokens';
+import { foldsClasses } from './foldsClasses';
+import { forgeFont, forgeInset, forgeShadowDark, forgeShadowLight } from './tokens';
 import './switch.css';
 
 // Forge restyles Cinny's shell from here, so the upstream style files stay untouched.
@@ -23,6 +24,36 @@ globalStyle(
   ':where(button, a, input, select, textarea, summary, [role=button], [role=tab], [role=menuitem], [tabindex]):focus-visible',
   { outline: `2px solid ${forgeColor.Ember.Main}`, outlineOffset: '2px' }
 );
+
+// Cinny marks its main actions (Save, Join, Accept, Upgrade…) with folds' green Success button.
+// In Forge green is a status colour, never a button: those buttons take the wine Primary, in every
+// fill, and so does a spinner inside them. Success badges, chips and presence dots stay green.
+// Without a fill (Cinny's "Reset" beside "Save") the wine is too dark to read as text on the dark
+// panel, so that one is ember, like a link.
+const successButtons = [foldsClasses.Button, foldsClasses.IconButton];
+globalStyle(successButtons.map(({ base, Success }) => `.${base}.${Success}`).join(', '), {
+  vars: assignVars(color.Success, color.Primary),
+});
+globalStyle(
+  successButtons.map(({ base, Success, None }) => `.${base}.${Success}.${None}`).join(', '),
+  { vars: { [color.Success.Main]: forgeColor.Ember.Main } }
+);
+
+// One text field. Cinny's inputs and text areas came in four neutral variants; light mode's
+// Secondary was a heavy grey slab that read as disabled. Now each is the raised surface with a
+// hairline, and an ember ring while typing. Critical and Warning fields keep their colours.
+const fields = [foldsClasses.Input, foldsClasses.TextArea].map(
+  ({ base, Background, Surface, SurfaceVariant, Secondary }) =>
+    `.${base}:is(.${Background}, .${Surface}, .${SurfaceVariant}, .${Secondary})`
+);
+globalStyle(fields.join(', '), {
+  backgroundColor: color.SurfaceVariant.Container,
+  color: color.SurfaceVariant.OnContainer,
+  boxShadow: forgeInset(color.SurfaceVariant.ContainerLine),
+});
+globalStyle(fields.flatMap((field) => [`${field}:focus`, `${field}:has(:focus)`]).join(', '), {
+  boxShadow: forgeInset(forgeColor.Ember.Main, 2),
+});
 
 // The open room or page: a raised row with an ember bar on its left edge.
 globalStyle(`[aria-selected=true]:has(.${navCss.NavLink})`, {

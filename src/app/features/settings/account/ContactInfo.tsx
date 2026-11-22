@@ -34,7 +34,10 @@ export function ContactInformation() {
         direction="Column"
         gap="400"
       >
-        <SettingTile title="Email Address" description="Email address attached to your account.">
+        <SettingTile
+          title={tr('account_settings.email', 'Email Address')}
+          description={tr('account_settings.email_desc', 'Email address attached to your account.')}
+        >
           <Box>
             {emailIds?.map((email) => (
               <Chip key={email.address} as="span" variant="Secondary" radii="Pill">

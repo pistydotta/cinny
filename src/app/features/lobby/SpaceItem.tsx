@@ -37,6 +37,7 @@ import { useOpenCreateRoomModal } from '../../state/hooks/createRoomModal';
 import { AddExistingModal } from '../add-existing';
 import { CreateRoomType } from '../../components/create-room/types';
 import { BetaNoticeBadge } from '../../components/BetaNoticeBadge';
+import { tr } from '../translation/tr';
 
 function SpaceProfileLoading() {
   return (
@@ -79,15 +80,15 @@ function InaccessibleSpaceProfile({ roomId, suggested }: InaccessibleSpaceProfil
     >
       <Box alignItems="Center" gap="200">
         <Text size="H4" truncate>
-          Unknown
+          {tr('lobby.unknown', 'Unknown')}
         </Text>
 
         <Badge variant="Secondary" fill="Soft" radii="Pill" outlined>
-          <Text size="L400">Inaccessible</Text>
+          <Text size="L400">{tr('lobby.inaccessible', 'Inaccessible')}</Text>
         </Badge>
         {suggested && (
           <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-            <Text size="L400">Suggested</Text>
+            <Text size="L400">{tr('lobby.suggested', 'Suggested')}</Text>
           </Badge>
         )}
       </Box>
@@ -143,11 +144,11 @@ function UnjoinedSpaceProfile({
     >
       <Box alignItems="Center" gap="200">
         <Text size="H4" truncate>
-          {name || 'Unknown'}
+          {name || tr('lobby.unknown', 'Unknown')}
         </Text>
         {suggested && (
           <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-            <Text size="L400">Suggested</Text>
+            <Text size="L400">{tr('lobby.suggested', 'Suggested')}</Text>
           </Badge>
         )}
         {joinState.status === AsyncStatus.Error && (
@@ -209,7 +210,7 @@ function SpaceProfile({
         </Text>
         {suggested && (
           <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-            <Text size="L400">Suggested</Text>
+            <Text size="L400">{tr('lobby.suggested', 'Suggested')}</Text>
           </Badge>
         )}
       </Box>
@@ -234,7 +235,7 @@ function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileP
     >
       <Box alignItems="Center" gap="200">
         <Text size="H4" truncate>
-          Rooms
+          {tr('lobby.rooms', 'Rooms')}
         </Text>
       </Box>
     </Chip>
@@ -284,7 +285,7 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
               fill="None"
               onClick={() => handleCreateRoom(CreateRoomType.TextRoom)}
             >
-              <Text size="T300">Chat Room</Text>
+              <Text size="T300">{tr('lobby.chat_room', 'Chat Room')}</Text>
             </MenuItem>
             <MenuItem
               size="300"
@@ -294,10 +295,10 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
               onClick={() => handleCreateRoom(CreateRoomType.VoiceRoom)}
               after={<BetaNoticeBadge />}
             >
-              <Text size="T300">Voice Room</Text>
+              <Text size="T300">{tr('lobby.voice_room', 'Voice Room')}</Text>
             </MenuItem>
             <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
-              <Text size="T300">Existing Room</Text>
+              <Text size="T300">{tr('lobby.existing_room', 'Existing Room')}</Text>
             </MenuItem>
           </Menu>
         </FocusTrap>
@@ -310,7 +311,7 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
         onClick={handleAddRoom}
         aria-pressed={!!cords}
       >
-        <Text size="B300">Add Room</Text>
+        <Text size="B300">{tr('lobby.add_room', 'Add Room')}</Text>
       </Chip>
       {addExisting && (
         <AddExistingModal parentId={item.roomId} requestClose={() => setAddExisting(false)} />

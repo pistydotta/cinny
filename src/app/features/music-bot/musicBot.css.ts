@@ -1,5 +1,9 @@
 import { style } from '@vanilla-extract/css';
 import { color } from 'folds';
+import { forgeColor } from '../forge-theme/forgeColor.css';
+
+// Progress, volume and focus marks: ember reads on the dark panel, the wine doesn't.
+const ember = forgeColor.Ember.Main;
 
 export const Bar = style({
   flexShrink: 0,
@@ -16,7 +20,7 @@ const button = {
   cursor: 'pointer',
   border: 0,
   selectors: {
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: -3 },
+    '&:focus-visible': { outline: `2px solid ${ember}`, outlineOffset: -3 },
     '&:disabled': { opacity: 0.45, cursor: 'default' },
   },
 } as const;
@@ -120,11 +124,11 @@ export const Progress = style({
   border: 0,
   borderRadius: 3,
   overflow: 'hidden',
-  accentColor: color.Primary.Main,
+  accentColor: ember,
   selectors: {
     '&::-webkit-progress-bar': { background: color.Surface.ContainerActive },
-    '&::-webkit-progress-value': { background: color.Primary.Main },
-    '&::-moz-progress-bar': { background: color.Primary.Main },
+    '&::-webkit-progress-value': { background: ember },
+    '&::-moz-progress-bar': { background: ember },
   },
 });
 export const Timing = style({
@@ -164,11 +168,11 @@ export const Volume = style({
   background: 'transparent',
   cursor: 'pointer',
   selectors: {
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: 3 },
+    '&:focus-visible': { outline: `2px solid ${ember}`, outlineOffset: 3 },
     '&::-webkit-slider-runnable-track': {
       height: 4,
       borderRadius: 4,
-      background: `linear-gradient(to right, ${color.Primary.Main} var(--music-volume), ${color.Surface.ContainerActive} var(--music-volume))`,
+      background: `linear-gradient(to right, ${ember} var(--music-volume), ${color.Surface.ContainerActive} var(--music-volume))`,
     },
     '&::-webkit-slider-thumb': {
       appearance: 'none',
@@ -178,7 +182,7 @@ export const Volume = style({
       marginTop: -4,
       border: 0,
       borderRadius: '50%',
-      background: color.Primary.Main,
+      background: ember,
     },
     '&::-moz-range-track': {
       height: 4,
@@ -188,14 +192,14 @@ export const Volume = style({
     '&::-moz-range-progress': {
       height: 4,
       borderRadius: 4,
-      background: color.Primary.Main,
+      background: ember,
     },
     '&::-moz-range-thumb': {
       width: 12,
       height: 12,
       border: 0,
       borderRadius: '50%',
-      background: color.Primary.Main,
+      background: ember,
     },
   },
 });
@@ -234,7 +238,7 @@ export const Search = style({
   color: 'inherit',
   background: color.Surface.Container,
   selectors: {
-    '&:focus-visible': { outline: `2px solid ${color.Primary.Main}`, outlineOffset: -1 },
+    '&:focus-visible': { outline: `2px solid ${ember}`, outlineOffset: -1 },
   },
 });
 export const PrimaryButton = style([

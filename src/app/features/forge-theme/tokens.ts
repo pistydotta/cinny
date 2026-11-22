@@ -74,3 +74,6 @@ export const forgeShadowLight: typeof forgeShadowDark = {
   E300: '0 16px 48px rgba(16, 18, 20, 0.2)',
   E400: '0 24px 64px rgba(16, 18, 20, 0.24)',
 };
+
+// A field's hairline or focus ring drawn inside its box, so it takes no layout space.
+export const forgeInset = (ink: string, width = 1) => `inset 0 0 0 ${width}px ${ink}`;

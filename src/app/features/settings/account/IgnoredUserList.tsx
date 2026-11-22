@@ -91,7 +91,7 @@ function IgnoreUserInput({ userList }: { userList: string[] }) {
         disabled={ignoring}
       >
         {ignoring && <Spinner variant="Secondary" size="300" />}
-        <Text size="B400">Block</Text>
+        <Text size="B400">{tr('account_settings.block', 'Block')}</Text>
       </Button>
     </Box>
   );
@@ -151,14 +151,17 @@ export function IgnoredUserList() {
         gap="400"
       >
         <SettingTile
-          title="Select User"
-          description="Prevent receiving messages or invites from user by adding their userId."
+          title={tr('account_settings.select_user', 'Select User')}
+          description={tr(
+            'account_settings.select_user_desc',
+            'Prevent receiving messages or invites from user by adding their userId.'
+          )}
         >
           <Box direction="Column" gap="300">
             <IgnoreUserInput userList={ignoredUsers} />
             {ignoredUsers.length > 0 && (
               <Box direction="Inherit" gap="100">
-                <Text size="L400">Users</Text>
+                <Text size="L400">{tr('account_settings.users', 'Users')}</Text>
                 <Box wrap="Wrap" gap="200">
                   {ignoredUsers.map((userId) => (
                     <IgnoredUserChip key={userId} userId={userId} userList={ignoredUsers} />

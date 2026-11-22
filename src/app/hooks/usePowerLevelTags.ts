@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { IPowerLevels } from './usePowerLevels';
 import { useStateEvent } from './useStateEvent';
 import { MemberPowerTag, StateEvent } from '../../types/matrix/room';
+import { tr } from '../features/translation/tr';
 
 export type PowerLevelTags = Record<number, MemberPowerTag>;
 
@@ -45,36 +46,37 @@ export const getUsedPowers = (powerLevels: IPowerLevels): Set<number> => {
   return powers;
 };
 
-const DEFAULT_TAGS: PowerLevelTags = {
+// A function so the names are read in the app's language, after i18n has started.
+const defaultTags = (): PowerLevelTags => ({
   9001: {
     name: 'Goku',
     color: '#ff6a00',
   },
   150: {
-    name: 'Manager',
+    name: tr('power_tags.manager', 'Manager'),
     color: '#ff6a7f',
   },
   101: {
-    name: 'Founder',
+    name: tr('power_tags.founder', 'Founder'),
     color: '#0000ff',
   },
   100: {
-    name: 'Admin',
+    name: tr('power_tags.admin', 'Admin'),
     color: '#0088ff',
   },
   50: {
-    name: 'Moderator',
+    name: tr('power_tags.moderator', 'Moderator'),
     color: '#1fd81f',
   },
   0: {
-    name: 'Member',
+    name: tr('power_tags.member', 'Member'),
     color: '#91cfdf',
   },
   [-1]: {
-    name: 'Muted',
+    name: tr('power_tags.muted', 'Muted'),
     color: '#888888',
   },
-};
+});
 
 const generateFallbackTag = (powerLevelTags: PowerLevelTags, power: number): MemberPowerTag => {
   const highToLow = sortPowers(getPowers(powerLevelTags));
@@ -83,7 +85,7 @@ const generateFallbackTag = (powerLevelTags: PowerLevelTags, power: number): Mem
   const tag = typeof tagPower === 'number' ? powerLevelTags[tagPower] : undefined;
 
   return {
-    name: tag ? `${tag.name} ${power}` : `Team ${power}`,
+    name: tag ? `${tag.name} ${power}` : tr('power_tags.team', 'Team {{power}}', { power }),
   };
 };
 
@@ -95,9 +97,10 @@ export const usePowerLevelTags = (room: Room, powerLevels: IPowerLevels): PowerL
     const powerToTags: PowerLevelTags = { ...content };
 
     const powers = getUsedPowers(powerLevels);
+    const defaults = defaultTags();
     Array.from(powers).forEach((power) => {
       if (powerToTags[power]?.name === undefined) {
-        powerToTags[power] = DEFAULT_TAGS[power] ?? generateFallbackTag(DEFAULT_TAGS, power);
+        powerToTags[power] = defaults[power] ?? generateFallbackTag(defaults, power);
       }
     });
 

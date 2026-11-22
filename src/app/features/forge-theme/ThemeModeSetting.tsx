@@ -1,10 +1,10 @@
 import React from 'react';
-import { Box, Button, Text } from 'folds';
 import { SettingTile } from '../../components/setting-tile';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { tr } from '../translation/tr';
 import { modeFromSettings, settingsForMode, ThemeMode } from './themeMode';
+import { Segmented } from './Segmented';
 
 const MODES: ThemeMode[] = ['system', 'light', 'dark'];
 
@@ -33,21 +33,12 @@ export function ThemeModeSetting() {
         'System follows your device’s light or dark mode.'
       )}
       after={
-        <Box gap="200">
-          {MODES.map((mode) => (
-            <Button
-              key={mode}
-              size="300"
-              radii="300"
-              variant={mode === current ? 'Primary' : 'Secondary'}
-              fill={mode === current ? 'Solid' : 'Soft'}
-              onClick={() => handleSelect(mode)}
-              aria-pressed={mode === current}
-            >
-              <Text size="B300">{modeName(mode)}</Text>
-            </Button>
-          ))}
-        </Box>
+        <Segmented
+          label={tr('forge.theme', 'Theme')}
+          options={MODES.map((mode) => ({ value: mode, name: modeName(mode) }))}
+          value={current}
+          onChange={handleSelect}
+        />
       }
     />
   );

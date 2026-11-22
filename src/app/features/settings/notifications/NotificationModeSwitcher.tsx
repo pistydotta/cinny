@@ -17,6 +17,7 @@ import FocusTrap from 'focus-trap-react';
 import { NotificationMode, useNotificationActionsMode } from '../../../hooks/useNotificationMode';
 import { stopPropagation } from '../../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { tr } from '../../translation/tr';
 
 export const useNotificationModes = (): NotificationMode[] =>
   useMemo(() => [NotificationMode.NotifyLoud, NotificationMode.Notify, NotificationMode.OFF], []);
@@ -24,9 +25,9 @@ export const useNotificationModes = (): NotificationMode[] =>
 const useNotificationModeStr = (): Record<NotificationMode, string> =>
   useMemo(
     () => ({
-      [NotificationMode.OFF]: 'Disable',
-      [NotificationMode.Notify]: 'Notify Silent',
-      [NotificationMode.NotifyLoud]: 'Notify Loud',
+      [NotificationMode.OFF]: tr('notification_settings.mode_off', 'Disable'),
+      [NotificationMode.Notify]: tr('notification_settings.mode_silent', 'Notify Silent'),
+      [NotificationMode.NotifyLoud]: tr('notification_settings.mode_loud', 'Notify Loud'),
     }),
     []
   );

@@ -1,15 +1,16 @@
 import React from 'react';
-import { Box, Button, Text } from 'folds';
+import { Box } from 'folds';
 import { SequenceCard } from '../../components/sequence-card';
 import { SettingTile } from '../../components/setting-tile';
 import { SequenceCardStyle } from '../settings/styles.css';
 import { getLanguage, Language, saveLanguage } from './language';
 import { tr } from './tr';
 import { SectionTitle } from '../settings/SettingsPage';
+import { Segmented } from '../forge-theme/Segmented';
 
-const LANGUAGES: { id: Language; name: string }[] = [
-  { id: 'pt', name: 'Português' },
-  { id: 'en', name: 'English' },
+const LANGUAGES: { value: Language; name: string }[] = [
+  { value: 'pt', name: 'Português' },
+  { value: 'en', name: 'English' },
 ];
 
 export function LanguageSetting() {
@@ -40,21 +41,12 @@ export function LanguageSetting() {
             'Some less-used screens are only in English.'
           )}
           after={
-            <Box gap="200">
-              {LANGUAGES.map(({ id, name }) => (
-                <Button
-                  key={id}
-                  size="300"
-                  radii="300"
-                  variant={id === current ? 'Primary' : 'Secondary'}
-                  fill={id === current ? 'Solid' : 'Soft'}
-                  onClick={() => handleSelect(id)}
-                  aria-pressed={id === current}
-                >
-                  <Text size="B300">{name}</Text>
-                </Button>
-              ))}
-            </Box>
+            <Segmented
+              label={tr('settings.language_title', 'App Language')}
+              options={LANGUAGES}
+              value={current}
+              onChange={handleSelect}
+            />
           }
         />
       </SequenceCard>
