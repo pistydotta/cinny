@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
+import { ApiError } from '../../../utils/blazeroomApi';
 import { tr } from '../../translation/tr';
-import { InvitePicker } from '../poker/InvitePicker';
-import { TableStatus } from '../poker/inviteCandidates';
-import { gameName, rulesText } from './text';
+import { InvitePanel } from '../invite/InvitePanel';
+import { InviteOnlyToggle } from '../invite/InviteOnlyToggle';
+import { TableStatus } from '../invite/inviteCandidates';
+import { gameError, gameName, rulesText } from './text';
 import { isBotId } from './tentosView';
 import { GameTable } from './types';
 import * as css from './tentos.css';
@@ -11,12 +13,45 @@ type SeatsSheetProps = {
   table: GameTable;
   busy: boolean;
   isOwner: boolean;
-  onAct: (action: Record<string, unknown>) => void;
+  onAct: (action: Record<string, unknown>) => unknown;
+  /** The table's join link, for people who weren't picked by name. */
+  getLink: () => Promise<string>;
+  onSwitchTable: () => void;
   onClose: () => void;
   nameOf: (userId: string) => string;
   /** Fodinha keeps rules, cancel and resign on its page: the sheet only holds seats and invites. */
   seatsOnly?: boolean;
 };
+
+type SwapButtonProps = {
+  busy: boolean;
+  bot: boolean;
+  iAsked: boolean;
+  name: string;
+  onSwap: () => void;
+  onWithdraw: () => void;
+};
+
+/** A seat's swap button: take a bot's seat, ask a person for theirs, or withdraw my request. */
+function SwapButton({ busy, bot, iAsked, name, onSwap, onWithdraw }: SwapButtonProps) {
+  if (iAsked)
+    return (
+      <button type="button" className={css.Pill} disabled={busy} onClick={onWithdraw}>
+        {tr('table_games.swap_waiting', 'Asked · cancel')}
+      </button>
+    );
+  return (
+    <button
+      type="button"
+      className={css.Pill}
+      disabled={busy}
+      onClick={onSwap}
+      aria-label={tr('table_games.swap_with', 'Swap seats with {{name}}', { name })}
+    >
+      {bot ? tr('table_games.swap_take', 'Swap') : tr('table_games.swap_ask', 'Ask to swap')}
+    </button>
+  );
+}
 
 /** Everything that isn't the game: seats, bots, invitations, rules and leaving. */
 export function SeatsSheet({
@@ -24,12 +59,12 @@ export function SeatsSheet({
   busy,
   isOwner,
   onAct,
+  getLink,
+  onSwitchTable,
   onClose,
   nameOf,
   seatsOnly,
 }: SeatsSheetProps) {
-  const [selected, setSelected] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const waiting = table.phase === 'waiting';
   const me = table.players[table.mySeat];
@@ -42,12 +77,9 @@ export function SeatsSheet({
     return map;
   }, [table.invited, table.players]);
 
-  const copy = () => {
-    navigator.clipboard
-      ?.writeText(window.location.href)
-      .then(() => setCopied(true))
-      .catch(() => undefined);
-  };
+  const myId = me?.userId;
+  const asked = (from?: string, to?: string) =>
+    !!table.swaps?.some((r) => r.from === from && r.to === to);
 
   const seats = Math.max(table.capacity, table.players.length);
   return (
@@ -82,6 +114,39 @@ export function SeatsSheet({
           </button>
         </div>
 
+        {waiting &&
+          table.swaps
+            ?.filter((r) => r.to === myId)
+            .map((r) => {
+              const from = table.players.findIndex((p) => p.userId === r.from);
+              return (
+                <div key={r.from} className={css.SeatRow} role="status">
+                  <span className={css.Grow}>
+                    {tr('table_games.swap_request', '{{name}} wants to swap seats with you', {
+                      name: nameOf(r.from),
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    className={css.Pill}
+                    data-primary="true"
+                    disabled={busy || from < 0}
+                    onClick={() => onAct({ type: 'swap', seat: from })}
+                  >
+                    {tr('table_games.swap_accept', 'Swap')}
+                  </button>
+                  <button
+                    type="button"
+                    className={css.Pill}
+                    disabled={busy}
+                    onClick={() => onAct({ type: 'swap_cancel', from: r.from })}
+                  >
+                    {tr('table_games.swap_decline_short', 'No')}
+                  </button>
+                </div>
+              );
+            })}
+
         <div>
           {Array.from({ length: seats }, (_, seat) => {
             const p = table.players[seat];
@@ -92,7 +157,7 @@ export function SeatsSheet({
                   <span className={`${css.Grow} ${css.Muted}`}>
                     {tr('table_games.empty_seat', 'Empty seat')}
                   </span>
-                  {isOwner && waiting && (
+                  {isOwner && waiting && table.kind !== 'chess' && (
                     <button
                       type="button"
                       className={css.Pill}
@@ -119,8 +184,22 @@ export function SeatsSheet({
                 </span>
                 <span className={css.Grow}>
                   {seat === table.mySeat ? tr('table_games.you', 'You') : nameOf(p.userId)}
+                  {tag && (
+                    <span className={css.Muted} style={{ display: 'block' }}>
+                      {tag}
+                    </span>
+                  )}
                 </span>
-                <span className={css.Muted}>{tag}</span>
+                {waiting && me && seat !== table.mySeat && !asked(p.userId, myId) && (
+                  <SwapButton
+                    busy={busy}
+                    bot={bot}
+                    iAsked={asked(myId, p.userId)}
+                    name={nameOf(p.userId)}
+                    onSwap={() => onAct({ type: 'swap', seat })}
+                    onWithdraw={() => onAct({ type: 'swap_cancel' })}
+                  />
+                )}
                 {bot && isOwner && waiting && (
                   <button
                     type="button"
@@ -140,37 +219,60 @@ export function SeatsSheet({
         </div>
 
         {waiting && me && (
+          <p className={css.Muted}>
+            {table.kind === 'truco'
+              ? tr(
+                  'table_games.swap_hint_truco',
+                  'Seats 1 and 3 play against 2 and 4. Swap seats with someone on the other pair to change pairs: a bot’s seat is yours at once, a person has to accept.'
+                )
+              : tr(
+                  'table_games.swap_hint',
+                  'Swap seats with anyone before the start: a bot’s seat is yours at once, a person has to accept.'
+                )}
+          </p>
+        )}
+
+        {waiting && me && (
           <>
             <p className={css.SectionLabel}>{tr('table_games.invite_people', 'Invite people')}</p>
-            <InvitePicker everyone status={status} selected={selected} onChange={setSelected} />
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" className={css.Pill} onClick={copy}>
-                {copied
-                  ? tr('table_games.link_copied', 'Link copied')
-                  : tr('table_games.copy_link', 'Copy link')}
-              </button>
-              <button
-                type="button"
-                className={css.Pill}
-                data-primary="true"
-                style={{ flex: 1 }}
-                disabled={busy || !selected.length}
-                onClick={() => {
-                  onAct({ type: 'invite', userIds: selected });
-                  setSelected([]);
-                }}
-              >
-                {tr('table_games.send_invites', 'Invite ({{count}})', { count: selected.length })}
-              </button>
-            </div>
-            <p className={css.Muted}>
-              {tr(
-                'table_games.invite_hint',
-                'Invited people see this table first in their lobby. Bots stake nothing and are never paid.'
-              )}
-            </p>
+            {isOwner && (
+              <InviteOnlyToggle
+                id="invite-only"
+                disabled={busy}
+                checked={table.inviteOnly === true}
+                onChange={(inviteOnly) => onAct({ type: 'access', inviteOnly })}
+              />
+            )}
+            <InvitePanel
+              everyone
+              status={status}
+              onInvite={(userIds) => Promise.resolve(onAct({ type: 'invite', userIds }))}
+              getLink={getLink}
+              describeError={(e) => gameError(e instanceof ApiError ? e.code : undefined)}
+              disabled={busy}
+              hint={
+                table.kind === 'chess'
+                  ? tr(
+                      'table_games.invite_hint_chess',
+                      'Invited people see this table first in their lobby.'
+                    )
+                  : tr(
+                      'table_games.invite_hint',
+                      'Invited people see this table first in their lobby. Bots stake nothing and are never paid.'
+                    )
+              }
+            />
           </>
         )}
+
+        <button
+          type="button"
+          className={css.Pill}
+          style={{ flexShrink: 0, alignSelf: 'flex-start' }}
+          onClick={onSwitchTable}
+        >
+          {tr('games.switch.title', 'Switch table')}
+        </button>
 
         {!seatsOnly && (
           <>

@@ -14,6 +14,7 @@ export type FodinhaScreenProps = {
   onJoin: () => void;
   onBack: () => void;
   onOpenSheet: () => void;
+  onSwitchTable: () => void;
   nameOf: (userId: string) => string;
   avatarOf: (userId: string) => string | undefined;
 };
@@ -31,6 +32,7 @@ export function FodinhaScreen({
   onJoin,
   onBack,
   onOpenSheet,
+  onSwitchTable,
   nameOf,
   avatarOf,
 }: FodinhaScreenProps) {
@@ -46,7 +48,10 @@ export function FodinhaScreen({
           <button type="button" className={css.Button} onClick={onBack}>
             {tr('games.action.back', 'Back')}
           </button>
-          <h1>{table.name}</h1>
+          <h1 style={{ flex: 1 }}>{table.name}</h1>
+          <button type="button" className={css.Button} onClick={onSwitchTable}>
+            {tr('games.switch.title', 'Switch table')}
+          </button>
         </header>
         {error && (
           <p role="alert" className={css.Error}>

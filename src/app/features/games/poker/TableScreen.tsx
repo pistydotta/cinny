@@ -10,8 +10,9 @@ import { PokerTable } from './table/PokerTable';
 import { TableLayout } from './table/layout';
 import { ActionBar } from './ActionBar';
 import { HistoryDrawer } from './TableParts';
-import type { TableAccess } from './InvitePicker';
+import type { TableAccess } from '../invite/InvitePicker';
 import { AwayDialog, CloseDialog, InviteDialog, RebuyDialog, SeatDialog } from './TableDialogs';
+import { PokerSwitcher } from './PokerSwitcher';
 import { errorText } from './errorText';
 import { createInFlight } from './inFlight';
 import { avatarSource } from './avatarSource';
@@ -39,6 +40,8 @@ type TableScreenProps = {
   onBack: () => void;
   /** Where "play another tournament" leads. */
   onNewTournament?: () => void;
+  /** Opens another table, for "switch table". */
+  onOpenTable?: (tableId: string) => void;
 };
 
 function Message({ text, onBack }: { text: string; onBack: () => void }) {
@@ -56,7 +59,7 @@ function Message({ text, onBack }: { text: string; onBack: () => void }) {
   );
 }
 
-export function TableScreen({ tableId, onBack, onNewTournament }: TableScreenProps) {
+export function TableScreen({ tableId, onBack, onNewTournament, onOpenTable }: TableScreenProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const userId = mx.getUserId() ?? '';
@@ -67,6 +70,7 @@ export function TableScreen({ tableId, onBack, onNewTournament }: TableScreenPro
   const [pickedSeat, setPickedSeat] = useState<number>();
   const [showHistory, setShowHistory] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string>();
@@ -381,6 +385,17 @@ export function TableScreen({ tableId, onBack, onNewTournament }: TableScreenPro
               <Icon size="200" src={Icons.Link} />
               {copied && <span>{tr('games.table.link_copied', 'Copied')}</span>}
             </button>
+            {onOpenTable && (
+              <button
+                type="button"
+                className={css.IconButton}
+                onClick={() => setSwitching(true)}
+                aria-label={tr('games.switch.title', 'Switch table')}
+              >
+                <Icon size="200" src={Icons.ArrowGoRight} />
+                <span className={css.WideOnly}>{tr('games.switch.title', 'Switch table')}</span>
+              </button>
+            )}
           </>
         )}
         <button
@@ -563,8 +578,25 @@ export function TableScreen({ tableId, onBack, onNewTournament }: TableScreenPro
             onInvite={async (userIds) => {
               await api.inviteMany(tableId, userIds);
             }}
+            getLink={async () =>
+              `${window.location.origin}${getGamesPokerJoinPath(await api.inviteLink(tableId))}`
+            }
             onAccess={async (next) => setAccessOverride(await api.settings(tableId, next))}
             onDone={() => setShowInvite(false)}
+          />
+        )}
+
+        {switching && onOpenTable && (
+          <PokerSwitcher
+            api={api}
+            tableId={tableId}
+            seated={seated}
+            onClose={() => setSwitching(false)}
+            onGo={(id) => {
+              setSwitching(false);
+              refreshCredits();
+              onOpenTable(id);
+            }}
           />
         )}
 

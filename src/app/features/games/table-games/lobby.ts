@@ -25,7 +25,8 @@ export function lobbySections(
       if (seated) s.recent.push(t);
     } else if (seated) s.mine.push(t);
     else if (t.phase === 'waiting' && t.invited?.includes(me)) s.invited.push(t);
-    else if (t.phase === 'waiting' && t.players.length < t.capacity) s.open.push(t);
+    else if (t.phase === 'waiting' && t.players.length < t.capacity && !t.inviteOnly)
+      s.open.push(t);
     else if (t.players.some((p) => friends.has(p))) s.friends.push(t);
   });
   s.recent.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));

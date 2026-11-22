@@ -54,6 +54,12 @@ export type GameTable = {
   handWinner?: number | null;
   handPoints?: number;
   invited?: string[];
+  // Only the invited and people with the link may sit.
+  inviteOnly?: boolean;
+  // Sent to seated players only: the table's join link.
+  inviteToken?: string;
+  // Seat swaps someone asked for and the other person hasn't answered yet.
+  swaps?: { from: string; to: string }[];
   winners?: number[];
   result?: string;
   // The table "Play again" opened from this one.
@@ -67,4 +73,10 @@ export type GameTable = {
 export type TableSummary = Pick<
   GameTable,
   'id' | 'name' | 'kind' | 'stake' | 'capacity' | 'phase'
-> & { players: string[]; invited?: string[]; winners?: number[]; updatedAt?: number };
+> & {
+  players: string[];
+  invited?: string[];
+  inviteOnly?: boolean;
+  winners?: number[];
+  updatedAt?: number;
+};

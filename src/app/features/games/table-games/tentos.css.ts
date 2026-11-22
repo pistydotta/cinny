@@ -948,6 +948,8 @@ export const Sheet = style({
   overflowY: 'auto',
   padding: 18,
   background: RAISED,
+  // Fodinha's page sets a dark text colour; the sheet keeps its own.
+  color: INK,
   borderLeft: `1px solid ${LINE}`,
   display: 'flex',
   flexDirection: 'column',

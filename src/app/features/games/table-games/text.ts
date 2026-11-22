@@ -30,6 +30,11 @@ export const gameError = (code?: string) =>
     table_full: tr('table_games.full', 'This table is full or has already started.'),
     comment_rate_limit: tr('table_games.slow', 'Wait a moment before commenting again.'),
     not_found: tr('table_games.missing', 'This table could not be found.'),
+    invite_only: tr(
+      'table_games.invite_only_error',
+      'This table is for invited people only. Ask someone at it for an invite or the link.'
+    ),
+    invalid_seat: tr('table_games.invalid_seat', 'That seat can’t be swapped.'),
     too_many_tables: tr(
       'table_games.too_many',
       'Finish or cancel an existing table before creating another.'

@@ -20,6 +20,7 @@ describe('card-game lobby', () => {
       t('mine', { phase: 'play', players: ['@me:x', 'bot:1', 'bot:2', 'bot:3'] }),
       t('invite', { players: ['@ana:x'], invited: ['@me:x'] }),
       t('open', { players: ['@bia:x'] }),
+      t('invite-only', { players: ['@bia:x'], inviteOnly: true }),
       t('full-stranger', { players: ['@a:x', '@b:x', '@c:x', '@d:x'] }),
       t('friend-playing', { phase: 'play', players: ['@ana:x', 'bot:1', 'bot:2', 'bot:3'] }),
       t('stranger-playing', { phase: 'play', players: ['@bia:x', 'bot:1', 'bot:2', 'bot:3'] }),
@@ -32,7 +33,7 @@ describe('card-game lobby', () => {
   );
   const ids = (list: TableSummary[]) => list.map((x) => x.id);
 
-  it('keeps your tables, invitations and open seats', () => {
+  it('keeps your tables, invitations and open seats, without invite-only tables you are not in', () => {
     expect(ids(sections.mine)).toEqual(['mine']);
     expect(ids(sections.invited)).toEqual(['invite']);
     expect(ids(sections.open)).toEqual(['open']);

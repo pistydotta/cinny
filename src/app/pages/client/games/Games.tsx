@@ -118,6 +118,7 @@ export function PokerTablePage() {
       tableId={decodeURIComponent(tableId)}
       onBack={goBack}
       onNewTournament={newTournament}
+      onOpenTable={(id) => navigate(getGamesPokerTablePath(id))}
     />
   );
 }

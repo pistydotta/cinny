@@ -10,8 +10,8 @@ import { errorText } from './errorText';
 import { CloseDialog, LeaveDialog } from './TableDialogs';
 import { formatChips, LobbyTable } from './types';
 import { useLobby } from './useLobby';
-import { AccessFields, InvitePicker, TableAccess } from './InvitePicker';
-import type { TableStatus } from './inviteCandidates';
+import { AccessFields, InvitePicker, TableAccess } from '../invite/InvitePicker';
+import type { TableStatus } from '../invite/inviteCandidates';
 import * as css from './pokerPage.css';
 import { tr } from '../../translation/tr';
 

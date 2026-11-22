@@ -697,6 +697,7 @@ export type TentosTableProps = {
   onRematch: () => void;
   onBack: () => void;
   onOpenSheet: () => void;
+  onSwitchTable: () => void;
   nameOf: (userId: string) => string;
   avatarOf: (userId: string) => string | undefined;
 };
@@ -710,6 +711,7 @@ export function TentosTable({
   onRematch,
   onBack,
   onOpenSheet,
+  onSwitchTable,
   nameOf,
   avatarOf,
 }: TentosTableProps) {
@@ -1049,6 +1051,9 @@ export function TentosTable({
           </div>
         )}
         <div className={css.Corner} data-side="right">
+          <button type="button" className={css.Pill} onClick={onSwitchTable}>
+            {tr('games.switch.title', 'Switch table')}
+          </button>
           <button type="button" className={css.Pill} onClick={onOpenSheet}>
             {phase === 'waiting'
               ? tr('table_games.invite', '+ Invite')

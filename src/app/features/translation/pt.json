@@ -314,7 +314,21 @@
     "suit_h": "copas",
     "suit_c": "paus",
     "manilha_word": "Manilha",
-    "worth_word": "Mão vale"
+    "worth_word": "Mão vale",
+    "invite_only": "Só convidados",
+    "invite_only_hint": "Só quem você convidar, ou quem tiver o link, pode sentar. Qualquer um ainda pode assistir.",
+    "invite_only_error": "Esta mesa é só para convidados. Peça um convite ou o link a quem está nela.",
+    "invalid_seat": "Esse lugar não dá para trocar.",
+    "swap_hint_truco": "Os lugares 1 e 3 jogam contra 2 e 4. Troque de lugar com alguém da outra dupla para mudar de dupla: o lugar de um bot é seu na hora, uma pessoa precisa aceitar.",
+    "swap_hint": "Troque de lugar com quem quiser antes de começar: o lugar de um bot é seu na hora, uma pessoa precisa aceitar.",
+    "swap_accept": "Trocar",
+    "swap_waiting": "Pedido · cancelar",
+    "swap_with": "Trocar de lugar com {{name}}",
+    "swap_take": "Trocar",
+    "swap_ask": "Pedir troca",
+    "swap_request": "{{name}} quer trocar de lugar com você",
+    "swap_decline_short": "Não",
+    "invite_hint_chess": "Quem você convidar vê esta mesa primeiro no lobby."
   },
   "Organisms": {
     "RoomCommon": {
@@ -1862,7 +1876,11 @@
       "unselect_all": "Desmarcar todos",
       "select_all": "Marcar todos ({{count}})",
       "in_call": "na call",
-      "send": "Convidar {{count}}"
+      "send": "Convidar {{count}}",
+      "copy_link": "Copiar link de convite",
+      "link_copied": "Link copiado",
+      "hint": "Quem você convidar vê a mesa no lobby e na página de jogos. O link deixa entrar quem tiver ele.",
+      "link_label": "Link de convite"
     },
     "access": {
       "public": "Mesa pública",
@@ -2340,6 +2358,24 @@
       "build_items": "Muambas",
       "choose_item": "Camelô: escolha uma Muamba",
       "treta_hud": "Treta ×{{count}}: +{{percent}}% de dificuldade"
+    },
+    "switch": {
+      "title": "Trocar de mesa",
+      "loading": "Procurando mesas…",
+      "none": "Nenhuma outra mesa aberta agora. Crie uma pelo lobby.",
+      "open": "Abrir",
+      "go": "Ir para esta",
+      "stay": "Ficar aqui",
+      "warn_cancel": "Você é o dono desta mesa: ir para outra cancela ela e devolve as apostas de todos.",
+      "warn_leave": "Você sai desta mesa e recebe sua aposta de volta.",
+      "warn_leave_free": "Você sai desta mesa.",
+      "warn_resign": "A partida está rolando: ir para outra mesa é desistir dela, e você perde a aposta.",
+      "warn_resign_free": "A partida está rolando: ir para outra mesa é desistir dela.",
+      "warn_poker": "Você levanta desta mesa e suas fichas voltam para a carteira (no fim da mão, se estiver nela).",
+      "poker_invite": "convidaram você",
+      "poker_public": "pública",
+      "poker_mine": "sua mesa",
+      "poker_members": "{{count}} na mesa"
     }
   },
   "music_bot": {

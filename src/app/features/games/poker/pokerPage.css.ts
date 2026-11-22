@@ -279,6 +279,7 @@ export const InfoRow = style({
 export const PrimaryButton = style({
   textAlign: 'center',
   height: 48,
+  flexShrink: 0,
   borderRadius: 12,
   border: 'none',
   background: `linear-gradient(180deg, #ffd96a 0%, ${GOLD} 50%, #d9a520 100%)`,
@@ -296,6 +297,7 @@ export const PrimaryButton = style({
 export const SecondaryButton = style({
   textAlign: 'center',
   height: 44,
+  flexShrink: 0,
   borderRadius: 12,
   border: '1px solid rgba(255,255,255,0.12)',
   background: 'rgba(255,255,255,0.05)',

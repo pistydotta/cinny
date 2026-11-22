@@ -1,13 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
+import { InviteOnlyToggle } from '../invite/InviteOnlyToggle';
 import { useCredits } from '../credits/useCredits';
 import { createTableGamesApi } from './api';
 import { ChessBoard } from './ChessBoard';
 import { CardTablesPage } from './CardTablesPage';
+import { SeatsSheet } from './SeatsSheet';
+import { TableSwitcher } from './TableSwitcher';
 import { cardText, gameError, gameName, phaseText, rulesText, shortName } from './text';
 import { GameKind, GameTable, TableSummary } from './types';
 import * as css from './tableGames.css';
@@ -45,6 +48,12 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
   const [capacity, setCapacity] = useState(4);
   const [comment, setComment] = useState('');
   const [confirmResign, setConfirmResign] = useState(false);
+  const [inviteOnly, setInviteOnly] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const [search] = useSearchParams();
+  const inviteToken = search.get('invite') ?? undefined;
+  const myId = mx.getUserId() ?? '';
 
   const load = useCallback(async () => {
     if (tableId) {
@@ -121,8 +130,47 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
           >
             {tr('games.action.back', 'Back')}
           </button>
-          <h1>{tableId ? table?.name ?? gameName(kind) : gameName(kind)}</h1>
+          <h1 style={{ flex: 1 }}>{tableId ? table?.name ?? gameName(kind) : gameName(kind)}</h1>
+          {table && (
+            <button type="button" className={css.Button} onClick={() => setSwitching(true)}>
+              {tr('games.switch.title', 'Switch table')}
+            </button>
+          )}
         </header>
+        {table && sheet && (
+          <SeatsSheet
+            table={table}
+            busy={busy}
+            isOwner={table.ownerId === myId}
+            onAct={(action) => run(() => api.act(table, action))}
+            getLink={async () =>
+              `${window.location.origin}${getGamesTableGamePath(
+                kind,
+                table.id
+              )}?invite=${encodeURIComponent(await api.inviteLink(table.id))}`
+            }
+            onSwitchTable={() => {
+              setSheet(false);
+              setSwitching(true);
+            }}
+            onClose={() => setSheet(false)}
+            nameOf={shortName}
+            seatsOnly
+          />
+        )}
+        {table && switching && (
+          <TableSwitcher
+            api={api}
+            table={table}
+            myId={myId}
+            nameOf={shortName}
+            onClose={() => setSwitching(false)}
+            onGo={(id) => {
+              setSwitching(false);
+              navigate(getGamesTableGamePath(kind, id));
+            }}
+          />
+        )}
         {error && (
           <p role="alert" className={css.Error}>
             {error}
@@ -142,11 +190,11 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  run(() => api.create(kind, name, kind === 'chess' ? 0 : stake, capacity)).then(
-                    (created) => {
-                      if (created) navigate(getGamesTableGamePath(kind, created.id));
-                    }
-                  );
+                  run(() =>
+                    api.create(kind, name, kind === 'chess' ? 0 : stake, capacity, inviteOnly)
+                  ).then((created) => {
+                    if (created) navigate(getGamesTableGamePath(kind, created.id));
+                  });
                 }}
               >
                 <label className={css.Label} htmlFor="table-name">
@@ -200,6 +248,11 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
                     )}
                   </p>
                 )}
+                <InviteOnlyToggle
+                  id="table-invite-only"
+                  checked={inviteOnly}
+                  onChange={setInviteOnly}
+                />
                 <button type="submit" className={css.Button} disabled={busy}>
                   {tr('table_games.create', 'Create a table')}
                 </button>
@@ -317,13 +370,18 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
                       type="button"
                       className={css.Button}
                       disabled={busy}
-                      onClick={() => run(() => api.join(table.id))}
+                      onClick={() => run(() => api.join(table.id, inviteToken))}
                     >
                       {kind === 'chess'
                         ? tr('table_games.join_free', 'Join as player (free)')
                         : tr('table_games.join_stake', 'Join · reserve {{stake}} credits', {
                             stake: table.stake,
                           })}
+                    </button>
+                  )}
+                  {me && (
+                    <button type="button" className={css.Button} onClick={() => setSheet(true)}>
+                      {tr('table_games.invite', '+ Invite')}
                     </button>
                   )}
                   {table.ownerId === mx.getUserId() && (

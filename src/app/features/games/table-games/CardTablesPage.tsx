@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { friendAvatarUrl, friendDisplayName } from '../../friends/userDisplay';
@@ -7,6 +7,7 @@ import { useFriends } from '../../friends/useFriends';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
+import { InviteOnlyToggle } from '../invite/InviteOnlyToggle';
 import { TopUpButton } from '../credits/TopUpButton';
 import { useCredits } from '../credits/useCredits';
 import { formatChips } from '../poker/types';
@@ -14,6 +15,7 @@ import { createTableGamesApi } from './api';
 import { FodinhaScreen } from './FodinhaScreen';
 import { lobbySections, wonBy } from './lobby';
 import { SeatsSheet } from './SeatsSheet';
+import { TableSwitcher } from './TableSwitcher';
 import { TentosTable } from './TentosTable';
 import { botName, isBotId } from './tentosView';
 import { gameError, gameName, phaseText } from './text';
@@ -32,9 +34,10 @@ function CreateForm({
   kind: CardKind;
   busy: boolean;
   balance?: number;
-  onCreate: (name: string, stake: number, capacity: number) => void;
+  onCreate: (name: string, stake: number, capacity: number, inviteOnly: boolean) => void;
 }) {
   const [name, setName] = useState('');
+  const [inviteOnly, setInviteOnly] = useState(false);
   const [stake, setStake] = useState(0);
   const [capacity, setCapacity] = useState(4);
   return (
@@ -42,7 +45,7 @@ function CreateForm({
       className={css.Form}
       onSubmit={(e) => {
         e.preventDefault();
-        onCreate(name, stake, kind === 'truco' ? 4 : capacity);
+        onCreate(name, stake, kind === 'truco' ? 4 : capacity, inviteOnly);
       }}
     >
       <label className={css.Field} htmlFor="table-name">
@@ -93,6 +96,7 @@ function CreateForm({
           </div>
         </div>
       )}
+      <InviteOnlyToggle id="table-invite-only" checked={inviteOnly} onChange={setInviteOnly} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span className={`${css.Grow} ${css.Muted}`}>
           {stake
@@ -117,6 +121,9 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
   const myId = mx.getUserId() ?? '';
   const navigate = useNavigate();
   const { tableId } = useParams();
+  // A shared link carries the table's invite token, which lets its holder sit at an invite-only table.
+  const [search] = useSearchParams();
+  const inviteToken = search.get('invite') ?? undefined;
   const useAuthentication = useMediaAuthentication();
   const api = useMemo(() => createTableGamesApi(() => mx.getAccessToken()), [mx]);
   const { balance, atTables, refresh, topUp } = useCredits();
@@ -127,6 +134,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
   const [loaded, setLoaded] = useState(false);
   const [creating, setCreating] = useState(false);
   const [sheet, setSheet] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const { lists } = useFriends();
   const friends = useMemo(() => new Set((lists?.friends ?? []).map((f) => f.userId)), [lists]);
 
@@ -201,16 +209,46 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
         </main>
       );
     const act = (action: Record<string, unknown>) => run(() => api.act(table, action));
-    const sheetView = sheet && (
-      <SeatsSheet
-        table={table}
-        busy={busy}
-        isOwner={table.ownerId === myId}
-        onAct={act}
-        onClose={() => setSheet(false)}
-        nameOf={nameOf}
-        seatsOnly={kind === 'fodinha'}
-      />
+    const join = () => run(() => api.join(table.id, inviteToken));
+    const openSwitch = () => {
+      setSheet(false);
+      setSwitching(true);
+    };
+    const sheetView = (
+      <>
+        {sheet && (
+          <SeatsSheet
+            table={table}
+            busy={busy}
+            isOwner={table.ownerId === myId}
+            onAct={act}
+            getLink={async () =>
+              `${window.location.origin}${getGamesTableGamePath(
+                kind,
+                table.id
+              )}?invite=${encodeURIComponent(await api.inviteLink(table.id))}`
+            }
+            onSwitchTable={openSwitch}
+            onClose={() => setSheet(false)}
+            nameOf={nameOf}
+            seatsOnly={kind === 'fodinha'}
+          />
+        )}
+        {switching && (
+          <TableSwitcher
+            api={api}
+            table={table}
+            myId={myId}
+            nameOf={nameOf}
+            onClose={() => setSwitching(false)}
+            onGo={(id) => {
+              setSwitching(false);
+              refresh();
+              navigate(getGamesTableGamePath(kind, id));
+            }}
+          />
+        )}
+      </>
     );
     if (kind === 'fodinha')
       return (
@@ -221,9 +259,10 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
             error={error}
             isOwner={table.ownerId === myId}
             onAct={act}
-            onJoin={() => run(() => api.join(table.id))}
+            onJoin={join}
             onBack={toLobby}
             onOpenSheet={() => setSheet(true)}
+            onSwitchTable={openSwitch}
             nameOf={nameOf}
             avatarOf={avatarOf}
           />
@@ -237,7 +276,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
           busy={busy}
           isOwner={table.ownerId === myId}
           onAct={act}
-          onJoin={() => run(() => api.join(table.id))}
+          onJoin={join}
           onRematch={() =>
             run(() => api.rematch(table.id)).then((next) => {
               if (next) navigate(getGamesTableGamePath(kind, next.id));
@@ -245,6 +284,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
           }
           onBack={toLobby}
           onOpenSheet={() => setSheet(true)}
+          onSwitchTable={openSwitch}
           nameOf={nameOf}
           avatarOf={avatarOf}
         />
@@ -342,8 +382,8 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
               kind={kind}
               busy={busy}
               balance={balance}
-              onCreate={(name, stake, capacity) =>
-                run(() => api.create(kind, name, stake, capacity)).then((created) => {
+              onCreate={(name, stake, capacity, inviteOnly) =>
+                run(() => api.create(kind, name, stake, capacity, inviteOnly)).then((created) => {
                   if (created) navigate(getGamesTableGamePath(kind, created.id));
                 })
               }

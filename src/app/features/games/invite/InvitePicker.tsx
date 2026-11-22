@@ -12,7 +12,7 @@ import {
   mergeCandidates,
   TableStatus,
 } from './inviteCandidates';
-import * as css from './pokerPage.css';
+import * as css from '../poker/pokerPage.css';
 
 type Filter = 'all' | 'call' | 'friend';
 
