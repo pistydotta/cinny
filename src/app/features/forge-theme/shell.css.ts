@@ -1,14 +1,28 @@
 import { assignVars, globalStyle, keyframes } from '@vanilla-extract/css';
-import { color } from 'folds';
+import { color, config } from 'folds';
 import * as navCss from '../../components/nav/styles.css';
 import * as sidebarCss from '../../components/sidebar/Sidebar.css';
 import * as pageCss from '../../components/page/style.css';
 import { forgeDark } from './palette';
 import { forgeColor } from './forgeColor.css';
+import { forgeFont, forgeShadowDark, forgeShadowLight } from './tokens';
 import './switch.css';
 
 // Forge restyles Cinny's shell from here, so the upstream style files stay untouched.
-const mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+const { mono } = forgeFont;
+
+// Elevation per mode. The theme-class prefix outranks folds' config class on the same <body>.
+globalStyle('body.light-theme', { vars: assignVars(config.shadow, forgeShadowLight) });
+globalStyle('body.dark-theme', { vars: assignVars(config.shadow, forgeShadowDark) });
+
+// One keyboard focus ring for everything focusable: the ember outline folds' own controls
+// already draw. :where keeps it at zero specificity, so a component's own focus style wins, and
+// the games' plain buttons, which had only the browser's ring (lost on their dark tables), get
+// it too.
+globalStyle(
+  ':where(button, a, input, select, textarea, summary, [role=button], [role=tab], [role=menuitem], [tabindex]):focus-visible',
+  { outline: `2px solid ${forgeColor.Ember.Main}`, outlineOffset: '2px' }
+);
 
 // The open room or page: a raised row with an ember bar on its left edge.
 globalStyle(`[aria-selected=true]:has(.${navCss.NavLink})`, {

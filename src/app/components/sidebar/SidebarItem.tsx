@@ -33,6 +33,8 @@ export function SidebarItemTooltip({
   if (!tooltip) {
     return children(() => undefined);
   }
+  // blazeroom: rail buttons are icons or initials, so screen readers take the tooltip as the name.
+  const label = typeof tooltip === 'string' ? tooltip : undefined;
 
   return (
     <TooltipProvider
@@ -44,7 +46,12 @@ export function SidebarItemTooltip({
         </Tooltip>
       }
     >
-      {children}
+      {(triggerRef) =>
+        children((el) => {
+          triggerRef(el);
+          if (el && label) el.setAttribute('aria-label', label);
+        })
+      }
     </TooltipProvider>
   );
 }

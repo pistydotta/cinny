@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useId, useState } from 'react';
 import { Icon, Icons, IconSrc, Text } from 'folds';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
@@ -165,12 +165,14 @@ export function SettingsShell<T>({
   const [body, setBody] = useState<HTMLDivElement | null>(null);
   const anyMatch = useRowFilter(body, query);
   useActiveSection(body, activePage);
+  const titleId = useId();
 
+  // Settings opens over the app, so it says it's a dialog and names itself by its title.
   return (
-    <div className={css.Shell}>
+    <div className={css.Shell} role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <div className={css.Bar}>
         <div className={css.BarTop}>
-          <Text as="h1" size="H4" className={css.Title}>
+          <Text as="h1" size="H4" className={css.Title} id={titleId}>
             {tr('settings.title', 'Settings')}
           </Text>
           <div className={css.Search}>

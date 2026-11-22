@@ -172,7 +172,12 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   upstream style files. Roles folds has no slot for are in `forgeColor` (`forgeColor.css.ts`):
   `Ember` for focus rings, links, the selected row and switch/slider fills, and `Text.Secondary`/
   `Text.Faint` for dimmer text. Use them instead of a new hex or an opacity; filled buttons stay
-  the wine `Primary`. The wallpaper shows only behind the logged-out pages. Games screens
+  the wine `Primary`. Sizes, spacing, radii, z layers, motion and per-mode shadows are in
+  `forge-theme/tokens.ts`. `literals.test.ts` caps the hand-written colours, font sizes, shadows
+  and z-indexes left in `features/**/*.css.ts` (outside `games/` for now): a count may only go
+  down, so lower its ceiling when you remove some, and reach for a token instead of adding one.
+  `shell.css.ts` gives everything focusable an ember keyboard ring at zero specificity; a control
+  that sets `outline: none` must draw its own visible focus instead. The wallpaper shows only behind the logged-out pages. Games screens
   still carry their own gold and serif styles until their redesign PRs.
 
 - An unwatched screen share is a stand-in tile in Element Call's grid (a bundle patch), with
