@@ -1,27 +1,12 @@
 import React, { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
-import { useMatch, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Avatar,
-  Box,
-  Button,
-  Icon,
-  Icons,
-  Input,
-  Scroll,
-  Spinner,
-  Text,
-  color,
-  config,
-  toRem,
-} from 'folds';
+import { useSearchParams } from 'react-router-dom';
+import { Box, Button, Input, Scroll, Spinner, Text, color, config, toRem } from 'folds';
 import { Page, PageContent } from '../../components/page';
-import { NavButton, NavItem, NavItemContent } from '../../components/nav';
 import { MobileBackHeader } from '../home-overview/MobileBackHeader';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useAlive } from '../../hooks/useAlive';
 import { useToast } from '../../components/toast';
-import { getHomeJoinPath } from '../../pages/pathUtils';
 import { tr } from '../translation/tr';
 import {
   RedeemInput,
@@ -31,30 +16,6 @@ import {
   roomCodeErrorMessage,
 } from './roomCodesApi';
 import { redeemAndJoin } from './joinByCode';
-
-// "Join with code" in the Home nav, beside "Join with Address".
-export function JoinByCodeNavItem() {
-  const navigate = useNavigate();
-  const selected = !!useMatch({ path: getHomeJoinPath(), caseSensitive: true, end: false });
-  return (
-    <NavItem variant="Background" radii="400" aria-selected={selected}>
-      <NavButton onClick={() => navigate(getHomeJoinPath())}>
-        <NavItemContent>
-          <Box as="span" grow="Yes" alignItems="Center" gap="200">
-            <Avatar size="200" radii="400">
-              <Icon src={Icons.Hash} size="100" />
-            </Avatar>
-            <Box as="span" grow="Yes">
-              <Text as="span" size="Inherit" truncate>
-                {tr('room_codes.join_nav', 'Join with code')}
-              </Text>
-            </Box>
-          </Box>
-        </NavItemContent>
-      </NavButton>
-    </NavItem>
-  );
-}
 
 // /home/join/: type a four-digit code, or open an invite link (?link=...), and join the room or
 // space it's for.

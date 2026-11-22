@@ -34,6 +34,7 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { EncryptionStep, getEncryptionStep } from './encryptionStep';
 import { isEncryptionBannerQuiet, readFirstLogin } from '../first-login/firstLogin';
 import { tr } from '../translation/tr';
+import * as css from './encryptionSetup.css';
 
 const toVerified = (status: VerificationStatus): boolean | null | undefined => {
   if (status === VerificationStatus.Verified) return true;
@@ -231,22 +232,26 @@ export function EncryptionSetup() {
   return (
     <>
       <Box
-        className={ContainerColor({ variant: 'Warning' })}
+        className={`${ContainerColor({ variant: 'Warning' })} ${css.Banner}`}
         shrink="No"
         alignItems="Center"
         justifyContent="Center"
         gap="300"
         wrap="Wrap"
-        style={{ padding: `${config.space.S200} ${config.space.S400}` }}
       >
-        <Icon size="100" src={Icons.Shield} />
-        <Text size="T300">
+        <Icon className={css.Shield} size="100" src={Icons.Shield} />
+        <Text className={css.Long} size="T300">
           {step === 'create'
             ? tr(
                 'encryption.banner_create',
                 'Create a recovery key to read your messages on other devices.'
               )
             : tr('encryption.banner_unlock', "This device can't read your encrypted messages yet.")}
+        </Text>
+        <Text className={css.Short} size="T300">
+          {step === 'create'
+            ? tr('encryption.banner_create_short', 'Create your recovery key')
+            : tr('encryption.banner_unlock_short', 'Verify this device')}
         </Text>
         <Button size="300" radii="300" variant="Warning" onClick={() => setOpen(true)}>
           <Text size="B300">

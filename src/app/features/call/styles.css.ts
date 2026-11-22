@@ -1,5 +1,7 @@
 import { style } from '@vanilla-extract/css';
-import { config, toRem } from 'folds';
+import { color, config, toRem } from 'folds';
+import { forgeColor } from '../forge-theme/forgeColor.css';
+import { forgeRadius, forgeType } from '../forge-theme/tokens';
 
 export const CallViewContent = style({
   padding: config.space.S400,
@@ -37,3 +39,36 @@ export const CallStage = style({
   position: 'relative',
   '@media': { 'screen and (max-width: 700px)': { flexDirection: 'column' } },
 });
+
+// The room before you join: what it is, who's there, your devices and the join button, as one
+// card in the middle of the page instead of a strip of buttons in an empty one.
+export const PrejoinCard = style({
+  width: '100%',
+  maxWidth: toRem(420),
+  padding: config.space.S600,
+  borderRadius: forgeRadius.card,
+  backgroundColor: color.SurfaceVariant.Container,
+  color: color.SurfaceVariant.OnContainer,
+  border: `1px solid ${color.SurfaceVariant.ContainerLine}`,
+});
+
+export const PrejoinIcon = style({
+  display: 'grid',
+  placeItems: 'center',
+  width: toRem(48),
+  height: toRem(48),
+  borderRadius: forgeRadius.round,
+  backgroundColor: color.Primary.Container,
+  color: color.Primary.OnContainer,
+});
+
+export const PrejoinTitle = style({ ...forgeType.title, margin: 0, textAlign: 'center' });
+
+export const PrejoinStatus = style({
+  ...forgeType.bodySm,
+  margin: 0,
+  textAlign: 'center',
+  color: forgeColor.Text.Secondary,
+});
+
+export const PrejoinDevices = style({ flexWrap: 'wrap' });

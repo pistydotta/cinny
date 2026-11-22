@@ -71,8 +71,6 @@ import {
   HomeOverviewEmptyButton,
   HomeOverviewNavItem,
 } from '../../../features/home-overview/HomeOverviewNavItem';
-import { CoffeeNavItem } from '../../../features/coffee/CoffeeNavItem';
-import { JoinByCodeNavItem } from '../../../features/room-invite/JoinByCodePage';
 import { TipIconButton } from '../../../features/tooltips/TipIconButton';
 
 type HomeMenuProps = {
@@ -258,7 +256,6 @@ export function Home() {
           <Box direction="Column" gap="300">
             <NavCategory>
               <HomeOverviewNavItem />
-              <CoffeeNavItem />
               <NavItem variant="Background" radii="400" aria-selected={createRoomSelected}>
                 <NavButton onClick={() => navigate(getHomeCreatePath())}>
                   <NavItemContent>
@@ -313,7 +310,6 @@ export function Home() {
                   </>
                 )}
               </UseStateProvider>
-              <JoinByCodeNavItem />
               <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
                 <NavLink to={getHomeSearchPath()}>
                   <NavItemContent>

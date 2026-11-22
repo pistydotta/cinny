@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Box, Scroll, Text, config, toRem } from 'folds';
 import { Page, PageContent } from '../../components/page';
 import { WhatsNewCard } from '../whats-new/WhatsNewCard';
@@ -8,9 +9,11 @@ import { sourceUrl } from '../source/sourceUrl';
 import { AppsCard } from './AppsCard';
 import { JokeLine } from './JokeLine';
 import { MobileBackHeader } from './MobileBackHeader';
+import { HappeningNow } from './HappeningNow';
+import { getHomeCoffeePath } from '../../pages/pathUtils';
 
-// Visão geral: the greeting with what's left to set up, then the latest news. Nothing here
-// opens by itself.
+// Visão geral: the greeting with what's left to set up, who's in a call now, then the latest
+// news. Nothing here opens by itself.
 export function HomeOverview() {
   return (
     <Page>
@@ -28,6 +31,7 @@ export function HomeOverview() {
             }}
           >
             <WelcomeCard />
+            <HappeningNow />
             <AppsCard />
             <WhatsNewCard />
             <JokeLine />
@@ -44,6 +48,8 @@ export function HomeOverview() {
               <a href={sourceUrl} target="_blank" rel="noreferrer noopener">
                 {tr('welcome.source_code', 'Source code')}
               </a>
+              {' · '}
+              <Link to={getHomeCoffeePath()}>{tr('coffee.nav', 'Buy me a coffee')}</Link>
             </Text>
           </Box>
         </PageContent>

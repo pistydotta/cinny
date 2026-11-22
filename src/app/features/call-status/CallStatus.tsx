@@ -84,7 +84,12 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
         </Box>
         {!compact && <StatusDivider />}
         <Box shrink="No" alignItems="Center" gap="Inherit">
-          <CallControl callJoined={callJoined} compact={compact} callEmbed={callEmbed} />
+          <CallControl
+            callJoined={callJoined}
+            compact={compact}
+            callEmbed={callEmbed}
+            devices={!(callJoined && selectedRoom === callEmbed.roomId)}
+          />
         </Box>
       </Box>
     </Box>

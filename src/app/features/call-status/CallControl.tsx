@@ -6,6 +6,7 @@ import { CallEmbed, useCallControlState } from '../../plugins/call';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { callEmbedAtom } from '../../state/callEmbed';
 import { AudioMenuArrow } from '../call-audio-settings';
+import { tr } from '../translation/tr';
 
 type MicrophoneButtonProps = {
   enabled: boolean;
@@ -21,7 +22,11 @@ function MicrophoneButton({ enabled, onToggle, disabled }: MicrophoneButtonProps
       position="Top"
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Turn Off Microphone' : 'Turn On Microphone'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.mic_off', 'Turn Off Microphone')
+              : tr('call_view.mic_on', 'Turn On Microphone')}
+          </Text>
         </Tooltip>
       }
     >
@@ -54,7 +59,11 @@ function SoundButton({ enabled, onToggle, disabled }: SoundButtonProps) {
       position="Top"
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Turn Off Sound' : 'Turn On Sound'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.sound_off', 'Turn Off Sound')
+              : tr('call_view.sound_on', 'Turn On Sound')}
+          </Text>
         </Tooltip>
       }
     >
@@ -94,7 +103,11 @@ function VideoButton({ enabled, onToggle, disabled }: VideoButtonProps) {
       position="Top"
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Stop Camera' : 'Start Camera'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.camera_off', 'Stop Camera')
+              : tr('call_view.camera_on', 'Start Camera')}
+          </Text>
         </Tooltip>
       }
     >
@@ -131,7 +144,11 @@ function ScreenShareButton({ enabled, onToggle, disabled }: ScreenShareButtonPro
       position="Top"
       tooltip={
         <Tooltip>
-          <Text size="T200">{enabled ? 'Stop Screenshare' : 'Start Screenshare'}</Text>
+          <Text size="T200">
+            {enabled
+              ? tr('call_view.screenshare_off', 'Stop Screenshare')
+              : tr('call_view.screenshare_on', 'Start Screenshare')}
+          </Text>
         </Tooltip>
       }
     >
@@ -157,10 +174,13 @@ export function CallControl({
   callEmbed,
   compact,
   callJoined,
+  devices = true,
 }: {
   callEmbed: CallEmbed;
   compact: boolean;
   callJoined: boolean;
+  // Off while the call's own page is open: the bar under the call already has these buttons.
+  devices?: boolean;
 }) {
   const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
   const setCallEmbed = useSetAtom(callEmbedAtom);
@@ -187,30 +207,34 @@ export function CallControl({
 
   return (
     <Box shrink="No" alignItems="Center" gap="300">
-      <Box alignItems="Inherit" gap="200">
-        <MicrophoneButton
-          enabled={microphone}
-          onToggle={handleMicrophoneToggle}
-          disabled={!callJoined}
-        />
-        <AudioMenuArrow kind="input" />
-        <SoundButton
-          enabled={sound}
-          onToggle={() => callEmbed.control.toggleSound()}
-          disabled={!callJoined}
-        />
-        <AudioMenuArrow kind="output" />
-        {!compact && <StatusDivider />}
-        <VideoButton enabled={video} onToggle={handleVideoToggle} disabled={!callJoined} />
-        {!compact && (
-          <ScreenShareButton
-            enabled={screenshare}
-            onToggle={() => callEmbed.control.toggleScreenshare()}
-            disabled={!callJoined}
-          />
-        )}
-      </Box>
-      <StatusDivider />
+      {devices && (
+        <>
+          <Box alignItems="Inherit" gap="200">
+            <MicrophoneButton
+              enabled={microphone}
+              onToggle={handleMicrophoneToggle}
+              disabled={!callJoined}
+            />
+            <AudioMenuArrow kind="input" />
+            <SoundButton
+              enabled={sound}
+              onToggle={() => callEmbed.control.toggleSound()}
+              disabled={!callJoined}
+            />
+            <AudioMenuArrow kind="output" />
+            {!compact && <StatusDivider />}
+            <VideoButton enabled={video} onToggle={handleVideoToggle} disabled={!callJoined} />
+            {!compact && (
+              <ScreenShareButton
+                enabled={screenshare}
+                onToggle={() => callEmbed.control.toggleScreenshare()}
+                disabled={!callJoined}
+              />
+            )}
+          </Box>
+          <StatusDivider />
+        </>
+      )}
       <Chip
         variant="Critical"
         radii="Pill"
@@ -225,10 +249,11 @@ export function CallControl({
         disabled={exiting}
         outlined
         onClick={handleHangup}
+        aria-label={tr('screen_share.leave_call', 'Leave call')}
       >
         {!compact && (
           <Text as="span" size="L400">
-            End
+            {tr('screen_share.leave', 'Leave')}
           </Text>
         )}
       </Chip>

@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { globalStyle, style } from '@vanilla-extract/css';
 import { color } from 'folds';
 import { forgeColor } from '../forge-theme/forgeColor.css';
 
@@ -323,3 +323,14 @@ export const ScopeButton = style([
     textAlign: 'center',
   },
 ]);
+
+export const StopButton = style({});
+
+// Phones: closed, the card is what's playing plus play and skip, about 90px instead of 170. The
+// privacy notice, stop and volume wait in the open card.
+globalStyle(
+  [Scope, VolumeLabel, StopButton]
+    .map((part) => `${Bar}[data-expanded="false"] ${part}`)
+    .join(', '),
+  { '@media': { 'screen and (max-width: 600px)': { display: 'none' } } }
+);

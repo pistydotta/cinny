@@ -90,7 +90,11 @@ export function MusicPanel(props: Props) {
     if (await add(text)) setQuery((current) => (current.trim() === text ? '' : current));
   };
   return (
-    <section className={css.Bar} aria-label={tr('music_bot.heading', 'Music')}>
+    <section
+      className={css.Bar}
+      data-expanded={expanded}
+      aria-label={tr('music_bot.heading', 'Music')}
+    >
       {audience}
       <button
         className={css.Toggle}
@@ -138,6 +142,7 @@ export function MusicPanel(props: Props) {
             <Icon size="100" src={Icons.ArrowGoRight} />
           </TipIconButton>
           <TipIconButton
+            className={css.StopButton}
             size="400"
             radii="Pill"
             label={tr('music_bot.stop', 'Stop and clear the queue')}

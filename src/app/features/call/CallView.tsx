@@ -1,5 +1,5 @@
 import React, { RefObject, useRef } from 'react';
-import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
+import { Box, color, Icon, Icons, Scroll, Text, toRem } from 'folds';
 import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
@@ -43,11 +43,9 @@ function WebRTCMissingError() {
 }
 
 function JoinMessage({
-  hasParticipant,
   livekitSupported,
   rtcSupported,
 }: {
-  hasParticipant?: boolean;
   livekitSupported?: boolean;
   rtcSupported?: boolean;
 }) {
@@ -59,13 +57,7 @@ function JoinMessage({
     return <LivekitServerMissingMessage />;
   }
 
-  if (hasParticipant) return null;
-
-  return (
-    <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      {tr('call_view.empty', 'Voice chat’s empty — Be the first to hop in!')}
-    </Text>
-  );
+  return null;
 }
 
 function NoPermissionMessage() {
@@ -100,32 +92,28 @@ function CallPrescreen() {
   return (
     <Scroll variant="Surface" hideTrack>
       <Box className={css.CallViewContent} alignItems="Center" justifyContent="Center">
-        <Box style={{ maxWidth: toRem(382), width: '100%' }} direction="Column" gap="100">
-          {hasParticipant && (
-            <Header size="300">
-              <Box grow="Yes" alignItems="Center">
-                <Text size="L400">{tr('call_view.participants', 'Participant')}</Text>
-              </Box>
-              <Badge variant="Critical" fill="Solid" size="400">
-                <Text as="span" size="L400" truncate>
-                  {tr('call_view.n_live', '{{n}} Live', { n: callMembers.length })}
-                </Text>
-              </Badge>
-            </Header>
-          )}
-          <CallMemberRenderer members={callMembers} />
-          <PrescreenControls canJoin={canJoin} />
-          <Box className={css.PrescreenMessage} alignItems="Center">
-            {hasPermission ? (
-              <JoinMessage
-                hasParticipant={hasParticipant}
-                livekitSupported={livekitSupported}
-                rtcSupported={rtcSupported}
-              />
-            ) : (
-              <NoPermissionMessage />
-            )}
+        <Box className={css.PrejoinCard} direction="Column" gap="500">
+          <Box direction="Column" alignItems="Center" gap="200">
+            <span className={css.PrejoinIcon} aria-hidden>
+              <Icon src={Icons.VolumeHigh} size="400" />
+            </span>
+            <h2 className={css.PrejoinTitle}>{room.name}</h2>
+            <p className={css.PrejoinStatus}>
+              {hasParticipant
+                ? tr('call_view.n_in_call', '{{n}} in the call', { n: callMembers.length })
+                : tr('call_view.empty', 'Voice chat’s empty — Be the first to hop in!')}
+            </p>
           </Box>
+          {hasParticipant && (
+            <Box direction="Column" gap="100">
+              <CallMemberRenderer members={callMembers} />
+            </Box>
+          )}
+          <PrescreenControls canJoin={canJoin} />
+          {!hasPermission && <NoPermissionMessage />}
+          {hasPermission && (
+            <JoinMessage livekitSupported={livekitSupported} rtcSupported={rtcSupported} />
+          )}
         </Box>
       </Box>
     </Scroll>

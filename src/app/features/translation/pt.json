@@ -446,6 +446,8 @@
     "enter_key": "Digitar chave de recuperação",
     "banner_create": "Crie uma chave de recuperação para ler suas mensagens em outros dispositivos.",
     "banner_unlock": "Este dispositivo ainda não consegue ler suas mensagens criptografadas.",
+    "banner_create_short": "Crie sua chave de recuperação",
+    "banner_unlock_short": "Verifique este dispositivo",
     "set_up": "Configurar",
     "verify": "Verificar"
   },
@@ -505,7 +507,10 @@
     "no_rooms": "Nenhuma sala",
     "no_rooms_desc": "Você ainda não está em nenhuma sala.",
     "explore_rooms": "Explorar salas da comunidade",
-    "overview": "Visão geral"
+    "overview": "Visão geral",
+    "happening_now": "Acontecendo agora",
+    "live_you_here": "Você está aqui",
+    "live_empty": "Ninguém em chamada agora."
   },
   "lobby": {
     "rooms": "Salas",
@@ -884,7 +889,9 @@
     "horde_return_title": "BrazilianBonk: conquistas, desafio do dia e maestria",
     "horde_return_body": "Conquistas liberam armas e Boletos novos (as suas partidas antigas já contam). Todo dia há um desafio com a mesma partida para todo mundo e um ranking só dele. O ranking ganhou abas de semana, de herói e do dia, mostrando o build de cada um. Cada herói ganha maestria conforme você mata com ele, e a tela do fim mostra recordes, quanto faltou e a próxima conquista. Enter joga de novo.",
     "horde_robust_title": "BrazilianBonk: a partida não se perde mais",
-    "horde_robust_body": "Se a página recarregar, você clicar numa notificação ou o celular fechar o app, a partida fica guardada e dá para continuar do mesmo ponto pelo menu (partidas retomadas pagam ouro normalmente, mas não entram no ranking). Há também opção de qualidade gráfica, que fica automática por padrão, vibração ao levar dano no celular e dicas na primeira partida."
+    "horde_robust_body": "Se a página recarregar, você clicar numa notificação ou o celular fechar o app, a partida fica guardada e dá para continuar do mesmo ponto pelo menu (partidas retomadas pagam ouro normalmente, mas não entram no ranking). Há também opção de qualidade gráfica, que fica automática por padrão, vibração ao levar dano no celular e dicas na primeira partida.",
+    "show_all": "Ver todas as novidades",
+    "show_less": "Mostrar menos"
   },
   "admin": {
     "deactivate": {
@@ -1034,6 +1041,7 @@
     "no_webrtc": "Seu navegador não tem WebRTC, que as chamadas precisam.",
     "participants": "Na chamada",
     "n_live": "{{n}} ao vivo",
+    "n_in_call": "{{n}} na chamada",
     "mic_off": "Desligar microfone",
     "mic_on": "Ligar microfone",
     "sound_off": "Desligar som",
