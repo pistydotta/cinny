@@ -15,6 +15,8 @@ export type GamePlayer = {
   prediction: number | null;
   penalties: number;
   won: number;
+  // A running Fodinha seat a person left: a bot plays it until someone takes it over.
+  vacant?: boolean;
 };
 export type BoardPiece = { square: string; type: string; color: string };
 export type LegalMove = { from: string; to: string; promotion?: string };
@@ -24,6 +26,8 @@ export type GameTable = {
   name: string;
   kind: GameKind;
   stake: number;
+  // Stakes held by a running table, kept when someone leaves mid-game.
+  pot?: number;
   capacity: number;
   players: GamePlayer[];
   phase: 'waiting' | 'predict' | 'play' | 'respond' | 'eleven' | 'round_end' | 'finished';
@@ -77,6 +81,10 @@ export type TableSummary = Pick<
   players: string[];
   invited?: string[];
   inviteOnly?: boolean;
+  // Seats in a running Fodinha that someone left and anyone can take over.
+  vacant?: number;
   winners?: number[];
   updatedAt?: number;
+  // When a person last moved; unfinished tables only.
+  activeAt?: number;
 };

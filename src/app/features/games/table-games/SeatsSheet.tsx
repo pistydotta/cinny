@@ -282,7 +282,7 @@ export function SeatsSheet({
               <p className={css.Muted}>
                 {tr(
                   'table_games.timeout_rules',
-                  'Truco gives 45 seconds per turn and Fodinha 2 minutes. When time runs out the game plays for you: in Truco it plays a card or answers a raise, never raising; in Fodinha it bets 0 or plays your first card. A finished round moves on by itself after the same time. Waiting tables expire after 24 hours with a refund. Leaving a started game forfeits your stake. Stakes are play credits only.'
+                  'Truco gives 45 seconds per turn and Fodinha 2 minutes. When time runs out the game plays for you: in Truco it plays a card or answers a raise, never raising; in Fodinha it bets 0 or plays your first card. A finished round moves on by itself after the same time. A waiting table closes an hour after the last person sat down, with a refund, and a game nobody plays for 30 minutes ends with a refund. Fodinha starts with two or more players. Leaving a started Fodinha leaves a bot in your seat and your stake in the pot; anyone can take the seat over. Stakes are play credits only.'
                 )}
               </p>
             </details>

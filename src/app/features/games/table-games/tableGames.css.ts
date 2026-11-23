@@ -161,3 +161,37 @@ export const Comments = style({
 globalStyle(`${Inner} h1, ${Inner} h2, ${Inner} h3, ${Inner} p`, { margin: 0 });
 globalStyle(`${Inner} h2`, forgeType.heading);
 globalStyle(`${Panel} summary`, { cursor: 'pointer', marginBottom: 12 });
+
+/* ---------- Fodinha's table head ---------- */
+
+// The top bar and, under it, the one bar that says what's happening and what you can do now.
+// Both stay on screen while the table scrolls.
+export const Head = style({
+  position: 'sticky',
+  top: 0,
+  zIndex: forgeZ.sticky,
+  backgroundColor: game.Bg,
+});
+export const ActionBar = style({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: 12,
+  padding: '10px 16px',
+  backgroundColor: game.Raised,
+  borderBottom: `1px solid ${game.Line}`,
+});
+export const ActionText = style({
+  flex: '1 1 220px',
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+  ...forgeType.body,
+});
+export const ActionSub = style({ ...forgeType.caption, color: game.Muted });
+export const Actions = style({ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 });
+export const SmallButton = gameButton({ variant: 'secondary', size: 'sm' });
+export const SmallPrimary = gameButton({ variant: 'primary', size: 'sm' });
+export const SmallGhost = gameButton({ variant: 'ghost', size: 'sm' });
+export const SmallDanger = gameButton({ variant: 'danger', size: 'sm' });

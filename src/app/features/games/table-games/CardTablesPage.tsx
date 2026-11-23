@@ -13,7 +13,7 @@ import { useCredits } from '../credits/useCredits';
 import { formatChips } from '../poker/types';
 import { createTableGamesApi } from './api';
 import { FodinhaScreen } from './FodinhaScreen';
-import { lobbySections, wonBy } from './lobby';
+import { isIdle, lobbySections, playNowTable, seatsLeft, wonBy } from './lobby';
 import { SeatsSheet } from './SeatsSheet';
 import { TableSwitcher } from './TableSwitcher';
 import { TentosTable } from './TentosTable';
@@ -136,6 +136,7 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
   const [creating, setCreating] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [showRecent, setShowRecent] = useState(false);
   const { lists } = useFriends();
   const friends = useMemo(() => new Set((lists?.friends ?? []).map((f) => f.userId)), [lists]);
 
@@ -310,20 +311,57 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
       ? tr('table_games.you_won', 'You won')
       : tr('table_games.you_lost', 'You lost');
   };
+  const sit = (s: TableSummary) =>
+    run(() => api.join(s.id)).then((joined) => {
+      if (joined) navigate(getGamesTableGamePath(kind, s.id));
+    });
+  // A waiting table with a free seat seats you in one click (unless it's invite-only): you can
+  // still leave it with your stake back. Everything else opens, including a running game's free
+  // seat, whose stake stays in the pot, so taking it is a choice made on the table.
+  const open = (s: TableSummary) => {
+    if (
+      !s.players.includes(myId) &&
+      !s.inviteOnly &&
+      s.phase === 'waiting' &&
+      s.players.length < s.capacity
+    )
+      sit(s);
+    else navigate(getGamesTableGamePath(kind, s.id));
+  };
+  const now = Date.now();
+  // Running games say when a person last moved, so a stopped one doesn't pass for live.
+  const activity = (s: TableSummary) => {
+    if (s.phase === 'waiting' || s.phase === 'finished' || s.activeAt === undefined)
+      return undefined;
+    const n = Math.max(0, Math.floor((now - s.activeAt) / 60_000));
+    if (isIdle(s, now)) return tr('table_games.idle_for', 'Stopped for {{n}} min', { n });
+    return n < 1
+      ? tr('table_games.moved_now', 'Last move just now')
+      : tr('table_games.moved_ago', 'Last move {{n}} min ago', { n });
+  };
+  // Play now takes you back to a table you're already waiting at, or seats you at the best one.
+  const waitingAt = sections.mine.find((t) => t.phase === 'waiting');
+  const playNow = waitingAt ? undefined : playNowTable(sections);
   const row = (s: TableSummary, tag?: string) => (
     <button
       key={s.id}
       type="button"
       className={css.ListRow}
-      onClick={() => navigate(getGamesTableGamePath(kind, s.id))}
+      data-idle={isIdle(s, now)}
+      disabled={busy}
+      onClick={() => open(s)}
     >
       <span className={css.Grow}>
         <div>{s.name}</div>
         <div className={css.Muted}>{s.players.map(nameOf).join(' · ')}</div>
+        {activity(s) && <div className={css.Muted}>{activity(s)}</div>}
       </span>
       {tag && <span className={css.Tag}>{tag}</span>}
       <span className={css.Muted}>
-        {s.players.length}/{s.capacity} ·{' '}
+        {s.phase !== 'waiting' && s.vacant
+          ? tr('table_games.free_seats', 'Free seats: {{n}}', { n: seatsLeft(s) })
+          : `${s.players.length}/${s.capacity}`}{' '}
+        ·{' '}
         {s.stake
           ? tr('table_games.credits_n', '{{n}} credits', { n: s.stake })
           : tr('table_games.free', 'free')}
@@ -358,12 +396,27 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
       <div className={css.LobbyInner}>
         <div className={css.LobbyHead}>
           <span className={css.Grow} />
-          <button
-            type="button"
-            className={css.Pill}
-            data-primary={!creating}
-            onClick={() => setCreating((c) => !c)}
-          >
+          {loaded && (
+            <button
+              type="button"
+              className={css.Pill}
+              data-primary
+              disabled={busy}
+              title={playNow?.name}
+              onClick={() => {
+                if (waitingAt) navigate(getGamesTableGamePath(kind, waitingAt.id));
+                else if (playNow) sit(playNow);
+                else setCreating(true);
+              }}
+            >
+              {playNow?.stake
+                ? tr('table_games.play_now_stake', 'Play now · {{n}} credits', {
+                    n: playNow.stake,
+                  })
+                : tr('table_games.play_now', 'Play now')}
+            </button>
+          )}
+          <button type="button" className={css.Pill} onClick={() => setCreating((c) => !c)}>
             {creating ? tr('table_games.close', 'Close') : tr('table_games.new_table', 'New table')}
           </button>
         </div>
@@ -403,7 +456,22 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
             )}
           </p>
         )}
-        {section(tr('table_games.recent_games', 'Your recent games'), sections.recent)}
+        {sections.recent.length > 0 && (
+          <button
+            type="button"
+            className={css.Pill}
+            aria-expanded={showRecent}
+            onClick={() => setShowRecent(!showRecent)}
+          >
+            {showRecent
+              ? tr('table_games.hide_recent', 'Hide your recent games')
+              : tr('table_games.show_recent', 'Your recent games ({{n}})', {
+                  n: sections.recent.length,
+                })}
+          </button>
+        )}
+        {showRecent &&
+          section(tr('table_games.recent_games', 'Your recent games'), sections.recent)}
       </div>
     </main>
   );

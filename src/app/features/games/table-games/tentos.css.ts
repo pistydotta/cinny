@@ -961,6 +961,8 @@ export const ListRow = style({
   selectors: {
     '&:first-child': { borderTop: 'none' },
     '&:hover': { background: game.RaisedHover },
+    // A running game nobody has moved in for a while: still listed, but not as live.
+    '&[data-idle="true"]': { opacity: 0.6 },
     '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: -2 },
   },
 });

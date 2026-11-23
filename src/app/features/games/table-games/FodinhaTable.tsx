@@ -140,7 +140,8 @@ function Seat({ table, player, seat, hero, name, avatar, style }: SeatProps) {
         </div>
       )}
       <div className={poker.AvatarWrap} data-turn={turn && !table.deadline} data-winner={!!won}>
-        <Avatar name={name} src={avatar} />
+        {/* An open seat shows a dash, not the initials of "Open seat". */}
+        <Avatar name={player.vacant ? '—' : name} src={player.vacant ? undefined : avatar} />
         {turn && table.deadline && (
           <svg className={poker.TimerRing} viewBox="0 0 100 100" aria-hidden>
             <circle className={poker.TimerTrack} cx="50" cy="50" r={RING_RADIUS} />
@@ -194,9 +195,21 @@ export type FodinhaTableProps = {
   onAct: (action: Record<string, unknown>) => void;
   nameOf: (userId: string) => string;
   avatarOf: (userId: string) => string | undefined;
+  // What an empty seat does for you (sit down, or add a bot as the owner), if anything.
+  emptySeat?: { label: string; onClick: () => void };
+  // Take over a seat someone left mid-game.
+  onTakeSeat?: () => void;
 };
 
-export function FodinhaTable({ table, busy, onAct, nameOf, avatarOf }: FodinhaTableProps) {
+export function FodinhaTable({
+  table,
+  busy,
+  onAct,
+  nameOf,
+  avatarOf,
+  emptySeat,
+  onTakeSeat,
+}: FodinhaTableProps) {
   const wrap = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<FodinhaLayout>('landscape');
   useEffect(() => {
@@ -342,22 +355,44 @@ export function FodinhaTable({ table, busy, onAct, nameOf, avatarOf }: FodinhaTa
             const player = table.players[seat];
             if (!player)
               return (
-                // eslint-disable-next-line react/no-array-index-key
-                <div key={`empty-${seat}`} className={poker.EmptySeat} style={pct(points[seat])}>
-                  {tr('games.table.empty', 'empty')}
-                </div>
+                <button
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={`empty-${seat}`}
+                  type="button"
+                  className={poker.EmptySeat}
+                  style={pct(points[seat])}
+                  disabled={!emptySeat || busy}
+                  data-open={!!emptySeat}
+                  onClick={emptySeat?.onClick}
+                >
+                  {emptySeat?.label ?? tr('games.table.empty', 'empty')}
+                </button>
               );
             return (
-              <Seat
-                key={player.userId}
-                table={table}
-                player={player}
-                seat={seat}
-                hero={seat === mySeat}
-                name={nameOf(player.userId)}
-                avatar={avatarOf(player.userId)}
-                style={pct(points[seat])}
-              />
+              <React.Fragment key={player.userId}>
+                <Seat
+                  table={table}
+                  player={player}
+                  seat={seat}
+                  hero={seat === mySeat}
+                  name={
+                    player.vacant ? tr('table_games.seat_open', 'Open seat') : nameOf(player.userId)
+                  }
+                  avatar={avatarOf(player.userId)}
+                  style={pct(points[seat])}
+                />
+                {player.vacant && onTakeSeat && (
+                  <button
+                    type="button"
+                    className={css.TakeSeat}
+                    style={pct(points[seat])}
+                    disabled={busy}
+                    onClick={onTakeSeat}
+                  >
+                    {tr('table_games.take_seat', 'Take this seat')}
+                  </button>
+                )}
+              </React.Fragment>
             );
           })}
         </div>

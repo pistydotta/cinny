@@ -187,3 +187,14 @@ export const PredictButton = style([
 ]);
 
 export const Hint = style({ fontSize: 13, color: game.Muted, textAlign: 'center' });
+
+// "Take this seat" under a seat someone left: the main action for a spectator, so wine.
+export const TakeSeat = style([
+  gameButton({ variant: 'primary', size: 'sm' }),
+  {
+    position: 'absolute',
+    zIndex: 6,
+    transform: 'translate(-50%, 140%)',
+    whiteSpace: 'nowrap',
+  },
+]);
