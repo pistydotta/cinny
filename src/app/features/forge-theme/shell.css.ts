@@ -1,12 +1,19 @@
 import { assignVars, globalStyle, keyframes } from '@vanilla-extract/css';
-import { color, config } from 'folds';
+import { color, config, toRem } from 'folds';
 import * as navCss from '../../components/nav/styles.css';
 import * as sidebarCss from '../../components/sidebar/Sidebar.css';
 import * as pageCss from '../../components/page/style.css';
 import { forgeDark } from './palette';
 import { forgeColor } from './forgeColor.css';
 import { foldsClasses } from './foldsClasses';
-import { forgeFont, forgeInset, forgeShadowDark, forgeShadowLight } from './tokens';
+import {
+  forgeFont,
+  forgeInset,
+  forgeRadius,
+  forgeShadowDark,
+  forgeShadowLight,
+  forgeTint,
+} from './tokens';
 import './switch.css';
 
 // Forge restyles Cinny's shell from here, so the upstream style files stay untouched.
@@ -53,6 +60,40 @@ globalStyle(fields.join(', '), {
 });
 globalStyle(fields.flatMap((field) => [`${field}:focus`, `${field}:has(:focus)`]).join(', '), {
   boxShadow: forgeInset(forgeColor.Ember.Main, 2),
+});
+
+// One chip. Cinny's chips came in two heights and every radius; now every chip is 28px tall and
+// square-shouldered. Background and Surface chips stay flush with the panel they sit on (the
+// sidebar's category headers are chips); a Secondary one, light mode's heavy grey slab, is the
+// raised surface; a Primary one (a choice, a filter) is ember. Status chips keep their colours.
+// Pills are only ours (call-indicator/LivePill, counts).
+const chip = foldsClasses.Chip;
+globalStyle(`.${chip.base}`, { height: toRem(28), borderRadius: forgeRadius.control });
+(['Secondary'] as const).forEach((variant) =>
+  globalStyle(`.${chip.base}.${chip[variant]}`, {
+    vars: {
+      [color[variant].Container]: color.SurfaceVariant.Container,
+      [color[variant].ContainerHover]: color.SurfaceVariant.ContainerHover,
+      [color[variant].ContainerActive]: color.SurfaceVariant.ContainerActive,
+      [color[variant].ContainerLine]: color.SurfaceVariant.ContainerLine,
+      [color[variant].OnContainer]: color.SurfaceVariant.OnContainer,
+    },
+  })
+);
+globalStyle(`.${chip.base}.${chip.Primary}`, {
+  vars: {
+    [color.Primary.Container]: forgeTint(forgeColor.Ember.Main, 14),
+    [color.Primary.ContainerHover]: forgeTint(forgeColor.Ember.Main, 20),
+    [color.Primary.ContainerActive]: forgeTint(forgeColor.Ember.Main, 26),
+    [color.Primary.ContainerLine]: forgeTint(forgeColor.Ember.Main, 45),
+    [color.Primary.OnContainer]: color.Surface.OnContainer,
+  },
+});
+
+// Cinny's modals and dialogs: the card radius and the dialog shadow, like ForgeDialog.
+globalStyle(`.${foldsClasses.Modal.base}, .${foldsClasses.Dialog.base}`, {
+  borderRadius: forgeRadius.card,
+  boxShadow: config.shadow.E300,
 });
 
 // The open room or page: a raised row with an ember bar on its left edge.

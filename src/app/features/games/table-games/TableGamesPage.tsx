@@ -14,6 +14,7 @@ import { TableSwitcher } from './TableSwitcher';
 import { cardText, gameError, gameName, phaseText, rulesText, shortName } from './text';
 import { GameKind, GameTable, TableSummary } from './types';
 import * as css from './tableGames.css';
+import { GameTopBar } from '../ui/GameTopBar';
 
 function Rules({ kind }: { kind: GameKind }) {
   return (
@@ -121,22 +122,18 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
 
   return (
     <main className={css.Page}>
-      <div className={css.Inner}>
-        <header className={css.Row}>
-          <button
-            type="button"
-            className={css.Button}
-            onClick={() => navigate(tableId ? getGamesTableGamePath(kind) : getGamesPath())}
-          >
-            {tr('games.action.back', 'Back')}
+      <GameTopBar
+        title={tableId ? table?.name ?? gameName(kind) : gameName(kind)}
+        subtitle={tableId ? gameName(kind) : undefined}
+        onBack={() => navigate(tableId ? getGamesTableGamePath(kind) : getGamesPath())}
+      >
+        {table && (
+          <button type="button" className={css.Button} onClick={() => setSwitching(true)}>
+            {tr('games.switch.title', 'Switch table')}
           </button>
-          <h1 style={{ flex: 1 }}>{tableId ? table?.name ?? gameName(kind) : gameName(kind)}</h1>
-          {table && (
-            <button type="button" className={css.Button} onClick={() => setSwitching(true)}>
-              {tr('games.switch.title', 'Switch table')}
-            </button>
-          )}
-        </header>
+        )}
+      </GameTopBar>
+      <div className={css.Inner}>
         {table && sheet && (
           <SeatsSheet
             table={table}
@@ -253,7 +250,7 @@ function BoardTablesPage({ kind }: { kind: GameKind }) {
                   checked={inviteOnly}
                   onChange={setInviteOnly}
                 />
-                <button type="submit" className={css.Button} disabled={busy}>
+                <button type="submit" className={css.PrimaryButton} disabled={busy}>
                   {tr('table_games.create', 'Create a table')}
                 </button>
               </form>

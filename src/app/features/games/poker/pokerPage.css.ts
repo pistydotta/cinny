@@ -1,13 +1,20 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { color, toRem } from 'folds';
+import { game, LobbyScope, StageScope } from '../ui/gameTheme.css';
+import { tint } from '../ui/tint';
+import { gameButton } from '../ui/gameUi.css';
+import { forgeInset, forgeRadius, forgeType } from '../../forge-theme/tokens';
+import { forgeStage } from '../../forge-theme/palette';
 
-const GOLD = '#f5c84b';
+// Poker on the games kit (games/ui): graphite where the game is played, the app's theme in the
+// lobby and setup screens, wine for the main action, ember for a choice, gold for money only.
 
 const fadeIn = keyframes({
-  from: { opacity: 0, transform: 'translateY(8px) scale(0.98)' },
+  from: { opacity: 0, transform: 'translateY(8px)' },
   to: { opacity: 1, transform: 'none' },
 });
 
-export const Page = style({
+const page = {
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
@@ -15,48 +22,12 @@ export const Page = style({
   height: '100%',
   minHeight: 0,
   overflow: 'hidden',
-  color: '#fff',
-  background: 'radial-gradient(ellipse at 50% 45%, #18263a 0%, #0d1522 45%, #070b12 100%)',
-  fontFamily: 'InterVariable, Inter, system-ui, sans-serif',
-});
+  backgroundColor: game.Bg,
+} as const;
 
-export const TopBar = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: '10px 16px',
-  '@media': {
-    'screen and (max-width: 600px)': { gap: 6, padding: '8px 12px', flexWrap: 'wrap' },
-  },
-  flexShrink: 0,
-  borderBottom: '1px solid rgba(255,255,255,0.06)',
-  background: 'rgba(5,8,13,0.55)',
-  backdropFilter: 'blur(6px)',
-});
-
-export const TopTitle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  minWidth: 0,
-  flexGrow: 1,
-  '@media': { 'screen and (max-width: 600px)': { minWidth: 100 } },
-});
-
-export const TitleText = style({
-  fontSize: 16,
-  fontWeight: 700,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-});
-
-export const SubtitleText = style({
-  fontSize: 12,
-  color: 'rgba(255,255,255,0.55)',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-});
+// The lobby, practice and tournament setup follow the theme; the table is the stage.
+export const Page = style([LobbyScope, page]);
+export const TablePage = style([StageScope, page]);
 
 /** Text next to an icon that is dropped on narrow screens. */
 export const WideOnly = style({
@@ -65,71 +36,11 @@ export const WideOnly = style({
   },
 });
 
-export const IconButton = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 6,
-  height: 36,
-  minWidth: 36,
-  padding: '0 10px',
-  borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.10)',
-  background: 'rgba(255,255,255,0.05)',
-  color: 'rgba(255,255,255,0.9)',
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: 'pointer',
-  flexShrink: 0,
-  selectors: {
-    '&:hover': { background: 'rgba(255,255,255,0.10)' },
-    '&[aria-pressed="true"]': { background: 'rgba(245,200,75,0.15)', borderColor: GOLD },
-    '&:disabled': { opacity: 0.4, cursor: 'default' },
-  },
-});
-
-export const WalletPill = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  height: 36,
-  padding: '0 12px 0 6px',
-  borderRadius: 9999,
-  background: 'rgba(245,200,75,0.10)',
-  border: '1px solid rgba(245,200,75,0.35)',
-  fontSize: 13,
-  fontWeight: 700,
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-});
-
-export const Coin = style({
-  width: 24,
-  height: 24,
-  borderRadius: '50%',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  background: 'radial-gradient(circle at 35% 30%, #fff1b8, #f5c84b 45%, #b8860b)',
-  boxShadow: 'inset 0 0 0 2px rgba(120,80,0,0.35)',
-  color: '#6b4500',
-  fontSize: 12,
-  fontWeight: 900,
-  flexShrink: 0,
-});
-
-export const WalletValue = style({
-  color: GOLD,
-  fontVariantNumeric: 'tabular-nums',
-});
-
-export const WalletMuted = style({
-  color: 'rgba(255,255,255,0.55)',
-  fontWeight: 600,
-  '@media': {
-    'screen and (max-width: 600px)': { display: 'none' },
-  },
-});
+// The top bar's buttons: an icon, sometimes with a word beside it.
+export const IconButton = style([
+  gameButton({ variant: 'ghost', size: 'md' }),
+  { minWidth: toRem(40), padding: `0 ${toRem(10)}` },
+]);
 
 export const TableArea = style({
   position: 'relative',
@@ -157,47 +68,27 @@ export const Overlay = style({
   alignItems: 'center',
   justifyContent: 'center',
   padding: 16,
-  background: 'rgba(3,6,10,0.55)',
-  backdropFilter: 'blur(3px)',
+  backgroundColor: color.Other.Overlay,
 });
-
-export const PokerModalOverlay = style([
-  Overlay,
-  {
-    position: 'fixed',
-    zIndex: 2000,
-    color: '#fff',
-    fontFamily: 'InterVariable, Inter, system-ui, sans-serif',
-  },
-]);
 
 export const Dialog = style({
   width: 'min(440px, 100%)',
   maxHeight: '100%',
   overflowY: 'auto',
   padding: 24,
-  borderRadius: 20,
-  background: 'linear-gradient(180deg, #172131 0%, #0e1520 100%)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  boxShadow: '0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,200,75,0.10)',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Raised,
+  color: game.Ink,
+  boxShadow: forgeInset(game.Line),
   display: 'flex',
   flexDirection: 'column',
   gap: 18,
   animation: `${fadeIn} 280ms ease-out both`,
 });
 
-export const DialogTitle = style({
-  fontSize: 22,
-  fontWeight: 800,
-  margin: 0,
-});
+export const DialogTitle = style({ ...forgeType.title, margin: 0 });
 
-export const DialogText = style({
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: 'rgba(255,255,255,0.7)',
-  margin: 0,
-});
+export const DialogText = style({ ...forgeType.body, color: game.Muted, margin: 0 });
 
 export const Field = style({
   display: 'flex',
@@ -209,29 +100,28 @@ export const FieldHeader = style({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'baseline',
-  fontSize: 13,
+  ...forgeType.bodySm,
   fontWeight: 600,
-  color: 'rgba(255,255,255,0.7)',
+  color: game.Muted,
 });
 
 export const FieldValue = style({
-  fontSize: 18,
-  fontWeight: 800,
-  color: GOLD,
+  ...forgeType.heading,
+  color: game.Money,
   fontVariantNumeric: 'tabular-nums',
 });
 
 export const Range = style({
   width: '100%',
-  accentColor: GOLD,
+  accentColor: game.Accent,
   cursor: 'pointer',
 });
 
 export const RangeLimits = style({
   display: 'flex',
   justifyContent: 'space-between',
-  fontSize: 11,
-  color: 'rgba(255,255,255,0.45)',
+  ...forgeType.caption,
+  color: game.Muted,
 });
 
 export const Segmented = style({
@@ -240,34 +130,21 @@ export const Segmented = style({
   gap: 6,
 });
 
-export const SegmentButton = style({
-  textAlign: 'center',
-  height: 40,
-  borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.10)',
-  background: 'rgba(255,255,255,0.04)',
-  color: '#fff',
-  fontSize: 15,
-  fontWeight: 700,
-  cursor: 'pointer',
-  selectors: {
-    '&[aria-pressed="true"]': {
-      background: 'rgba(245,200,75,0.16)',
-      borderColor: GOLD,
-      color: GOLD,
-    },
-  },
-});
+export const SegmentButton = style([
+  gameButton({ variant: 'secondary', size: 'md' }),
+  { padding: 0, fontVariantNumeric: 'tabular-nums' },
+]);
 
 export const InfoBox = style({
   display: 'flex',
   flexDirection: 'column',
   gap: 6,
   padding: '12px 14px',
-  borderRadius: 12,
-  background: 'rgba(255,255,255,0.04)',
-  fontSize: 13,
-  color: 'rgba(255,255,255,0.7)',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Bg,
+  boxShadow: forgeInset(game.Line),
+  ...forgeType.bodySm,
+  color: game.Muted,
 });
 
 export const InfoRow = style({
@@ -276,51 +153,16 @@ export const InfoRow = style({
   gap: 12,
 });
 
-export const PrimaryButton = style({
-  textAlign: 'center',
-  height: 48,
-  flexShrink: 0,
-  borderRadius: 12,
-  border: 'none',
-  background: `linear-gradient(180deg, #ffd96a 0%, ${GOLD} 50%, #d9a520 100%)`,
-  color: '#2a1d00',
-  fontSize: 16,
-  fontWeight: 800,
-  cursor: 'pointer',
-  boxShadow: '0 6px 18px rgba(245,200,75,0.25), inset 0 1px 0 rgba(255,255,255,0.6)',
-  selectors: {
-    '&:hover': { filter: 'brightness(1.05)' },
-    '&:disabled': { opacity: 0.45, cursor: 'default', filter: 'grayscale(0.5)' },
-  },
-});
+export const PrimaryButton = gameButton({ variant: 'primary', size: 'lg' });
+export const SecondaryButton = gameButton({ variant: 'secondary', size: 'md' });
+export const SmallButton = gameButton({ variant: 'primary', size: 'md' });
+export const QuietButton = gameButton({ variant: 'secondary', size: 'md' });
 
-export const SecondaryButton = style({
-  textAlign: 'center',
-  height: 44,
-  flexShrink: 0,
-  borderRadius: 12,
-  border: '1px solid rgba(255,255,255,0.12)',
-  background: 'rgba(255,255,255,0.05)',
-  color: '#fff',
-  fontSize: 14,
-  fontWeight: 700,
-  cursor: 'pointer',
-});
+export const ErrorText = style({ ...forgeType.bodySm, color: game.Critical, margin: 0 });
 
-export const ErrorText = style({
-  fontSize: 13,
-  color: '#ff8080',
-  margin: 0,
-});
+export const Note = style({ ...forgeType.caption, fontWeight: 400, color: game.Muted, margin: 0 });
 
-export const Note = style({
-  fontSize: 12,
-  lineHeight: 1.5,
-  color: 'rgba(255,255,255,0.45)',
-  margin: 0,
-});
-
-/* ---------- Action bar ---------- */
+/* ---------- Hand guide ---------- */
 
 export const GuideCards = style({
   display: 'flex',
@@ -330,9 +172,9 @@ export const GuideCards = style({
 });
 export const GuideNote = style({
   margin: '4px 0',
-  color: 'rgba(255,255,255,0.65)',
-  fontSize: 11,
-  lineHeight: 1.5,
+  color: game.Muted,
+  ...forgeType.caption,
+  fontWeight: 400,
 });
 export const HandLadder = style({
   listStyle: 'none',
@@ -346,13 +188,17 @@ export const HandLadderRow = style({
   gridTemplateColumns: '26px 1fr',
   gap: 8,
   padding: 10,
-  borderRadius: 10,
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid transparent',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Bg,
+  boxShadow: forgeInset(game.Line),
   selectors: {
-    '&[aria-current="true"]': { borderColor: GOLD, background: 'rgba(245,200,75,0.12)' },
+    '&[aria-current="true"]': {
+      backgroundColor: tint(game.Accent, 12),
+      boxShadow: forgeInset(game.Accent),
+    },
   },
 });
+
 /* ---------- History drawer ---------- */
 
 export const Drawer = style({
@@ -364,18 +210,17 @@ export const Drawer = style({
   width: 'min(300px, calc(100% - 16px))',
   display: 'flex',
   flexDirection: 'column',
-  borderRadius: 14,
-  background: 'rgba(8,12,18,0.94)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Raised,
+  boxShadow: forgeInset(game.Line),
   animation: `${fadeIn} 200ms ease-out both`,
 });
 
 export const DrawerHeader = style({
   padding: '12px 14px',
-  fontSize: 14,
-  fontWeight: 800,
-  borderBottom: '1px solid rgba(255,255,255,0.06)',
+  ...forgeType.body,
+  fontWeight: 700,
+  borderBottom: `1px solid ${game.Line}`,
 });
 
 export const DrawerList = style({
@@ -385,15 +230,12 @@ export const DrawerList = style({
   display: 'flex',
   flexDirection: 'column',
   gap: 4,
-  fontSize: 12.5,
-  color: 'rgba(255,255,255,0.75)',
+  ...forgeType.caption,
+  fontWeight: 400,
+  color: game.Muted,
 });
 
-export const DrawerHand = style({
-  marginTop: 8,
-  fontWeight: 800,
-  color: GOLD,
-});
+export const DrawerHand = style({ marginTop: 8, fontWeight: 700, color: game.Ink });
 
 /* ---------- Lobby ---------- */
 
@@ -419,56 +261,36 @@ export const SectionHeader = style({
   gap: 12,
 });
 
-export const SectionTitle = style({
-  margin: 0,
-  fontSize: 18,
-  fontWeight: 800,
-});
-
-export const SmallButton = style({
-  height: 38,
-  padding: '0 16px',
-  borderRadius: 10,
-  border: 'none',
-  background: `linear-gradient(180deg, #ffd96a 0%, ${GOLD} 50%, #d9a520 100%)`,
-  color: '#2a1d00',
-  fontSize: 14,
-  fontWeight: 800,
-  cursor: 'pointer',
-  textAlign: 'center',
-  whiteSpace: 'nowrap',
-  selectors: {
-    '&:disabled': { opacity: 0.5, cursor: 'default' },
-  },
-});
+export const SectionTitle = style({ ...forgeType.heading, margin: 0 });
 
 export const TableList = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: 10,
+  gap: 8,
 });
 
 export const TableRow = style({
   display: 'flex',
   alignItems: 'center',
   gap: 14,
-  padding: '14px 16px',
-  borderRadius: 14,
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  padding: '12px 16px',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Raised,
+  boxShadow: forgeInset(game.Line),
 });
 
+// A bit of felt: the one place the lobby shows the game's own colour.
 export const TableIcon = style({
-  width: 44,
-  height: 44,
-  borderRadius: 12,
+  width: 40,
+  height: 40,
+  borderRadius: forgeRadius.card,
   flexShrink: 0,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: 22,
-  background: 'radial-gradient(ellipse at 50% 40%, #33a865, #135c33)',
-  boxShadow: 'inset 0 0 0 2px rgba(200,162,74,0.5)',
+  ...forgeType.title,
+  color: forgeStage.Ink,
+  backgroundColor: forgeStage.Felt,
 });
 
 export const TableInfo = style({
@@ -480,25 +302,21 @@ export const TableInfo = style({
 });
 
 export const TableName = style({
-  fontSize: 15,
-  fontWeight: 700,
+  ...forgeType.body,
+  fontWeight: 600,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 });
 
-export const TableMeta = style({
-  fontSize: 12.5,
-  color: 'rgba(255,255,255,0.55)',
-});
+export const TableMeta = style({ ...forgeType.caption, fontWeight: 400, color: game.Muted });
 
 export const EmptyState = style({
   padding: '22px 18px',
-  borderRadius: 14,
-  border: '1px dashed rgba(255,255,255,0.12)',
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: 'rgba(255,255,255,0.6)',
+  borderRadius: forgeRadius.card,
+  border: `1px dashed ${game.Line}`,
+  ...forgeType.body,
+  color: game.Muted,
   textAlign: 'center',
 });
 
@@ -507,22 +325,23 @@ export const PracticeCard = style({
   alignItems: 'center',
   gap: 14,
   padding: '16px 18px',
-  borderRadius: 14,
-  background: 'linear-gradient(135deg, rgba(44,142,240,0.16), rgba(255,255,255,0.03))',
-  border: '1px solid rgba(44,142,240,0.3)',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Raised,
+  boxShadow: `${forgeInset(game.Line)}, inset 3px 0 0 ${game.Accent}`,
 });
 
 export const TextInput = style({
-  height: 42,
-  borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.14)',
-  background: 'rgba(0,0,0,0.3)',
-  color: '#fff',
-  fontSize: 14,
+  height: 40,
+  borderRadius: forgeRadius.control,
+  border: 0,
+  backgroundColor: game.Bg,
+  boxShadow: forgeInset(game.Line),
+  color: game.Ink,
+  ...forgeType.body,
   padding: '0 12px',
   outline: 'none',
   selectors: {
-    '&:focus': { borderColor: GOLD },
+    '&:focus': { boxShadow: forgeInset(game.Accent, 2) },
   },
 });
 
@@ -531,11 +350,11 @@ export const CheckRow = style({
   alignItems: 'center',
   gap: 10,
   padding: '8px 10px',
-  borderRadius: 10,
+  borderRadius: forgeRadius.control,
   cursor: 'pointer',
-  fontSize: 14,
+  ...forgeType.body,
   selectors: {
-    '&:hover': { background: 'rgba(255,255,255,0.05)' },
+    '&:hover': { backgroundColor: game.RaisedHover },
   },
 });
 
@@ -544,14 +363,12 @@ export const ContactList = style({
   flexDirection: 'column',
   maxHeight: 180,
   overflowY: 'auto',
-  borderRadius: 10,
-  background: 'rgba(255,255,255,0.03)',
+  borderRadius: forgeRadius.card,
+  backgroundColor: game.Bg,
+  boxShadow: forgeInset(game.Line),
 });
 
-export const Muted = style({
-  color: 'rgba(255,255,255,0.5)',
-  fontSize: 12,
-});
+export const Muted = style({ color: game.Muted, ...forgeType.caption, fontWeight: 400 });
 
 /* The app resets the native look of inputs; draw checkboxes and sliders ourselves. */
 
@@ -562,38 +379,35 @@ export const CheckInput = style({
   height: 18,
   flexShrink: 0,
   margin: 0,
-  borderRadius: 5,
-  border: '2px solid rgba(255,255,255,0.35)',
+  borderRadius: forgeRadius.control,
+  border: `2px solid ${game.Muted}`,
   background: 'transparent',
   cursor: 'pointer',
   selectors: {
     '&:checked': {
-      borderColor: GOLD,
-      background: `${GOLD} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%232a1d00' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat`,
+      borderColor: game.Accent,
+      background: `${game.Accent} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat`,
     },
   },
 });
 
-const sliderBase = {
+globalStyle(`${Range}`, {
   appearance: 'none',
   WebkitAppearance: 'none',
   height: 6,
-  borderRadius: 9999,
-  background: 'rgba(255,255,255,0.14)',
+  borderRadius: forgeRadius.pill,
+  background: game.Line,
   outline: 'none',
-} as const;
-
-globalStyle(`${Range}`, sliderBase);
+});
 
 const thumb = {
   appearance: 'none',
   WebkitAppearance: 'none',
-  width: 20,
-  height: 20,
-  borderRadius: '50%',
-  border: '3px solid #2a1d00',
-  background: GOLD,
-  boxShadow: '0 0 0 2px rgba(245,200,75,0.35), 0 2px 6px rgba(0,0,0,0.5)',
+  width: 18,
+  height: 18,
+  borderRadius: forgeRadius.round,
+  border: 0,
+  background: game.Accent,
   cursor: 'pointer',
 } as const;
 
@@ -605,21 +419,4 @@ export const RowActions = style({
   alignItems: 'center',
   gap: 8,
   flexShrink: 0,
-});
-
-export const QuietButton = style({
-  height: 38,
-  padding: '0 14px',
-  borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.15)',
-  background: 'transparent',
-  color: 'rgba(255,255,255,0.8)',
-  fontSize: 14,
-  fontWeight: 700,
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-  selectors: {
-    '&:hover': { background: 'rgba(255,255,255,0.08)' },
-    '&:disabled': { opacity: 0.5, cursor: 'default' },
-  },
 });

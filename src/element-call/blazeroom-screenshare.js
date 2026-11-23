@@ -2,6 +2,7 @@
 // share state on window, where the patched bundle and Cinny find it.
 import { createShareStore, wrapGetDisplayMedia } from './shareState.js';
 import { createVoiceStore } from './voiceVolume.js';
+import { forgeCallCss, keepCallDark } from './forgeCallTheme.js';
 
 const store = createShareStore();
 const { layoutShares } = store;
@@ -50,11 +51,19 @@ steadyLayout.textContent =
   ' { --call-view-safe-area-inset-bottom: env(safe-area-inset-bottom) !important; }';
 (document.head ?? document.documentElement).appendChild(steadyLayout);
 
+// The app's own stage, tile and avatar colours (forgeCallTheme.js).
+const forgeTheme = document.createElement('style');
+forgeTheme.textContent = forgeCallCss();
+(document.head ?? document.documentElement).appendChild(forgeTheme);
+// Module scripts run once the document is parsed, so <body> is there.
+if (document.body) keepCallDark(document.body);
+
 // The grid tile of a share not watched yet (patchElementCall.js) is empty: Cinny draws the share's
-// picture over it. Dark and round like the other tiles, for the frame before Cinny catches up.
+// picture over it. Filled and round like the other tiles, for the frame before Cinny catches up.
 const shareTile = document.createElement('style');
 shareTile.textContent =
-  '[data-blazeroom-share] { background: #1B1E23; border-radius: var(--cpd-space-4x, 16px); }';
+  '[data-blazeroom-share] { background: var(--video-tile-background);' +
+  ' border-radius: var(--cpd-space-4x, 16px); }';
 (document.head ?? document.documentElement).appendChild(shareTile);
 window.blazeroomShares = store;
 

@@ -1,5 +1,4 @@
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Icon, Icons } from 'folds';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { friendDisplayName } from '../../friends/userDisplay';
@@ -13,6 +12,7 @@ import { useLobby } from './useLobby';
 import { AccessFields, InvitePicker, TableAccess } from '../invite/InvitePicker';
 import type { TableStatus } from '../invite/inviteCandidates';
 import * as css from './pokerPage.css';
+import { GameTopBar, GameWallet } from '../ui/GameTopBar';
 import { tr } from '../../translation/tr';
 
 const NO_STATUS: ReadonlyMap<string, TableStatus> = new Map();
@@ -255,37 +255,20 @@ export function PokerLobby({ onOpenTable, onPractice, onTournament, onBack }: Po
 
   return (
     <div className={css.Page}>
-      <div className={css.TopBar}>
-        {onBack && (
-          <button
-            type="button"
-            className={css.IconButton}
-            onClick={onBack}
-            aria-label={tr('games.action.back', 'Back')}
-          >
-            <Icon size="200" src={Icons.ArrowLeft} />
-          </button>
-        )}
-        <div className={css.TopTitle}>
-          <span className={css.TitleText}>Poker · Texas Hold’em</span>
-          <span className={css.SubtitleText}>
-            {tr('games.lobby.subtitle', 'Tables with friends and practice')}
-          </span>
-        </div>
-        <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
-          <span className={css.Coin}>$</span>
-          <span className={css.WalletValue}>{formatChips(balance ?? 0)}</span>
-          {atTables > 0 && (
-            <span className={css.WalletMuted}>
-              ·{' '}
-              {tr('games.wallet.at_tables', '{{chips}} at tables', {
-                chips: formatChips(atTables),
-              })}
-            </span>
-          )}
-        </div>
+      <GameTopBar
+        title="Poker · Texas Hold’em"
+        subtitle={tr('games.lobby.subtitle', 'Tables with friends and practice')}
+        onBack={onBack}
+      >
+        <GameWallet
+          value={formatChips(balance ?? 0)}
+          extra={
+            atTables > 0 &&
+            tr('games.wallet.at_tables', '{{chips}} at tables', { chips: formatChips(atTables) })
+          }
+        />
         <TopUpButton atTables={atTables} topUp={topUp} className={css.SmallButton} />
-      </div>
+      </GameTopBar>
 
       <div className={css.LobbyScroll}>
         <div className={css.LobbyInner}>

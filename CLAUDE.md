@@ -182,8 +182,13 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   IconButton as Primary through their class names (`foldsClasses.ts`, checked by a test against
   folds 2.7.2), so use `variant="Primary"` in new code and leave Success to badges and status.
   folds Input and TextArea in a neutral variant are one field (raised surface, hairline, ember
-  ring); pick one of a few options with `forge-theme/Segmented`, and fill sliders with ember. The wallpaper shows only behind the logged-out pages. Games screens
-  still carry their own gold and serif styles until their redesign PRs.
+  ring); pick one of a few options with `forge-theme/Segmented`, and fill sliders with ember. The wallpaper shows only behind the logged-out pages.
+  Games build on the kit in `games/ui`: `game` colour variables, set by `StageScope` where the
+  game is played (always dark) or `LobbyScope` for lobbies, setup and dialogs (the app theme),
+  plus `gameButton`, `GameTopBar`, `GameWallet` and `GameDialog`. Gold (`game.Money`) is for
+  money only; a choice or a turn is ember (`game.Accent`), the main action wine. Poker is on the
+  kit, and so are Truco, Fodinha and chess (Truco's scene photo and the plaques over it keep
+  their warm tones); Crônicas and BrazilianBonk still carry their own styles.
 
 - An unwatched screen share is a stand-in tile in Element Call's grid (a bundle patch), with
   Cinny's picture and Watch button drawn over it; the floating viewer reuses the same

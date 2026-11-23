@@ -1,24 +1,29 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { color } from 'folds';
+import { game } from '../../ui/gameTheme.css';
+import { tint } from '../../ui/tint';
+import { forgeRadius } from '../../../forge-theme/tokens';
 
 /*
- * A quiet casino rail under the felt: graphite surfaces, a felt green for check/call and one
- * soft gold for the main action and selections. Every control row shares the bar's padding and
+ * A quiet casino rail under the felt: graphite surfaces, a felt green for check/call, the app's
+ * wine for the main action and ember for selections. Every control row shares the bar's padding and
  * one control height, so the header, the sizing row and the buttons line up.
  *
  * The app's reset (src/index.css) gives every button `padding: 0` and `text-align: inherit`, so
  * each button here sets its own padding and centres its content.
  */
-const GOLD = '#d8b872';
-const GOLD_TEXT = '#1a150b';
-const GOLD_SOFT = 'rgba(216, 184, 114, 0.14)';
-const GOLD_RING = 'rgba(216, 184, 114, 0.5)';
-const INK = '#ebe8e1';
-const MUTED = '#8f8d87';
-const LINE = '#2a2e37';
+// Ember marks a choice, gold only money; the stage colours come from the games kit.
+const ACCENT = game.Accent;
+const ON_ACCENT = game.OnAccent;
+const ACCENT_SOFT = tint(game.Accent, 14);
+const ACCENT_RING = tint(game.Accent, 50);
+const INK = game.Ink;
+const MUTED = game.Muted;
+const LINE = game.Line;
 const RAIL = 'rgba(0, 0, 0, 0.28)';
-const SURFACE = '#0f1115';
+const SURFACE = game.Bg;
 const CONTROL = 36;
-const RADIUS = 10;
+const RADIUS = forgeRadius.control;
 const MOBILE = 'screen and (max-width: 760px)';
 // On a computer the sizing row and the buttons form one compact block on the right, under the
 // hand, like a poker client's action panel; stretched across the bar they became huge.
@@ -31,7 +36,7 @@ const controlsBlock = {
 } as const;
 
 const focusRing = {
-  '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
+  '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: 2 },
 } as const;
 // A control that just appeared ignores clicks for a moment (clickGuard.ts) and looks it.
 const arming = {
@@ -46,8 +51,7 @@ export const Bar = style({
   // Wide screens keep the controls in a centred column instead of stretching edge to edge.
   padding: '14px max(18px, calc((100% - 1040px) / 2)) 16px',
   borderTop: `1px solid ${LINE}`,
-  boxShadow: 'inset 0 1px 0 rgba(216, 184, 114, 0.12)',
-  background: `linear-gradient(180deg, #14161c 0%, ${SURFACE} 60%)`,
+  background: SURFACE,
   color: INK,
   maxHeight: '52%',
   overflowY: 'auto',
@@ -69,7 +73,7 @@ export const Name = style({
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   selectors: {
-    '&[data-tone="win"]': { color: GOLD },
+    '&[data-tone="win"]': { color: game.Money },
     '&[data-tone="lose"]': { color: MUTED },
   },
 });
@@ -89,9 +93,9 @@ export const Timer = style({
   gap: 3,
   height: 18,
   padding: '0 6px 0 4px',
-  borderRadius: 999,
-  background: 'rgba(255, 255, 255, 0.05)',
-  color: '#cfc9bb',
+  borderRadius: forgeRadius.control,
+  background: tint(game.Ink, 5),
+  color: game.Muted,
   fontWeight: 600,
   selectors: {
     '&[data-urgent="true"]': { color: '#f0a198', background: 'rgba(201, 128, 120, 0.14)' },
@@ -121,7 +125,7 @@ export const Ring = style({
 export const RingTrack = style({ fill: 'none', stroke: LINE, strokeWidth: 4 });
 export const RingFill = style({
   fill: 'none',
-  stroke: GOLD,
+  stroke: ACCENT,
   strokeWidth: 4,
   strokeLinecap: 'round',
   strokeDasharray: 'var(--ring-length)',
@@ -152,7 +156,7 @@ export const Link = style({
   selectors: { '&:hover': { color: INK }, ...focusRing },
 });
 
-export const Divider = style({ height: 1, background: '#1f232b', flexShrink: 0 });
+export const Divider = style({ height: 1, background: LINE, flexShrink: 0 });
 
 /* The block under the header while the viewer is in the hand: the queued-action toggles over
    an empty slot before their turn, the sizing row over the buttons on it. The toggles never
@@ -213,8 +217,8 @@ const segment = style({
   justifyContent: 'center',
   minWidth: 0,
   padding: '0 10px',
-  borderRadius: RADIUS - 3,
-  color: '#b0ada5',
+  borderRadius: 2,
+  color: MUTED,
   fontSize: 12,
   fontWeight: 600,
   whiteSpace: 'nowrap',
@@ -224,9 +228,9 @@ const segment = style({
   selectors: {
     '&:hover:not(:disabled)': { color: INK, background: 'rgba(255, 255, 255, 0.05)' },
     '&[aria-pressed="true"]': {
-      color: GOLD,
-      background: GOLD_SOFT,
-      boxShadow: `inset 0 0 0 1px ${GOLD_RING}`,
+      color: ACCENT,
+      background: ACCENT_SOFT,
+      boxShadow: `inset 0 0 0 1px ${ACCENT_RING}`,
     },
     '&:disabled': { opacity: 0.4, cursor: 'default' },
     ...focusRing,
@@ -250,7 +254,7 @@ export const Slider = style({
   borderRadius: 3,
   outline: 'none',
   cursor: 'pointer',
-  background: `linear-gradient(${GOLD}, ${GOLD}) 0 / var(--fill, 0%) 100% no-repeat, ${LINE}`,
+  background: `linear-gradient(${ACCENT}, ${ACCENT}) 0 / var(--fill, 0%) 100% no-repeat, ${LINE}`,
   selectors: { '&:disabled': { opacity: 0.4, cursor: 'default' } },
 });
 // A chip-like thumb: gold face with a dark edge.
@@ -261,14 +265,14 @@ const thumb = {
   height: 20,
   borderRadius: '50%',
   border: `3px solid ${SURFACE}`,
-  background: GOLD,
-  boxShadow: `0 0 0 1px ${GOLD_RING}, 0 1px 3px rgba(0, 0, 0, 0.6)`,
+  background: ACCENT,
+  boxShadow: `0 0 0 1px ${ACCENT_RING}, 0 1px 3px rgba(0, 0, 0, 0.6)`,
   cursor: 'pointer',
 } as const;
 globalStyle(`${Slider}::-webkit-slider-thumb`, thumb);
 globalStyle(`${Slider}::-moz-range-thumb`, thumb);
-globalStyle(`${Slider}:focus-visible::-webkit-slider-thumb`, { outline: `2px solid ${GOLD}` });
-globalStyle(`${Slider}:focus-visible::-moz-range-thumb`, { outline: `2px solid ${GOLD}` });
+globalStyle(`${Slider}:focus-visible::-webkit-slider-thumb`, { outline: `2px solid ${ACCENT}` });
+globalStyle(`${Slider}:focus-visible::-moz-range-thumb`, { outline: `2px solid ${ACCENT}` });
 
 /* The bet total with its unit switch inside the same field. */
 export const Amount = style([
@@ -382,14 +386,11 @@ export const Neutral = style([
 export const Primary = style([
   button,
   {
-    border: '1px solid #e6cd93',
-    background: `linear-gradient(180deg, #e4c582 0%, ${GOLD} 45%, #c39d55 100%)`,
-    color: GOLD_TEXT,
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px rgba(0, 0, 0, 0.4)',
+    border: 0,
+    background: color.Primary.Main,
+    color: color.Primary.OnMain,
     selectors: {
-      '&:hover:not(:disabled)': {
-        background: 'linear-gradient(180deg, #ecd092 0%, #e0c27f 45%, #caa660 100%)',
-      },
+      '&:hover:not(:disabled)': { background: color.Primary.MainHover },
     },
   },
 ]);
@@ -401,15 +402,15 @@ export const Chip = style({
   gap: 6,
   height: 32,
   padding: '0 12px',
-  borderRadius: 999,
+  borderRadius: forgeRadius.control,
   border: `1px solid ${LINE}`,
   background: 'transparent',
-  color: '#cfc9bb',
+  color: game.Muted,
   fontSize: 12,
   whiteSpace: 'nowrap',
   cursor: 'pointer',
   selectors: {
-    '&:hover:not(:disabled)': { borderColor: '#3b404b' },
+    '&:hover:not(:disabled)': { borderColor: game.Muted, color: game.Ink },
     '&:disabled': { opacity: 0.4, cursor: 'default' },
     ...focusRing,
   },
@@ -421,14 +422,14 @@ export const Danger = style({
   gap: 6,
   height: 32,
   padding: '0 10px',
-  borderRadius: 999,
+  borderRadius: forgeRadius.control,
   border: 'none',
   background: 'transparent',
-  color: '#c98078',
+  color: game.Critical,
   fontSize: 12,
   cursor: 'pointer',
   selectors: {
-    '&:hover:not(:disabled)': { color: '#e39a91', background: 'rgba(201, 128, 120, 0.08)' },
+    '&:hover:not(:disabled)': { background: tint(game.Critical, 10) },
     ...arming,
     '&:disabled': { opacity: 0.4 },
     ...focusRing,
@@ -443,16 +444,16 @@ export const Toggle = style({
   gap: 7,
   height: 32,
   padding: '0 10px 0 8px',
-  borderRadius: 8,
+  borderRadius: forgeRadius.control,
   border: `1px solid ${LINE}`,
   background: 'transparent',
-  color: '#cfc9bb',
+  color: game.Muted,
   fontSize: 12,
   whiteSpace: 'nowrap',
   cursor: 'pointer',
   selectors: {
-    '&:hover:not(:disabled)': { borderColor: '#3b404b' },
-    '&[aria-checked="true"]': { borderColor: GOLD_RING, background: GOLD_SOFT, color: '#ead19a' },
+    '&:hover:not(:disabled)': { borderColor: game.Muted, color: game.Ink },
+    '&[aria-checked="true"]': { borderColor: ACCENT_RING, background: ACCENT_SOFT, color: ACCENT },
     ...arming,
     '&:disabled': { opacity: 0.4, cursor: 'default' },
     ...focusRing,
@@ -468,9 +469,9 @@ export const Box = style({
   borderRadius: 4,
   border: '1.5px solid #5a5e68',
   boxSizing: 'border-box',
-  color: GOLD_TEXT,
+  color: ON_ACCENT,
   selectors: {
-    [`${Toggle}[aria-checked="true"] &`]: { borderColor: GOLD, background: GOLD },
+    [`${Toggle}[aria-checked="true"] &`]: { borderColor: ACCENT, background: ACCENT },
   },
 });
 /* Where the action buttons appear on the turn: nothing to click there before it. */
@@ -488,7 +489,7 @@ export const Slot = style({
   textAlign: 'center',
   lineHeight: 1.3,
   selectors: {
-    '&[data-queued="true"]': { borderColor: GOLD_RING, color: '#ead19a' },
+    '&[data-queued="true"]': { borderColor: ACCENT_RING, color: ACCENT },
   },
   '@media': { [MOBILE]: { height: 46 } },
 });

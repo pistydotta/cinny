@@ -69,6 +69,7 @@ import { webRTCSupported } from '../../utils/rtc';
 import { tr } from '../translation/tr';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { DeleteRoomMenuItem } from '../space-rooms/DeleteRoomMenuItem';
+import { LivePill } from '../call-indicator/LivePill';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -413,14 +414,7 @@ export function RoomNavItem({
                   aria-label={notificationMode}
                 />
               )}
-              {callMembers.length > 0 && (
-                <Badge variant="Critical" fill="Solid" size="400">
-                  <Icon size="50" src={Icons.VolumeHigh} filled />
-                  <Text as="span" size="L400" truncate>
-                    {tr('nav.live', 'Live')}
-                  </Text>
-                </Badge>
-              )}
+              {callMembers.length > 0 && <LivePill />}
             </Box>
           </NavItemContent>
         </NavLink>

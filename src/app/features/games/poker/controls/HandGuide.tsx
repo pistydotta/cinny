@@ -6,7 +6,7 @@ import { PlayingCard } from '../table/PlayingCard';
 import { exampleCards, HAND_TYPES, handTypeRank, personalCardsUsed } from './handRanks';
 import * as css from '../pokerPage.css';
 import * as bar from './actionBar.css';
-import { PokerModal } from './PokerModal';
+import { GameDialog } from '../../ui/GameDialog';
 
 export function GuideCards({ cards }: { cards: Card[] }) {
   return (
@@ -20,7 +20,7 @@ export function GuideCards({ cards }: { cards: Card[] }) {
 
 export function GuideDialog({ current, onClose }: { current?: string; onClose: () => void }) {
   return (
-    <PokerModal title={tr('poker_controls.guide.title', 'Poker hand rankings')} onClose={onClose}>
+    <GameDialog title={tr('poker_controls.guide.title', 'Poker hand rankings')} onClose={onClose}>
       <p className={css.DialogText}>
         {tr(
           'poker_controls.guide.explanation',
@@ -45,7 +45,7 @@ export function GuideDialog({ current, onClose }: { current?: string; onClose: (
           </li>
         ))}
       </ol>
-    </PokerModal>
+    </GameDialog>
   );
 }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { Box, Text, config, color } from 'folds';
+import { Button, Text } from 'folds';
+import { ToastCard } from '../../components/toast';
 import { callEmbedAtom } from '../../state/callEmbed';
 import { tr } from '../translation/tr';
 import { publishedEntry, runningEntry } from './appVersion';
@@ -43,55 +44,50 @@ function useNewVersion(): boolean {
 }
 
 /**
- * A thin line at the top when blazeroom was updated since this tab loaded. Reloading would
- * drop a call (and any screen share), so during one it only says so; the reload link comes back
- * once the call is over.
+ * A card in the toast stack when blazeroom was updated since this tab loaded. Reloading would
+ * drop a call (and any screen share), so during one it only says so; the Update button comes
+ * back once the call is over. "Later" hides it until the tab is loaded again.
  */
 export function AppUpdateBanner() {
   const available = useNewVersion();
   const inCall = !!useAtomValue(callEmbedAtom);
-  if (!available) return null;
+  const [later, setLater] = useState(false);
+  if (!available || later) return null;
 
   return (
-    <Box
-      shrink="No"
-      alignItems="Center"
-      justifyContent="Center"
-      gap="200"
-      wrap="Wrap"
-      style={{
-        padding: `${config.space.S100} ${config.space.S300}`,
-        background: color.Background.Container,
-        color: color.Background.OnContainer,
-        borderBottom: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
-      }}
-    >
-      <Text size="T200" priority="300">
-        {inCall
+    <ToastCard
+      text={
+        inCall
           ? tr(
               'app_update.available_in_call',
               'A new version of blazeroom is out. Update after the call.'
             )
-          : tr('app_update.available', 'A new version of blazeroom is out.')}
-      </Text>
-      {!inCall && (
-        <Text
-          as="button"
-          type="button"
-          size="T200"
-          onClick={() => window.location.reload()}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            color: color.Primary.Main,
-            textDecoration: 'underline',
-          }}
-        >
-          {tr('app_update.reload', 'Update')}
-        </Text>
-      )}
-    </Box>
+          : tr('app_update.available', 'A new version of blazeroom is out.')
+      }
+      actions={
+        <>
+          <Button
+            onClick={() => setLater(true)}
+            size="300"
+            radii="300"
+            variant="Secondary"
+            fill="None"
+          >
+            <Text size="B300">{tr('common.later', 'Later')}</Text>
+          </Button>
+          {!inCall && (
+            <Button
+              onClick={() => window.location.reload()}
+              size="300"
+              radii="300"
+              variant="Primary"
+              fill="Solid"
+            >
+              <Text size="B300">{tr('app_update.reload', 'Update')}</Text>
+            </Button>
+          )}
+        </>
+      }
+    />
   );
 }

@@ -1,6 +1,7 @@
 import { globalStyle } from '@vanilla-extract/css';
 import { color } from 'folds';
 import { forgeColor } from './forgeColor.css';
+import { forgeRadius } from './tokens';
 
 // Forge's switch: a see-through track. Off is an empty ring on the left; on slides a filled
 // ember dot to the right and then draws its check, so the state reads by shape, not only colour.
@@ -22,7 +23,7 @@ globalStyle(track, {
   padding: '0 3px',
   display: 'flex',
   alignItems: 'center',
-  borderRadius: '999px',
+  borderRadius: forgeRadius.pill,
   border: `1.5px solid ${line(30)}`,
   backgroundColor: 'transparent',
   transition: 'border-color 160ms ease',

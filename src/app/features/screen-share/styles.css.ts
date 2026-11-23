@@ -2,9 +2,18 @@ import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, toRem } from 'folds';
 import { forgeColor } from '../forge-theme/forgeColor.css';
+import { forgeDark, forgeExtraDark, forgeStage } from '../forge-theme/palette';
+import { forgeRadius, forgeTint } from '../forge-theme/tokens';
 
 // Slider thumbs and focus rings: ember reads on the dark panel, the wine doesn't.
 const ember = forgeColor.Ember.Main;
+
+// The call is always dark, so its keys use the dark palette in both themes: light ink for icons,
+// ember for what's on, red for what's off. These replaced the call's own cream and orange.
+const INK = forgeStage.Ink;
+const MUTED = forgeStage.Muted;
+const EMBER = forgeExtraDark.Ember.Main;
+const CRITICAL = forgeStage.Critical;
 
 // Over the call frame, where Element Call keeps an empty grid tile for each share not watched
 // yet; clipped to the frame, so a tile scrolled out of the grid is hidden here too.
@@ -99,9 +108,9 @@ export const LiveTileWatch = style({
   alignItems: 'center',
   gap: config.space.S200,
   padding: `${toRem(7)} ${config.space.S400} ${toRem(7)} ${toRem(13)}`,
-  borderRadius: toRem(999),
+  borderRadius: forgeRadius.control,
   backgroundColor: color.Primary.Main,
-  color: '#EBDAD6',
+  color: INK,
   fontWeight: 600,
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
   transition: 'background-color 120ms ease-out',
@@ -131,9 +140,9 @@ export const LiveBadge = style({
   top: config.space.S300,
   left: config.space.S300,
   padding: `${toRem(4)} ${toRem(12)}`,
-  borderRadius: toRem(999),
+  borderRadius: forgeRadius.pill,
   backgroundColor: color.Primary.Main,
-  color: '#EBDAD6',
+  color: INK,
   fontWeight: 600,
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
 });
@@ -239,8 +248,8 @@ export const FloatingBar = style({
   height: toRem(40),
   padding: `0 ${config.space.S100} 0 ${config.space.S300}`,
   backgroundColor: '#1C1F25',
-  boxShadow: 'inset 0 -1px 0 rgba(240, 217, 188, 0.08)',
-  color: '#F0D9BC',
+  boxShadow: `inset 0 -1px 0 ${forgeTint(INK, 8)}`,
+  color: INK,
   cursor: 'grab',
   touchAction: 'none',
   userSelect: 'none',
@@ -265,16 +274,16 @@ export const FloatingKey = style({
   justifyContent: 'center',
   transition: 'background-color 120ms ease-out, color 120ms ease-out',
   selectors: {
-    '&&': { color: '#F0D9BC', backgroundColor: 'transparent' },
-    '&&:hover': { color: '#FFE6C8', backgroundColor: 'rgba(255, 164, 92, 0.18)' },
+    '&&': { color: INK, backgroundColor: 'transparent' },
+    '&&:hover': { color: INK, backgroundColor: forgeTint(EMBER, 18) },
   },
 });
-export const FloatingKeyOff = style({ selectors: { '&&&': { color: '#F2705E' } } });
+export const FloatingKeyOff = style({ selectors: { '&&&': { color: CRITICAL } } });
 // Stop watching closes the window: red, like a window's close.
 export const FloatingKeyClose = style({
   selectors: {
-    '&&&': { color: '#F2705E' },
-    '&&&:hover': { color: '#FFF4EC', backgroundColor: '#D9412B' },
+    '&&&': { color: CRITICAL },
+    '&&&:hover': { color: INK, backgroundColor: forgeDark.Critical.MainHover },
   },
 });
 
@@ -314,8 +323,14 @@ export const FloatingGrip = style({
   pointerEvents: 'none',
   opacity: 0,
   backgroundImage:
-    'linear-gradient(135deg, transparent 45%, rgba(240, 217, 188, 0.9) 45%, rgba(240, 217, 188, 0.9) 55%, transparent 55%), ' +
-    'linear-gradient(135deg, transparent 75%, rgba(240, 217, 188, 0.9) 75%, rgba(240, 217, 188, 0.9) 85%, transparent 85%)',
+    `linear-gradient(135deg, transparent 45%, ${forgeTint(INK, 90)} 45%, ${forgeTint(
+      INK,
+      90
+    )} 55%, transparent 55%), ` +
+    `linear-gradient(135deg, transparent 75%, ${forgeTint(INK, 90)} 75%, ${forgeTint(
+      INK,
+      90
+    )} 85%, transparent 85%)`,
   filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.9))',
   transition: 'opacity 250ms ease-out',
   selectors: { [`${FloatingChrome}:hover &`]: { opacity: 1 } },
@@ -481,17 +496,17 @@ export const LiveAsleep = style({
   selectors: { '&:hover, &:focus-within': { opacity: 1 } },
 });
 
-// Warm ash and ember: the call's controls over a share, tied to the Forge palette.
+// The call's controls over a share, on the Forge palette.
 const ASH = {
-  icon: '#F0D9BC',
-  muted: '#B39A7C',
-  line: 'rgba(240, 217, 188, 0.35)',
-  off: '#F2705E',
-  on: '#FFA45C',
+  icon: INK,
+  muted: MUTED,
+  line: forgeTint(INK, 35),
+  off: CRITICAL,
+  on: EMBER,
   // Leave wears the Watch button's oxblood and off-white (LiveTileWatch): quieter than a red.
   leave: color.Primary.Main,
   leaveHover: color.Primary.MainHover,
-  onLeave: '#EBDAD6',
+  onLeave: INK,
 };
 
 // Keeps the controls readable on any picture.
@@ -526,7 +541,7 @@ export const LiveDot = style({
   height: toRem(8),
   flexShrink: 0,
   borderRadius: '50%',
-  backgroundColor: '#FF5A4F',
+  backgroundColor: EMBER,
   animation: `${pulse} 2s ease-in-out infinite`,
   '@media': { '(prefers-reduced-motion: reduce)': { animation: 'none' } },
 });
@@ -570,7 +585,7 @@ export const LiveTopBar = style({
   padding: `0 ${config.space.S200} 0 ${config.space.S100}`,
   backgroundColor: '#1C1F25',
   borderRadius: `${toRem(12)} ${toRem(12)} 0 0`,
-  boxShadow: 'inset 0 -1px 0 rgba(240, 217, 188, 0.08)',
+  boxShadow: `inset 0 -1px 0 ${forgeTint(INK, 8)}`,
 });
 globalStyle(`${LiveTopBar} > ${LiveWho}`, { filter: 'none' });
 globalStyle(`${LiveTopBar} ${LiveButtons}`, { gap: config.space.S100 });
@@ -585,8 +600,8 @@ export const LiveChipButton = style({
   selectors: {
     '&&': { color: ASH.icon, backgroundColor: 'transparent' },
     '&&:hover, &&[aria-pressed=true]': {
-      color: '#FFE6C8',
-      backgroundColor: 'rgba(255, 164, 92, 0.18)',
+      color: INK,
+      backgroundColor: forgeTint(EMBER, 18),
     },
   },
 });
@@ -626,7 +641,7 @@ export const LiveCallDocked = style({
 });
 
 // The call is always dark, like the video in it, so its cream buttons read in every theme.
-export const CallDark = style({ backgroundColor: '#14161A', color: '#F0D9BC' });
+export const CallDark = style({ backgroundColor: forgeDark.Surface.Container, color: INK });
 
 // Each button floats on its own: it rises a little under the pointer.
 const floaty = `${LiveCallBelow} button, ${LiveCallDocked} button`;
@@ -663,7 +678,7 @@ export const LiveArrow = style({
     '&&': { color: ASH.muted, backgroundColor: 'transparent' },
     '&&:hover, &&[aria-pressed=true]': {
       color: ASH.icon,
-      backgroundColor: 'rgba(255, 164, 92, 0.18)',
+      backgroundColor: forgeTint(EMBER, 18),
     },
   },
 });
@@ -705,7 +720,7 @@ export const LiveVolume = style({
 
 export const LiveVolumeSlider = style({
   width: toRem(72),
-  backgroundColor: 'rgba(240, 217, 188, 0.45)',
+  backgroundColor: forgeTint(INK, 45),
 });
 
 // Over the picture the controls sit on smoked glass: bare icons with a shadow vanished on bright,
@@ -714,25 +729,25 @@ const glass = {
   backgroundColor: 'rgba(14, 15, 18, 0.86)',
   backdropFilter: 'blur(14px)',
   WebkitBackdropFilter: 'blur(14px)',
-  border: '1px solid rgba(240, 217, 188, 0.16)',
+  border: `1px solid ${forgeTint(INK, 16)}`,
   boxShadow: '0 4px 18px rgba(0, 0, 0, 0.45)',
 } as const;
 
 const overTop = `${LiveTop}:not(${LiveTopBar})`;
 const KEY = {
-  icon: '#FFF1E0',
-  fill: 'rgba(240, 217, 188, 0.14)',
-  edge: 'rgba(240, 217, 188, 0.28)',
-  hover: 'rgba(255, 164, 92, 0.26)',
-  edgeHover: 'rgba(255, 164, 92, 0.6)',
+  icon: INK,
+  fill: forgeTint(INK, 14),
+  edge: forgeTint(INK, 28),
+  hover: forgeTint(EMBER, 26),
+  edgeHover: forgeTint(EMBER, 60),
   fillOver: 'rgba(12, 13, 16, 0.82)',
-  hoverOver: 'rgba(52, 36, 26, 0.92)',
+  hoverOver: `color-mix(in srgb, ${EMBER} 18%, rgba(12, 13, 16, 0.92))`,
 };
 globalStyle(`${overTop} > ${LiveWho}`, {
   ...glass,
   filter: 'none',
   pointerEvents: 'auto',
-  borderRadius: toRem(999),
+  borderRadius: forgeRadius.control,
   padding: `${toRem(6)} ${config.space.S300}`,
 });
 // The share's own buttons (people, fullscreen, stop) sit straight on the bar with no key behind
@@ -745,7 +760,7 @@ globalStyle(keySelector(), {
   height: toRem(32),
   minWidth: 0,
   padding: 0,
-  color: '#FFF1E0 !important',
+  color: `${INK} !important`,
   backgroundColor: 'transparent !important',
   border: 'none',
   borderRadius: config.radii.R300,
@@ -754,7 +769,7 @@ globalStyle(keySelector(), {
 });
 globalStyle(keySelector(':hover'), {
   color: '#FFFFFF !important',
-  backgroundColor: 'rgba(255, 241, 224, 0.12) !important',
+  backgroundColor: `${forgeTint(INK, 12)} !important`,
 });
 globalStyle(keySelector(`${LiveOff}`), { color: `${ASH.off} !important` });
 globalStyle(`${overTop} ${LiveButtons} ${LiveChipButton}`, {

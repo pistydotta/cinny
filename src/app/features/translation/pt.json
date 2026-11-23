@@ -378,6 +378,7 @@
     "try_again": "Tentar de novo",
     "back": "Voltar",
     "cancel": "Cancelar",
+    "close": "Fechar",
     "server_busy": "O servidor está ocupado. Tente de novo daqui a pouco.",
     "went_wrong": "Algo deu errado. Tente de novo daqui a pouco.",
     "later": "Depois",
@@ -510,7 +511,15 @@
     "overview": "Visão geral",
     "happening_now": "Acontecendo agora",
     "live_you_here": "Você está aqui",
-    "live_empty": "Ninguém em chamada agora."
+    "live_empty": "Ninguém em chamada agora.",
+    "live_empty_all": "Ninguém em chamada nem em mesa agora.",
+    "table_yours": "Sua mesa",
+    "table_invited": "Te convidou",
+    "table_call": "Na sua chamada",
+    "table_friends": "Amigos",
+    "table_back": "Voltar",
+    "table_join": "Entrar",
+    "table_watch": "Assistir"
   },
   "lobby": {
     "rooms": "Salas",
@@ -586,6 +595,20 @@
     "yesterday": "Ontem",
     "jump_to_unread": "Ir para não lidas",
     "jump_to_latest": "Ir para as mais recentes",
+    "member_run": {
+      "and": "{{first}} e {{last}}",
+      "and_more": "{{first}} e mais {{count}}",
+      "joined_one": "{{names}} entrou",
+      "joined": "{{names}} entraram",
+      "left_one": "{{names}} saiu",
+      "left": "{{names}} saíram",
+      "invited_one": "{{names}} recebeu convite",
+      "invited": "{{names}} receberam convite",
+      "other_one": "mais 1 mudança",
+      "other": "mais {{count}} mudanças",
+      "show": "Mostrar {{count}}",
+      "hide": "Esconder"
+    },
     "member": {
       "accepted": " aceitou o pedido de entrada de ",
       "join_request_end": " ",
@@ -891,7 +914,9 @@
     "horde_robust_title": "BrazilianBonk: a partida não se perde mais",
     "horde_robust_body": "Se a página recarregar, você clicar numa notificação ou o celular fechar o app, a partida fica guardada e dá para continuar do mesmo ponto pelo menu (partidas retomadas pagam ouro normalmente, mas não entram no ranking). Há também opção de qualidade gráfica, que fica automática por padrão, vibração ao levar dano no celular e dicas na primeira partida.",
     "show_all": "Ver todas as novidades",
-    "show_less": "Mostrar menos"
+    "show_less": "Mostrar menos",
+    "forge_games_title": "Visual novo nos jogos, nas chamadas e na Visão geral",
+    "forge_games_body": "Poker, Truco, Fodinha e Xadrez ganharam o mesmo visual: a mesma barra no topo e os mesmos botões, dourado só para moedas e fichas, e os lobbies seguem o modo claro ou escuro. A tela da chamada pergunta antes de você entrar e mostra uma barra só de controles durante a chamada, e os quadros das câmeras combinam com o app. A Visão geral mostra quem está em chamada agora, e no celular a faixa de criptografia e o card de música ocupam menos espaço."
   },
   "admin": {
     "deactivate": {

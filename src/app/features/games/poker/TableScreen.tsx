@@ -20,6 +20,7 @@ import { turnTimerFor } from './turnTimer';
 import { formatChips, PokerAction } from './types';
 import { useTable } from './useTable';
 import * as css from './pokerPage.css';
+import { GameTopBar, GameWallet } from '../ui/GameTopBar';
 import { tr } from '../../translation/tr';
 import { PokerPreferences, readPreferences, savePreferences } from './controls/preferences';
 import { formatAmount } from './controls/amounts';
@@ -333,39 +334,25 @@ export function TableScreen({ tableId, onBack, onNewTournament, onOpenTable }: T
 
   return (
     <div
-      className={css.Page}
+      className={css.TablePage}
       onPointerDownCapture={() => pokerAudio.unlock()}
       onKeyDownCapture={() => pokerAudio.unlock()}
     >
-      <div className={css.TopBar}>
-        <button
-          type="button"
-          className={css.IconButton}
-          onClick={onBack}
-          aria-label={tr('games.action.back', 'Back')}
-        >
-          <Icon size="200" src={Icons.ArrowLeft} />
-        </button>
-        <div className={css.TopTitle}>
-          <span className={css.TitleText}>{title}</span>
-          <span className={css.SubtitleText}>{subtitle}</span>
-        </div>
-        <div className={css.WalletPill} title={tr('games.wallet.hint', 'Coins in your wallet')}>
-          <span className={css.Coin}>$</span>
-          <span className={css.WalletValue}>{formatChips(balance ?? 0)}</span>
-          {seated && !tournament && (
-            <span className={css.WalletMuted}>
-              ·{' '}
-              {tr('games.wallet.at_table', '{{chips}} at the table', {
-                chips: formatAmount(
-                  me.stack + (view?.pendingChips ?? 0),
-                  preferences.unit,
-                  view?.bigBlind ?? 1
-                ),
-              })}
-            </span>
-          )}
-        </div>
+      <GameTopBar title={title} subtitle={subtitle} onBack={onBack}>
+        <GameWallet
+          value={formatChips(balance ?? 0)}
+          extra={
+            seated &&
+            !tournament &&
+            tr('games.wallet.at_table', '{{chips}} at the table', {
+              chips: formatAmount(
+                me.stack + (view?.pendingChips ?? 0),
+                preferences.unit,
+                view?.bigBlind ?? 1
+              ),
+            })
+          }
+        />
         {view?.kind === 'friends' && (
           <>
             <button
@@ -444,7 +431,7 @@ export function TableScreen({ tableId, onBack, onNewTournament, onOpenTable }: T
             <span className={css.WideOnly}>{tr('games.table.close', 'Close the table')}</span>
           </button>
         )}
-      </div>
+      </GameTopBar>
 
       {!connected && view && (
         <p className={css.Note} style={{ padding: '6px 16px', textAlign: 'center' }}>

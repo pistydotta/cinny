@@ -1,5 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { color, config } from 'folds';
+import { forgeColor } from '../forge-theme/forgeColor.css';
+import { livePill } from '../call-indicator/live.css';
 
 export const CategoryButton = style({
   flexGrow: 1,
@@ -20,23 +22,18 @@ export const CallMemberSpeaking = style({
 });
 export const CallMemberNameSpeaking = style({ color: color.Surface.OnContainer, opacity: 1 });
 
-// Someone sharing their screen: a red ring and a Live badge after the name, which watches it.
+// Someone sharing their screen: an ember ring and a Live pill after the name, which watches it.
+// Live is ember everywhere (call-indicator/live.css.ts), never the red of errors.
 export const CallMemberLiveRing = style({
-  boxShadow: `0 0 0 2px ${color.Background.Container}, 0 0 0 4px ${color.Critical.Main}`,
+  boxShadow: `0 0 0 2px ${color.Background.Container}, 0 0 0 4px ${forgeColor.Ember.Main}`,
 });
 export const CallMemberLive = style({
-  flexShrink: 0,
-  padding: `1px ${config.space.S200}`,
+  ...livePill,
   border: 'none',
-  borderRadius: config.radii.Pill,
-  backgroundColor: color.Critical.Main,
-  color: color.Critical.OnMain,
-  fontSize: '0.6875rem',
-  fontWeight: 600,
-  lineHeight: 1.5,
+  fontFamily: 'inherit',
   selectors: {
     'button&': { cursor: 'pointer' },
     'button&:hover': { filter: 'brightness(1.1)' },
-    '&:focus-visible': { outline: `2px solid ${color.Critical.Main}`, outlineOffset: 2 },
+    '&:focus-visible': { outline: `2px solid ${forgeColor.Ember.Main}`, outlineOffset: 2 },
   },
 });

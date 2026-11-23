@@ -1,45 +1,7 @@
 import React, { ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { Box, Text, color, config, toRem } from 'folds';
+import { ToastCard } from '../../components/toast';
 
-// A small card in the bottom-right corner, above the composer row, that leaves the page usable.
+// A card in the toast stack, above the composer row, that leaves the page usable.
 export function PromptCard({ text, children }: { text: ReactNode; children: ReactNode }) {
-  return createPortal(
-    <Box
-      justifyContent="End"
-      style={{
-        position: 'fixed',
-        left: config.space.S400,
-        right: config.space.S400,
-        bottom: toRem(88),
-        zIndex: 9998,
-        pointerEvents: 'none',
-      }}
-    >
-      <Box
-        role="status"
-        alignItems="Center"
-        wrap="Wrap"
-        gap="300"
-        style={{
-          pointerEvents: 'auto',
-          maxWidth: toRem(360),
-          padding: `${config.space.S200} ${config.space.S200} ${config.space.S200} ${config.space.S400}`,
-          borderRadius: config.radii.R400,
-          background: color.Surface.Container,
-          color: color.Surface.OnContainer,
-          border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
-        }}
-      >
-        <Box grow="Yes">
-          <Text size="T300">{text}</Text>
-        </Box>
-        <Box alignItems="Center" gap="200">
-          {children}
-        </Box>
-      </Box>
-    </Box>,
-    document.body
-  );
+  return <ToastCard text={text} actions={children} />;
 }

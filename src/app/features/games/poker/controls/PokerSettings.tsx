@@ -2,7 +2,7 @@ import React, { useId } from 'react';
 import { tr } from '../../../translation/tr';
 import type { PokerPreferences } from './preferences';
 import * as css from '../pokerPage.css';
-import { PokerModal } from './PokerModal';
+import { GameDialog } from '../../ui/GameDialog';
 
 type Props = {
   preferences: PokerPreferences;
@@ -21,7 +21,7 @@ export function PokerSettings({ preferences, onChange, onPreview, onClose }: Pro
     wins: 'You win a pot',
   };
   return (
-    <PokerModal title={tr('poker_controls.audio.title', 'Poker sounds')} onClose={onClose}>
+    <GameDialog title={tr('poker_controls.audio.title', 'Poker sounds')} onClose={onClose}>
       <p className={css.DialogText}>
         {tr(
           'poker_controls.audio.hint',
@@ -64,6 +64,6 @@ export function PokerSettings({ preferences, onChange, onPreview, onClose }: Pro
       >
         {tr('poker_controls.audio.test', 'Test sound')}
       </button>
-    </PokerModal>
+    </GameDialog>
   );
 }

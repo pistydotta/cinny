@@ -1,11 +1,15 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { game } from '../../ui/gameTheme.css';
+import { tint } from '../../ui/tint';
 
 /*
  * The table is drawn inside a size container, so every dimension uses container units (cqmin,
  * cqw, cqh) and the whole scene scales with the space available.
  */
 
-const GOLD = '#f5c84b';
+// Gold is money (the pot, a win); a turn or an open seat is not, so those use ember and ink.
+const GOLD = game.Money;
+const ACCENT = game.Accent;
 
 const chipsIn = keyframes({
   '0%': { opacity: 0, transform: 'translate(-50%, -50%) translate(var(--from-x), var(--from-y))' },
@@ -33,8 +37,8 @@ const winnerGlow = keyframes({
 });
 
 const turnPulse = keyframes({
-  '0%, 100%': { boxShadow: `0 0 0 0.45cqmin ${GOLD}, 0 0 1.5cqmin 0.2cqmin rgba(245,200,75,0.5)` },
-  '50%': { boxShadow: `0 0 0 0.45cqmin ${GOLD}, 0 0 3.2cqmin 0.8cqmin rgba(245,200,75,0.75)` },
+  '0%, 100%': { boxShadow: `0 0 0 0.45cqmin ${ACCENT}, 0 0 1.5cqmin 0.2cqmin ${tint(ACCENT, 50)}` },
+  '50%': { boxShadow: `0 0 0 0.45cqmin ${ACCENT}, 0 0 3.2cqmin 0.8cqmin ${tint(ACCENT, 75)}` },
 });
 
 const turnTimer = keyframes({
@@ -243,17 +247,17 @@ export const EmptySeat = style({
     '[data-layout="portrait"] &': { width: '13cqmin', height: '13cqmin', fontSize: '2.4cqmin' },
     '&[data-open="true"]': {
       cursor: 'pointer',
-      color: GOLD,
-      fontWeight: 800,
-      border: `0.3cqmin dashed rgba(245,200,75,0.6)`,
-      background: 'rgba(245,200,75,0.10)',
+      color: game.Ink,
+      fontWeight: 700,
+      border: `0.3cqmin dashed ${game.Muted}`,
+      background: tint(game.Ink, 8),
     },
-    '&[data-open="true"]:hover': { background: 'rgba(245,200,75,0.22)' },
+    '&[data-open="true"]:hover': { background: tint(game.Ink, 16) },
   },
 });
 
 export const HostMark = style({
-  color: GOLD,
+  color: ACCENT,
 });
 
 export const SeatCards = style({
@@ -331,14 +335,14 @@ export const TimerTrack = style({
 
 export const TimerCircle = style({
   fill: 'none',
-  stroke: GOLD,
+  stroke: ACCENT,
   strokeWidth: 5,
   strokeLinecap: 'round',
   strokeDasharray: 'var(--ring-length)',
   animationName: turnTimer,
   animationTimingFunction: 'linear',
   animationFillMode: 'both',
-  filter: 'drop-shadow(0 0 2px rgba(245,200,75,0.8))',
+  filter: `drop-shadow(0 0 2px ${tint(ACCENT, 80)})`,
 });
 
 export const Plate = style({
@@ -357,8 +361,8 @@ export const Plate = style({
     '[data-seats="9"] &': { minWidth: '12.5cqmin', padding: '0.4cqmin 1.1cqmin 0.5cqmin' },
     '[data-seats="9"][data-layout="portrait"] &': { minWidth: '18cqmin' },
     '[data-turn="true"] &': {
-      background: 'linear-gradient(180deg, rgba(72,56,14,0.97), rgba(36,28,8,0.97))',
-      boxShadow: `0 0 0 0.3cqmin ${GOLD}, 0 0 2.4cqmin 0.3cqmin rgba(245,200,75,0.45)`,
+      background: `linear-gradient(${tint(ACCENT, 22)}, ${tint(ACCENT, 22)}), ${game.Raised}`,
+      boxShadow: `0 0 0 0.3cqmin ${ACCENT}, 0 0 2.4cqmin 0.3cqmin ${tint(ACCENT, 45)}`,
     },
   },
 });
@@ -370,8 +374,8 @@ export const TurnTag = style({
   transform: 'translate(-50%, -0.4cqmin)',
   padding: '0.2cqmin 1.2cqmin',
   borderRadius: '99cqmin',
-  background: GOLD,
-  color: '#2a1f04',
+  background: ACCENT,
+  color: game.OnAccent,
   fontSize: '1.4cqmin',
   fontWeight: 800,
   letterSpacing: '0.04em',

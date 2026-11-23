@@ -1,12 +1,15 @@
 import { style } from '@vanilla-extract/css';
+import { game } from '../../ui/gameTheme.css';
+import { tint } from '../../ui/tint';
+import { forgeRadius } from '../../../forge-theme/tokens';
 
-// The same graphite and soft gold as the action bar (controls/actionBar.css.ts).
-const GOLD = '#d8b872';
-const GOLD_SOFT = 'rgba(216, 184, 114, 0.14)';
-const GOLD_RING = 'rgba(216, 184, 114, 0.5)';
-const INK = '#ebe8e1';
-const MUTED = '#8f8d87';
-const LINE = '#2a2e37';
+// The same stage colours as the action bar (controls/actionBar.css.ts): ember for a choice.
+const ACCENT = game.Accent;
+const ACCENT_SOFT = tint(game.Accent, 14);
+const ACCENT_RING = tint(game.Accent, 50);
+const INK = game.Ink;
+const MUTED = game.Muted;
+const LINE = game.Line;
 const GOOD = '#6fcf97';
 const WARN = '#e6b450';
 const BAD = '#eb6f6f';
@@ -51,7 +54,7 @@ export const InfoValue = style({
   fontWeight: 700,
   fontVariantNumeric: 'tabular-nums',
   whiteSpace: 'nowrap',
-  selectors: { '&[data-accent="true"]': { color: GOLD } },
+  selectors: { '&[data-accent="true"]': { color: game.Money } },
 });
 
 export const InfoSub = style({
@@ -75,9 +78,9 @@ export const InfoButton = style({
   textAlign: 'center',
   cursor: 'pointer',
   selectors: {
-    '&:hover': { borderColor: GOLD_RING },
-    '&[aria-pressed="true"]': { background: GOLD_SOFT, borderColor: GOLD_RING, color: GOLD },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
+    '&:hover': { borderColor: ACCENT_RING },
+    '&[aria-pressed="true"]': { background: ACCENT_SOFT, borderColor: ACCENT_RING, color: ACCENT },
+    '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: 2 },
   },
 });
 
@@ -95,7 +98,7 @@ export const DetailsRow = style({
   gap: 12,
   fontVariantNumeric: 'tabular-nums',
   selectors: {
-    '&[data-me="true"]': { color: GOLD, fontWeight: 700 },
+    '&[data-me="true"]': { color: ACCENT, fontWeight: 700 },
     '&[data-dim="true"]': { opacity: 0.55 },
   },
 });
@@ -128,7 +131,7 @@ export const CoachTag = style({
   fontWeight: 700,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: GOLD,
+  color: ACCENT,
 });
 
 export const CoachAction = style({ fontSize: 15, fontWeight: 700 });
@@ -147,7 +150,7 @@ export const CoachToggle = style({
   cursor: 'pointer',
   selectors: {
     '&:hover': { color: INK },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
+    '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: 2 },
   },
 });
 
@@ -158,7 +161,7 @@ export const Metric = style({
   alignItems: 'baseline',
   gap: 5,
   padding: '3px 8px',
-  borderRadius: 999,
+  borderRadius: forgeRadius.control,
   background: 'rgba(255, 255, 255, 0.05)',
   fontSize: 12,
   fontVariantNumeric: 'tabular-nums',
@@ -183,10 +186,10 @@ export const Size = style({
   lineHeight: 1.2,
   cursor: 'pointer',
   selectors: {
-    '&:hover:not(:disabled)': { borderColor: GOLD_RING },
-    '&[data-recommended="true"]': { background: GOLD_SOFT, borderColor: GOLD_RING },
+    '&:hover:not(:disabled)': { borderColor: ACCENT_RING },
+    '&[data-recommended="true"]': { background: ACCENT_SOFT, borderColor: ACCENT_RING },
     '&:disabled': { opacity: 0.5, cursor: 'default' },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
+    '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: 2 },
   },
 });
 
@@ -234,7 +237,7 @@ export const Place = style({
   fontSize: 34,
   fontWeight: 800,
   lineHeight: 1.1,
-  color: GOLD,
+  color: ACCENT,
   fontVariantNumeric: 'tabular-nums',
 });
 
@@ -282,7 +285,7 @@ export const Entrants = style({ display: 'flex', flexWrap: 'wrap', gap: 6 });
 
 export const Entrant = style({
   padding: '4px 10px',
-  borderRadius: 999,
+  borderRadius: forgeRadius.control,
   background: 'rgba(255, 255, 255, 0.06)',
   fontSize: 12.5,
 });

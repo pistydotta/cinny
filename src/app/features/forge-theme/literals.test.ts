@@ -8,10 +8,11 @@ import { describe, expect, it } from 'vitest';
 // token instead. games/ joins once the games share the stage kit; until then each game keeps its
 // own palette (see docs/ui-review-2026-11.md).
 const CEILING = {
-  hex: 74,
+  hex: 54,
   fontSize: 58,
   boxShadow: 25,
   zIndex: 4,
+  pill: 0,
 };
 
 const PATTERNS: Record<keyof typeof CEILING, RegExp> = {
@@ -21,6 +22,8 @@ const PATTERNS: Record<keyof typeof CEILING, RegExp> = {
   boxShadow: /boxShadow:\s*['`][^'`]*\d+(px)?\s/g,
   // 0–3 order things inside a component; anything higher is a layer and needs a token.
   zIndex: /zIndex:\s*([4-9]|[1-9]\d+)\b/g,
+  // A hand-written pill (999px): chips and buttons are square; real pills use forgeRadius.pill.
+  pill: /borderRadius:\s*(toRem\(|')?9{3,}/g,
 };
 
 const FEATURES = join(__dirname, '..');

@@ -1,9 +1,7 @@
-import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  Dialog,
-  Header,
   Modal,
   Overlay,
   OverlayBackdrop,
@@ -28,11 +26,7 @@ import { FeedbackItem, feedbackErrorMessage, splitFeedback } from '../../feedbac
 import { useFeedbackApi } from '../../feedback/useFeedbackApi';
 import { tr } from '../../translation/tr';
 import { SectionTitle } from '../SettingsPage';
-
-const HeaderStyle: CSSProperties = {
-  padding: `0 ${config.space.S400}`,
-  borderBottomWidth: config.borderWidth.B300,
-};
+import { ForgeDialog } from '../../forge-theme/ForgeDialog';
 
 type DeleteDialogProps = {
   onConfirm: () => Promise<unknown>;
@@ -49,47 +43,30 @@ function DeleteDialog({ onConfirm, onClose }: DeleteDialogProps) {
   };
 
   return (
-    <Overlay open backdrop={<OverlayBackdrop />}>
-      <OverlayCenter>
-        <FocusTrap
-          focusTrapOptions={{
-            initialFocus: false,
-            onDeactivate: () => !busy && onClose(),
-            clickOutsideDeactivates: true,
-            escapeDeactivates: true,
-          }}
+    <ForgeDialog
+      title={tr('feedback.delete_title', 'Delete this feedback?')}
+      onClose={() => !busy && onClose()}
+    >
+      <Text size="T300">
+        {tr(
+          'feedback.delete_body',
+          "This can't be undone. The message and its screenshot are deleted from the server."
+        )}
+      </Text>
+      <Box gap="200" justifyContent="End">
+        <Button variant="Secondary" fill="Soft" onClick={onClose} disabled={busy}>
+          <Text size="B400">{tr('common.cancel', 'Cancel')}</Text>
+        </Button>
+        <Button
+          variant="Critical"
+          onClick={handleConfirm}
+          disabled={busy}
+          before={busy ? <Spinner variant="Critical" fill="Solid" size="200" /> : undefined}
         >
-          <Dialog variant="Surface" style={{ maxWidth: toRem(440) }}>
-            <Header style={HeaderStyle} variant="Surface" size="500">
-              <Text size="H4" truncate>
-                {tr('feedback.delete_title', 'Delete this feedback?')}
-              </Text>
-            </Header>
-            <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
-              <Text size="T300">
-                {tr(
-                  'feedback.delete_body',
-                  "This can't be undone. The message and its screenshot are deleted from the server."
-                )}
-              </Text>
-              <Box gap="200" justifyContent="End">
-                <Button variant="Secondary" fill="Soft" onClick={onClose} disabled={busy}>
-                  <Text size="B400">{tr('common.cancel', 'Cancel')}</Text>
-                </Button>
-                <Button
-                  variant="Critical"
-                  onClick={handleConfirm}
-                  disabled={busy}
-                  before={busy ? <Spinner variant="Critical" fill="Solid" size="200" /> : undefined}
-                >
-                  <Text size="B400">{tr('feedback.delete', 'Delete')}</Text>
-                </Button>
-              </Box>
-            </Box>
-          </Dialog>
-        </FocusTrap>
-      </OverlayCenter>
-    </Overlay>
+          <Text size="B400">{tr('feedback.delete', 'Delete')}</Text>
+        </Button>
+      </Box>
+    </ForgeDialog>
   );
 }
 

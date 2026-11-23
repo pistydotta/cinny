@@ -22,6 +22,9 @@ import {
 import { GamePlayer, GameTable, TableCard, TrucoResponse, TrucoTrick } from './types';
 import { hasScene, OWN_CARD, trucoScene } from './trucoScene';
 import * as css from './tentos.css';
+import { gameName } from './text';
+import * as ui from '../ui/gameUi.css';
+import { GameTopBar } from '../ui/GameTopBar';
 import { GameCard } from '../cards/GameCard';
 import barArt from '../art/truco-bar.webp';
 
@@ -1014,52 +1017,44 @@ export function TentosTable({
     </div>
   );
 
+  const subtitle = table.stake
+    ? `${gameName(table.kind)} · ${tr('table_games.credits_n', '{{n}} credits', {
+        n: table.stake,
+      })}`
+    : gameName(table.kind);
+
   return (
     <div className={css.Screen}>
-      <div ref={stage} className={css.Stage}>
-        {truco ? (
-          <>
-            <div className={css.Corner} data-side="left">
-              <button type="button" className={css.TrucoBack} onClick={onBack}>
-                <span aria-hidden="true">←</span>
-                {tr('table_games.back_to_tables', 'Back to tables')}
-              </button>
-            </div>
-            <span className={css.TrucoTableName} title={table.name}>
-              {table.name}
-            </span>
-            {phase !== 'waiting' && (
-              <div className={css.TrucoScoreboard}>
-                <Tally table={table} />
-                <HandTricks table={table} nameOf={nameOf} />
-              </div>
-            )}
-          </>
-        ) : (
-          <div className={css.Corner} data-side="left">
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                className={css.Pill}
-                onClick={onBack}
-                aria-label={tr('games.action.back', 'Back')}
-              >
-                ←
-              </button>
-              <span className={css.TableName}>{table.name}</span>
-            </div>
-          </div>
-        )}
-        <div className={css.Corner} data-side="right">
-          <button type="button" className={css.Pill} onClick={onSwitchTable}>
+      <GameTopBar title={table.name} subtitle={subtitle} onBack={onBack}>
+        <div className={ui.TopActions}>
+          <button
+            type="button"
+            className={ui.gameButton({ variant: 'ghost', size: 'sm' })}
+            onClick={onSwitchTable}
+          >
             {tr('games.switch.title', 'Switch table')}
           </button>
-          <button type="button" className={css.Pill} onClick={onOpenSheet}>
+          <button
+            type="button"
+            className={ui.gameButton({
+              variant: phase === 'waiting' ? 'primary' : 'secondary',
+              size: 'sm',
+            })}
+            onClick={onOpenSheet}
+          >
             {phase === 'waiting'
               ? tr('table_games.invite', '+ Invite')
               : tr('table_games.table_menu', 'Table')}
           </button>
         </div>
+      </GameTopBar>
+      <div ref={stage} className={css.Stage}>
+        {truco && phase !== 'waiting' && (
+          <div className={css.TrucoScoreboard}>
+            <Tally table={table} />
+            <HandTricks table={table} nameOf={nameOf} />
+          </div>
+        )}
 
         <div className={css.Felt} data-layout={layout} data-scene={!!scene}>
           {scene ? (

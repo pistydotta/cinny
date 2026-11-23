@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAtomValue } from 'jotai';
+import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Text } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
@@ -8,6 +9,10 @@ import { callEmbedAtom } from '../../state/callEmbed';
 import { roomsInCallAtom } from '../call-indicator/RoomsInCallTracker';
 import { MemberGlance } from '../call-status/MemberGlance';
 import { tr } from '../translation/tr';
+import { GamesIcon } from '../games/GamesIcon';
+import { LiveTable, useLiveTables } from '../games/useLiveTables';
+import { gameName, phaseText } from '../games/table-games/text';
+import { getGamesPokerTablePath, getGamesTableGamePath } from '../../pages/pathUtils';
 import { CardList } from './CardList';
 import * as css from './homeOverview.css';
 
@@ -54,8 +59,68 @@ function CallRow({ room, here }: { room: Room; here: boolean }) {
   );
 }
 
-// Who's around right now: the calls in your rooms, so the home page answers "is anyone on?".
-// Joining is one click away on the room's own page; nothing here starts a call.
+const MAX_TABLES = 4;
+
+// A game table you're at, were invited to, or that people in your call or your friends are at
+// (useLiveTables, shared with the games hub). Strangers' tables stay in each game's lobby.
+function TableRow({ table }: { table: LiveTable }) {
+  const mx = useMatrixClient();
+  const navigate = useNavigate();
+  const nameOf = (id: string) => mx.getUser(id)?.displayName ?? id.replace(/^@|:.*$/g, '');
+  const open = () =>
+    navigate(
+      table.game === 'poker'
+        ? getGamesPokerTablePath(table.tableId)
+        : getGamesTableGamePath(table.game, table.tableId)
+    );
+  const why = {
+    seated: tr('home.table_yours', 'Your table'),
+    invited: tr('home.table_invited', 'Invited you'),
+    call: tr('home.table_call', 'In your call'),
+    friend: tr('home.table_friends', 'Friends'),
+  }[table.relevance];
+  const action = {
+    seated: tr('home.table_back', 'Go back'),
+    open: tr('home.table_join', 'Join'),
+    watch: tr('home.table_watch', 'Watch'),
+  }[table.role];
+  const detail = [
+    table.game === 'poker' ? 'Poker' : gameName(table.game),
+    why,
+    table.players.length ? table.players.map(nameOf).join(', ') : undefined,
+    table.seats ? `${table.players.length}/${table.seats}` : undefined,
+    table.phase ? phaseText(table.phase) : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <Box alignItems="Center" gap="300" className={css.LiveRow}>
+      <Icon src={GamesIcon} size="100" className={css.LiveIcon} />
+      <Box
+        as="button"
+        type="button"
+        onClick={open}
+        direction="Column"
+        grow="Yes"
+        className={css.LiveName}
+      >
+        <Text size="T300" truncate>
+          {table.name}
+        </Text>
+        <Text size="T200" priority="300" truncate>
+          {detail}
+        </Text>
+      </Box>
+      <button type="button" className={css.TableAction} onClick={open}>
+        {action}
+      </button>
+    </Box>
+  );
+}
+
+// Who's around right now: the calls in your rooms and the game tables that are about you, so
+// the home page answers "is anyone on?". Nothing here starts a call or takes a seat by itself.
 export function HappeningNow() {
   const mx = useMatrixClient();
   const inCall = useAtomValue(roomsInCallAtom);
@@ -64,18 +129,23 @@ export function HappeningNow() {
     .map((roomId) => mx.getRoom(roomId))
     .filter((room): room is Room => !!room)
     .sort((a, b) => Number(b.roomId === embed?.roomId) - Number(a.roomId === embed?.roomId));
+  const { tables } = useLiveTables();
+  const shownTables = tables.slice(0, MAX_TABLES);
 
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">{tr('home.happening_now', 'Happening now')}</Text>
-      {rooms.length === 0 ? (
+      {rooms.length === 0 && shownTables.length === 0 ? (
         <Text size="T300" priority="300" className={css.LiveEmpty}>
-          {tr('home.live_empty', 'Nobody is in a call right now.')}
+          {tr('home.live_empty_all', 'Nobody is in a call or at a table right now.')}
         </Text>
       ) : (
         <CardList>
           {rooms.map((room) => (
             <CallRow key={room.roomId} room={room} here={room.roomId === embed?.roomId} />
+          ))}
+          {shownTables.map((table) => (
+            <TableRow key={table.key} table={table} />
           ))}
         </CardList>
       )}

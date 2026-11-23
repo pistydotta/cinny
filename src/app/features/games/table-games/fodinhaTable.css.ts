@@ -1,4 +1,7 @@
 import { style } from '@vanilla-extract/css';
+import { game } from '../ui/gameTheme.css';
+import { gameButton } from '../ui/gameUi.css';
+import { forgeType } from '../../forge-theme/tokens';
 
 /*
  * The felt, seats, avatars and cards reuse the poker table's styles (`pokerTable.css`). These are
@@ -6,7 +9,8 @@ import { style } from '@vanilla-extract/css';
  * middle and the hand below the table.
  */
 
-const GOLD = '#f5c84b';
+// The turn, your own seat and a choice are ember (games kit); gold is for money only.
+const ACCENT = game.Accent;
 
 // Fits the stage in the window height, as the poker screen does, without scrolling past it.
 export const Wrap = style({
@@ -109,7 +113,7 @@ export const Vira = style({
 export const CenterTitle = style({
   fontSize: '2.1cqmin',
   fontWeight: 800,
-  color: GOLD,
+  color: game.Ink,
   selectors: {
     '[data-layout="portrait"] &': { fontSize: '3.2cqmin' },
   },
@@ -139,7 +143,7 @@ export const HandStatus = style({
   fontWeight: 600,
   textAlign: 'center',
   selectors: {
-    '&[data-mine="true"]': { color: GOLD },
+    '&[data-mine="true"]': { color: ACCENT },
   },
 });
 
@@ -165,7 +169,7 @@ export const HandCard = style({
   selectors: {
     '&:hover:not(:disabled)': { transform: 'translateY(-8px)' },
     '&:disabled': { cursor: 'default' },
-    '&:focus-visible': { outline: `3px solid ${GOLD}`, outlineOffset: 4 },
+    '&:focus-visible': { outline: `3px solid ${ACCENT}`, outlineOffset: 4 },
   },
 });
 
@@ -176,21 +180,10 @@ export const Predictions = style({
   gap: 8,
 });
 
-export const PredictButton = style({
-  minWidth: 48,
-  minHeight: 48,
-  borderRadius: 12,
-  border: `1px solid ${GOLD}aa`,
-  background: `${GOLD}1a`,
-  color: GOLD,
-  fontSize: 20,
-  fontWeight: 800,
-  cursor: 'pointer',
-  selectors: {
-    '&:hover:not(:disabled)': { background: `${GOLD}33` },
-    '&:disabled': { opacity: 0.4, cursor: 'default' },
-    '&:focus-visible': { outline: '3px solid #9bc6ff', outlineOffset: 3 },
-  },
-});
+// A bet: a square kit button with the number large.
+export const PredictButton = style([
+  gameButton({ variant: 'secondary', size: 'lg' }),
+  { minWidth: 48, padding: 0, ...forgeType.title },
+]);
 
-export const Hint = style({ fontSize: 13, color: '#bec9d8', textAlign: 'center' });
+export const Hint = style({ fontSize: 13, color: game.Muted, textAlign: 'center' });

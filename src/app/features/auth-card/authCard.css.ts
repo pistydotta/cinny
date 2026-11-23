@@ -1,6 +1,7 @@
 import { globalStyle, style } from '@vanilla-extract/css';
 import { DefaultReset, color, config, toRem } from 'folds';
 import { forgeColor } from '../forge-theme/forgeColor.css';
+import { forgeRadius } from '../forge-theme/tokens';
 
 // Hairlines take the card's text color at low strength, so they hold up in every theme.
 const line = (strength: number) =>
@@ -47,7 +48,7 @@ export const Chip = style({
   gap: toRem(6),
   alignSelf: 'center',
   padding: `${toRem(3)} ${toRem(10)}`,
-  borderRadius: toRem(999),
+  borderRadius: forgeRadius.control,
   border: `1px solid ${line(18)}`,
   background: 'transparent',
   color: line(70),
@@ -139,7 +140,7 @@ export const Passkey = style({
 
 export const Soon = style({
   padding: `${toRem(1)} ${toRem(7)}`,
-  borderRadius: toRem(999),
+  borderRadius: forgeRadius.control,
   background: line(10),
   fontSize: toRem(11),
 });

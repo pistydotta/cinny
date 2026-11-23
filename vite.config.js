@@ -48,6 +48,7 @@ const copyFiles = {
       { src: 'src/element-call/blazeroom-noise.js' },
       { src: 'src/element-call/micFilter.js' },
       { src: 'src/element-call/blazeroom-screenshare.js' },
+      { src: 'src/element-call/forgeCallTheme.js' },
       { src: 'src/element-call/shareState.js' },
       { src: 'src/element-call/voiceVolume.js' },
       { src: 'src/element-call/audioSettings.js' },

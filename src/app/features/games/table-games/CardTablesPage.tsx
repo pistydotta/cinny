@@ -21,6 +21,7 @@ import { botName, isBotId } from './tentosView';
 import { gameError, gameName, phaseText } from './text';
 import { GameTable, TableSummary } from './types';
 import * as css from './tentos.css';
+import { GameTopBar, GameWallet } from '../ui/GameTopBar';
 
 type CardKind = 'truco' | 'fodinha';
 const STAKES = [0, 50, 100, 500];
@@ -345,17 +346,18 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
 
   return (
     <main className={css.Lobby}>
+      <GameTopBar
+        title={gameName(kind)}
+        subtitle={tr('games.wallet.card_games', 'Card-game wallet')}
+        onBack={() => navigate(getGamesPath())}
+      >
+        <GameWallet value={balance === undefined ? '—' : formatChips(balance)} />
+        {/* Someone who lost everything can always get back in from here. */}
+        <TopUpButton atTables={atTables} topUp={topUp} className={css.Pill} />
+      </GameTopBar>
       <div className={css.LobbyInner}>
-        <header className={css.LobbyHead}>
-          <button
-            type="button"
-            className={css.Pill}
-            onClick={() => navigate(getGamesPath())}
-            aria-label={tr('games.action.back', 'Back')}
-          >
-            ←
-          </button>
-          <h1 className={`${css.LobbyTitle} ${css.Grow}`}>{gameName(kind)}</h1>
+        <div className={css.LobbyHead}>
+          <span className={css.Grow} />
           <button
             type="button"
             className={css.Pill}
@@ -364,16 +366,6 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
           >
             {creating ? tr('table_games.close', 'Close') : tr('table_games.new_table', 'New table')}
           </button>
-        </header>
-        {/* Someone who lost everything can always get back in from here. */}
-        <div className={css.LobbyHead}>
-          <span className={`${css.Grow} ${css.Muted}`}>
-            {tr('games.wallet.card_games', 'Card-game wallet')}:{' '}
-            {tr('games.wallet.coins', '{{coins}} coins', {
-              coins: balance === undefined ? '—' : formatChips(balance),
-            })}
-          </span>
-          <TopUpButton atTables={atTables} topUp={topUp} className={css.Pill} />
         </div>
         {errorBox}
         {creating && (

@@ -115,6 +115,13 @@ import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import {
+  findMemberRun,
+  memberRunKind,
+  memberRunName,
+  MemberRunItem,
+} from '../member-runs/memberRun';
+import { MemberRunLine } from '../member-runs/MemberRunLine';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
 import { useIsDirectRoom } from '../../hooks/useRoom';
@@ -538,6 +545,31 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [timeline, setTimeline] = useState<Timeline>(() =>
     eventId ? getEmptyTimeline() : getInitialTimeline(room)
   );
+
+  // blazeroom: joins and leaves in a row show as one line that opens (features/member-runs).
+  const [openMemberRuns, setOpenMemberRuns] = useState<Set<string>>(() => new Set());
+  const memberRunAt = (index: number): MemberRunItem | undefined => {
+    const [runTimeline, runBase] = getTimelineAndBaseIndex(timeline.linkedTimelines, index);
+    const ev =
+      runTimeline && getTimelineEvent(runTimeline, getTimelineRelativeIndex(index, runBase));
+    const evId = ev?.getId();
+    if (!ev || !evId || ev.getType() !== StateEvent.RoomMember) return undefined;
+    if (ev.isRedacted() || !isMembershipChanged(ev)) return undefined;
+    const sender = ev.getSender();
+    if (sender && ignoredUsersSet.has(sender)) return undefined;
+    const userId = ev.getStateKey() ?? '';
+    const content = ev.getContent();
+    const prev = ev.getPrevContent();
+    return {
+      id: evId,
+      day: new Date(ev.getTs()).toDateString(),
+      entry: {
+        kind: memberRunKind(content, prev, sender, userId),
+        userId,
+        name: memberRunName(content, prev, userId),
+      },
+    };
+  };
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked =
     timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
@@ -1305,6 +1337,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         if (!membershipChanged && hideNickAvatarEvents) return null;
 
         const highlighted = focusItem?.index === item && focusItem.highlight;
+        const memberRun = membershipChanged
+          ? findMemberRun(item, timeline.range.start, timeline.range.end, memberRunAt)
+          : undefined;
+        const runOpen = !!memberRun && openMemberRuns.has(memberRun.headId);
+        if (memberRun && !runOpen && !memberRun.isHead && !highlighted) return null;
         const parsed = parseMemberEvent(mEvent);
 
         const timeJSX = (
@@ -1316,7 +1353,32 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           />
         );
 
-        return (
+        if (memberRun?.isHead && !runOpen && !highlighted) {
+          return (
+            <Event
+              key={mEvent.getId()}
+              data-message-item={item}
+              data-message-id={mEventId}
+              room={room}
+              mEvent={mEvent}
+              highlight={false}
+              messageSpacing={messageSpacing}
+              canDelete={false}
+              hideReadReceipts={hideActivity}
+              showDeveloperTools={false}
+            >
+              <MemberRunLine
+                messageLayout={messageLayout}
+                time={timeJSX}
+                entries={memberRun.entries}
+                expanded={false}
+                onToggle={() => setOpenMemberRuns((open) => new Set(open).add(memberRun.headId))}
+              />
+            </Event>
+          );
+        }
+
+        const memberEventJSX = (
           <Event
             key={mEvent.getId()}
             data-message-item={item}
@@ -1342,6 +1404,27 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               }
             />
           </Event>
+        );
+        if (!memberRun?.isHead || !runOpen) return memberEventJSX;
+        return (
+          <React.Fragment key={mEvent.getId()}>
+            <MessageBase space={messageSpacing}>
+              <MemberRunLine
+                messageLayout={messageLayout}
+                time={null}
+                entries={memberRun.entries}
+                expanded
+                onToggle={() =>
+                  setOpenMemberRuns((open) => {
+                    const next = new Set(open);
+                    next.delete(memberRun.headId);
+                    return next;
+                  })
+                }
+              />
+            </MessageBase>
+            {memberEventJSX}
+          </React.Fragment>
         );
       },
       [StateEvent.RoomName]: (mEventId, mEvent, item) => {

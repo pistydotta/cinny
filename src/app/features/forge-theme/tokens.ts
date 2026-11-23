@@ -77,3 +77,7 @@ export const forgeShadowLight: typeof forgeShadowDark = {
 
 // A field's hairline or focus ring drawn inside its box, so it takes no layout space.
 export const forgeInset = (ink: string, width = 1) => `inset 0 0 0 ${width}px ${ink}`;
+
+// A role's colour at some strength over whatever is behind it: soft fills and rings.
+export const forgeTint = (ink: string, percent: number) =>
+  `color-mix(in srgb, ${ink} ${percent}%, transparent)`;

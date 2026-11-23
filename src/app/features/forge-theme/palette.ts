@@ -210,3 +210,26 @@ export const forgeExtraLight: typeof forgeExtraDark = {
   Ember: { Main: '#B84A30', OnMain: '#FFFFFF' },
   Text: { Secondary: '#5C636B', Faint: '#6B7178' },
 };
+
+// Where a game is played (the felt, the table, the bars around it): always dark, in both modes,
+// so cards and chips read the same for everyone. Lobbies and setup screens follow the theme
+// instead (games/ui/gameTheme.css.ts).
+export const forgeStage = {
+  Base: '#0B0D10',
+  Raised: '#171A1F',
+  RaisedHover: '#20242A',
+  Line: '#2A2E35',
+  Ink: '#ECEEF0',
+  Muted: '#9AA0A8',
+  Critical: '#E5534B',
+  // Poker's felt, where a lobby shows it.
+  Felt: '#14532D',
+};
+
+// Gold means money and nothing else: balances, chips, pots and prizes.
+export const forgeMoneyDark = { Main: '#E2B85A', Container: '#1A1508', OnMain: '#1A1508' };
+export const forgeMoneyLight: typeof forgeMoneyDark = {
+  Main: '#8A6410',
+  Container: '#FBF3DF',
+  OnMain: '#FFFFFF',
+};

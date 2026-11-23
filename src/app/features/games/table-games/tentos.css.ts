@@ -1,34 +1,41 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
+import { color } from 'folds';
+import { game, LobbyScope, StageScope } from '../ui/gameTheme.css';
+import { gameButton, TopBar } from '../ui/gameUi.css';
+import { forgeInset, forgeRadius, forgeTint, forgeType } from '../../forge-theme/tokens';
 
 /*
  * "Tentos": Truco and Fodinha drawn from above on graphite, with thin rings instead of felt.
- * Same palette as the poker bar: neutral outlined controls, one sober gold for the main
- * action, the turn and what just happened.
+ * The games kit's colours (games/ui): the table is the stage, the lobby follows the theme, ember
+ * marks the turn and what just happened, and the main action is wine. Truco's scene photo and
+ * the plaques drawn over it keep their own warm tones.
  */
-const GOLD = '#d8b872';
+const ACCENT = game.Accent;
 const TURN_GREEN = '#a7e593';
-const GOLD_TEXT = '#1a150b';
-const INK = '#ebe8e1';
-const MUTED = '#8f8d87';
-const LINE = '#2e3037';
-const SURFACE = '#141518';
-const RAISED = '#1b1c20';
-const SERIF = "'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif";
+const ON_ACCENT = game.OnAccent;
+const INK = game.Ink;
+const MUTED = game.Muted;
+const LINE = game.Line;
+const SURFACE = game.Bg;
+const RAISED = game.Raised;
 
-export const Screen = style({
-  position: 'relative',
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
-  background: SURFACE,
-  color: INK,
-  fontSize: 13,
-});
+export const Screen = style([
+  StageScope,
+  {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    background: SURFACE,
+    color: INK,
+    fontSize: 13,
+  },
+]);
 
 export const Stage = style({ position: 'relative', flex: 1, minHeight: 320 });
-/* The seats and the cards; on a phone it starts below the corners so the tentos stay clear. */
+/* The seats and the cards; on a phone it starts below the score so the tentos stay clear. */
 export const Felt = style({
   position: 'absolute',
   inset: 0,
@@ -54,44 +61,14 @@ export const Rings = style({
   },
 });
 
-export const Corner = style({
-  position: 'absolute',
-  top: 14,
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 8,
-  zIndex: 3,
-  selectors: {
-    '&[data-side="left"]': { left: 14 },
-    '&[data-side="right"]': { right: 14 },
-  },
-});
-export const TableName = style({ color: MUTED, fontSize: 12, marginTop: 6, maxWidth: 180 });
-
-export const TrucoTableName = style({
-  position: 'absolute',
-  top: 23,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  zIndex: 3,
-  maxWidth: 'min(280px, calc(100% - 310px))',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  fontSize: 12,
-  color: '#f3e4ca',
-  textShadow: '0 1px 3px #100a07, 0 0 8px #100a07',
-  '@media': { '(max-width: 470px)': { top: 55, maxWidth: 'calc(100% - 28px)' } },
-});
 export const TrucoScoreboard = style({
   position: 'absolute',
-  top: 57,
+  top: 14,
   left: 14,
   zIndex: 3,
   display: 'grid',
   justifyItems: 'start',
   gap: 6,
-  '@media': { '(max-width: 470px)': { top: 76 } },
 });
 
 export const TrucoOverlays = style({
@@ -148,8 +125,8 @@ export const TrucoCallDetail = style({ display: 'block', color: '#e5c9a6', fontS
 export const TrucoCallClock = style({
   padding: '2px 7px',
   borderRadius: 5,
-  background: GOLD,
-  color: GOLD_TEXT,
+  background: ACCENT,
+  color: ON_ACCENT,
   fontWeight: 650,
   fontVariantNumeric: 'tabular-nums',
   whiteSpace: 'nowrap',
@@ -159,7 +136,7 @@ export const TrucoCallTimer = style({
   borderRadius: 999,
   overflow: 'hidden',
   background: '#ffffff23',
-  color: GOLD,
+  color: ACCENT,
   selectors: { '&[data-urgent="true"]': { color: '#ff906d' } },
 });
 globalStyle(`${TrucoCallTimer} > div`, {
@@ -190,13 +167,13 @@ export const TrucoCallOption = style({
   font: 'inherit',
   cursor: 'pointer',
   selectors: {
-    '&:hover:not(:disabled)': { borderColor: GOLD },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
+    '&:hover:not(:disabled)': { borderColor: ACCENT },
+    '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: 2 },
     '&:disabled': { opacity: 0.6, cursor: 'default' },
     '&[aria-pressed="true"], &[data-confirm]': {
-      background: GOLD,
-      borderColor: GOLD,
-      color: GOLD_TEXT,
+      background: ACCENT,
+      borderColor: ACCENT,
+      color: ON_ACCENT,
       fontWeight: 650,
     },
     '&[data-confirm]': { flexBasis: '100%' },
@@ -284,7 +261,7 @@ export const TrucoAsk = style({
     '&:active:enabled': { transform: 'translateY(1px)' },
     '&:focus-visible': { outline: '2px solid #ffe3ac', outlineOffset: 3 },
     '&:disabled': { opacity: 0.6, cursor: 'default' },
-    '&[aria-pressed="true"]': { borderColor: GOLD, color: GOLD },
+    '&[aria-pressed="true"]': { borderColor: ACCENT, color: ACCENT },
   },
 });
 // Cover sits beside the call in the same shape, a shade darker so the call stays the one to look at.
@@ -337,48 +314,23 @@ globalStyle(`${RaiseCards} > span`, {
   borderRadius: 3,
   background: '#faedcc',
   color: '#39261a',
-  fontFamily: SERIF,
   fontSize: 9,
   transform: 'rotate(13deg)',
   boxShadow: '0 1px 3px #1a0e09aa',
 });
 
-export const Pill = style({
-  height: 34,
-  padding: '0 14px',
-  borderRadius: 999,
-  border: `1px solid #4b4b52`,
-  background: RAISED,
-  color: INK,
-  font: 'inherit',
-  fontSize: 13,
-  whiteSpace: 'nowrap',
-  cursor: 'pointer',
-  selectors: {
-    '&:hover:not(:disabled)': { borderColor: '#6a6a72' },
-    '&:disabled': { opacity: 0.4, cursor: 'default' },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
-    '&[data-primary="true"]': {
-      background: GOLD,
-      borderColor: GOLD,
-      color: GOLD_TEXT,
-      fontWeight: 600,
-    },
-    '&[aria-pressed="true"]': { borderColor: GOLD, color: GOLD },
-  },
-});
-
-export const TrucoBack = style([
-  Pill,
+// Every button on these screens: the kit's secondary, or wine when it's the main action.
+export const Pill = style([
+  gameButton({ variant: 'secondary', size: 'sm' }),
   {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 7,
-    paddingInline: 11,
-    background: '#20160feb',
-    borderColor: '#916d4b',
-    color: '#fff1db',
-    selectors: { '&:hover:enabled': { background: '#38251a', borderColor: GOLD } },
+    selectors: {
+      '&[data-primary="true"]': {
+        backgroundColor: color.Primary.Main,
+        color: color.Primary.OnMain,
+        boxShadow: 'none',
+      },
+      '&[data-primary="true"]:hover:not(:disabled)': { backgroundColor: color.Primary.MainHover },
+    },
   },
 ]);
 
@@ -400,15 +352,14 @@ export const ScoreRow = style({
   columnGap: 11,
   minHeight: 24,
 });
-export const ScoreTeam = style({ fontFamily: SERIF, fontSize: 15, color: '#e8dcc4' });
+export const ScoreTeam = style({ fontSize: 15, color: '#e8dcc4' });
 export const ScoreNum = style({
-  fontFamily: SERIF,
   fontSize: 23,
   fontWeight: 600,
   lineHeight: 1,
   textAlign: 'center',
   color: '#c9b48e',
-  selectors: { '&[data-ours="true"]': { color: GOLD } },
+  selectors: { '&[data-ours="true"]': { color: ACCENT } },
 });
 export const Riscos = style({
   display: 'inline-flex',
@@ -471,7 +422,7 @@ export const Risco = style({
   background: '#b7ad99',
   transform: 'rotate(-16deg)',
 });
-globalStyle(`${RiscoGroup}[data-ours="true"] ${Risco}`, { background: GOLD });
+globalStyle(`${RiscoGroup}[data-ours="true"] ${Risco}`, { background: ACCENT });
 globalStyle(`${RiscoGroup}[data-five="true"]::after`, {
   content: '""',
   position: 'absolute',
@@ -483,7 +434,7 @@ globalStyle(`${RiscoGroup}[data-five="true"]::after`, {
   background: '#b7ad99',
   transform: 'rotate(-28deg)',
 });
-globalStyle(`${RiscoGroup}[data-five="true"][data-ours="true"]::after`, { background: GOLD });
+globalStyle(`${RiscoGroup}[data-five="true"][data-ours="true"]::after`, { background: ACCENT });
 
 export const Center = style({
   position: 'absolute',
@@ -498,7 +449,7 @@ export const Center = style({
   zIndex: 1,
   maxWidth: 220,
 });
-export const CenterTitle = style({ fontFamily: SERIF, fontSize: 15, color: GOLD });
+export const CenterTitle = style({ fontSize: 15, color: ACCENT });
 export const CenterLine = style({ color: MUTED, fontSize: 12 });
 export const MatchResult = style({
   position: 'absolute',
@@ -606,9 +557,8 @@ export const Callout = style({
   marginTop: 4,
   padding: '4px 12px',
   borderRadius: 999,
-  border: `1px solid ${GOLD}`,
-  color: GOLD,
-  fontFamily: SERIF,
+  border: `1px solid ${ACCENT}`,
+  color: ACCENT,
   fontSize: 14,
   selectors: { '&[data-quiet="true"]': { borderColor: LINE, color: INK, fontSize: 13 } },
 });
@@ -622,7 +572,7 @@ export const Mark = style({
   color: MUTED,
   fontSize: 11,
   selectors: {
-    '&[data-mark="us"]': { background: GOLD, borderColor: GOLD, color: GOLD_TEXT },
+    '&[data-mark="us"]': { background: ACCENT, borderColor: ACCENT, color: ON_ACCENT },
     '&[data-mark="them"]': { background: '#6b3a35', borderColor: '#6b3a35', color: INK },
     '&[data-mark="tie"]': { borderColor: MUTED, color: INK },
   },
@@ -631,7 +581,7 @@ export const Mark = style({
 // The card itself is games/cards; a Truco card that won its trick gets a gold ring.
 export const Card = style({
   selectors: {
-    '&[data-win="true"]': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
+    '&[data-win="true"]': { outline: `2px solid ${ACCENT}`, outlineOffset: 2 },
   },
 });
 
@@ -715,9 +665,9 @@ export const TrickNotice = style({
 });
 globalStyle(`${TrickNotice} > ${Card}`, {
   transform: 'rotate(-6deg)',
-  filter: `drop-shadow(0 0 6px ${GOLD}aa)`,
+  filter: `drop-shadow(0 0 6px ${ACCENT}aa)`,
 });
-export const TrickNoticeTitle = style({ color: GOLD, fontSize: 12, fontWeight: 650 });
+export const TrickNoticeTitle = style({ color: ACCENT, fontSize: 12, fontWeight: 650 });
 export const TrickNoticeDetail = style({ color: '#d8c8b5', fontSize: 11 });
 
 export const Placed = style({
@@ -747,8 +697,8 @@ export const PlacedName = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   selectors: {
-    '&[data-latest="true"]': { borderColor: GOLD },
-    '&[data-win="true"]': { background: GOLD, borderColor: GOLD, color: GOLD_TEXT },
+    '&[data-latest="true"]': { borderColor: ACCENT },
+    '&[data-win="true"]': { background: ACCENT, borderColor: ACCENT, color: ON_ACCENT },
   },
 });
 
@@ -769,18 +719,18 @@ export const Avatar = style({
   width: 42,
   height: 42,
   borderRadius: '50%',
-  background: '#2a2b30',
-  border: `1.5px solid #3c3d43`,
+  background: RAISED,
+  border: `1.5px solid ${LINE}`,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  color: '#cfc8b8',
+  color: INK,
   fontSize: 13,
   selectors: {
-    '&[data-turn="true"]': { borderColor: GOLD },
+    '&[data-turn="true"]': { borderColor: ACCENT },
     '&[data-empty="true"]': {
       borderStyle: 'dashed',
-      borderColor: '#55555c',
+      borderColor: MUTED,
       background: 'transparent',
     },
   },
@@ -805,7 +755,7 @@ export const Ring = style({
 });
 export const RingFill = style({
   fill: 'none',
-  stroke: GOLD,
+  stroke: ACCENT,
   strokeWidth: 3,
   strokeLinecap: 'round',
   strokeDasharray: 'var(--ring-length)',
@@ -822,14 +772,14 @@ export const SeatName = style({
 export const SeatSub = style({
   color: MUTED,
   fontSize: 11,
-  selectors: { '&[data-tone="gold"]': { color: GOLD } },
+  selectors: { '&[data-tone="gold"]': { color: ACCENT } },
 });
 export const Lives = style({ display: 'flex', gap: 3 });
 export const Life = style({
   width: 3,
   height: 12,
   borderRadius: 1,
-  background: GOLD,
+  background: ACCENT,
   selectors: { '&[data-lost="true"]': { background: '#3a3b41' } },
 });
 export const SeatCards = style({ display: 'flex', gap: 2, vars: { '--card-w': '24px' } });
@@ -859,13 +809,13 @@ export const Bar = style({
   gap: 10,
   padding: '12px 18px 16px',
   borderTop: `1px solid ${LINE}`,
-  background: '#0f1013',
+  background: SURFACE,
   '@media': { 'screen and (max-width: 640px)': { padding: '10px 12px 12px' } },
 });
 export const Status = style({
   color: MUTED,
   minHeight: 18,
-  selectors: { '&[data-mine="true"]': { color: GOLD } },
+  selectors: { '&[data-mine="true"]': { color: ACCENT } },
 });
 export const BarRow = style({
   display: 'flex',
@@ -904,7 +854,7 @@ export const HandButton = style({
   selectors: {
     '&:hover:not(:disabled)': { transform: 'translateY(-6px)' },
     '&:disabled': { cursor: 'default' },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 3 },
+    '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: 3 },
   },
 });
 export const Actions = style({ display: 'flex', gap: 8, flexWrap: 'wrap', marginLeft: 'auto' });
@@ -937,7 +887,7 @@ export const Scrim = style({
   position: 'absolute',
   inset: 0,
   zIndex: 10,
-  background: '#0b0c0ecc',
+  background: color.Other.Overlay,
   display: 'flex',
   justifyContent: 'flex-end',
 });
@@ -956,7 +906,7 @@ export const Sheet = style({
   gap: 14,
 });
 export const SheetHead = style({ display: 'flex', alignItems: 'flex-start', gap: 8 });
-export const SheetTitle = style({ fontFamily: SERIF, fontSize: 19, margin: 0, fontWeight: 500 });
+export const SheetTitle = style({ ...forgeType.title, margin: 0 });
 export const SectionLabel = style({ color: MUTED, fontSize: 12, margin: '4px 0 0' });
 export const SeatRow = style({
   display: 'flex',
@@ -965,21 +915,20 @@ export const SeatRow = style({
   minHeight: 38,
   padding: '4px 8px',
   borderRadius: 8,
-  selectors: { '&[data-empty="true"]': { border: `1px dashed #3d3e45` } },
+  selectors: { '&[data-empty="true"]': { border: `1px dashed ${LINE}` } },
 });
 export const SmallAvatar = style([Avatar, { width: 28, height: 28, fontSize: 11 }]);
 export const Grow = style({ flex: 1, minWidth: 0 });
 export const Muted = style({ color: MUTED, fontSize: 12, lineHeight: 1.5 });
-export const ErrorText = style({ color: '#e7a69c', fontSize: 12 });
+export const ErrorText = style({ color: game.Critical, fontSize: 12 });
 
 /* Lobby. */
-export const Lobby = style({
-  width: '100%',
-  height: '100%',
-  overflowY: 'auto',
-  background: SURFACE,
-  color: INK,
-});
+export const Lobby = style([
+  LobbyScope,
+  { width: '100%', height: '100%', overflowY: 'auto', background: SURFACE, color: INK },
+]);
+// The kit's top bar stays put while the lobby scrolls under it.
+globalStyle(`${Lobby} > ${TopBar}`, { position: 'sticky', top: 0, zIndex: 1 });
 export const LobbyInner = style({
   maxWidth: 760,
   margin: '0 auto',
@@ -989,12 +938,12 @@ export const LobbyInner = style({
   gap: 18,
 });
 export const LobbyHead = style({ display: 'flex', alignItems: 'center', gap: 12 });
-export const LobbyTitle = style({ fontFamily: SERIF, fontSize: 26, fontWeight: 500, margin: 0 });
 export const List = style({
   display: 'flex',
   flexDirection: 'column',
   border: `1px solid ${LINE}`,
-  borderRadius: 12,
+  borderRadius: forgeRadius.card,
+  background: RAISED,
   overflow: 'hidden',
 });
 export const ListRow = style({
@@ -1011,28 +960,30 @@ export const ListRow = style({
   cursor: 'pointer',
   selectors: {
     '&:first-child': { borderTop: 'none' },
-    '&:hover': { background: RAISED },
-    '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: -2 },
+    '&:hover': { background: game.RaisedHover },
+    '&:focus-visible': { outline: `2px solid ${ACCENT}`, outlineOffset: -2 },
   },
 });
 export const Tag = style({
   padding: '2px 8px',
   borderRadius: 999,
-  border: `1px solid ${GOLD}`,
-  color: GOLD,
+  border: `1px solid ${ACCENT}`,
+  color: ACCENT,
   fontSize: 11,
 });
 export const Form = style({ display: 'flex', flexDirection: 'column', gap: 12 });
 export const Field = style({ display: 'flex', flexDirection: 'column', gap: 6, color: MUTED });
 export const Input = style({
-  height: 38,
+  height: 40,
   padding: '0 12px',
-  borderRadius: 8,
-  border: `1px solid #3d3e45`,
+  borderRadius: forgeRadius.control,
+  border: 0,
   background: SURFACE,
+  boxShadow: forgeInset(LINE),
   color: INK,
   font: 'inherit',
-  selectors: { '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 1 } },
+  outline: 'none',
+  selectors: { '&:focus': { boxShadow: forgeInset(ACCENT, 2) } },
 });
 export const Choices = style({ display: 'flex', gap: 6, flexWrap: 'wrap' });
 
@@ -1043,7 +994,8 @@ globalStyle(`${Sheet} details summary`, { cursor: 'pointer', color: MUTED });
  * lie on the plastic table.
  */
 const SCENE = `${Felt}[data-scene="true"]`;
-const SHADE = '#120a06d9';
+// Seat labels sit on a raised-graphite plate so they read on the busy photo.
+const PLATE = forgeTint(RAISED, 80);
 export const Scene = style({
   position: 'absolute',
   maxWidth: 'none',
@@ -1148,13 +1100,21 @@ globalStyle(`${SCENE} ${Avatar}`, {
   width: 54,
   height: 54,
   borderWidth: 3,
-  borderColor: GOLD,
+  // A quiet ring; ember only marks whose turn it is (below), so it means one thing.
+  borderColor: forgeTint(INK, 35),
   background: 'radial-gradient(circle at 50% 32%, #34352f, #191a17)',
-  fontFamily: SERIF,
   fontSize: 17,
   fontWeight: 600,
   color: '#ecd9ac',
   boxShadow: '0 6px 15px #000c, inset 0 0 0 1px #00000055',
+});
+globalStyle(`${SCENE} ${Avatar}[data-turn="true"]`, { borderColor: ACCENT });
+globalStyle(`${SCENE} ${Avatar}[data-empty="true"]`, {
+  borderWidth: 2,
+  borderStyle: 'dashed',
+  borderColor: MUTED,
+  background: forgeTint(SURFACE, 80),
+  boxShadow: 'none',
 });
 globalStyle(`${SCENE} ${Avatar}[data-timed="true"]`, { borderColor: 'transparent' });
 globalStyle(`${SCENE} ${Avatar}[data-play-turn="true"][data-timed="false"]`, {
@@ -1177,18 +1137,12 @@ globalStyle(`${SCENE} ${Ring}`, {
   height: 60,
   transform: 'translate(-50%, -50%) rotate(-90deg)',
 });
-globalStyle(`${SCENE} ${SeatName}, ${SCENE} ${SeatSub}`, {
-  padding: '1px 9px',
-  borderRadius: 999,
-  background: SHADE,
+globalStyle(`${SCENE} ${SeatName}, ${SCENE} ${SeatSub}, ${SCENE} ${Pips}`, {
+  borderRadius: forgeRadius.control,
+  background: PLATE,
+  boxShadow: forgeInset(LINE),
 });
-globalStyle(`${SCENE} ${SeatName}`, {
-  fontFamily: SERIF,
-  fontSize: 14,
-  color: '#f0e6d2',
-  border: '1px solid #00000066',
-});
-globalStyle(`${SCENE} ${Pips}`, { padding: '3px 7px', borderRadius: 999, background: SHADE });
-globalStyle(`${Stage}:has(${SCENE}) ${Corner}[data-side="right"] > ${Pill}`, {
-  background: SHADE,
-});
+globalStyle(`${SCENE} ${SeatName}`, { padding: '1px 8px', ...forgeType.bodySm, color: INK });
+globalStyle(`${SCENE} ${SeatSub}`, { padding: '0 6px', ...forgeType.caption, color: MUTED });
+globalStyle(`${SCENE} ${SeatSub}[data-tone="gold"]`, { color: ACCENT });
+globalStyle(`${SCENE} ${Pips}`, { padding: '3px 7px' });

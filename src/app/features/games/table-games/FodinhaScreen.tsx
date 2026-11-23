@@ -4,6 +4,7 @@ import { FodinhaTable } from './FodinhaTable';
 import { phaseText, rulesText } from './text';
 import { GameTable } from './types';
 import * as css from './tableGames.css';
+import { GameTopBar } from '../ui/GameTopBar';
 
 export type FodinhaScreenProps = {
   table: GameTable;
@@ -42,17 +43,13 @@ export function FodinhaScreen({
   const open = table.capacity - table.players.length;
 
   return (
-    <main className={css.Page}>
+    <main className={css.StagePage}>
+      <GameTopBar title={table.name} subtitle="Fodinha" onBack={onBack}>
+        <button type="button" className={css.Button} onClick={onSwitchTable}>
+          {tr('games.switch.title', 'Switch table')}
+        </button>
+      </GameTopBar>
       <div className={css.Inner}>
-        <header className={css.Row}>
-          <button type="button" className={css.Button} onClick={onBack}>
-            {tr('games.action.back', 'Back')}
-          </button>
-          <h1 style={{ flex: 1 }}>{table.name}</h1>
-          <button type="button" className={css.Button} onClick={onSwitchTable}>
-            {tr('games.switch.title', 'Switch table')}
-          </button>
-        </header>
         {error && (
           <p role="alert" className={css.Error}>
             {error}

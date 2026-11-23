@@ -1,6 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { color } from 'folds';
 import { forgeColor } from '../forge-theme/forgeColor.css';
+import { forgeRadius } from '../forge-theme/tokens';
 
 // Slider fill, thumb and focus ring: ember reads on the dark panel, the wine doesn't.
 const ember = forgeColor.Ember.Main;
@@ -47,7 +48,7 @@ export const Slider = style({
   selectors: {
     '&::-webkit-slider-runnable-track': {
       height: 4,
-      borderRadius: 999,
+      borderRadius: forgeRadius.pill,
       background: `linear-gradient(to right, ${ember} var(--voice-volume, 100%), ${color.Surface.ContainerLine} var(--voice-volume, 100%))`,
     },
     '&::-webkit-slider-thumb': {
@@ -63,10 +64,10 @@ export const Slider = style({
     },
     '&::-moz-range-track': {
       height: 4,
-      borderRadius: 999,
+      borderRadius: forgeRadius.pill,
       background: color.Surface.ContainerLine,
     },
-    '&::-moz-range-progress': { height: 4, borderRadius: 999, background: ember },
+    '&::-moz-range-progress': { height: 4, borderRadius: forgeRadius.pill, background: ember },
     '&::-moz-range-thumb': {
       width: 10,
       height: 10,

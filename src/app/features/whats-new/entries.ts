@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-forge-games-calls',
+    items: () => [
+      {
+        title: tr('whats_new.forge_games_title', 'A new look for the games, calls and home page'),
+        body: tr(
+          'whats_new.forge_games_body',
+          'Poker, Truco, Fodinha and chess share one look: the same top bar and buttons, gold only for coins and chips, and their lobbies follow the light or dark mode. The call screen asks before joining and keeps one control bar while you are in it, and its camera tiles match the app. The Overview shows who is in a call right now, and on phones the encryption banner and the music card take less room.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-clock24-translations',
     items: () => [
       {

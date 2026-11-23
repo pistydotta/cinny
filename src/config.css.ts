@@ -25,7 +25,9 @@ export const onDarkFontWeight = createTheme(config.fontWeight, {
   W900: '900',
 });
 
-// Forge is square-shouldered: one small radius everywhere, avatars stay round.
+// Forge is square-shouldered: one small radius everywhere, avatars stay round. folds' `Pill` stays
+// 4px on purpose: upstream puts it on ~80 chips and buttons that Forge draws square. A real pill
+// (the live pill, counts, the wallet, a switch or slider track) takes forgeRadius.pill instead.
 export const forgeRadii = createTheme(config.radii, {
   R0: '0',
   R300: '4px',

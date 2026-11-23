@@ -1,6 +1,7 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Badge, toRem, Text } from 'folds';
 import { millify } from '../../plugins/millify';
+import { forgeRadius } from '../../features/forge-theme/tokens';
 
 type UnreadBadgeProps = {
   highlight?: boolean;
@@ -24,6 +25,8 @@ export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
       size={count > 0 ? '400' : '200'}
       fill="Solid"
       radii="Pill"
+      // blazeroom: a count is one of the few true pills; folds' Pill is Forge's square 4px.
+      style={{ borderRadius: forgeRadius.pill }}
       outlined={false}
     >
       {count > 0 && (
