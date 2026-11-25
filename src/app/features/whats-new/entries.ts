@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-football',
+    items: () => [
+      {
+        title: tr('whats_new.football_title', 'Football in the Games tab'),
+        body: tr(
+          'whats_new.football_body',
+          'A 3D football match with the 2026 Brasileirão clubs and national teams. Play against the CPU on three levels, with a friend on the same computer, or online: create a match, send the link, and anyone can watch from the stands and send cheers.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-forge-games-calls',
     items: () => [
       {

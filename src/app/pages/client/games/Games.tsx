@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import {
   GamesHub,
@@ -10,6 +10,7 @@ import {
 } from '../../../features/games';
 import { IdleGame } from '../../../features/games/idle';
 import { HordeGame } from '../../../features/games/horde';
+import { FootballGame } from '../../../features/games/football';
 import { callEmbedAtom } from '../../../state/callEmbed';
 import { createPokerApi } from '../../../features/games/poker/api';
 import { errorText } from '../../../features/games/poker/errorText';
@@ -21,6 +22,8 @@ import {
   getGamesPath,
   getGamesIdlePath,
   getGamesHordePath,
+  getGamesFootballPath,
+  getGamesFootballMatchPath,
   getGamesTableGamePath,
   getGamesPokerPath,
   getGamesPokerPracticePath,
@@ -39,6 +42,7 @@ export function GamesHubPage() {
       onOpenPoker={() => navigate(getGamesPokerPath())}
       onOpenIdle={() => navigate(getGamesIdlePath())}
       onOpenHorde={() => navigate(getGamesHordePath())}
+      onOpenFootball={() => navigate(getGamesFootballPath())}
       onOpenTableGame={(kind) => navigate(getGamesTableGamePath(kind))}
       onBack={screenSize === ScreenSize.Mobile ? () => navigate(getHomePath()) : undefined}
     />
@@ -75,6 +79,34 @@ export function HordeGamePage() {
       nameOf={nameOf}
       onBack={() => navigate(getGamesPath())}
       inCall={inCall}
+    />
+  );
+}
+
+export function FootballGamePage() {
+  const mx = useMatrixClient();
+  const navigate = useNavigate();
+  const { matchId } = useParams();
+  const [search] = useSearchParams();
+  const as = search.get('as');
+  const getToken = useCallback(() => mx.getAccessToken(), [mx]);
+  const nameOf = useCallback(
+    (userId: string) => mx.getUser(userId)?.displayName ?? userId.replace(/^@|:.*$/g, ''),
+    [mx]
+  );
+  // In a call the stadium plays quietly, under the voices.
+  const inCall = useAtomValue(callEmbedAtom) !== undefined;
+  return (
+    <FootballGame
+      onBack={() => navigate(getGamesPath())}
+      inCall={inCall}
+      userId={mx.getUserId() ?? ''}
+      getToken={getToken}
+      nameOf={nameOf}
+      matchId={matchId ? decodeURIComponent(matchId) : undefined}
+      matchRole={as === 'play' || as === 'watch' ? as : undefined}
+      onOpenMatch={(id, role) => navigate(`${getGamesFootballMatchPath(id)}?as=${role}`)}
+      onCloseMatch={() => navigate(getGamesFootballPath())}
     />
   );
 }

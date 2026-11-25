@@ -122,7 +122,8 @@ export default defineConfig({
     port: 8080,
     host: true,
     proxy: {
-      '/api': { target: 'http://127.0.0.1:3000', changeOrigin: true },
+      // ws: online football's WebSocket goes through the same proxy.
+      '/api': { target: 'http://127.0.0.1:3000', changeOrigin: true, ws: true },
     },
     fs: {
       // Do not expose the private monorepo's parent directory to the dev server.

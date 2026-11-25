@@ -42,6 +42,8 @@ import {
   GAMES_POKER_TABLE_PATH,
   GAMES_IDLE_PATH,
   GAMES_HORDE_PATH,
+  GAMES_FOOTBALL_PATH,
+  GAMES_FOOTBALL_MATCH_PATH,
   GAMES_TRUCO_PATH,
   GAMES_FODINHA_PATH,
   GAMES_CHESS_PATH,
@@ -92,6 +94,7 @@ import {
   GamesHubPage,
   IdleGamePage,
   HordeGamePage,
+  FootballGamePage,
   PokerJoinPage,
   PokerLobbyPage,
   PokerPracticePage,
@@ -327,6 +330,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route path={GAMES_POKER_JOIN_PATH} element={<PokerJoinPage />} />
         <Route path={GAMES_IDLE_PATH} element={<IdleGamePage />} />
         <Route path={GAMES_HORDE_PATH} element={<HordeGamePage />} />
+        <Route path={GAMES_FOOTBALL_PATH} element={<FootballGamePage />} />
+        <Route path={GAMES_FOOTBALL_MATCH_PATH} element={<FootballGamePage />} />
         <Route path={GAMES_TRUCO_PATH} element={<TableGamesPage key="truco" kind="truco" />} />
         <Route
           path={`${GAMES_TRUCO_PATH}table/:tableId/`}

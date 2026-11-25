@@ -149,6 +149,23 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   whether Lula and Bolsonaro need help against bosses (the abilities may already be enough);
   whether a room should hear about a new group record (plan 7.7) and what gold buys once
   everything is maxed (cosmetics, plan 7.5).
+- `games/football` (Futebol, `../docs/football.md`): `engine/` is deterministic like horde's
+  (`step(match, [input0, input1])` at 60 ticks, rng in the state, `dmath` for trigonometry,
+  inputs as whole numbers) and a `structuredClone` of a match must step on identically, since
+  online play will roll back. `render/` is the only part importing three.js, loaded with
+  `import()`. The mannequin is Quaternius' CC0 UAL2 cut down to a few clips (how, in the doc);
+  `render/rig.ts` makes idle, run and kick from bone rotations in model axes, and
+  `render/kit.ts` paints the kit from rest-pose height, so the model's positions must stay
+  unquantized. The TV camera never turns: screen right is +x, up is -z. Teams in
+  `engine/teams.ts` are names and colours only, never crests or real player names.
+  Keys (`controls.ts`, three sets, by `KeyboardEvent.code`) and graphics (`options.ts`) are
+  options per browser; the runner leaves keys typed into fields alone. The API runs online
+  matches with the engine bundled into `api/src/football/engine.gen.js`: after any change in
+  `engine/`, run `node scripts/build-football-engine.mjs` and commit it (`bundle.test.ts`).
+  The runner steps a `MatchSource` (`source.ts`): local, online with rollback (`online/netplay.ts`)
+  or watched (`online/spectate.ts`); `useMatchCanvas` mounts any of them and `MatchHud` draws the
+  scoreboard for all. Online screens are `OnlineLobby` and `OnlineMatch`, at
+  `/games/football/match/<id>/` (the link people share).
 - `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
   free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but

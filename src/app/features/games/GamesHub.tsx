@@ -26,6 +26,7 @@ type GamesHubProps = {
   onOpenPoker: () => void;
   onOpenIdle: () => void;
   onOpenHorde: () => void;
+  onOpenFootball: () => void;
   onOpenTableGame: (kind: GameKind) => void;
   onBack?: () => void;
 };
@@ -34,6 +35,7 @@ export function GamesHub({
   onOpenPoker,
   onOpenIdle,
   onOpenHorde,
+  onOpenFootball,
   onOpenTableGame,
   onBack,
 }: GamesHubProps) {
@@ -177,6 +179,35 @@ export function GamesHub({
             </p>
           </div>
           <div className={css.Grid}>
+            <div className={css.GameCard} data-playable="true">
+              <div className={css.IdleArt}>
+                {['🥅', '⚽', '🏆', '👟', '🧤'].map((icon, i) => (
+                  <span
+                    key={icon}
+                    className={css.IdleArtIcon}
+                    style={{ transform: `translateY(${Math.abs(i - 2) * 8}px)` }}
+                  >
+                    {icon}
+                  </span>
+                ))}
+              </div>
+              <div className={css.CardBody}>
+                <span className={css.GameGenre}>
+                  {tr('games.hub.football_genre', 'Sports · Football')}
+                </span>
+                <span className={css.GameName}>{tr('football.title', 'Football')}</span>
+                <span className={css.GameMeta}>
+                  {tr(
+                    'games.hub.football_meta',
+                    '3D · Brasileirão clubs and national teams, against the CPU or a friend'
+                  )}
+                </span>
+                <button type="button" className={css.PlayButton} onClick={onOpenFootball}>
+                  {tr('games.hub.play', 'Play')}
+                </button>
+              </div>
+            </div>
+
             <div className={css.GameCard} data-playable="true">
               <img className={css.GameArtwork} src={hordeArt} alt="" loading="lazy" />
               <div className={css.CardBody}>
