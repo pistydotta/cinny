@@ -8,10 +8,15 @@ import * as css from './callAudio.css';
 export function CallAudioSettings() {
   return (
     <div className={css.Panel}>
-      <Text size="L400">{tr('call_audio.input', 'Microphone')}</Text>
-      <InputSettings withNoise />
-      <Text size="L400">{tr('call_audio.output', 'Sound')}</Text>
-      <OutputSettings />
+      <section className={css.Group}>
+        <Text size="H6">{tr('call_audio.input', 'Microphone')}</Text>
+        <InputSettings withNoise />
+      </section>
+      <div className={css.Divider} />
+      <section className={css.Group}>
+        <Text size="H6">{tr('call_audio.output', 'Sound')}</Text>
+        <OutputSettings />
+      </section>
       <Text size="T200" priority="300">
         {tr(
           'call_audio.saved_here',

@@ -100,6 +100,7 @@ export type AudioDevices = {
   // Without mic permission browsers hide device names.
   named: boolean;
   askPermission: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 export const useAudioDevices = (): AudioDevices => {
@@ -133,5 +134,6 @@ export const useAudioDevices = (): AudioDevices => {
     outputs: devices.filter((d) => d.kind === 'audiooutput' && !isAlias(d)),
     named: devices.some((d) => d.label !== ''),
     askPermission,
+    refresh,
   };
 };

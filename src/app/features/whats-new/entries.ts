@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-audio-test',
+    items: () => [
+      {
+        title: tr('whats_new.audio_test_title', 'Test your microphone and sound'),
+        body: tr(
+          'whats_new.audio_test_body',
+          'The arrow beside the mic and headphone buttons now lists every device: one click picks it. "Test mic" plays your voice back with a level meter, and "Play test sound" checks your speaker. Both are also in Settings > Voice & video.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-football',
     items: () => [
       {
