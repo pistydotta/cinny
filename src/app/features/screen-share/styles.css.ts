@@ -701,6 +701,18 @@ export const LiveLeave = style({
   },
 });
 
+// Bare hang-up beside "Stop watching": still red, but no word to mistake for the share's.
+export const LiveLeaveIcon = style({
+  marginLeft: config.space.S100,
+});
+
+// Eye and a short "Stop", in the row's own bare style: easy to read without a box of its own.
+export const LiveStop = style({
+  paddingLeft: config.space.S200,
+  paddingRight: config.space.S300,
+  gap: config.space.S100,
+});
+
 export const LiveSound = style({
   gridColumn: 3,
   justifySelf: 'end',

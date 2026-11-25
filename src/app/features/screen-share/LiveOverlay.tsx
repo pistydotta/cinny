@@ -344,6 +344,7 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
           fullscreen={fullscreen}
           below={below}
           asleep={!awake && below === null}
+          onStopWatching={() => watched.forEach((share) => store.unwatch(share.id))}
         >
           <div className={css.LiveSound}>
             {watched

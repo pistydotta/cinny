@@ -25,6 +25,9 @@ type LiveCallButtonsProps = {
   asleep?: boolean;
   // The watched share's own sound, kept at the right end of the row.
   children?: ReactNode;
+  // Closes the watched share from the row, and leaving the call shrinks to the bare hang-up
+  // icon: a red "Leave" under a share read as closing the share.
+  onStopWatching?: () => void;
 };
 
 // The call's own buttons while a share is watched: bare icons centred on the share's bottom edge,
@@ -37,6 +40,7 @@ export function LiveCallButtons({
   docked,
   asleep,
   children,
+  onStopWatching,
 }: LiveCallButtonsProps) {
   const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
   const [chat, setChat] = useAtom(callChatAtom);
@@ -53,7 +57,8 @@ export function LiveCallButtons({
     hangupState.status === AsyncStatus.Loading || hangupState.status === AsyncStatus.Success;
 
   const menus = !fullscreen && width >= 520;
-  const leaveLabel = width >= 400;
+  const leaveText = tr('screen_share.leave_call', 'Leave call');
+  const stopText = tr('screen_share.stop_watching', 'Stop watching');
 
   return (
     <div
@@ -152,25 +157,60 @@ export function LiveCallButtons({
             </TipIconButton>
           )}
         </div>
-        <Button
-          className={css.LiveLeave}
-          variant="Critical"
-          fill="Solid"
-          size="400"
-          radii="300"
-          onClick={hangup}
-          disabled={exiting}
-          aria-label={tr('screen_share.leave_call', 'Leave call')}
-          before={
-            exiting ? (
+        {onStopWatching && width >= 440 && <span className={css.LiveCallDivider} />}
+        {onStopWatching && (
+          <Button
+            className={classNames(css.LiveChipButton, css.LiveStop)}
+            variant="Secondary"
+            fill="None"
+            size="400"
+            radii="300"
+            onClick={onStopWatching}
+            aria-label={stopText}
+            title={stopText}
+            before={<Icon size="400" src={Icons.EyeBlind} />}
+          >
+            <Text size="B400">{tr('screen_share.stop', 'Stop')}</Text>
+          </Button>
+        )}
+        {onStopWatching ? (
+          <TipIconButton
+            label={leaveText}
+            className={classNames(css.LiveLeave, css.LiveLeaveIcon)}
+            variant="Critical"
+            fill="Solid"
+            size="400"
+            radii="300"
+            onClick={hangup}
+            disabled={exiting}
+          >
+            {exiting ? (
               <Spinner variant="Critical" fill="Solid" size="200" />
             ) : (
               <Icon src={Icons.PhoneDown} size="200" filled />
-            )
-          }
-        >
-          {leaveLabel && <Text size="B400">{tr('screen_share.leave', 'Leave')}</Text>}
-        </Button>
+            )}
+          </TipIconButton>
+        ) : (
+          <Button
+            className={css.LiveLeave}
+            variant="Critical"
+            fill="Solid"
+            size="400"
+            radii="300"
+            onClick={hangup}
+            disabled={exiting}
+            aria-label={leaveText}
+            before={
+              exiting ? (
+                <Spinner variant="Critical" fill="Solid" size="200" />
+              ) : (
+                <Icon src={Icons.PhoneDown} size="200" filled />
+              )
+            }
+          >
+            {width >= 400 && <Text size="B400">{leaveText}</Text>}
+          </Button>
+        )}
       </div>
       {children}
     </div>
