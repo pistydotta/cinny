@@ -1,5 +1,6 @@
 import React, { RefObject, useRef } from 'react';
-import { Box, color, Icon, Icons, Scroll, Text, toRem } from 'folds';
+import classNames from 'classnames';
+import { Box, color, Scroll, Text, toRem } from 'folds';
 import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
@@ -10,7 +11,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { StateEvent } from '../../../types/matrix/room';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
-import { CallMemberRenderer } from './CallMemberCard';
+import { PrejoinOrbit } from './PrejoinOrbit';
+import { uniqueCallUserIds } from '../room-nav/callMembers';
 import * as css from './styles.css';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
@@ -85,31 +87,30 @@ function CallPrescreen() {
 
   const callSession = useCallSession(room);
   const callMembers = useCallMembers(callSession);
-  const hasParticipant = callMembers.length > 0;
+  // People on several devices count once.
+  const people = uniqueCallUserIds(callMembers).length;
 
   const canJoin = hasPermission && livekitSupported && rtcSupported;
 
   return (
     <Scroll variant="Surface" hideTrack>
-      <Box className={css.CallViewContent} alignItems="Center" justifyContent="Center">
-        <Box className={css.PrejoinCard} direction="Column" gap="500">
-          <Box direction="Column" alignItems="Center" gap="200">
-            <span className={css.PrejoinIcon} aria-hidden>
-              <Icon src={Icons.VolumeHigh} size="400" />
-            </span>
+      <Box
+        className={classNames(css.CallViewContent, css.PrejoinBackdrop)}
+        alignItems="Center"
+        justifyContent="Center"
+      >
+        <Box className={css.PrejoinCard} direction="Column" alignItems="Center" gap="500">
+          <PrejoinOrbit room={room} members={callMembers} />
+          <Box direction="Column" alignItems="Center" gap="100">
             <h2 className={css.PrejoinTitle}>{room.name}</h2>
             <p className={css.PrejoinStatus}>
-              {hasParticipant
-                ? tr('call_view.n_in_call', '{{n}} in the call', { n: callMembers.length })
-                : tr('call_view.empty', 'Voice chat’s empty — Be the first to hop in!')}
+              <span className={people > 0 ? css.PrejoinLiveDot : css.PrejoinIdleDot} />
+              {people > 0
+                ? tr('call_view.n_in_call', '{{n}} in the call', { n: people })
+                : tr('call_view.nobody', 'Nobody here yet')}
             </p>
           </Box>
-          {hasParticipant && (
-            <Box direction="Column" gap="100">
-              <CallMemberRenderer members={callMembers} />
-            </Box>
-          )}
-          <PrescreenControls canJoin={canJoin} />
+          <PrescreenControls canJoin={canJoin} empty={people === 0} />
           {!hasPermission && <NoPermissionMessage />}
           {hasPermission && (
             <JoinMessage livekitSupported={livekitSupported} rtcSupported={rtcSupported} />
