@@ -7,7 +7,7 @@ import { Input, MatchSetup, MatchState, NO_INPUT } from './types';
 const setup = (seed: number, over: Partial<MatchSetup> = {}): MatchSetup => ({
   seed,
   teams: ['flamengo', 'palmeiras'],
-  humans: [false, false],
+  slots: [],
   halfMinutes: 3,
   difficulty: 'normal',
   ...over,
@@ -69,22 +69,22 @@ describe('football match', () => {
   });
 
   it('keeps a kick-off button pressed before the ball is ready', () => {
-    const m = createMatch(setup(11, { humans: [true, false] }));
+    const m = createMatch(setup(11, { slots: [0] }));
     step(m, [{ ...NO_INPUT, pass: true }, NO_INPUT]);
     play(m, 90);
     expect(m.phase).toBe('play');
   });
 
   it('lets a person run with the ball and shoot', () => {
-    const m = createMatch(setup(9, { humans: [true, false] }));
+    const m = createMatch(setup(9, { slots: [0] }));
     // Wait for the kick-off, then pass to start play.
     play(m, 80);
     step(m, [{ ...NO_INPUT, pass: true }, NO_INPUT]);
     expect(m.phase).toBe('play');
     let shots = 0;
     play(m, 3000, (s) => {
-      const p = s.players[s.control[0]];
-      const mine = s.ball.owner === s.control[0];
+      const p = s.players[s.people[0].control];
+      const mine = s.ball.owner === s.people[0].control;
       const toGoal = HALF_LENGTH - p.x;
       // Run at goal with the ball, shoot when near; chase it otherwise.
       if (mine && toGoal < 20) {

@@ -6,7 +6,7 @@ import { Shirt } from './MatchHud';
 import { FootballApi, Room } from './online/api';
 import * as css from './football.css';
 
-// The online part of the menu: create a match with the team picked above, or join one that
+// The online part of the menu: create a match with the teams picked above, or join one that
 // waits for a player, or watch one being played. The list refreshes every few seconds.
 
 const REFRESH_MS = 4000;
@@ -14,14 +14,18 @@ const REFRESH_MS = 4000;
 export function OnlineLobby({
   api,
   userId,
-  team,
+  home,
+  away,
+  perSide,
   halfMinutes,
   nameOf,
   onOpen,
 }: {
   api: FootballApi;
   userId: string;
-  team: string;
+  home: string;
+  away: string;
+  perSide: number;
   halfMinutes: number;
   nameOf: (userId: string) => string;
   onOpen: (id: string, role: 'play' | 'watch') => void;
@@ -52,7 +56,7 @@ export function OnlineLobby({
   const create = () => {
     setCreating(true);
     api
-      .create(team, halfMinutes)
+      .create({ home, away, halfMinutes, perSide })
       .then((room) => onOpen(room.id, 'play'))
       .catch(() => setFailed(true))
       .finally(() => setCreating(false));
@@ -75,7 +79,7 @@ export function OnlineLobby({
         <span className={css.Note}>
           {tr(
             'football.online.create_help',
-            'You play with the team chosen above; send the link to a friend.'
+            'With the teams and sizes chosen above; then send the link to your friends.'
           )}
         </span>
       </div>
@@ -91,27 +95,33 @@ export function OnlineLobby({
           </p>
         )}
         {open.map((r) => {
-          const [a, b] = r.seats;
-          const mine = r.seats.some((s) => s?.userId === userId);
+          const rowHome = teamById(r.teams[0]);
+          const rowAway = teamById(r.teams[1]);
+          const mine = r.sides.some((list) => list.some((s) => s.userId === userId));
+          const seated = r.sides[0].length + r.sides[1].length;
+          const free = r.sides.some((list) => list.length < r.perSide);
           return (
             <div key={r.id} className={css.MatchRow}>
-              {a && <Shirt team={teamById(a.team)} />}
+              <Shirt team={rowHome} />
               <span className={css.MatchRowText}>
                 {r.state === 'waiting'
                   ? tr(
                       'football.online.row_waiting',
-                      '{{name}} ({{team}}) is waiting for a player',
+                      '{{home}} × {{away}} · {{name}}’s match · {{n}} of {{max}} players',
                       {
-                        name: nameOf(a?.userId ?? ''),
-                        team: a ? teamById(a.team).name : '',
+                        home: rowHome.short,
+                        away: rowAway.short,
+                        name: nameOf(r.host),
+                        n: seated,
+                        max: r.perSide * 2,
                       }
                     )
                   : tr(
                       'football.online.row_playing',
                       '{{a}} {{sa}} × {{sb}} {{b}} · {{minute}}′ · {{n}} watching',
                       {
-                        a: a ? teamById(a.team).short : '',
-                        b: b ? teamById(b.team).short : '',
+                        a: rowHome.short,
+                        b: rowAway.short,
                         sa: r.score[0],
                         sb: r.score[1],
                         minute: r.minute,
@@ -119,7 +129,7 @@ export function OnlineLobby({
                       }
                     )}
               </span>
-              {b && <Shirt team={teamById(b.team)} />}
+              <Shirt team={rowAway} />
               {mine && (
                 <button
                   type="button"
@@ -129,7 +139,7 @@ export function OnlineLobby({
                   {tr('football.online.back_to', 'Go back')}
                 </button>
               )}
-              {!mine && r.state === 'waiting' && !b && (
+              {!mine && r.state === 'waiting' && free && (
                 <button
                   type="button"
                   className={gameButton({ size: 'sm', variant: 'primary' })}

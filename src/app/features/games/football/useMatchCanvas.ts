@@ -24,8 +24,9 @@ export type MatchCanvas = {
 export const useMatchCanvas = ({
   source,
   kits,
-  people,
-  sides,
+  devices,
+  mine,
+  labels,
   keys,
   graphics,
   inCall,
@@ -34,8 +35,10 @@ export const useMatchCanvas = ({
 }: {
   source: MatchSource | undefined;
   kits: [Kit, Kit];
-  people: [boolean, boolean];
-  sides: RunnerOptions['sides'];
+  devices: RunnerOptions['devices'];
+  mine: number[];
+  // A name over each person's player (slot order), when there is more than one person.
+  labels?: string[];
   keys: KeySets;
   graphics: Graphics;
   inCall: boolean;
@@ -50,8 +53,8 @@ export const useMatchCanvas = ({
   const [failed, setFailed] = useState(false);
   const [ended, setEnded] = useState<MatchState>();
   // Read when the match starts; later changes go to the runner below.
-  const latest = useRef({ keys, graphics, inCall, kits, people, sides, freeze, onEvents });
-  latest.current = { keys, graphics, inCall, kits, people, sides, freeze, onEvents };
+  const latest = useRef({ keys, graphics, inCall, kits, devices, mine, labels, freeze, onEvents });
+  latest.current = { keys, graphics, inCall, kits, devices, mine, labels, freeze, onEvents };
 
   useEffect(() => {
     runnerRef.current?.setKeys(keys);
@@ -77,7 +80,10 @@ export const useMatchCanvas = ({
       .then(async ([{ FootballScene }, { FootballRunner }, { FootballAudio }]) => {
         const canvas = canvasRef.current;
         if (cancelled || !canvas) return;
-        const scene = new FootballScene(canvas, opts.kits, opts.people, opts.graphics);
+        const scene = new FootballScene(canvas, opts.kits, opts.graphics, {
+          mine: opts.mine,
+          labels: opts.labels,
+        });
         const fit = () => scene.resize(canvas.clientWidth, canvas.clientHeight);
         fit();
         const observer = new ResizeObserver(fit);
@@ -97,7 +103,8 @@ export const useMatchCanvas = ({
         }
         audioRef.current = audio;
         const runner = new FootballRunner(source, scene, {
-          sides: opts.sides,
+          devices: opts.devices,
+          mine: opts.mine,
           onHud: setHud,
           onEvents: (events) => {
             audio?.play(events);

@@ -27,6 +27,41 @@ const restartName = (kind: Hud['restart']): string | undefined => {
   return undefined;
 };
 
+// A small red card per player sent off, next to the team on the scoreboard.
+function RedCards({ n }: { n: number }) {
+  if (n === 0) return null;
+  return (
+    <span className={css.RedCards} aria-label={tr('football.reds', '{{n}} sent off', { n })}>
+      {Array.from({ length: n }, (_, k) => (
+        <span key={k} className={css.RedCard} />
+      ))}
+    </span>
+  );
+}
+
+// What the referee decided, while the restart waits: foul, offside or penalty, and the card.
+function CallBanner({ call, teams }: { call: NonNullable<Hud['call']>; teams: [Team, Team] }) {
+  let title = tr('football.call.foul', 'Foul');
+  if (call.kind === 'offside') title = tr('football.call.offside', 'Offside');
+  else if (call.kind === 'penalty') title = tr('football.call.penalty', 'Penalty!');
+  const who = `${teams[call.side].short} #${call.num}`;
+  let card: string | undefined;
+  if (call.card === 'yellow') card = tr('football.call.yellow', 'Yellow card');
+  else if (call.secondYellow) card = tr('football.call.second_yellow', 'Second yellow: sent off');
+  else if (call.card === 'red') card = tr('football.call.red', 'Red card: sent off');
+  return (
+    <div className={css.CallBox}>
+      <span className={css.CallTitle}>{title}</span>
+      <span className={css.BannerSub}>
+        {card && (
+          <span className={call.card === 'red' ? css.CardRed : css.CardYellow} aria-hidden />
+        )}
+        {card ? `${card} · ${who}` : who}
+      </span>
+    </div>
+  );
+}
+
 export function MatchHud({
   hud,
   loading,
@@ -59,11 +94,17 @@ export function MatchHud({
       {hud && (
         <div className={css.Scoreboard}>
           <span className={css.KitBar} style={{ background: kits[0].shirt }} />
-          <span className={css.ScoreTeam}>{home.short}</span>
+          <span className={css.ScoreTeam}>
+            {home.short}
+            <RedCards n={hud.reds[0]} />
+          </span>
           <span className={css.ScoreValue}>
             {hud.score[0]} – {hud.score[1]}
           </span>
-          <span className={css.ScoreTeam}>{away.short}</span>
+          <span className={css.ScoreTeam}>
+            <RedCards n={hud.reds[1]} />
+            {away.short}
+          </span>
           <span className={css.KitBar} style={{ background: kits[1].shirt }} />
           <span className={css.Clock}>{`${Math.min(90, hud.minute)}′`}</span>
         </div>
@@ -82,14 +123,12 @@ export function MatchHud({
         <span className={css.Banner}>{tr('football.halftime', 'Half time')}</span>
       )}
       {hud?.waiting && waitingText && <span className={css.BannerSub}>{waitingText}</span>}
-      {hud && hud.charge.some((c) => c > 0) && (
+      {hud && hud.charge > 0 && (
         <div className={css.PowerBar}>
-          <div
-            className={css.PowerFill}
-            style={{ width: `${Math.round(Math.max(...hud.charge) * 100)}%` }}
-          />
+          <div className={css.PowerFill} style={{ width: `${Math.round(hud.charge * 100)}%` }} />
         </div>
       )}
+      {hud?.call && <CallBanner call={hud.call} teams={teams} />}
       {hud?.restart && <span className={css.Hint}>{restartName(hud.restart)}</span>}
       {children}
     </div>
@@ -122,6 +161,18 @@ export function FinalScore({ match, teams }: { match: MatchState; teams: [Team, 
         <br />
         {away.name}: {scoreLine(match, 1) || '—'}
       </p>
+      {match.cards.length > 0 && (
+        <p className={css.Scorers}>
+          {tr('football.end.cards', 'Cards: {{list}}', {
+            list: match.cards
+              .map(
+                (c) =>
+                  `${teams[c.side].short} #${c.num} ${c.color === 'red' ? '🟥' : '🟨'} ${c.minute}′`
+              )
+              .join(', '),
+          })}
+        </p>
+      )}
     </>
   );
 }

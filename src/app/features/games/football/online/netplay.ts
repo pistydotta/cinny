@@ -1,20 +1,21 @@
 import { step } from '../engine/match';
 import { PackedInput, hashMatch, packInput, sameInput, unpackInput } from '../engine/net';
-import { GameEvent, Input, MatchState, NO_INPUT, Side } from '../engine/types';
+import { GameEvent, Input, MatchState, NO_INPUT } from '../engine/types';
 
-// One player's side of an online match, with rollback (the GGPO way): every tick both inputs
-// go into the engine, ours read a few ticks ahead and the other's guessed (the last one we
-// got) until it arrives. When it arrives different from the guess, the match goes back to the
-// last state both agreed on and steps forward again with the real inputs, all within a frame.
+// One person's copy of an online match, with rollback (the GGPO way): every tick all the
+// people's inputs go into the engine, ours read a few ticks ahead and the others' guessed (the
+// last one we got from each) until they arrive. When one arrives different from the guess,
+// the match goes back to the last state everyone agreed on and steps forward again with the
+// real inputs, all within a frame.
 //
-// Ticks: a match's `tick` is the last one stepped; stepping tick t needs both inputs for t.
-// `confirmed` is the last tick stepped with real inputs on both sides, so nothing up to it can
-// change; states after it are kept to roll back to.
+// Ticks: a match's `tick` is the last one stepped; stepping tick t needs every slot's input
+// for t. `confirmed` is the last tick stepped with real inputs from everyone, so nothing up to
+// it can change; states after it are kept to roll back to.
 
-// Ticks between pressing a key and the engine using it: the other player's input usually
-// arrives within this, so most ticks need no guess.
+// Ticks between pressing a key and the engine using it: the others' inputs usually arrive
+// within this, so most ticks need no guess.
 export const INPUT_DELAY = 3;
-// How far we may step past the confirmed tick before waiting for the other player.
+// How far we may step past the confirmed tick before waiting for the others.
 export const MAX_AHEAD = 15;
 // A hash of the confirmed match goes to the API every this many ticks.
 export const HASH_EVERY = 60;
@@ -24,41 +25,46 @@ export type NetOut = {
   sendHash: (t: number, hash: number) => void;
 };
 
-export type Pending = [Side, number, PackedInput][];
+// Inputs the API holds past a state: [slot, tick, input].
+export type Pending = [number, number, PackedInput][];
 
 export class Netplay {
   match: MatchState;
 
   confirmed: number;
 
-  private inputs: [Map<number, Input>, Map<number, Input>] = [new Map(), new Map()];
+  private inputs: Map<number, Input>[] = [];
 
-  // The other side's input each stepped tick was played with, guessed or real.
-  private used = new Map<number, Input>();
+  // Each tick's inputs as played, guessed or real.
+  private used = new Map<number, Input[]>();
 
   // The match after each tick from `confirmed` on.
   private states = new Map<number, MatchState>();
 
   private ownMax = 0;
 
-  // The other side's newest real input and its tick.
-  private remoteMax = 0;
-
-  private lastRemote: Input = NO_INPUT;
+  // Each slot's newest real input and its tick.
+  private latest: { t: number; input: Input }[] = [];
 
   private rollbackFrom: number | undefined;
 
   // For the netcode tests: how many ticks were stepped again.
   resteps = 0;
 
-  constructor(readonly side: Side, state: MatchState, private out: NetOut, pending: Pending = []) {
+  constructor(
+    // Our slot in setup.slots.
+    readonly slot: number,
+    state: MatchState,
+    private out: NetOut,
+    pending: Pending = []
+  ) {
     this.match = structuredClone(state);
     this.confirmed = state.tick;
     this.reset(state, pending);
   }
 
-  private get other(): Side {
-    return (1 - this.side) as Side;
+  private get slots(): number {
+    return this.match.setup.slots.length;
   }
 
   // Starts again from a state the API sent (joining late, back from a reconnection, or after a
@@ -66,61 +72,59 @@ export class Netplay {
   reset(state: MatchState, pending: Pending): void {
     // Inputs of ours already sent past that state stay ours: some may still be on their way to
     // the API, which will play them.
-    const sent = [...this.inputs[this.side].entries()].filter(([t]) => t > state.tick);
+    const sent = [...(this.inputs[this.slot]?.entries() ?? [])].filter(([t]) => t > state.tick);
     this.match = structuredClone(state);
     this.confirmed = state.tick;
-    this.inputs = [new Map(sent), new Map()];
+    const n = state.setup.slots.length;
+    this.inputs = Array.from({ length: n }, (_, s) => new Map(s === this.slot ? sent : []));
+    this.latest = Array.from({ length: n }, (_, s) => ({
+      t: state.tick,
+      input: state.people[s]?.prev ?? NO_INPUT,
+    }));
     this.used.clear();
     this.states.clear();
     this.states.set(state.tick, structuredClone(state));
     this.rollbackFrom = undefined;
     this.ownMax = Math.max(state.tick, ...sent.map(([t]) => t));
-    this.remoteMax = state.tick;
-    this.lastRemote = state.prev[this.other];
     pending.forEach(([s, t, packed]) => {
-      if (t <= state.tick) return;
+      if (t <= state.tick || s < 0 || s >= n) return;
       const input = unpackInput(packed);
       this.inputs[s].set(t, input);
-      if (s === this.side) this.ownMax = Math.max(this.ownMax, t);
-      else if (t > this.remoteMax) {
-        this.remoteMax = t;
-        this.lastRemote = input;
-      }
+      if (s === this.slot) this.ownMax = Math.max(this.ownMax, t);
+      else if (t > this.latest[s].t) this.latest[s] = { t, input };
     });
     // Our first ticks are already late for real input: they are played standing still.
     for (let t = this.ownMax + 1; t <= state.tick + INPUT_DELAY; t += 1) this.setOwn(t, NO_INPUT);
   }
 
   private setOwn(t: number, input: Input) {
-    this.inputs[this.side].set(t, input);
+    this.inputs[this.slot].set(t, input);
     this.ownMax = t;
     this.out.sendInput(t, packInput(input));
   }
 
-  // The other player's input for tick t, relayed by the API.
-  remoteInput(t: number, packed: PackedInput): void {
-    if (t <= this.confirmed || this.inputs[this.other].has(t)) return;
+  // Another person's input for tick t, relayed by the API.
+  remoteInput(slot: number, t: number, packed: PackedInput): void {
+    if (slot === this.slot || slot < 0 || slot >= this.slots) return;
+    if (t <= this.confirmed || this.inputs[slot].has(t)) return;
     const input = unpackInput(packed);
-    this.inputs[this.other].set(t, input);
-    if (t > this.remoteMax) {
-      this.remoteMax = t;
-      this.lastRemote = input;
-    }
-    const guessed = this.used.get(t);
-    if (t <= this.match.tick && guessed && !sameInput(guessed, input))
+    this.inputs[slot].set(t, input);
+    if (t > this.latest[slot].t) this.latest[slot] = { t, input };
+    const played = this.used.get(t);
+    if (t <= this.match.tick && played && !sameInput(played[slot], input))
       this.rollbackFrom = Math.min(this.rollbackFrom ?? t, t);
   }
 
-  private remoteFor(t: number): Input {
-    return this.inputs[this.other].get(t) ?? this.lastRemote;
+  private inputsFor(t: number): Input[] {
+    return this.inputs.map(
+      (known, s) => known.get(t) ?? (s === this.slot ? NO_INPUT : this.latest[s].input)
+    );
   }
 
   private stepOnce(): GameEvent[] {
     const t = this.match.tick + 1;
-    const own = this.inputs[this.side].get(t) ?? NO_INPUT;
-    const remote = this.remoteFor(t);
-    this.used.set(t, remote);
-    const inputs: [Input, Input] = this.side === 0 ? [own, remote] : [remote, own];
+    const inputs = this.inputsFor(t);
+    this.used.set(t, inputs);
     step(this.match, inputs);
     this.states.set(t, structuredClone(this.match));
     return this.match.events;
@@ -141,16 +145,12 @@ export class Netplay {
   }
 
   private confirm() {
-    const own = this.inputs[this.side];
-    const remote = this.inputs[this.other];
     while (
       this.confirmed < this.match.tick &&
-      own.has(this.confirmed + 1) &&
-      remote.has(this.confirmed + 1)
+      this.inputs.every((known) => known.has(this.confirmed + 1))
     ) {
       this.states.delete(this.confirmed);
-      own.delete(this.confirmed);
-      remote.delete(this.confirmed);
+      this.inputs.forEach((known) => known.delete(this.confirmed));
       this.used.delete(this.confirmed);
       this.confirmed += 1;
       if (this.confirmed % HASH_EVERY === 0) {
@@ -160,14 +160,16 @@ export class Netplay {
     }
   }
 
-  // How many ticks we run ahead of the other player, once the time their inputs take to arrive
-  // (`lagTicks`) is counted. Above 1 the runner slows down a little so neither side keeps
+  // How many ticks we run ahead of the slowest other person, once the time their inputs take
+  // to arrive (`lagTicks`) is counted. Above 1 the runner slows down a little so nobody keeps
   // rolling back.
   advantage(lagTicks: number): number {
-    return this.match.tick - (this.remoteMax - INPUT_DELAY + lagTicks);
+    const others = this.latest.filter((_, s) => s !== this.slot).map((l) => l.t);
+    if (others.length === 0) return 0;
+    return this.match.tick - (Math.min(...others) - INPUT_DELAY + lagTicks);
   }
 
-  // Waiting for the other player: too far past the last tick both agreed on.
+  // Waiting for the others: too far past the last tick everyone agreed on.
   get stalled(): boolean {
     return this.match.tick - this.confirmed >= MAX_AHEAD;
   }

@@ -149,8 +149,8 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   whether Lula and Bolsonaro need help against bosses (the abilities may already be enough);
   whether a room should hear about a new group record (plan 7.7) and what gold buys once
   everything is maxed (cosmetics, plan 7.5).
-- `games/football` (Futebol, `../docs/football.md`): `engine/` is deterministic like horde's
-  (`step(match, [input0, input1])` at 60 ticks, rng in the state, `dmath` for trigonometry,
+- `games/football` (FIFUMA, `../docs/football.md`): `engine/` is deterministic like horde's
+  (`step(match, inputs)`, one input per person, at 60 ticks, rng in the state, `dmath` for trigonometry,
   inputs as whole numbers) and a `structuredClone` of a match must step on identically, since
   online play will roll back. `render/` is the only part importing three.js, loaded with
   `import()`. The mannequin is Quaternius' CC0 UAL2 cut down to a few clips (how, in the doc);
@@ -166,6 +166,9 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   or watched (`online/spectate.ts`); `useMatchCanvas` mounts any of them and `MatchHud` draws the
   scoreboard for all. Online screens are `OnlineLobby` and `OnlineMatch`, at
   `/games/football/match/<id>/` (the link people share).
+  People are slots (`setup.slots`, one input each, up to four a side online); each controls
+  one player in `m.people`, the rest of the team is the CPU. Fouls, cards, offside and the
+  officials' movement are `engine/referee.ts`, all in the match state.
 - `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
   free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but

@@ -1,17 +1,21 @@
 import { createApiRequest } from '../../../../utils/blazeroomApi';
-import { MatchState, MatchSetup, Side } from '../engine/types';
+import { MatchState, MatchSetup } from '../engine/types';
 import { PackedInput } from '../engine/net';
 import { Pending } from './netplay';
 
 // The online lobby (/api/football) and what the WebSocket says (api/src/football/rooms.js).
 
-export type RoomSeat = { userId: string; team: string; connected: boolean } | null;
+export type RoomSeat = { userId: string; connected: boolean };
 
 export type Room = {
   id: string;
   state: 'waiting' | 'playing' | 'over' | 'abandoned' | 'cancelled';
   halfMinutes: number;
-  seats: [RoomSeat, RoomSeat];
+  // Seats per side, 1 to 4, and the people sitting on each side.
+  perSide: number;
+  teams: [string, string];
+  host: string;
+  sides: [RoomSeat[], RoomSeat[]];
   watchers: string[];
   score: [number, number];
   minute: number;
@@ -21,11 +25,11 @@ export type Room = {
 export type ServerMessage =
   | { type: 'hello'; userId: string }
   | { type: 'room'; room: Room }
-  | { type: 'start'; side: Side; setup: MatchSetup }
-  | { type: 'resume'; side: Side; state: MatchState; pending: Pending }
+  | { type: 'start'; slot: number; setup: MatchSetup }
+  | { type: 'resume'; slot: number; state: MatchState; pending: Pending }
   | { type: 'watch'; state: MatchState }
-  | { type: 'frames'; from: number; frames: [PackedInput, PackedInput][] }
-  | { type: 'input'; t: number; i: PackedInput }
+  | { type: 'frames'; from: number; frames: PackedInput[][] }
+  | { type: 'input'; s: number; t: number; i: PackedInput }
   | { type: 'over'; state: 'over' | 'abandoned' | 'cancelled'; score: [number, number] }
   | { type: 'cheer'; userId: string; e: number }
   | { type: 'pong'; at: number }
@@ -41,8 +45,13 @@ export const createFootballApi = (getToken: () => string | null) => {
     get: async (id: string): Promise<Room> =>
       (await (await request(`/api/football/matches/${encodeURIComponent(id)}`, 'GET')).json())
         .match,
-    create: async (team: string, halfMinutes: number): Promise<Room> =>
-      (await (await request('/api/football/matches', 'POST', { team, halfMinutes })).json()).match,
+    create: async (opts: {
+      home: string;
+      away: string;
+      halfMinutes: number;
+      perSide: number;
+    }): Promise<Room> =>
+      (await (await request('/api/football/matches', 'POST', opts)).json()).match,
     cancel: async (id: string): Promise<void> => {
       await request(`/api/football/matches/${encodeURIComponent(id)}`, 'DELETE');
     },

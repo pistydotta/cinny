@@ -4,8 +4,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import playerUrl from '../assets/player.glb?url';
 import { BALL_RADIUS, HALF_LENGTH, HALF_WIDTH } from '../engine/data';
-import { Kit, keeperKit } from '../engine/teams';
-import { Action, MatchState, Player } from '../engine/types';
+import { Kit, colorDistance, keeperKit } from '../engine/teams';
+import { Action, MatchState, Official, Player } from '../engine/types';
 import { CAMERA, Graphics, QUALITY, Quality } from '../options';
 import { kitMaterial } from './kit';
 import { makeClips, readRig } from './rig';
@@ -20,6 +20,9 @@ import { buildStadium } from './stadium';
 
 type Body = {
   root: THREE.Object3D;
+  // The right hand, for the referee's card and the linesman's flag.
+  hand?: THREE.Object3D;
+  prop?: THREE.Mesh;
   mixer: THREE.AnimationMixer;
   actions: Record<string, THREE.AnimationAction>;
   current: string;
@@ -34,6 +37,39 @@ const MOVE_CLIPS: Partial<Record<Action, { clip: string; once: boolean; speed?: 
   fall: { clip: 'Hit_Knockback', once: true, speed: 1.2 },
   celebrate: { clip: 'Yes', once: false },
   throw: { clip: 'OverhandThrow', once: true, speed: 1.5 },
+  card: { clip: 'raise', once: true },
+  flag: { clip: 'raise', once: true },
+};
+
+// One colour per person: warm ones for the first side, cool ones for the second.
+const PERSON_COLORS = [
+  ['#ffd23f', '#ff8a3d', '#ff5d8f', '#f4f1de'],
+  ['#4fc3ff', '#7cff6b', '#b388ff', '#2ee6c8'],
+];
+
+// The officials wear whichever of these is furthest from both kits.
+const OFFICIAL_COLORS = ['#111111', '#e9f542', '#ff7ab6', '#5b5f66'];
+
+// A person's name on a small label over their player.
+const nameSprite = (text: string, color: string): THREE.Sprite => {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 64;
+  const g = c.getContext('2d') as CanvasRenderingContext2D;
+  g.font = 'bold 30px sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = 'rgba(0,0,0,0.55)';
+  const w = Math.min(250, g.measureText(text).width + 24);
+  g.fillRect(128 - w / 2, 10, w, 44);
+  g.fillStyle = color;
+  g.fillText(text.slice(0, 16), 128, 33);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false }));
+  sprite.scale.set(2.4, 0.6, 1);
+  sprite.renderOrder = 2;
+  return sprite;
 };
 
 // Starts a clip on a body, fading from the one it plays; a looping clip already playing only
@@ -57,7 +93,7 @@ const playClip = (body: Body, name: string, once: boolean, speed = 1) => {
 
 // Picks the clip for what the player is doing: a move's own clip, the run at a pace that
 // matches the feet to the ground, or standing.
-const animate = (body: Body, p: Player, dt: number) => {
+const animate = (body: Body, p: Pick<Player, 'vx' | 'vz' | 'action' | 'role'>, dt: number) => {
   const speed = Math.hypot(p.vx, p.vz);
   const move = MOVE_CLIPS[p.action];
   if (move) {
@@ -109,6 +145,10 @@ export class FootballScene {
 
   private bodies: Body[] = [];
 
+  private officials: Body[] = [];
+
+  private labels: THREE.Sprite[] = [];
+
   private ball: THREE.Mesh;
 
   private ballShadow: THREE.Mesh;
@@ -133,9 +173,10 @@ export class FootballScene {
   constructor(
     private canvas: HTMLCanvasElement,
     private kits: [Kit, Kit],
-    // Which sides people play, to mark their player (yellow for the first, blue the second).
-    private people: [boolean, boolean],
-    graphics: Graphics
+    graphics: Graphics,
+    // The people on this computer (slots: their pass arrow shows) and, with more than one
+    // person in the match, a name over each one's player.
+    private who: { mine: number[]; labels?: string[] }
   ) {
     const start: Quality = graphics.quality === 'auto' ? 'high' : graphics.quality;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: QUALITY[start].antialias });
@@ -177,25 +218,6 @@ export class FootballScene {
     this.ballShadow.rotation.x = -Math.PI / 2;
     this.scene.add(this.ballShadow);
 
-    ['#ffd23f', '#4fc3ff'].forEach((c) => {
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.55, 0.72, 32),
-        new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9 })
-      );
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.03;
-      ring.visible = false;
-      this.scene.add(ring);
-      this.markers.push(ring);
-      const arrow = new THREE.Mesh(
-        new THREE.ConeGeometry(0.28, 0.5, 4),
-        new THREE.MeshBasicMaterial({ color: c, transparent: true })
-      );
-      arrow.rotation.x = Math.PI;
-      arrow.visible = false;
-      this.scene.add(arrow);
-      this.arrows.push(arrow);
-    });
     this.setQuality(start);
     this.setCamera(graphics.camera);
   }
@@ -236,11 +258,12 @@ export class FootballScene {
     gltf.animations.forEach((clip) => {
       clips[clip.name] = clip;
     });
-    m.players.forEach((p, i) => {
+    const body = (kit: Kit, look: number, keeper: boolean, delay: number): Body => {
       const root = cloneSkinned(gltf.scene);
-      const kit = p.role === 'gk' ? keeperKit(this.kits, p.side) : this.kits[p.side];
-      const material = kitMaterial(kit, p.look, p.role === 'gk');
+      const material = kitMaterial(kit, look, keeper);
+      let hand: THREE.Object3D | undefined;
       root.traverse((o) => {
+        if (o.name === 'hand_r') hand = o;
         const mesh = o as THREE.SkinnedMesh;
         if (!mesh.isMesh) return;
         mesh.material = material;
@@ -253,20 +276,105 @@ export class FootballScene {
       Object.entries(clips).forEach(([name, clip]) => {
         actions[name] = mixer.clipAction(clip);
       });
-      const first = p.role === 'gk' ? 'ready' : 'idle';
+      const first = keeper ? 'ready' : 'idle';
       actions[first].play();
       // Players don't breathe in step.
-      mixer.setTime(i * 0.37);
-      this.bodies.push({ root, mixer, actions, current: first, lastAction: 'none' });
+      mixer.setTime(delay);
+      return { root, hand, mixer, actions, current: first, lastAction: 'none' };
+    };
+    m.players.forEach((p, i) => {
+      const kit = p.role === 'gk' ? keeperKit(this.kits, p.side) : this.kits[p.side];
+      this.bodies.push(body(kit, p.look, p.role === 'gk', i * 0.37));
+    });
+
+    // The officials: a colour neither team wears; the referee's card and the flags in hand.
+    const taken = [
+      this.kits[0].shirt,
+      this.kits[1].shirt,
+      this.kits[0].shorts,
+      this.kits[1].shorts,
+    ];
+    const color = [...OFFICIAL_COLORS].sort(
+      (a, b) =>
+        Math.min(...taken.map((t) => colorDistance(b, t))) -
+        Math.min(...taken.map((t) => colorDistance(a, t)))
+    )[0];
+    const officialKit: Kit = {
+      shirt: color,
+      trim: color,
+      pattern: 'solid',
+      shorts: '#111111',
+      socks: '#111111',
+    };
+    m.officials.forEach((o, k) => {
+      const b = body(officialKit, 3 + k * 11, false, k * 0.5);
+      const prop = new THREE.Mesh(
+        k === 0 ? new THREE.PlaneGeometry(0.12, 0.17) : new THREE.PlaneGeometry(0.32, 0.24),
+        new THREE.MeshBasicMaterial({
+          color: k === 0 ? '#ffd400' : '#ff3d00',
+          side: THREE.DoubleSide,
+        })
+      );
+      // The card or flag sits above the hand; hidden until raised.
+      prop.position.set(0, k === 0 ? 0.16 : 0.22, 0);
+      prop.visible = false;
+      (b.hand ?? b.root).add(prop);
+      b.prop = prop;
+      this.officials.push(b);
+    });
+
+    // Each person's ring, name and pass arrow.
+    m.setup.slots.forEach((side, s) => {
+      const nth = m.setup.slots.slice(0, s).filter((x) => x === side).length;
+      const c = PERSON_COLORS[side][nth % 4];
+      const mine = this.who.mine.includes(s);
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(mine ? 0.55 : 0.6, mine ? 0.74 : 0.7, 32),
+        new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: mine ? 0.95 : 0.7 })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.03;
+      this.scene.add(ring);
+      this.markers.push(ring);
+      const arrow = new THREE.Mesh(
+        new THREE.ConeGeometry(0.28, 0.5, 4),
+        new THREE.MeshBasicMaterial({ color: c, transparent: true })
+      );
+      arrow.rotation.x = Math.PI;
+      arrow.visible = false;
+      this.scene.add(arrow);
+      this.arrows.push(arrow);
+      const label = this.who.labels?.[s];
+      const sprite = nameSprite(label ?? '', c);
+      sprite.visible = !!label;
+      this.scene.add(sprite);
+      this.labels.push(sprite);
     });
     this.ready = true;
   }
 
+  private placeOfficial(o: Official, k: number, dt: number) {
+    const b = this.officials[k];
+    b.root.position.set(o.x, 0, o.z);
+    b.root.rotation.set(0, Math.PI / 2 - o.face, 0);
+    animate(b, { vx: o.vx, vz: o.vz, action: o.action, role: 'mid' }, dt);
+    if (b.prop) {
+      b.prop.visible = o.action === 'card' || o.action === 'flag';
+      if (k === 0 && o.card)
+        (b.prop.material as THREE.MeshBasicMaterial).color.set(
+          o.card === 'red' ? '#e0102a' : '#ffd400'
+        );
+    }
+  }
+
   // Draws the match as it is now; `dt` is the real time since the last frame, for the clips.
-  render(m: MatchState, dt: number, control: [number, number]): void {
+  render(m: MatchState, dt: number): void {
     if (!this.ready) return;
     m.players.forEach((p, i) => {
       const body = this.bodies[i];
+      // Someone sent off has left the pitch.
+      body.root.visible = !p.off;
+      if (p.off) return;
       body.root.position.set(p.x, 0, p.z);
       // The model faces +z; the engine's angle 0 is +x.
       body.root.rotation.set(0, Math.PI / 2 - p.face, 0);
@@ -292,22 +400,33 @@ export class FootballScene {
     this.ballShadow.position.set(ball.x, 0.02, ball.z);
     this.ballShadow.scale.setScalar(1 + ball.y * 0.15);
 
-    this.markers.forEach((ring, side) => {
-      ring.visible = this.people[side] && m.phase !== 'over';
-      const p = m.players[control[side]];
+    m.officials.forEach((o, k) => this.placeOfficial(o, k, dt));
+
+    this.markers.forEach((ring, s) => {
+      const person = m.people[s];
+      const p = person && m.players[person.control];
+      ring.visible = !!p && !p.off && m.phase !== 'over';
       if (p) ring.position.set(p.x, 0.03, p.z);
+      const label = this.labels[s];
+      label.visible = !!this.who.labels?.[s] && ring.visible;
+      if (p) label.position.set(p.x, 2.25, p.z);
     });
 
-    // Who gets the pass: solid while the ball is on its way, faint while the carrier aims.
+    // Who gets the pass: solid while the ball is on its way, faint while the carrier aims. Only
+    // for the people on this computer.
     this.time += dt;
-    this.arrows.forEach((arrow, side) => {
-      const inFlight = ball.owner < 0 && ball.target >= 0 && m.players[ball.target].side === side;
-      const who = inFlight ? ball.target : m.preview[side];
-      arrow.visible = this.people[side] && who >= 0 && m.phase === 'play';
+    this.arrows.forEach((arrow, s) => {
+      const person = m.people[s];
+      const side = m.setup.slots[s];
+      const passer = person && ball.credit === person.control;
+      const inFlight =
+        ball.owner < 0 && ball.target >= 0 && m.players[ball.target].side === side && passer;
+      const who = inFlight ? ball.target : person?.preview ?? -1;
+      arrow.visible = this.who.mine.includes(s) && who >= 0 && m.phase === 'play';
       if (!arrow.visible) return;
       const p = m.players[who];
       const bob = Math.sin(this.time * (inFlight ? 12 : 6)) * 0.08;
-      arrow.position.set(p.x, 2.35 + bob, p.z);
+      arrow.position.set(p.x, 2.6 + bob, p.z);
       (arrow.material as THREE.MeshBasicMaterial).opacity = inFlight ? 0.95 : 0.55;
     });
 

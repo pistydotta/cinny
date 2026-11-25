@@ -14,6 +14,8 @@ export type Choices = {
   away: string;
   difficulty: Difficulty;
   halfMinutes: number;
+  // Online: people a side, 1 to 4.
+  perSide: number;
 };
 
 const KEY = 'blazeroom.football.choices';
@@ -24,6 +26,7 @@ export const DEFAULT_CHOICES: Choices = {
   away: 'palmeiras',
   difficulty: 'normal',
   halfMinutes: 4,
+  perSide: 1,
 };
 
 export const parseChoices = (text: string | null): Choices => {
@@ -42,6 +45,9 @@ export const parseChoices = (text: string | null): Choices => {
       halfMinutes: HALF_OPTIONS.includes(raw.halfMinutes as 2)
         ? (raw.halfMinutes as number)
         : DEFAULT_CHOICES.halfMinutes,
+      perSide: [1, 2, 3, 4].includes(raw.perSide as number)
+        ? (raw.perSide as number)
+        : DEFAULT_CHOICES.perSide,
     };
   } catch {
     return DEFAULT_CHOICES;

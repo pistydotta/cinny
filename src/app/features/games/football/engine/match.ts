@@ -17,21 +17,37 @@ import {
   shoot,
   teammates,
 } from './actions';
-import { Move, chaserOf, cpuCarrier, cpuTackle, keeper, offBall, press, toward } from './ai';
+import {
+  Move,
+  ballAhead,
+  chaserOf,
+  cpuCarrier,
+  cpuTackle,
+  keeper,
+  offBall,
+  press,
+  toward,
+} from './ai';
 import {
   ACCEL,
   AIR_DRAG,
   BALL_RADIUS,
+  BOX_DEPTH,
+  BOX_HALF_WIDTH,
+  CALL_WAIT,
   CELEBRATE_TICKS,
   CHARGE_FULL,
   CHARGE_MAX,
   CIRCLE_RADIUS,
   CPU,
   DIVE_REACH,
+  DIVE_TICKS,
   DRIBBLE_GAP,
   DT,
   FALL_TICKS,
+  FIRST_TOUCH_TURN,
   FORMATION,
+  FREEKICK_RANGE,
   GOAL_DEPTH,
   GOAL_HALF_WIDTH,
   GOAL_HEIGHT,
@@ -48,9 +64,13 @@ import {
   KEEPER_MAX_HOLD,
   KEEPER_REACH,
   MATCH_SECONDS,
+  PENALTY_SPOT,
   POST_RADIUS,
   QUEUE_TICKS,
   REACH,
+  RECEIVE_ASSIST,
+  RECEIVE_HARD,
+  RECEIVE_REACH,
   RESTART_PATIENCE,
   RESTART_WAIT,
   ROLL_FIXED,
@@ -64,16 +84,38 @@ import {
   TICK_RATE,
   TURN_RATE,
   TURN_RATE_BALL,
+  WALL_DISTANCE,
   WITH_BALL,
 } from './data';
+import {
+  FoulKind,
+  RestartFor,
+  foul,
+  judgeSlide,
+  judgeStand,
+  moveOfficials,
+  newOfficials,
+  touch,
+} from './referee';
 import { teamById } from './teams';
-import { Ball, Input, MatchSetup, MatchState, NO_INPUT, Player, RestartKind, Side } from './types';
+import {
+  Ball,
+  Input,
+  MatchSetup,
+  MatchState,
+  NO_INPUT,
+  Person,
+  Player,
+  RestartKind,
+  Side,
+} from './types';
 
-// The rules of a match. `step` moves everything one tick (1/60 s) with one input per side and
-// is the only thing that changes a MatchState. It is deterministic: the same setup and the
-// same inputs always give the same match, which online play and replays rely on.
+// The rules of a match. `step` moves everything one tick (1/60 s) with one input per person
+// (setup.slots) and is the only thing that changes a MatchState. It is deterministic: the
+// same setup and the same inputs always give the same match, which online play relies on.
 //
-// Simplified on purpose for now: no fouls, cards, offside or penalties.
+// Each person controls one player at a time; the rest of their team, and any side nobody
+// plays, is the CPU. Fouls, cards and offside are judged in referee.ts.
 
 const PITCH_MARGIN = 4;
 
@@ -106,6 +148,8 @@ const newPlayer = (
     pace: spread(1),
     skill: spread(2),
     look: (look + m.rng) % 997,
+    yellow: 0,
+    off: false,
   };
 };
 
@@ -123,20 +167,80 @@ const newBall = (): Ball => ({
   target: -1,
   held: 0,
   credit: -1,
+  offside: [],
 });
 
+const newPerson = (control: number): Person => ({
+  control,
+  charge: 0,
+  chargeKind: undefined,
+  prev: NO_INPUT,
+  queued: undefined,
+  preview: -1,
+});
+
+export const sideHasPeople = (m: MatchState, side: Side): boolean => m.setup.slots.includes(side);
+
+// For each player, the person (slot) controlling them, or -1.
+const controllers = (m: MatchState): number[] => {
+  const by = m.players.map(() => -1);
+  m.people.forEach((person, s) => {
+    by[person.control] = s;
+  });
+  return by;
+};
+
+const slotsOf = (m: MatchState, side: Side): number[] =>
+  m.setup.slots.flatMap((s, k) => (s === side ? [k] : []));
+
+// The person of `side` whose player is nearest to (x, z).
+const nearestSlot = (m: MatchState, side: Side, x: number, z: number): number => {
+  let best = -1;
+  let bestD = Infinity;
+  slotsOf(m, side).forEach((s) => {
+    const d = dist(m.players[m.people[s].control], { x, z });
+    if (d < bestD) {
+      bestD = d;
+      best = s;
+    }
+  });
+  return best;
+};
+
+// Gives player i to person s; whoever had i takes s's old player.
+const giveControl = (m: MatchState, s: number, i: number) => {
+  const other = m.people.findIndex((p, k) => k !== s && p.control === i);
+  if (other >= 0) m.people[other].control = m.people[s].control;
+  m.people[s].control = i;
+};
+
+// Pushes players of `side` out of a circle around (x, z).
+const clearCircle = (m: MatchState, side: Side, x: number, z: number, r: number) => {
+  m.players.forEach((p) => {
+    if (p.side !== side || p.off) return;
+    const d = len(p.x - x, p.z - z);
+    if (d >= r) return;
+    const k = d > 0.01 ? r / d : 1;
+    p.x = x + (p.x - x) * k + (d > 0.01 ? 0 : r);
+    p.z = z + (p.z - z) * k;
+  });
+};
+
 // A restart: the ball on its spot, the taker beside it and everyone else sent toward their
-// places. Kick-offs put both teams back in their halves at once.
+// places. Kick-offs put both teams back in their halves; free kicks push the other team back
+// 9.15 m and, near goal, build a wall; penalties clear the box.
 const setRestart = (m: MatchState, kind: RestartKind, side: Side, x: number, z: number) => {
   const { ball } = m;
-  Object.assign(ball, newBall(), { x, z, lastSide: side });
-  let taker: number;
   const f = attackDir(m, side);
+  let bx = x;
+  if (kind === 'penalty') bx = goalX(m, side) - f * PENALTY_SPOT;
+  Object.assign(ball, newBall(), { x: bx, z: kind === 'penalty' ? 0 : z, lastSide: side });
+  let taker: number;
   if (kind === 'kickoff') {
     m.players.forEach((p) => {
+      if (p.off) return;
       const pf = attackDir(m, p.side);
-      const kx = Math.min(p.homeX * 0.92 - 1, -1);
-      let px = kx;
+      let px = Math.min(p.homeX * 0.92 - 1, -1);
       const pz = p.homeZ;
       // The other team stays outside the centre circle.
       if (p.side !== side && len(px, pz) < CIRCLE_RADIUS + 0.5) px = -(CIRCLE_RADIUS + 1);
@@ -144,24 +248,29 @@ const setRestart = (m: MatchState, kind: RestartKind, side: Side, x: number, z: 
       Object.assign(p, { action: 'none', busy: 0, noTouch: 0 });
       if (p.side === side && p.num === 10) Object.assign(p, { x: -3 * f, z: -4 });
     });
-    taker = teammates(m, side).find((i) => m.players[i].num === 9) ?? 0;
+    const nine = teammates(m, side).find((i) => m.players[i].num === 9);
+    taker = nine ?? teammates(m, side).filter((i) => m.players[i].role !== 'gk')[0];
   } else if (kind === 'goalkick') {
     taker = keeperOf(m, side);
+  } else if (kind === 'penalty') {
+    taker = teammates(m, side)
+      .filter((i) => m.players[i].role !== 'gk')
+      .reduce((a, b) => (m.players[a].skill >= m.players[b].skill ? a : b));
   } else {
     taker = teammates(m, side)
       .filter((i) => m.players[i].role !== 'gk')
       .reduce((a, b) => (dist(m.players[a], ball) <= dist(m.players[b], ball) ? a : b));
   }
   const t = m.players[taker];
-  // The taker stands behind the ball, facing into the pitch.
-  const inX = kind === 'goalkick' || kind === 'kickoff' ? f : -Math.sign(x) || f;
-  let inZ = 0;
-  if (kind === 'throw') inZ = -Math.sign(z);
-  else if (kind === 'corner') inZ = -Math.sign(z) * 0.6;
-  const a = datan2(inZ, kind === 'throw' ? 0 : inX);
+  // The taker stands behind the ball, facing into the pitch (or at goal).
+  let a: number;
+  if (kind === 'throw') a = datan2(-Math.sign(z), 0);
+  else if (kind === 'corner') a = datan2(-Math.sign(z) * 0.6, -Math.sign(bx) || f);
+  else if (kind === 'freekick' || kind === 'penalty') a = datan2(-ball.z, goalX(m, side) - ball.x);
+  else a = datan2(0, f);
   Object.assign(t, {
-    x: x - dcos(a) * 0.6,
-    z: z - dsin(a) * 0.6,
+    x: ball.x - dcos(a) * 0.6,
+    z: ball.z - dsin(a) * 0.6,
     vx: 0,
     vz: 0,
     face: a,
@@ -169,13 +278,63 @@ const setRestart = (m: MatchState, kind: RestartKind, side: Side, x: number, z: 
     busy: 0,
   });
   if (kind === 'throw') ball.y = 1.9;
-  m.restart = { kind, side, x, z, taker };
+
+  const other = (1 - side) as Side;
+  if (kind === 'freekick' || kind === 'corner')
+    clearCircle(m, other, ball.x, ball.z, WALL_DISTANCE);
+  if (kind === 'freekick' && len(goalX(m, side) - ball.x, ball.z) < FREEKICK_RANGE) {
+    // A wall of three on the line from the ball to the goal.
+    const gx = goalX(m, side);
+    const d = len(gx - ball.x, -ball.z) || 1;
+    const ux = (gx - ball.x) / d;
+    const uz = -ball.z / d;
+    teammates(m, other)
+      .filter((i) => m.players[i].role !== 'gk')
+      .sort((i, j) => dist(m.players[i], ball) - dist(m.players[j], ball))
+      .slice(0, 3)
+      .forEach((i, k) => {
+        const p = m.players[i];
+        Object.assign(p, {
+          x: ball.x + ux * WALL_DISTANCE - uz * (k - 1) * 0.75,
+          z: ball.z + uz * WALL_DISTANCE + ux * (k - 1) * 0.75,
+          vx: 0,
+          vz: 0,
+          face: a + Math.PI,
+        });
+      });
+  }
+  if (kind === 'penalty') {
+    // Everyone but the taker and the keeper out of the box, behind the ball.
+    const gx = goalX(m, side);
+    m.players.forEach((p, i) => {
+      if (p.off || i === taker) return;
+      if (p.role === 'gk' && p.side === other) {
+        Object.assign(p, { x: gx - f * 0.3, z: 0, vx: 0, vz: 0, face: a + Math.PI });
+        return;
+      }
+      if (Math.abs(p.x - gx) < BOX_DEPTH + 1 && Math.abs(p.z) < BOX_HALF_WIDTH + 1)
+        Object.assign(p, { x: gx - f * (BOX_DEPTH + 2), vx: 0, vz: 0 });
+    });
+  }
+  m.restart = { kind, side, x: ball.x, z: ball.z, taker };
   m.phase = 'restart';
   m.wait = RESTART_WAIT[kind];
-  m.charge = [0, 0];
-  m.chargeKind = [undefined, undefined];
+  m.people.forEach((person) => {
+    person.charge = 0;
+    person.chargeKind = undefined;
+    person.queued = undefined;
+  });
   m.events.push({ type: 'out', kind });
 };
+
+// The referee's restarts, with the longer wait a decision needs.
+const restartFor: RestartFor = (m, kind, side, x, z) => {
+  setRestart(m, kind, side, x, z);
+  m.wait += CALL_WAIT;
+};
+
+// Which players people start on: the forwards first, then midfield.
+const START_ORDER = [9, 10, 8, 7, 11, 5, 6, 2, 3, 4];
 
 export const createMatch = (setup: MatchSetup): MatchState => {
   const m: MatchState = {
@@ -188,17 +347,15 @@ export const createMatch = (setup: MatchSetup): MatchState => {
     phase: 'restart',
     wait: 0,
     restart: undefined,
+    call: undefined,
     players: [],
+    officials: newOfficials(),
     ball: newBall(),
-    control: [9, 20],
-    charge: [0, 0],
-    chargeKind: [undefined, undefined],
-    prev: [NO_INPUT, NO_INPUT],
+    people: [],
     think: [0, 0],
     aim: [0, Math.PI],
-    queued: [undefined, undefined],
-    preview: [-1, -1],
     scorers: [],
+    cards: [],
     events: [],
   };
   ([0, 1] as Side[]).forEach((side) => {
@@ -206,6 +363,12 @@ export const createMatch = (setup: MatchSetup): MatchState => {
     FORMATION.forEach((slot, k) =>
       m.players.push(newPlayer(m, side, slot, team.rating, k * 31 + side * 500))
     );
+  });
+  const taken: [number, number] = [0, 0];
+  m.people = setup.slots.map((side) => {
+    const num = START_ORDER[taken[side] % START_ORDER.length];
+    taken[side] += 1;
+    return newPerson(m.players.findIndex((p) => p.side === side && p.num === num));
   });
   setRestart(m, 'kickoff', 0, 0, 0);
   m.events = [{ type: 'whistle', kind: 'start' }];
@@ -226,7 +389,11 @@ const speedOf = (p: Player, sprint: boolean, withBall: boolean) => {
   return (base + extra * p.pace) * (withBall ? WITH_BALL : 1);
 };
 
-// A standing tackle: wins the ball or leaves the tackler stumbling.
+const callFoul = (m: MatchState, offender: number, victim: number, kind: FoulKind) =>
+  foul(m, offender, victim, kind, restartFor);
+
+// A standing tackle: wins the ball, or leaves the tackler stumbling (and now and then the
+// referee calls it a foul).
 const standingTackle = (m: MatchState, i: number, nudge: number, range = 1.5) => {
   const p = m.players[i];
   const { ball } = m;
@@ -245,12 +412,15 @@ const standingTackle = (m: MatchState, i: number, nudge: number, range = 1.5) =>
     ball.vz = fz * 3 + p.vz * 0.5;
     ball.lastSide = p.side;
     ball.lastPlayer = i;
+    ball.offside = [];
     m.players[loser].noTouch = 30;
-  } else {
-    p.busy = STUMBLE_TICKS;
-    p.action = 'fall';
-    p.noTouch = 30;
+    return;
   }
+  p.busy = STUMBLE_TICKS;
+  p.action = 'fall';
+  p.noTouch = 30;
+  const kind = dist(p, c) < 1.2 ? judgeStand(m) : undefined;
+  if (kind) callFoul(m, i, ball.owner, kind);
 };
 
 const startSlide = (m: MatchState, i: number, dx: number, dz: number) => {
@@ -268,46 +438,48 @@ const startSlide = (m: MatchState, i: number, dx: number, dz: number) => {
 // or shot), pass and through ball are played on the press, shoot and lob charge while held and
 // go on release. Without it, pass switches player, shoot slides in and through tackles (holding
 // it presses, in step).
-const personActs = (m: MatchState, side: Side, input: Input): void => {
-  const before = m.prev[side];
-  const i = m.control[side];
+const personActs = (m: MatchState, s: number, input: Input, taken: number[]): void => {
+  const person = m.people[s];
+  const side = m.setup.slots[s];
+  const before = person.prev;
+  const i = person.control;
   const p = m.players[i];
   const { ball } = m;
   const dir = stick(input);
   const [dx, dz] = dir ?? faceVector(p);
   const mine = ball.owner === i;
   const incoming = ball.owner < 0 && (ball.target === i || dist(p, ball) < INCOMING);
-  m.preview[side] = -1;
+  person.preview = -1;
 
   if ((mine || incoming) && p.busy === 0) {
-    if (pressed(input, before, 'pass'))
-      m.queued[side] = { key: 'pass', until: m.tick + QUEUE_TICKS };
-    else if (pressed(input, before, 'through'))
-      m.queued[side] = { key: 'through', until: m.tick + QUEUE_TICKS };
+    const aim = { mx: input.mx, mz: input.mz, until: m.tick + QUEUE_TICKS };
+    if (pressed(input, before, 'pass')) person.queued = { key: 'pass', ...aim };
+    else if (pressed(input, before, 'through')) person.queued = { key: 'through', ...aim };
     (['shoot', 'lob'] as const).forEach((key) => {
-      if (m.charge[side] === 0 && pressed(input, before, key)) {
-        m.charge[side] = 1;
-        m.chargeKind[side] = key;
+      if (person.charge === 0 && pressed(input, before, key)) {
+        person.charge = 1;
+        person.chargeKind = key;
       }
     });
-    const kind = m.chargeKind[side];
-    if (kind && input[kind] && m.charge[side] < CHARGE_MAX) m.charge[side] += 1;
+    const kind = person.chargeKind;
+    if (kind && input[kind] && person.charge < CHARGE_MAX) person.charge += 1;
     if (!mine) return;
 
-    const queued = m.queued[side];
-    m.queued[side] = undefined;
+    const { queued } = person;
+    person.queued = undefined;
     if (queued && queued.until >= m.tick) {
-      m.charge[side] = 0;
-      m.chargeKind[side] = undefined;
+      person.charge = 0;
+      person.chargeKind = undefined;
       const through = queued.key === 'through';
-      const j = pickReceiver(m, i, dx, dz, through ? 50 : 45);
+      const [qx, qz] = dir ?? stick({ ...input, mx: queued.mx, mz: queued.mz }) ?? [dx, dz];
+      const j = pickReceiver(m, i, qx, qz, through ? 50 : 45);
       const speed = through ? 17 : 13;
       if (j >= 0) passTo(m, i, j, through ? 7 : 0);
-      else release(m, i, dx * speed, 0.3, dz * speed);
+      else release(m, i, qx * speed, 0.3, qz * speed);
       return;
     }
-    if (kind && (!input[kind] || m.charge[side] >= CHARGE_MAX)) {
-      const power = Math.min(1, m.charge[side] / CHARGE_FULL);
+    if (kind && (!input[kind] || person.charge >= CHARGE_MAX)) {
+      const power = Math.min(1, person.charge / CHARGE_FULL);
       if (kind === 'shoot') {
         // The stick's part across the pitch picks the spot between the posts.
         shoot(m, i, dir ? clamp(dir[1] * 1.2, -1, 1) : (rand(m) - 0.5) * 0.8, power);
@@ -317,8 +489,8 @@ const personActs = (m: MatchState, side: Side, input: Input): void => {
         const d = j >= 0 ? dist(p, m.players[j]) : 18 + power * 30;
         loft(m, i, a, d, j);
       }
-      m.charge[side] = 0;
-      m.chargeKind[side] = undefined;
+      person.charge = 0;
+      person.chargeKind = undefined;
       return;
     }
     // A keeper can't hold the ball for ever: it goes long.
@@ -326,18 +498,19 @@ const personActs = (m: MatchState, side: Side, input: Input): void => {
       loft(m, i, datan2(0, attackDir(m, side)), 40);
       return;
     }
-    m.preview[side] = pickReceiver(m, i, dx, dz);
+    person.preview = pickReceiver(m, i, dx, dz);
     return;
   }
 
-  m.charge[side] = 0;
-  m.chargeKind[side] = undefined;
-  m.queued[side] = undefined;
+  person.charge = 0;
+  person.chargeKind = undefined;
+  person.queued = undefined;
   if (ball.owner >= 0 && m.players[ball.owner].side === side) return;
 
   if (pressed(input, before, 'pass')) {
-    const next = chaserOf(m, side, i);
-    if (next >= 0) m.control[side] = next;
+    // The nearest teammate to the ball nobody else is playing.
+    const next = chaserOf(m, side, [i, ...taken]);
+    if (next >= 0) person.control = next;
   } else if (pressed(input, before, 'shoot')) {
     startSlide(m, i, dx, dz);
   } else if (pressed(input, before, 'through')) {
@@ -345,33 +518,78 @@ const personActs = (m: MatchState, side: Side, input: Input): void => {
   }
 };
 
-// Taking a restart: the person picks pass, lob or a cross with shoot (or the CPU does, after
-// the wait); the ball goes in and play is back on.
-const takeRestart = (m: MatchState, inputs: [Input, Input]) => {
+// Free kicks and penalties: does the CPU (or a person who didn't choose) shoot from here.
+const shootingRange = (m: MatchState, side: Side, x: number, z: number) =>
+  len(goalX(m, side) - x, z) < FREEKICK_RANGE && Math.abs(z) < 22;
+
+// The keeper picks a side before a penalty is struck: left, the middle or right.
+const keeperGuess = (m: MatchState, side: Side) => {
+  const k = m.players[keeperOf(m, side)];
+  const r = rand(m);
+  let z = 0;
+  if (r < 0.4) z = -2.6;
+  else if (r < 0.8) z = 2.6;
+  if (z !== 0) {
+    k.action = 'dive';
+    k.busy = DIVE_TICKS;
+    k.actX = 0;
+    k.actZ = Math.sign(z);
+    k.vz = Math.sign(z) * 6.5;
+  }
+};
+
+// Taking a restart: the person picks pass, lob, a cross, or (free kick, penalty) holds shoot
+// for a shot; the CPU picks after the wait. The ball goes in and play is back on.
+const takeRestart = (m: MatchState, inputs: Input[], by: number[]) => {
   const r = m.restart;
   if (!r) return;
   const i = r.taker;
   const p = m.players[i];
-  const human = m.setup.humans[r.side];
-  const input = inputs[r.side];
-  const before = m.prev[r.side];
+  const s = by[i];
   const f = attackDir(m, r.side);
-  let go: 'pass' | 'lob' | 'cross' | undefined;
-  if (human) {
+  const shotKind = r.kind === 'freekick' || r.kind === 'penalty';
+  let go: 'pass' | 'lob' | 'cross' | 'shot' | undefined;
+  let power = 0.7;
+  let aim = (rand(m) < 0.5 ? -1 : 1) * (0.5 + rand(m) * 0.45);
+  if (s >= 0) {
+    const person = m.people[s];
+    const input = inputs[s] ?? NO_INPUT;
+    const before = person.prev;
     const dir = stick(input);
-    if (dir) p.face = datan2(dir[1], dir[0]);
+    if (dir && r.kind !== 'penalty') p.face = datan2(dir[1], dir[0]);
     if (pressed(input, before, 'pass') || pressed(input, before, 'through')) r.queued = 'pass';
     else if (pressed(input, before, 'lob')) r.queued = 'lob';
-    else if (pressed(input, before, 'shoot')) r.queued = r.kind === 'corner' ? 'cross' : 'lob';
+    else if (pressed(input, before, 'shoot')) {
+      if (shotKind) {
+        person.charge = 1;
+        person.chargeKind = 'shoot';
+      } else r.queued = r.kind === 'corner' ? 'cross' : 'lob';
+    }
+    if (person.chargeKind === 'shoot') {
+      if (input.shoot && person.charge < CHARGE_MAX) person.charge += 1;
+      else r.queued = 'shot';
+    }
     if (m.wait > 0) return;
     go = r.queued;
-    if (!go && m.wait < -RESTART_PATIENCE) go = r.kind === 'corner' ? 'cross' : 'pass';
+    if (go === 'shot') {
+      power = Math.min(1, person.charge / CHARGE_FULL);
+      aim = dir ? clamp(dir[1] * 1.2, -1, 1) : (rand(m) - 0.5) * 0.6;
+      person.charge = 0;
+      person.chargeKind = undefined;
+    }
+    if (!go && m.wait < -RESTART_PATIENCE) {
+      if (r.kind === 'penalty') go = 'shot';
+      else go = r.kind === 'corner' ? 'cross' : 'pass';
+    }
   } else {
     if (m.wait > 0) return;
     go = 'pass';
     if (r.kind === 'corner') go = 'cross';
     else if (r.kind === 'goalkick') go = 'lob';
+    else if (r.kind === 'penalty') go = 'shot';
+    else if (r.kind === 'freekick' && shootingRange(m, r.side, r.x, r.z)) go = 'shot';
     if (r.kind === 'throw' && rand(m) < 0.3) go = 'lob';
+    power = 0.55 + rand(m) * 0.3;
   }
   if (!go) return;
 
@@ -379,13 +597,16 @@ const takeRestart = (m: MatchState, inputs: [Input, Input]) => {
   const busy = r.kind === 'throw' ? THROW_TICKS : undefined;
   const [fx, fz] = faceVector(p);
   m.ball.owner = -1;
-  if (go === 'cross') {
+  if (go === 'shot') {
+    if (r.kind === 'penalty') keeperGuess(m, (1 - r.side) as Side);
+    shoot(m, i, aim, power);
+  } else if (go === 'cross') {
     const gx = goalX(m, r.side);
     const tx = gx - f * (7 + rand(m) * 6);
     const tz = (rand(m) - 0.5) * 12;
     loft(m, i, datan2(tz - p.z, tx - p.x), len(tx - p.x, tz - p.z));
   } else {
-    let j = human ? pickReceiver(m, i, fx, fz, r.kind === 'throw' ? 25 : 60) : -1;
+    let j = s >= 0 ? pickReceiver(m, i, fx, fz, r.kind === 'throw' ? 25 : 60) : -1;
     if (j < 0) {
       const options = teammates(m, r.side).filter((k) => {
         const q = m.players[k];
@@ -403,12 +624,15 @@ const takeRestart = (m: MatchState, inputs: [Input, Input]) => {
       loft(m, i, datan2(q.z - p.z, q.x - p.x), Math.max(6, dist(p, q)), j);
     } else passTo(m, i, j);
   }
+  // No offside from a throw-in, a goal kick or a corner.
+  if (r.kind === 'throw' || r.kind === 'goalkick' || r.kind === 'corner') m.ball.offside = [];
   m.players[i].action = anim;
   if (busy) m.players[i].busy = busy;
   // A ball thrown or kicked must be touched by someone else first.
   m.players[i].noTouch = 20;
   m.phase = 'play';
   m.restart = undefined;
+  m.call = undefined;
   m.events.push({ type: 'whistle', kind: 'restart' });
 };
 
@@ -420,13 +644,13 @@ const movePlayer = (p: Player, want: Move, withBall: boolean) => {
   const dvx = tvx - p.vx;
   const dvz = tvz - p.vz;
   const dv = len(dvx, dvz);
-  const step = ACCEL * DT;
-  if (dv <= step) {
+  const stepSize = ACCEL * DT;
+  if (dv <= stepSize) {
     p.vx = tvx;
     p.vz = tvz;
   } else {
-    p.vx += (dvx / dv) * step;
-    p.vz += (dvz / dv) * step;
+    p.vx += (dvx / dv) * stepSize;
+    p.vz += (dvz / dv) * stepSize;
   }
   const v = len(p.vx, p.vz);
   if (v > 0.6) {
@@ -477,6 +701,7 @@ const goalScored = (m: MatchState, scoringSide: Side) => {
   m.wait = GOAL_WAIT;
   ball.owner = -1;
   ball.shot = false;
+  ball.offside = [];
   if (lastP && !own) {
     lastP.action = 'celebrate';
     lastP.busy = CELEBRATE_TICKS;
@@ -589,9 +814,13 @@ const moveBall = (m: MatchState) => {
   }
 };
 
-const gainBall = (m: MatchState, i: number) => {
+// Someone takes the ball. A person's receiver gets the first touch they steer: the body turns
+// part of the way toward where they point, so the ball sits ready to go there. A carrier no
+// person plays goes to the person who passed to them, or the nearest one on that side.
+const gainBall = (m: MatchState, i: number, inputs: Input[]) => {
   const { ball } = m;
   const p = m.players[i];
+  const passer = ball.credit;
   ball.owner = i;
   ball.lastSide = p.side;
   ball.lastPlayer = i;
@@ -601,51 +830,84 @@ const gainBall = (m: MatchState, i: number) => {
   ball.credit = i;
   ball.vy = 0;
   m.think[p.side] = 0;
-  if (m.setup.humans[p.side]) m.control[p.side] = i;
+  if (!sideHasPeople(m, p.side)) return;
+  let s = m.people.findIndex((person) => person.control === i);
+  if (s < 0) {
+    s = m.people.findIndex((person, k) => person.control === passer && m.setup.slots[k] === p.side);
+    if (s < 0) s = nearestSlot(m, p.side, p.x, p.z);
+    if (s >= 0) giveControl(m, s, i);
+  }
+  const dir = s >= 0 ? stick(inputs[s] ?? NO_INPUT) : undefined;
+  if (dir) {
+    let diff = datan2(dir[1], dir[0]) - p.face;
+    while (diff > Math.PI) diff -= 2 * Math.PI;
+    while (diff < -Math.PI) diff += 2 * Math.PI;
+    p.face += clamp(diff, -FIRST_TOUCH_TURN, FIRST_TOUCH_TURN);
+  }
+};
+
+// A sliding player meeting the ball, or the body of the player on it (a slide from behind
+// meets the legs first). Returns true when the referee called it a foul.
+const slideContact = (m: MatchState, i: number): boolean => {
+  const { ball } = m;
+  const p = m.players[i];
+  if (m.phase !== 'play') return false;
+  if (p.off || p.action !== 'slide' || p.busy < 6 || p.busy > SLIDE_TICKS - 3) return false;
+  const onCarrier = ball.owner >= 0 && dist(p, m.players[ball.owner]) < 1.0;
+  if (ball.y > 0.6 || (dist(p, ball) > 1.2 && !onCarrier)) return false;
+  if (ball.owner >= 0) {
+    const carrier = ball.owner;
+    const c = m.players[carrier];
+    if (c.side === p.side) return false;
+    const won = rand(m) < clamp(0.72 + (p.skill - c.skill) * 0.4, 0.3, 0.92);
+    const offence = judgeSlide(m, i, carrier, won);
+    m.events.push({ type: 'tackle', player: i, won });
+    p.busy = Math.min(p.busy, 12);
+    if (offence) {
+      c.action = 'fall';
+      c.busy = FALL_TICKS;
+      callFoul(m, i, carrier, offence);
+      return true;
+    }
+    if (!won) return false;
+    c.noTouch = 30;
+    if (rand(m) < 0.35) {
+      c.action = 'fall';
+      c.busy = FALL_TICKS;
+    }
+  }
+  if (ball.owner >= 0 && m.players[ball.owner].side === p.side) return false;
+  ball.owner = -1;
+  ball.vx = p.actX * 6 + (rand(m) - 0.5) * 2;
+  ball.vz = p.actZ * 6 + (rand(m) - 0.5) * 2;
+  ball.vy = 0.5;
+  ball.lastSide = p.side;
+  ball.lastPlayer = i;
+  ball.shot = false;
+  ball.offside = [];
+  p.noTouch = 10;
+  return false;
 };
 
 // Who touches a loose ball: keepers save or catch, heads meet high balls, feet take the rest.
-// A sliding player knocks the ball off a carrier.
-const contacts = (m: MatchState) => {
+// A sliding player knocks the ball off a carrier, fairly or not. The player a pass is meant for
+// reaches a little further and keeps harder balls more often.
+const contacts = (m: MatchState, inputs: Input[]) => {
   const { ball } = m;
   if (m.phase !== 'play') return;
 
-  // Slides.
-  m.players.forEach((p, i) => {
-    if (p.action !== 'slide' || p.busy < 6 || p.busy > SLIDE_TICKS - 3) return;
-    if (ball.y > 0.6 || dist(p, ball) > 1.2) return;
-    if (ball.owner >= 0) {
-      const c = m.players[ball.owner];
-      if (c.side === p.side) return;
-      const won = rand(m) < clamp(0.72 + (p.skill - c.skill) * 0.4, 0.3, 0.92);
-      m.events.push({ type: 'tackle', player: i, won });
-      if (!won) return;
-      c.noTouch = 30;
-      if (rand(m) < 0.35) {
-        c.action = 'fall';
-        c.busy = FALL_TICKS;
-      }
-    }
-    if (ball.owner >= 0 && m.players[ball.owner].side === p.side) return;
-    ball.owner = -1;
-    ball.vx = p.actX * 6 + (rand(m) - 0.5) * 2;
-    ball.vz = p.actZ * 6 + (rand(m) - 0.5) * 2;
-    ball.vy = 0.5;
-    ball.lastSide = p.side;
-    ball.lastPlayer = i;
-    ball.shot = false;
-    p.noTouch = 10;
-  });
+  // Slides: stop at the first that is called a foul.
+  if (m.players.some((_, i) => slideContact(m, i))) return;
 
-  if (ball.owner >= 0) return;
+  if (ball.owner >= 0 || m.phase !== 'play') return;
 
   let best = -1;
   let bestD = Infinity;
   m.players.forEach((p, i) => {
-    if (p.noTouch > 0 || p.action === 'fall' || p.action === 'celebrate') return;
+    if (p.off || p.noTouch > 0 || p.action === 'fall' || p.action === 'celebrate') return;
     const keeperHands = p.role === 'gk' && inOwnBox(m, p.side, ball.x, ball.z);
     const diving = p.action === 'dive';
-    let reach = REACH;
+    let reach = ball.target === i ? RECEIVE_REACH : REACH;
     let top = HEAD_MAX;
     if (keeperHands) {
       reach = diving ? DIVE_REACH : KEEPER_REACH;
@@ -665,7 +927,7 @@ const contacts = (m: MatchState) => {
 
   if (keeperHands) {
     if (ball.shot || rel > 12) {
-      const nudge = m.setup.humans[p.side] ? 0 : CPU[m.setup.difficulty].skill;
+      const nudge = sideHasPeople(m, p.side) ? 0 : CPU[m.setup.difficulty].skill;
       const save = clamp(0.62 + p.skill * 0.3 - (rel - 18) * 0.025 + nudge, 0.2, 0.95);
       if (rand(m) > save) {
         p.noTouch = 30;
@@ -686,11 +948,14 @@ const contacts = (m: MatchState) => {
         return;
       }
     }
-    gainBall(m, best);
+    if (touch(m, best, restartFor)) return;
+    gainBall(m, best, inputs);
     p.vx = 0;
     p.vz = 0;
     return;
   }
+
+  if (touch(m, best, restartFor)) return;
 
   if (ball.y > HEAD_MIN) {
     // A header: at goal when near it, otherwise cleared forward.
@@ -710,7 +975,10 @@ const contacts = (m: MatchState) => {
   }
 
   // A hard ball can bounce off the feet instead of being taken.
-  if (rel > 15 && rand(m) > 0.35 + p.skill * 0.4) {
+  const meant = ball.target === best;
+  const hard = meant ? RECEIVE_HARD : 15;
+  const keep = (meant ? 0.5 : 0.35) + p.skill * 0.4;
+  if (rel > hard && rand(m) > keep) {
     ball.vx = -ball.vx * 0.25 + p.vx;
     ball.vz = -ball.vz * 0.25 + p.vz;
     ball.vy = 1.5;
@@ -720,7 +988,7 @@ const contacts = (m: MatchState) => {
     p.noTouch = 12;
     return;
   }
-  gainBall(m, best);
+  gainBall(m, best, inputs);
 };
 
 // Keeps players from walking through each other.
@@ -730,51 +998,88 @@ const separate = (m: MatchState) => {
     for (let j = i + 1; j < ps.length; j += 1) {
       const a = ps[i];
       const b = ps[j];
-      const dx = b.x - a.x;
-      const dz = b.z - a.z;
-      const d2 = dx * dx + dz * dz;
-      if (d2 < 0.49 && d2 > 1e-6) {
-        const d = len(dx, dz);
-        const push = (0.7 - d) / 2;
-        a.x -= (dx / d) * push;
-        a.z -= (dz / d) * push;
-        b.x += (dx / d) * push;
-        b.z += (dz / d) * push;
+      if (!a.off && !b.off) {
+        const dx = b.x - a.x;
+        const dz = b.z - a.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 < 0.49 && d2 > 1e-6) {
+          const d = len(dx, dz);
+          const push = (0.7 - d) / 2;
+          a.x -= (dx / d) * push;
+          a.z -= (dz / d) * push;
+          b.x += (dx / d) * push;
+          b.z += (dz / d) * push;
+        }
       }
     }
   }
 };
 
-// Who each side controls: its ball carrier, or for a person the player they picked, switched
-// when someone else is clearly nearer the ball.
+// Who each person controls. The carrier and a restart's taker were given in gainBall and
+// below; a pass on its way to a teammate nobody plays goes to the passer's person. Alone on a
+// side, a person is switched when someone else is clearly nearer the ball, as before; with
+// several, each switches with the pass button, so nobody's player is taken from under them.
 const updateControl = (m: MatchState) => {
   const { ball } = m;
-  ([0, 1] as Side[]).forEach((side) => {
-    if (ball.owner >= 0 && m.players[ball.owner].side === side) {
-      m.control[side] = ball.owner;
+  const by = controllers(m);
+  m.people.forEach((person, s) => {
+    const side = m.setup.slots[s];
+    const current = m.players[person.control];
+    if (current.off) {
+      const next = chaserOf(
+        m,
+        side,
+        m.people.map((q) => q.control)
+      );
+      if (next >= 0) person.control = next;
+    }
+    if (m.phase === 'restart' && m.restart?.side === side && by[m.restart.taker] < 0) {
+      if (nearestSlot(m, side, m.restart.x, m.restart.z) === s) {
+        giveControl(m, s, m.restart.taker);
+        by[m.restart.taker] = s;
+      }
       return;
     }
-    if (m.phase === 'restart' && m.restart?.side === side) {
-      m.control[side] = m.restart.taker;
-      return;
-    }
-    const current = m.players[m.control[side]];
-    const nearest = chaserOf(m, side);
-    if (nearest < 0) return;
-    if (!m.setup.humans[side]) {
-      m.control[side] = nearest;
-      return;
-    }
+    if (ball.owner >= 0 && m.players[ball.owner].side === side) return;
     if (ball.target >= 0 && m.players[ball.target].side === side) {
-      m.control[side] = ball.target;
+      if (by[ball.target] < 0 && person.control === ball.credit) {
+        giveControl(m, s, ball.target);
+        by[ball.target] = s;
+      }
       return;
     }
-    if (current.role === 'gk' || dist(current, ball) > dist(m.players[nearest], ball) + 12)
-      m.control[side] = nearest;
+    const alone = slotsOf(m, side).length === 1;
+    const others = m.people.filter((q, k) => k !== s).map((q) => q.control);
+    const nearest = chaserOf(m, side, others);
+    if (nearest < 0) return;
+    const keeperIdle = current.role === 'gk' && ball.owner !== person.control;
+    if (keeperIdle || (alone && dist(current, ball) > dist(m.players[nearest], ball) + 12))
+      person.control = nearest;
   });
 };
 
-export const step = (m: MatchState, inputs: [Input, Input]): void => {
+// A person steering toward a pass meant for them keeps the stick; when they aren't steering,
+// or steering roughly the right way, the player drifts to meet the ball.
+const receiveMove = (
+  m: MatchState,
+  i: number,
+  dir: [number, number] | undefined,
+  sprint: boolean
+): Move | undefined => {
+  const { ball } = m;
+  if (ball.owner >= 0 || ball.target !== i) return undefined;
+  const p = m.players[i];
+  const [bx, bz] = ballAhead(m, 0.25);
+  if (dist(p, { x: bx, z: bz }) > 12) return undefined;
+  const meet = toward(p, bx, bz);
+  if (!dir) return { x: meet.x * 0.75, z: meet.z * 0.75, sprint: false };
+  const x = dir[0] * (1 - RECEIVE_ASSIST) + meet.x * RECEIVE_ASSIST;
+  const z = dir[1] * (1 - RECEIVE_ASSIST) + meet.z * RECEIVE_ASSIST;
+  const l = len(x, z) || 1;
+  return { x: x / l, z: z / l, sprint };
+};
+
+export const step = (m: MatchState, inputs: Input[]): void => {
   m.events = [];
   m.tick += 1;
   const { ball } = m;
@@ -796,27 +1101,29 @@ export const step = (m: MatchState, inputs: [Input, Input]): void => {
   }
   if (m.phase === 'over') {
     m.players.forEach((p) => moveBusy(p));
-    m.prev = inputs;
+    m.people.forEach((person, s) => {
+      person.prev = inputs[s] ?? NO_INPUT;
+    });
     return;
   }
 
   updateControl(m);
+  const by = controllers(m);
 
   const chasers: [number, number] = [-1, -1];
   ([0, 1] as Side[]).forEach((side) => {
     if (ball.owner >= 0 && m.players[ball.owner].side === side) return;
-    const human = m.setup.humans[side];
-    const skip = human ? m.control[side] : -1;
-    const c = chaserOf(m, side, skip);
-    // A person's teammates help press only when the person's player is far from the ball.
-    if (human && dist(m.players[m.control[side]], ball) < 9) return;
-    chasers[side] = c;
+    const mine = slotsOf(m, side).map((s) => m.people[s].control);
+    // A person's teammates help press only when no person's player is near the ball.
+    if (mine.some((i) => dist(m.players[i], ball) < 9)) return;
+    chasers[side] = chaserOf(m, side, mine);
   });
 
   const restart = m.phase === 'restart' ? m.restart : undefined;
-  const live = m.phase === 'play';
+  const wall = restart?.kind === 'freekick' || restart?.kind === 'penalty';
 
   m.players.forEach((p, i) => {
+    if (p.off) return;
     if (p.noTouch > 0) p.noTouch -= 1;
     if (p.busy > 0) {
       p.busy -= 1;
@@ -825,31 +1132,37 @@ export const step = (m: MatchState, inputs: [Input, Input]): void => {
       return;
     }
     const { side } = p;
-    const human = m.setup.humans[side] && m.control[side] === i;
+    const s = by[i];
     const hasBall = ball.owner === i;
     let want: Move = { x: 0, z: 0, sprint: false };
 
-    if (restart && restart.taker === i) {
+    if (restart && (restart.taker === i || wall || restart.kind === 'penalty')) {
+      // The taker waits on the ball; at a free kick or penalty everyone holds their place.
       want = { x: 0, z: 0, sprint: false };
     } else if (m.phase === 'goal' || m.phase === 'halftime') {
       want = toward(p, p.x * 0.98, p.z * 0.98);
-    } else if (human) {
-      const input = inputs[side];
-      if (live) personActs(m, side, input);
+    } else if (s >= 0) {
+      const input = inputs[s] ?? NO_INPUT;
+      const liveNow = m.phase === 'play';
+      const others = m.people.filter((_, k) => k !== s).map((q) => q.control);
+      if (liveNow) personActs(m, s, input, others);
       const dir = stick(input);
       const theirs = ball.owner < 0 || m.players[ball.owner].side !== side;
-      if (live && theirs && input.through && ball.target < 0) want = press(m, i, input.sprint);
+      const receive = liveNow ? receiveMove(m, i, dir, input.sprint) : undefined;
+      if (receive) want = receive;
+      else if (liveNow && theirs && input.through && ball.target < 0)
+        want = press(m, i, input.sprint);
       else if (dir) want = { x: dir[0], z: dir[1], sprint: input.sprint };
     } else if (p.role === 'gk') {
       want = keeper(m, i);
-    } else if (hasBall && live) {
+    } else if (hasBall && m.phase === 'play') {
       want = cpuCarrier(m, i);
     } else {
       want = offBall(m, i, chasers);
-      if (live && !m.setup.humans[side]) {
+      if (m.phase === 'play' && !sideHasPeople(m, side)) {
         const t = cpuTackle(m, i);
         if (t === 'stand') standingTackle(m, i, CPU[m.setup.difficulty].skill);
-        else if (t === 'slide') {
+        else if (t === 'slide' && ball.owner >= 0) {
           const c = m.players[ball.owner];
           startSlide(m, i, c.x + c.vx * 0.3 - p.x, c.z + c.vz * 0.3 - p.z);
         }
@@ -860,21 +1173,27 @@ export const step = (m: MatchState, inputs: [Input, Input]): void => {
       const f = attackDir(m, side);
       if ((p.x + want.x) * f > -0.5 && !(side === restart.side && p.num === 10)) want.x = 0;
     }
-    if (p.busy > 0) return;
-    movePlayer(p, want, ball.owner === i);
+    if (p.busy === 0) movePlayer(p, want, ball.owner === i);
   });
 
   m.players.forEach((p) => {
+    if (p.off) return;
     p.x += p.vx * DT;
     p.z += p.vz * DT;
     p.x = clamp(p.x, -HALF_LENGTH - PITCH_MARGIN, HALF_LENGTH + PITCH_MARGIN);
     p.z = clamp(p.z, -HALF_WIDTH - PITCH_MARGIN, HALF_WIDTH + PITCH_MARGIN);
   });
   separate(m);
+  if (m.phase === 'restart' && m.restart && m.restart.kind !== 'throw') {
+    const r = m.restart;
+    if (r.kind === 'freekick' || r.kind === 'corner')
+      clearCircle(m, (1 - r.side) as Side, r.x, r.z, WALL_DISTANCE - 0.5);
+  }
 
-  if (m.phase === 'restart') takeRestart(m, inputs);
+  if (m.phase === 'restart') takeRestart(m, inputs, controllers(m));
   if (m.phase !== 'restart') moveBall(m);
-  contacts(m);
+  contacts(m, inputs);
+  moveOfficials(m);
 
   if (m.phase === 'play' || m.phase === 'restart') {
     if (m.think[0] > 0) m.think[0] -= 1;
@@ -891,7 +1210,9 @@ export const step = (m: MatchState, inputs: [Input, Input]): void => {
       ball.owner = -1;
     }
   }
-  m.prev = inputs;
+  m.people.forEach((person, s) => {
+    person.prev = inputs[s] ?? NO_INPUT;
+  });
 };
 
 export const minuteOf = (m: MatchState): number => Math.floor(m.clock / 60);

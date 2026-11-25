@@ -45,7 +45,7 @@ export const toward = (p: Player, tx: number, tz: number, sprint = false): Move 
 };
 
 // The ball, a moment ahead, for whoever runs to meet it.
-const ballAhead = (m: MatchState, t: number): [number, number] => {
+export const ballAhead = (m: MatchState, t: number): [number, number] => {
   const { ball } = m;
   return [ball.x + ball.vx * t, ball.z + ball.vz * t];
 };
@@ -70,13 +70,15 @@ export const shapeSpot = (m: MatchState, i: number): [number, number] => {
 };
 
 // The outfield player of `side` nearest to where the ball is going.
-export const chaserOf = (m: MatchState, side: Side, skip = -1): number => {
+// `skip` leaves out players already taken (the person's own, or other people's).
+export const chaserOf = (m: MatchState, side: Side, skip: number | number[] = -1): number => {
+  const skips = Array.isArray(skip) ? skip : [skip];
   const [bx, bz] = ballAhead(m, 0.3);
   let best = -1;
   let bestD = Infinity;
   teammates(m, side).forEach((i) => {
     const p = m.players[i];
-    if (p.role === 'gk' || i === skip || p.action === 'fall') return;
+    if (p.role === 'gk' || skips.includes(i) || p.action === 'fall') return;
     const d = len(p.x - bx, p.z - bz);
     if (d < bestD) {
       bestD = d;
@@ -156,7 +158,7 @@ export const keeper = (m: MatchState, i: number): Move => {
     // Come out only when the keeper gets there first.
     const mine = dist(p, ball);
     const theirs = Math.min(
-      ...m.players.filter((o) => o.side !== p.side).map((o) => dist(o, ball))
+      ...m.players.filter((o) => o.side !== p.side && !o.off).map((o) => dist(o, ball))
     );
     if (mine < theirs + 1.5) return toward(p, ball.x, ball.z, true);
   }
@@ -215,7 +217,7 @@ export const cpuCarrier = (m: MatchState, i: number): Move => {
     let ax = (gx - p.x) / (toGoal || 1);
     let az = -p.z / (toGoal || 1);
     m.players.forEach((o) => {
-      if (o.side === side) return;
+      if (o.side === side || o.off) return;
       const d = dist(o, p);
       if (d > 6 || d < 0.01) return;
       ax += ((p.x - o.x) / d) * (6 - d) * 0.25;

@@ -7,67 +7,68 @@ import { Input, MatchSetup, NO_INPUT, Side } from '../engine/types';
 import { INPUT_DELAY, Netplay } from './netplay';
 import { SpectatorFeed } from './spectate';
 
-const SETUP: MatchSetup = {
+const setup = (slots: Side[]): MatchSetup => ({
   seed: 77,
   teams: ['brasil', 'argentina'],
-  humans: [true, true],
+  slots,
   halfMinutes: 2,
   difficulty: 'normal',
-};
+});
 
-// A player's keys over time: runs around and presses things, different for each side.
-const keysAt = (side: Side, frame: number): Input => {
-  const phase = Math.floor(frame / (40 + side * 13));
-  const a = ((phase * 2.39996 + side) % (2 * Math.PI)) - Math.PI;
+// A person's keys over time: runs around and presses things, different for each person.
+const keysAt = (slot: number, frame: number): Input => {
+  const phase = Math.floor(frame / (40 + slot * 13));
+  const a = ((phase * 2.39996 + slot) % (2 * Math.PI)) - Math.PI;
   return {
     mx: Math.round(Math.cos(a) * 100),
     mz: Math.round(Math.sin(a) * 100),
     sprint: phase % 3 === 0,
-    pass: frame % (29 + side * 7) < 3,
-    shoot: frame % (97 + side * 11) < 20,
+    pass: frame % (29 + slot * 7) < 3,
+    shoot: frame % (97 + slot * 11) < 20,
     through: frame % 151 < 2,
     lob: false,
   };
 };
 
-// Two players and a server between them: every message takes `lag` frames to arrive (a
-// different lag each way, plus jitter), as over a real connection.
-const playOnline = (frames: number, lag: [number, number]) => {
-  const server = createMatch(SETUP);
-  const pending: [Map<number, PackedInput>, Map<number, PackedInput>] = [new Map(), new Map()];
+// People and a server between them: every message takes some frames to arrive (a different
+// lag per person, plus jitter), as over a real connection.
+const playOnline = (frames: number, slots: Side[], lags: number[]) => {
+  const s = setup(slots);
+  const server = createMatch(s);
+  const n = slots.length;
+  const pending: Map<number, PackedInput>[] = slots.map(() => new Map());
   const queue: { at: number; deliver: () => void }[] = [];
-  const frameLog: [PackedInput, PackedInput][] = [];
+  const frameLog: PackedInput[][] = [];
   const hashes = new Map<number, number>();
   const mismatches: number[] = [];
   let now = 0;
   const players: Netplay[] = [];
-  const later = (side: Side, deliver: () => void) =>
-    queue.push({ at: now + lag[side] + ((now * 7 + side) % 3), deliver });
+  const later = (slot: number, deliver: () => void) =>
+    queue.push({ at: now + lags[slot] + ((now * 7 + slot) % 3), deliver });
 
-  const serverInput = (side: Side, t: number, packed: PackedInput) => {
-    pending[side].set(t, packed);
-    later((1 - side) as Side, () => players[1 - side].remoteInput(t, packed));
-    while (pending[0].has(server.tick + 1) && pending[1].has(server.tick + 1)) {
+  const serverInput = (slot: number, t: number, packed: PackedInput) => {
+    pending[slot].set(t, packed);
+    players.forEach((p, k) => {
+      if (k !== slot) later(k, () => p.remoteInput(slot, t, packed));
+    });
+    while (pending.every((m) => m.has(server.tick + 1))) {
       const t1 = server.tick + 1;
-      const pair: [PackedInput, PackedInput] = [
-        pending[0].get(t1) as PackedInput,
-        pending[1].get(t1) as PackedInput,
-      ];
-      step(server, [unpackInput(pair[0]), unpackInput(pair[1])]);
-      frameLog.push(pair);
+      const frame = pending.map((m) => m.get(t1) as PackedInput);
+      step(server, frame.map(unpackInput));
+      frameLog.push(frame);
       if (server.tick % 60 === 0) hashes.set(server.tick, hashMatch(server));
     }
   };
 
-  ([0, 1] as Side[]).forEach((side) => {
-    players[side] = new Netplay(side, createMatch(SETUP), {
-      sendInput: (t, packed) => later(side, () => serverInput(side, t, packed)),
+  for (let k = 0; k < n; k += 1) {
+    players[k] = new Netplay(k, createMatch(s), {
+      sendInput: (t, packed) => later(k, () => serverInput(k, t, packed)),
       sendHash: (t, hash) =>
-        later(side, () => {
+        later(k, () => {
           if (hashes.get(t) !== hash) mismatches.push(t);
         }),
     });
-  });
+  }
 
   let stalls = 0;
   for (now = 0; now < frames; now += 1) {
@@ -77,18 +78,16 @@ const playOnline = (frames: number, lag: [number, number]) => {
         queue.splice(queue.indexOf(q), 1);
         q.deliver();
       });
-    players.forEach((p, side) => {
-      if (p.advance(keysAt(side as Side, now)) === null) stalls += 1;
+    players.forEach((p, k) => {
+      if (p.advance(keysAt(k, now)) === null) stalls += 1;
     });
   }
-  return { server, players, frameLog, mismatches, stalls };
+  return { server, players, frameLog, mismatches, stalls, setup: s };
 };
 
 describe('football netplay', () => {
   it('ends with both players and the server on the same match', () => {
-    const { server, players, mismatches } = playOnline(1800, [2, 5]);
-    // Both are at most a few ticks ahead of the server: compare at the server's tick by
-    // replaying the server's inputs, then compare the confirmed parts.
+    const { server, players, mismatches } = playOnline(1800, [0, 1], [2, 5]);
     expect(mismatches).toEqual([]);
     players.forEach((p) => {
       expect(p.confirmed).toBeGreaterThan(1700);
@@ -97,16 +96,29 @@ describe('football netplay', () => {
     expect(players[0].resteps + players[1].resteps).toBeGreaterThan(0);
   });
 
+  it('keeps eight people, four a side, on the same match', () => {
+    const lags = [2, 3, 5, 4, 1, 6, 3, 2];
+    const { server, players, mismatches } = playOnline(1500, [0, 0, 0, 0, 1, 1, 1, 1], lags);
+    expect(mismatches).toEqual([]);
+    players.forEach((p) => expect(p.confirmed).toBeGreaterThan(1350));
+    // Each person played a different player of their side.
+    const controls = server.people.map((q) => q.control);
+    expect(new Set(controls).size).toBe(8);
+    server.people.forEach((q, k) =>
+      expect(server.players[q.control].side).toBe(server.setup.slots[k])
+    );
+  });
+
   it('matches a plain replay of the inputs the server confirmed', () => {
-    const { server, frameLog } = playOnline(1200, [3, 3]);
-    const replay = createMatch(SETUP);
-    frameLog.forEach(([a, b]) => step(replay, [unpackInput(a), unpackInput(b)]));
+    const { server, frameLog, setup: s } = playOnline(1200, [0, 1], [3, 3]);
+    const replay = createMatch(s);
+    frameLog.forEach((frame) => step(replay, frame.map(unpackInput)));
     expect(hashMatch(replay)).toBe(hashMatch(server));
   });
 
-  it('waits instead of running away when the other player stops sending', () => {
+  it('waits instead of running away when the others stop sending', () => {
     let sent = 0;
-    const p = new Netplay(0, createMatch(SETUP), {
+    const p = new Netplay(0, createMatch(setup([0, 1])), {
       sendInput: () => {
         sent += 1;
       },
@@ -119,10 +131,10 @@ describe('football netplay', () => {
   });
 
   it('lets a watcher who joins late see the same match', () => {
-    const { server, frameLog } = playOnline(900, [2, 4]);
+    const { server, frameLog, setup: s } = playOnline(900, [0, 0, 1], [2, 4, 3]);
     // The watcher gets the match at tick 300 and the rest as frames.
-    const at300 = createMatch(SETUP);
-    frameLog.slice(0, 300).forEach(([a, b]) => step(at300, [unpackInput(a), unpackInput(b)]));
+    const at300 = createMatch(s);
+    frameLog.slice(0, 300).forEach((frame) => step(at300, frame.map(unpackInput)));
     const feed = new SpectatorFeed(at300);
     feed.push(301, frameLog.slice(300, 600));
     // A batch sent twice, or overlapping, changes nothing.

@@ -47,10 +47,38 @@ export const inOwnBox = (m: MatchState, side: Side, x: number, z: number): boole
   return Math.abs(x - gx) < BOX_DEPTH && Math.abs(z) < BOX_HALF_WIDTH;
 };
 
+// Players still on the pitch: someone sent off is out of every choice.
 export const teammates = (m: MatchState, side: Side): number[] =>
-  m.players.flatMap((p, i) => (p.side === side ? [i] : []));
+  m.players.flatMap((p, i) => (p.side === side && !p.off ? [i] : []));
 
-export const keeperOf = (m: MatchState, side: Side): number => (side === 0 ? 0 : 11);
+// The side's keeper: the one in the role (a sent-off keeper's role passes to an outfielder).
+export const keeperOf = (m: MatchState, side: Side): number => {
+  const i = m.players.findIndex((p) => p.side === side && p.role === 'gk' && !p.off);
+  return i >= 0 ? i : teammates(m, side)[0];
+};
+
+// The attackers of `side` in an offside position now: in the other half, past the ball and
+// past the second-last defender. A pass or shot taken now catches them if they play the ball
+// next.
+export const offsidePositions = (
+  m: MatchState,
+  side: Side,
+  kicker: number
+): [number, number, number][] => {
+  const f = attackDir(m, side);
+  const defenders = m.players
+    .filter((p) => p.side !== side && !p.off)
+    .map((p) => p.x * f)
+    .sort((a, b) => b - a);
+  const line = Math.max(defenders[1] ?? -Infinity, m.ball.x * f);
+  return teammates(m, side).flatMap((j) => {
+    const q = m.players[j];
+    const x = q.x * f;
+    return j !== kicker && x > 0 && x > line + 0.2
+      ? [[j, q.x, q.z] as [number, number, number]]
+      : [];
+  });
+};
 
 export const faceVector = (p: Player): [number, number] => [dcos(p.face), dsin(p.face)];
 
@@ -88,6 +116,7 @@ export const release = (
   ball.target = opts.target ?? -1;
   ball.held = 0;
   ball.credit = i;
+  ball.offside = offsidePositions(m, p.side, i);
   p.action = opts.anim ?? 'kick';
   p.busy = opts.busy ?? KICK_TICKS;
   p.noTouch = 14;
@@ -186,7 +215,7 @@ export const laneSpace = (m: MatchState, p: Player, q: Player): number => {
   const l2 = lx * lx + lz * lz || 1;
   let space = 30;
   m.players.forEach((o) => {
-    if (o.side === p.side) return;
+    if (o.side === p.side || o.off) return;
     const t = clamp(((o.x - p.x) * lx + (o.z - p.z) * lz) / l2, 0, 1);
     space = Math.min(space, len(p.x + lx * t - o.x, p.z + lz * t - o.z));
   });
@@ -196,7 +225,7 @@ export const laneSpace = (m: MatchState, p: Player, q: Player): number => {
 export const nearestOpponent = (m: MatchState, p: Player): number => {
   let best = Infinity;
   m.players.forEach((o) => {
-    if (o.side !== p.side) best = Math.min(best, dist(o, p));
+    if (o.side !== p.side && !o.off) best = Math.min(best, dist(o, p));
   });
   return best;
 };

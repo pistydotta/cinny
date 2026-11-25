@@ -32,10 +32,10 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     id: '2026-11-football',
     items: () => [
       {
-        title: tr('whats_new.football_title', 'Football in the Games tab'),
+        title: tr('whats_new.football_title', 'FIFUMA in the Games tab'),
         body: tr(
           'whats_new.football_body',
-          'A 3D football match with the 2026 Brasileirão clubs and national teams. Play against the CPU on three levels, with a friend on the same computer, or online: create a match, send the link, and anyone can watch from the stands and send cheers.'
+          'A 3D football match with the 2026 Brasileirão clubs and national teams, with a referee, linesmen, fouls, cards, offside and penalties. Play against the CPU on three levels, with a friend on the same computer, or online up to four a side: create a match, send the link, and anyone can watch from the stands and send cheers.'
         ),
       },
     ],

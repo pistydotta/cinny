@@ -346,3 +346,49 @@ export const MatchRow = style({
 });
 
 export const MatchRowText = style({ flexGrow: 1, minWidth: 0 });
+
+export const RedCards = style({ display: 'inline-flex', gap: toRem(2), margin: `0 ${toRem(4)}` });
+
+export const RedCard = style({
+  display: 'inline-block',
+  width: toRem(7),
+  height: toRem(10),
+  borderRadius: toRem(1),
+  background: game.Critical,
+});
+
+export const CallBox = style({
+  position: 'absolute',
+  top: toRem(64),
+  left: '50%',
+  transform: 'translateX(-50%)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: forgeSpace.S100,
+  padding: `${forgeSpace.S200} ${forgeSpace.S500}`,
+  borderRadius: forgeRadius.card,
+  background: tint(game.Bg, 85),
+  boxShadow: forgeInset(game.Line),
+});
+
+export const CallTitle = style({
+  ...forgeType.display,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+});
+
+const card = {
+  display: 'inline-block',
+  width: toRem(14),
+  height: toRem(19),
+  marginRight: forgeSpace.S200,
+  verticalAlign: 'middle',
+  borderRadius: toRem(2),
+} as const;
+
+export const CardYellow = style({ ...card, background: game.Money });
+
+export const CardRed = style({ ...card, background: game.Critical });
+
+export const SeatName = style({ ...forgeType.body });

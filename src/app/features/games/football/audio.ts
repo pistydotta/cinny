@@ -16,7 +16,7 @@ const noiseBuffer = (ctx: AudioContext, seconds: number): AudioBuffer => {
 };
 
 // Blasts of the whistle: one to start, two at half time, three at the end.
-const WHISTLES = { start: 1, restart: 0, half: 2, end: 3 } as const;
+const WHISTLES = { start: 1, restart: 0, foul: 1, half: 2, end: 3 } as const;
 
 export class FootballAudio {
   private ctx: AudioContext;

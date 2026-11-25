@@ -55,7 +55,16 @@ export const SLIDE_SPEED = 8.5;
 // Pauses, in ticks.
 export const GOAL_WAIT = 200;
 export const HALFTIME_WAIT = 150;
-export const RESTART_WAIT = { kickoff: 70, throw: 45, corner: 80, goalkick: 60 } as const;
+export const RESTART_WAIT = {
+  kickoff: 70,
+  throw: 45,
+  corner: 80,
+  goalkick: 60,
+  freekick: 110,
+  penalty: 160,
+} as const;
+// A card or a flag holds the restart a little longer, so people see it.
+export const CALL_WAIT = 70;
 // A person taking a restart has this long before the game takes it for them.
 export const RESTART_PATIENCE = 360;
 export const KEEPER_HOLD = 70;
@@ -98,3 +107,33 @@ export const CPU: Record<
   normal: { think: 9, skill: 0, tackle: 0.22, shootRange: 22 },
   hard: { think: 5, skill: 0.1, tackle: 0.32, shootRange: 25 },
 };
+
+// Fouls (referee.ts): a slide that misses the ball but meets the carrier is a foul, more so
+// from behind; a failed standing tackle sometimes is. The chances of each card follow.
+export const FOUL = {
+  slideMiss: 0.85,
+  slideBehind: 0.55,
+  stand: 0.25,
+  yellowSlide: 0.4,
+  yellowBehind: 0.6,
+  redBehind: 0.08,
+  yellowStand: 0.08,
+  // Stopping a clear run at goal: last defender, carrier heading in, near enough.
+  redChance: 0.5,
+};
+export const WALL_DISTANCE = 9.15;
+export const PENALTY_SPOT = 11;
+// Free kicks within this of the goal are shot at by the CPU, and get a wall.
+export const FREEKICK_RANGE = 28;
+
+// Officials run at these speeds; linesmen keep to their touchline, a step off the pitch.
+export const OFFICIAL_SPEED = 6.5;
+export const LINESMAN_OFFSET = 1.5;
+
+// Receiving a pass: the player it's meant for reaches a little further, keeps harder balls more
+// often, and when the person isn't steering drifts to meet it. Steering always wins.
+export const RECEIVE_REACH = 1.0;
+export const RECEIVE_HARD = 18;
+export const RECEIVE_ASSIST = 0.35;
+// The first touch turns the body this far (radians) toward where the person points.
+export const FIRST_TOUCH_TURN = 1.2;

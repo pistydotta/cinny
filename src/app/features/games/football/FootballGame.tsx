@@ -114,7 +114,7 @@ function MatchScreen({
         createMatch({
           seed,
           teams: [home.id, away.id],
-          humans: [true, local],
+          slots: local ? [0, 1] : [0],
           halfMinutes: choices.halfMinutes,
           difficulty: choices.difficulty,
         })
@@ -126,8 +126,11 @@ function MatchScreen({
   const { canvasRef, runnerRef, hud, loading, failed, ended } = useMatchCanvas({
     source,
     kits,
-    people: [true, local],
-    sides: local ? ['p1', 'p2'] : ['p1', 'cpu'],
+    devices: local ? ['p1', 'p2'] : ['p1'],
+    mine: local ? [0, 1] : [0],
+    labels: local
+      ? [tr('football.player1', 'Player 1'), tr('football.player2', 'Player 2')]
+      : undefined,
     keys,
     graphics,
     inCall,
@@ -280,7 +283,6 @@ export function FootballGame({
           key={matchId}
           matchId={matchId}
           wanted={matchRole}
-          myTeam={choices.home}
           userId={userId}
           getToken={getToken}
           nameOf={nameOf}
@@ -290,7 +292,6 @@ export function FootballGame({
           inCall={inCall}
           optionsOpen={optionsOpen}
           onOptions={() => setOptionsOpen(true)}
-          onTeam={(home) => set({ home })}
           onLeave={onCloseMatch}
         />
         {options}
@@ -319,7 +320,7 @@ export function FootballGame({
   return (
     <div className={`${css.Page} ${LobbyScope}`}>
       <GameTopBar
-        title={tr('football.title', 'Football')}
+        title={tr('football.title', 'FIFUMA')}
         subtitle={tr('football.subtitle', 'Brasileirão and national teams')}
         onBack={onBack}
       />
@@ -340,24 +341,26 @@ export function FootballGame({
         <div className={css.Pickers}>
           <TeamPicker
             title={
-              choices.mode === 'local'
-                ? tr('football.player1', 'Player 1')
-                : tr('football.your_team', 'Your team')
+              {
+                local: tr('football.player1', 'Player 1'),
+                cpu: tr('football.your_team', 'Your team'),
+                online: tr('football.home_team', 'Home team'),
+              }[choices.mode]
             }
             value={choices.home}
             onChange={(home) => set({ home })}
           />
-          {choices.mode !== 'online' && (
-            <TeamPicker
-              title={
-                choices.mode === 'local'
-                  ? tr('football.player2', 'Player 2')
-                  : tr('football.opponent', 'Opponent')
-              }
-              value={choices.away}
-              onChange={(away) => set({ away })}
-            />
-          )}
+          <TeamPicker
+            title={
+              {
+                local: tr('football.player2', 'Player 2'),
+                cpu: tr('football.opponent', 'Opponent'),
+                online: tr('football.away_team', 'Away team'),
+              }[choices.mode]
+            }
+            value={choices.away}
+            onChange={(away) => set({ away })}
+          />
         </div>
 
         <div className={css.Row}>
@@ -373,6 +376,17 @@ export function FootballGame({
                   { value: 'normal', name: tr('football.normal', 'Normal') },
                   { value: 'hard', name: tr('football.hard', 'Hard') },
                 ]}
+              />
+            </>
+          )}
+          {choices.mode === 'online' && (
+            <>
+              <span className={css.Label}>{tr('football.per_side', 'People a side')}</span>
+              <Segmented<string>
+                label={tr('football.per_side', 'People a side')}
+                value={String(choices.perSide)}
+                onChange={(v) => set({ perSide: Number(v) })}
+                options={['1', '2', '3', '4'].map((n) => ({ value: n, name: n }))}
               />
             </>
           )}
@@ -392,7 +406,9 @@ export function FootballGame({
           <OnlineLobby
             api={api}
             userId={userId}
-            team={choices.home}
+            home={choices.home}
+            away={choices.away}
+            perSide={choices.perSide}
             halfMinutes={choices.halfMinutes}
             nameOf={nameOf}
             onOpen={(id, role) => {

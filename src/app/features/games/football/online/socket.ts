@@ -30,7 +30,7 @@ export class FootballSocket {
   peerRtt = 80;
 
   constructor(
-    private hello: () => { token: string; match: string; role: 'play' | 'watch'; team?: string },
+    private hello: () => { token: string; match: string; role: 'play' | 'watch'; side?: 0 | 1 },
     private onMessage: (msg: ServerMessage) => void,
     private onStatus: (status: SocketStatus) => void
   ) {

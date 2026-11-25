@@ -16,18 +16,32 @@ export type Hud = {
   half: 1 | 2;
   phase: Phase;
   paused: boolean;
-  // 0 to 1 while a person holds shoot or lob.
-  charge: [number, number];
+  // 0 to 1 while a person on this computer holds shoot or lob.
+  charge: number;
   restart: RestartKind | undefined;
   // The last goal, for the banner.
   goal: { side: Side; num: number; own: boolean } | undefined;
-  // Online: waiting for the other player's inputs (or, watching, for the next ones).
+  // Online: waiting for the other players' inputs (or, watching, for the next ones).
   waiting: boolean;
+  // The referee's decision on show (who, by shirt number and side), and red cards per side.
+  call:
+    | {
+        kind: 'foul' | 'offside' | 'penalty';
+        num: number;
+        side: Side;
+        card: 'yellow' | 'red' | undefined;
+        secondYellow: boolean;
+      }
+    | undefined;
+  reds: [number, number];
 };
 
 export type RunnerOptions = {
-  // Each side's input source: a person on this computer (P1 or P2 keys and pads) or the CPU.
-  sides: ['p1' | 'p2' | 'cpu', 'p1' | 'p2' | 'cpu'];
+  // The keys and pads of the people on this computer, in the order the source takes inputs:
+  // alone ['p1'], two people ['p1', 'p2'], watching [].
+  devices: ('p1' | 'p2')[];
+  // Their slots in the match (setup.slots), for the power bar.
+  mine: number[];
   onHud: (hud: Hud) => void;
   onEvents?: (events: GameEvent[], m: MatchState) => void;
   onEnd: (m: MatchState) => void;
@@ -41,6 +55,10 @@ const MAX_STEPS = 8;
 
 export class FootballRunner {
   private held = new Set<string>();
+
+  // Keys pressed since the last frame read the keyboard: a tap shorter than a frame (a slow
+  // computer, a quick finger) still counts once.
+  private tapped = new Set<string>();
 
   private raf = 0;
 
@@ -101,11 +119,12 @@ export class FootballRunner {
     // Arrows and space would scroll the page.
     e.preventDefault();
     this.held.add(e.code);
+    this.tapped.add(e.code);
   };
 
   setKeys(keys: KeySets): void {
     this.keys = keys;
-    const twoPeople = this.opts.sides[0] !== 'cpu' && this.opts.sides[1] !== 'cpu';
+    const twoPeople = this.opts.devices.length > 1;
     this.gameKeys = keysIn(twoPeople ? [keys.p1, keys.p2] : [keys.alone]);
     this.held.clear();
   }
@@ -148,18 +167,21 @@ export class FootballRunner {
   setPaused(paused: boolean): void {
     this.paused = paused;
     this.held.clear();
+    this.tapped.clear();
     this.pushHud(true);
   }
 
-  private inputFor(side: Side, pads: (Gamepad | null)[]): Input {
-    const who = this.opts.sides[side];
-    if (who === 'cpu') return NO_INPUT;
-    const twoPeople = this.opts.sides[0] !== 'cpu' && this.opts.sides[1] !== 'cpu';
+  private keysNow(): Set<string> {
+    return this.tapped.size ? new Set([...this.held, ...this.tapped]) : this.held;
+  }
+
+  private inputFor(who: 'p1' | 'p2', pads: (Gamepad | null)[]): Input {
+    const twoPeople = this.opts.devices.length > 1;
     if (who === 'p1') {
-      const keys = fromKeys(this.held, twoPeople ? this.keys.p1 : this.keys.alone);
+      const keys = fromKeys(this.keysNow(), twoPeople ? this.keys.p1 : this.keys.alone);
       return merge(keys, fromGamepad(pads[0]));
     }
-    return merge(fromKeys(this.held, this.keys.p2), fromGamepad(pads[twoPeople ? 1 : 0]));
+    return merge(fromKeys(this.keysNow(), this.keys.p2), fromGamepad(pads[twoPeople ? 1 : 0]));
   }
 
   private frame = (now: number) => {
@@ -171,9 +193,10 @@ export class FootballRunner {
     if (!frozen && !this.ended) {
       this.acc += dt;
       const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
-      const inputs: [Input, Input] = this.paused
-        ? [NO_INPUT, NO_INPUT]
-        : [this.inputFor(0, pads), this.inputFor(1, pads)];
+      const inputs: Input[] = this.opts.devices.map((d) =>
+        this.paused ? NO_INPUT : this.inputFor(d, pads)
+      );
+      this.tapped.clear();
       let steps = 0;
       while (this.acc >= DT && steps < MAX_STEPS) {
         const events = this.source.advance(inputs);
@@ -204,7 +227,7 @@ export class FootballRunner {
       if (this.source.match.phase === 'play' && this.goal) this.goal = undefined;
     }
     const m = this.source.match;
-    this.scene.render(m, frozen ? 0 : dt, m.control);
+    this.scene.render(m, frozen ? 0 : dt);
     this.watchFrames(now);
     if (now - this.hudAt > 100) this.pushHud(false);
   };
@@ -220,7 +243,24 @@ export class FootballRunner {
       half: m.half,
       phase: m.phase,
       paused: this.paused,
-      charge: [Math.min(1, m.charge[0] / CHARGE_FULL), Math.min(1, m.charge[1] / CHARGE_FULL)],
+      charge: Math.max(
+        0,
+        ...this.opts.mine.map((s) => Math.min(1, (m.people[s]?.charge ?? 0) / CHARGE_FULL))
+      ),
+      call:
+        m.phase === 'restart' && m.call
+          ? {
+              kind: m.call.kind,
+              num: m.players[m.call.player].num,
+              side: m.players[m.call.player].side,
+              card: m.call.kind === 'offside' ? undefined : m.call.card,
+              secondYellow: m.call.kind === 'offside' ? false : m.call.secondYellow,
+            }
+          : undefined,
+      reds: [0, 1].map((side) => m.players.filter((p) => p.side === side && p.off).length) as [
+        number,
+        number
+      ],
       restart: m.phase === 'restart' ? m.restart?.kind : undefined,
       goal: m.phase === 'goal' ? this.goal : undefined,
       // Half a second of waiting before saying so: a tick or two is normal online.

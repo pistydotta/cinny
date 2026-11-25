@@ -195,7 +195,7 @@ export function GamesHub({
                 <span className={css.GameGenre}>
                   {tr('games.hub.football_genre', 'Sports · Football')}
                 </span>
-                <span className={css.GameName}>{tr('football.title', 'Football')}</span>
+                <span className={css.GameName}>{tr('football.title', 'FIFUMA')}</span>
                 <span className={css.GameMeta}>
                   {tr(
                     'games.hub.football_meta',

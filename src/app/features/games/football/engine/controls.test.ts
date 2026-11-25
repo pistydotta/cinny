@@ -10,7 +10,7 @@ const live = (): MatchState => {
   const m = createMatch({
     seed: 3,
     teams: ['brasil', 'argentina'],
-    humans: [true, false],
+    slots: [0],
     halfMinutes: 4,
     difficulty: 'normal',
   });
@@ -38,7 +38,7 @@ describe('football controls', () => {
     Object.assign(m.players[me], { x: 0, z: 0, face: 0 });
     Object.assign(m.players[5], { x: 12, z: 0 });
     Object.assign(m.ball, { x: -6, z: 0, vx: 9, vz: 0, owner: -1, target: me, lastSide: 0 });
-    m.control[0] = me;
+    m.people[0].control = me;
     step(m, [{ ...NO_INPUT, mx: 100, pass: true }, NO_INPUT]);
     expect(m.ball.owner).toBe(-1);
     let passed = false;
@@ -54,7 +54,7 @@ describe('football controls', () => {
     const me = 9;
     Object.assign(m.players[me], { x: 0, z: 0, face: 0 });
     Object.assign(m.ball, { x: -5, z: 0, vx: 8, vz: 0, owner: -1, target: me, lastSide: 0 });
-    m.control[0] = me;
+    m.people[0].control = me;
     hold(m, { ...NO_INPUT, shoot: true }, 10);
     expect(m.players[me].action).not.toBe('slide');
     hold(m, NO_INPUT, 40);
@@ -73,7 +73,7 @@ describe('football controls', () => {
       // The CPU carrier keeps dribbling across instead of passing.
       m.think[1] = 10000;
       m.aim[1] = Math.PI / 2;
-      m.control[0] = me;
+      m.people[0].control = me;
       hold(m, input, 60);
       const p = m.players[me];
       const c = m.players[carrier];
@@ -88,9 +88,46 @@ describe('football controls', () => {
     Object.assign(m.players[me], { x: 0, z: 0, face: 0 });
     Object.assign(m.players[5], { x: 0, z: 15 });
     m.ball.owner = me;
-    m.control[0] = me;
+    m.people[0].control = me;
     step(m, [{ ...NO_INPUT, mz: 100 }, NO_INPUT]);
-    expect(m.preview[0]).toBe(5);
+    expect(m.people[0].preview).toBe(5);
+  });
+
+  it('meets a pass a step off target without steering, but steering still wins', () => {
+    const run = (input: Input) => {
+      const m = live();
+      const me = 9;
+      Object.assign(m.players[me], { x: 0, z: 0, face: Math.PI });
+      // A pass meant for us that would roll 1.6 m wide.
+      Object.assign(m.ball, { x: 10, z: 1.6, vx: -10, vz: 0, owner: -1, target: me, lastSide: 0 });
+      m.people[0].control = me;
+      hold(m, input, 90);
+      return m;
+    };
+    expect(run(NO_INPUT).ball.owner).toBe(9);
+    // Running the other way, the person leaves the ball behind.
+    const away = run({ ...NO_INPUT, mx: 0, mz: -100, sprint: true });
+    expect(away.ball.owner).not.toBe(9);
+  });
+
+  it('lets a person take a penalty with a charged, aimed shot', () => {
+    const m = live();
+    m.players[20].yellow = 0;
+    Object.assign(m, { phase: 'restart' });
+    // Our penalty at the +x end.
+    Object.assign(m.ball, { x: HALF_LENGTH - 11, z: 0, owner: -1 });
+    const taker = 9;
+    Object.assign(m.players[taker], { x: HALF_LENGTH - 11.6, z: 0, face: 0 });
+    m.restart = { kind: 'penalty', side: 0, x: HALF_LENGTH - 11, z: 0, taker };
+    m.wait = 0;
+    m.people[0].control = taker;
+    hold(m, { ...NO_INPUT, mz: -100, shoot: true }, 30);
+    expect(m.phase).toBe('restart');
+    step(m, [{ ...NO_INPUT, mz: -100 }]);
+    expect(m.phase).toBe('play');
+    expect(m.ball.shot).toBe(true);
+    // Aimed at the far (−z) side of the goal.
+    expect(m.ball.vz).toBeLessThan(0);
   });
 
   it('credits a goal that went in off the keeper to the kicker', () => {

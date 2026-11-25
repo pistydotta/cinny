@@ -3,7 +3,7 @@ import { PackedInput, unpackInput } from '../engine/net';
 import { GameEvent, MatchState } from '../engine/types';
 
 // Watching from the stands: the API sends the match once (or its setup at kick-off) and then
-// both players' confirmed inputs in small batches; we step the same engine with them. A small
+// all the people's confirmed inputs in small batches; we step the same engine with them. A small
 // buffer keeps it smooth: it plays a little behind, catches up when the buffer grows and waits
 // when it runs dry. Nothing here guesses, so it never rolls back.
 
@@ -14,7 +14,8 @@ const CATCH_UP = 24;
 export class SpectatorFeed {
   match: MatchState;
 
-  private frames: [PackedInput, PackedInput][] = [];
+  // One list per tick, an input per person.
+  private frames: PackedInput[][] = [];
 
   private waiting = true;
 
@@ -29,7 +30,7 @@ export class SpectatorFeed {
   }
 
   // Inputs for ticks `from`, from + 1, ...; ticks we already have are skipped.
-  push(from: number, frames: [PackedInput, PackedInput][]): void {
+  push(from: number, frames: PackedInput[][]): void {
     const next = this.match.tick + this.frames.length + 1;
     const skip = next - from;
     if (skip < 0) return;
@@ -53,8 +54,8 @@ export class SpectatorFeed {
     const steps = this.frames.length > CATCH_UP ? 2 : 1;
     const events: GameEvent[] = [];
     for (let k = 0; k < steps && this.frames.length > 0; k += 1) {
-      const [a, b] = this.frames.shift() as [PackedInput, PackedInput];
-      step(this.match, [unpackInput(a), unpackInput(b)]);
+      const frame = this.frames.shift() as PackedInput[];
+      step(this.match, frame.map(unpackInput));
       events.push(...this.match.events);
     }
     return events;

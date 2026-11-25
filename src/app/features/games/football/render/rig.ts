@@ -157,5 +157,17 @@ export const makeClips = (rig: RigInfo): Record<string, THREE.AnimationClip> => 
     };
   });
 
-  return { idle, run, kick, ready };
+  // The referee's card and the linesman's flag: right arm straight up, the other one down.
+  const raise = clipOf(rig, 'raise', 0.4, 8, (t) => {
+    const up = Math.min(1, t * 2.5);
+    return {
+      upperarm_l: rx(3).multiply(rz(-72)),
+      upperarm_r: rz(72 - 160 * up),
+      lowerarm_l: ry(-14),
+      lowerarm_r: ry(4),
+      spine_02: rx(-3 * up),
+    };
+  });
+
+  return { idle, run, kick, ready, raise };
 };
