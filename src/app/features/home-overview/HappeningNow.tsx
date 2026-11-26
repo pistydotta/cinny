@@ -89,7 +89,11 @@ function TableRow({ table }: { table: LiveTable }) {
     why,
     table.players.length ? table.players.map(nameOf).join(', ') : undefined,
     table.seats ? `${table.players.length}/${table.seats}` : undefined,
-    table.phase ? phaseText(table.phase) : undefined,
+    table.idle && table.activeAt !== undefined
+      ? tr('table_games.idle_for', 'Stopped for {{n}} min', {
+          n: Math.floor((Date.now() - table.activeAt) / 60_000),
+        })
+      : table.phase && phaseText(table.phase),
   ]
     .filter(Boolean)
     .join(' · ');

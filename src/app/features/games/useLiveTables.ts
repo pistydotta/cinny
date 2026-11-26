@@ -6,6 +6,7 @@ import { useFriends } from '../friends/useFriends';
 import { createTableGamesApi } from './table-games/api';
 import { GameKind, TableSummary } from './table-games/types';
 import { useLobby } from './poker/useLobby';
+import { isIdle } from './table-games/lobby';
 import { rank, Relevance } from './liveRank';
 
 export type LiveTable = {
@@ -19,6 +20,9 @@ export type LiveTable = {
   // What the button does: go back to your seat, take a free one, or watch.
   role: 'seated' | 'open' | 'watch';
   relevance: Relevance;
+  // When a person last moved, and whether that was long enough ago to call the game stopped.
+  activeAt?: number;
+  idle?: boolean;
 };
 
 const KINDS: GameKind[] = ['truco', 'fodinha', 'chess'];
@@ -66,6 +70,8 @@ export function useLiveTables(): { tables: LiveTable[]; loaded: boolean } {
   const tables = useMemo(() => {
     const friends = new Set(friendLists?.friends.map((f) => f.userId) ?? []);
     const circle = { call: new Set(callKey ? callKey.split(' ') : []), friends };
+    // Recomputed on every poll, which is often enough for a three-minute threshold.
+    const now = Date.now();
     const rows = (summaries ?? [])
       .filter((s) => s.phase !== 'finished')
       .map((s) => {
@@ -87,6 +93,8 @@ export function useLiveTables(): { tables: LiveTable[]; loaded: boolean } {
           seated,
           invited: (s.invited ?? []).includes(me),
           updatedAt: s.updatedAt,
+          activeAt: s.activeAt,
+          idle: isIdle(s, now),
         };
       });
     // The poker lobby names no players, only the owner.

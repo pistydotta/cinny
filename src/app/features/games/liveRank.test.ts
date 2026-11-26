@@ -33,4 +33,23 @@ describe('rank', () => {
     );
     expect(out.map((r) => r.id)).toEqual(['new', 'old']);
   });
+
+  it('prefers the last move by a person over the last change', () => {
+    const out = rank(
+      [
+        t('bots-only', ['@bia:x'], { updatedAt: 9, activeAt: 1 }),
+        t('played', ['@bia:x'], { updatedAt: 2, activeAt: 2 }),
+      ],
+      circle
+    );
+    expect(out.map((r) => r.id)).toEqual(['played', 'bots-only']);
+  });
+
+  it('puts stopped games below every live one, even your own', () => {
+    const out = rank(
+      [t('mine-stopped', ['@me:x'], { seated: true, idle: true }), t('friend', ['@bia:x'])],
+      circle
+    );
+    expect(out.map((r) => r.id)).toEqual(['friend', 'mine-stopped']);
+  });
 });

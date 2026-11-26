@@ -8,6 +8,10 @@ export type RankInput = {
   seated: boolean;
   invited: boolean;
   updatedAt?: number;
+  // The last move by a person; timeouts and bots also change `updatedAt`.
+  activeAt?: number;
+  // A running game nobody has moved in for a while (lobby's `isIdle`).
+  idle?: boolean;
 };
 
 export type Circle = { call: Set<string>; friends: Set<string> };
@@ -22,6 +26,7 @@ export const relevance = (t: RankInput, circle: Circle): Relevance | undefined =
 };
 
 const ORDER: Record<Relevance, number> = { seated: 0, invited: 1, call: 2, friend: 3 };
+const last = (t: RankInput) => t.activeAt ?? t.updatedAt ?? 0;
 
 export const rank = <T extends RankInput>(
   tables: T[],
@@ -32,6 +37,10 @@ export const rank = <T extends RankInput>(
       const r = relevance(t, circle);
       return r ? [{ ...t, relevance: r }] : [];
     })
+    // Stopped games go below every live one: a table nobody plays isn't happening now.
     .sort(
-      (a, b) => ORDER[a.relevance] - ORDER[b.relevance] || (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
+      (a, b) =>
+        Number(!!a.idle) - Number(!!b.idle) ||
+        ORDER[a.relevance] - ORDER[b.relevance] ||
+        last(b) - last(a)
     );
