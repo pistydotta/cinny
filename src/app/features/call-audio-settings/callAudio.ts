@@ -103,6 +103,13 @@ export type AudioDevices = {
   refresh: () => Promise<void>;
 };
 
+// Every open list (the mic's and the speaker's are separate) reloads together: granting the
+// mic in one names the devices in both, and browsers don't always fire `devicechange` for it.
+const deviceLists = new Set<() => Promise<void>>();
+const refreshAll = async () => {
+  await Promise.all([...deviceLists].map((load) => load()));
+};
+
 export const useAudioDevices = (): AudioDevices => {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const refresh = useCallback(async () => {
@@ -115,8 +122,12 @@ export const useAudioDevices = (): AudioDevices => {
 
   useEffect(() => {
     refresh();
+    deviceLists.add(refresh);
     navigator.mediaDevices?.addEventListener('devicechange', refresh);
-    return () => navigator.mediaDevices?.removeEventListener('devicechange', refresh);
+    return () => {
+      deviceLists.delete(refresh);
+      navigator.mediaDevices?.removeEventListener('devicechange', refresh);
+    };
   }, [refresh]);
 
   const askPermission = useCallback(async () => {
@@ -126,14 +137,14 @@ export const useAudioDevices = (): AudioDevices => {
     } catch {
       // Refused: the list stays unnamed and the system device keeps being used.
     }
-    await refresh();
-  }, [refresh]);
+    await refreshAll();
+  }, []);
 
   return {
     inputs: devices.filter((d) => d.kind === 'audioinput' && !isAlias(d)),
     outputs: devices.filter((d) => d.kind === 'audiooutput' && !isAlias(d)),
     named: devices.some((d) => d.label !== ''),
     askPermission,
-    refresh,
+    refresh: refreshAll,
   };
 };
