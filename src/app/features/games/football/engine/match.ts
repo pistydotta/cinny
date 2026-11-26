@@ -57,8 +57,11 @@ import {
   POST_RADIUS,
   QUEUE_TICKS,
   REACH,
+  RECEIVE_COME,
+  RECEIVE_FREE,
   RECEIVE_RUN,
   RECEIVE_SIDE,
+  RECEIVE_WINDOW,
   RECEIVE_HARD,
   RECEIVE_REACH,
   RESTART_PATIENCE,
@@ -1113,11 +1116,15 @@ const updateControl = (m: MatchState) => {
   });
 };
 
-// A pass on its way to a person's player: the player goes to meet it, and the stick says how.
-// Across the ball's path it picks a step to either side (up to RECEIVE_SIDE); along the path,
-// with the ball, it lets the ball run to take it further on (up to RECEIVE_RUN); sprint attacks
-// it. The first touch then follows the stick too (gainBall). Without this the stick alone made
-// people run past their passes.
+// A pass on its way to a person's player: with the stick at rest the player goes to meet it, and
+// a stick near the ball's path says how: a step to either side (up to RECEIVE_SIDE), letting the
+// ball run on to take it further (up to RECEIVE_RUN) or coming toward it to take it sooner (up to
+// RECEIVE_COME); sprint attacks it. The first touch then follows the stick too (gainBall).
+// Pointed clearly across the path (or away from a ball that has stopped) the person is making a
+// run of their own: undefined, so the player goes where the stick says, until the ball's last
+// RECEIVE_WINDOW seconds, when a player still near its line meets it. Without the help the stick
+// alone made people run past their passes; without the way out the player was stuck on the
+// ball's line until it arrived.
 const receiveMove = (
   m: MatchState,
   i: number,
@@ -1129,9 +1136,12 @@ const receiveMove = (
   const p = m.players[i];
   const speed = len(ball.vx, ball.vz);
   if (speed < 0.8) {
-    // A ball that has stopped (or nearly): go and get it.
-    if (dist(p, ball) > 14) return undefined;
-    return toward(p, ball.x, ball.z, sprint || dist(p, ball) > 5);
+    // A ball that has stopped (or nearly): go and get it, unless pointed away from it.
+    const d = dist(p, ball);
+    if (d > 14) return undefined;
+    if (dir && d > 1 && (dir[0] * (ball.x - p.x) + dir[1] * (ball.z - p.z)) / d < -0.2)
+      return undefined;
+    return toward(p, ball.x, ball.z, sprint || d > 5);
   }
   const ux = ball.vx / speed;
   const uz = ball.vz / speed;
@@ -1149,14 +1159,25 @@ const receiveMove = (
     // A ball in the air is best met where it comes down.
     reachable = speed * air + 2;
   }
-  // Where the player is along the path, moved on by the stick when it points with the ball.
+  // Where the player is along the path, moved on by the stick: with the ball to let it run,
+  // against it to come and meet it.
   let s = (p.x - ball.x) * ux + (p.z - ball.z) * uz;
   let side = 0;
   if (dir) {
     const along = dir[0] * ux + dir[1] * uz;
-    side = (-dir[0] * uz + dir[1] * ux) * RECEIVE_SIDE;
-    // Letting a slow ball run would only mean waiting for it: the run grows with its pace.
-    s += Math.max(0, along) * Math.min(RECEIVE_RUN, speed * 0.3);
+    const across = -dir[0] * uz + dir[1] * ux;
+    // In its last moments a ball reaching a player still near its line is taken, wherever the
+    // stick points: running across the path then meets it instead of running past.
+    const offLine = -(p.x - ball.x) * uz + (p.z - ball.z) * ux;
+    const arriving =
+      s > 0 && s < speed * RECEIVE_WINDOW && Math.abs(offLine) < RECEIVE_SIDE + RECEIVE_REACH;
+    if (Math.abs(across) > RECEIVE_FREE && !arriving) return undefined;
+    side = across * RECEIVE_SIDE;
+    // Letting a slow ball run would only mean waiting for it: the run grows with its pace. It
+    // also shrinks as the ball gets near (`s` is how far ahead of it the player is), so the
+    // ball catches up instead of the player running away from it.
+    if (along > 0) s += along * Math.min(RECEIVE_RUN, speed * 0.3, Math.max(0, s) * 0.35);
+    else s += along * RECEIVE_COME;
   }
   s = clamp(s, 0.5, Math.max(0.5, reachable));
   const tx = ball.x + ux * s - uz * side;

@@ -131,12 +131,17 @@ export const OFFICIAL_SPEED = 6.5;
 export const LINESMAN_OFFSET = 1.5;
 
 // Receiving a pass: the player it's meant for reaches a little further, keeps harder balls more
-// often and goes to meet it; the stick picks a step to the side (meters) or lets the ball run
-// on (meters further along its path). See receiveMove in match.ts.
+// often and goes to meet it; the stick picks a step to the side (meters), lets the ball run on
+// or comes to meet it sooner (meters along its path). Pointed clearly across the path (its
+// across part over RECEIVE_FREE) or away from a stopped ball, the player goes where the stick
+// says instead. See receiveMove in match.ts.
 export const RECEIVE_REACH = 1.3;
 export const RECEIVE_HARD = 22;
-export const RECEIVE_SIDE = 0.6;
+export const RECEIVE_SIDE = 1.2;
 export const RECEIVE_RUN = 4;
+export const RECEIVE_COME = 6;
+export const RECEIVE_FREE = 0.8;
+export const RECEIVE_WINDOW = 0.45;
 // The first touch turns the body this far (radians) toward where the person points.
 export const FIRST_TOUCH_TURN = 1.2;
 

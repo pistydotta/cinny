@@ -93,7 +93,7 @@ describe('football controls', () => {
     expect(m.people[0].preview).toBe(5);
   });
 
-  it('meets a pass a step off target, steered or not', () => {
+  it('meets a pass a step off target unless steered away', () => {
     const run = (input: Input) => {
       const m = live();
       const me = 9;
@@ -101,13 +101,17 @@ describe('football controls', () => {
       // A pass meant for us that would roll 1.6 m wide.
       Object.assign(m.ball, { x: 10, z: 1.6, vx: -10, vz: 0, owner: -1, target: me, lastSide: 0 });
       m.people[0].control = me;
-      hold(m, input, 90);
+      hold(m, input, 150);
       return m;
     };
     expect(run(NO_INPUT).ball.owner).toBe(9);
-    // Pointing across the pass picks the side of the touch; it doesn't lose the ball.
-    const across = run({ ...NO_INPUT, mx: 0, mz: -100, sprint: true });
-    expect(across.ball.owner).toBe(9);
+    // Pointing a little across (and with the ball) picks the side of the touch: still ours.
+    const diagonal = run({ ...NO_INPUT, mx: -70, mz: 70, sprint: true });
+    expect(diagonal.ball.owner).toBe(9);
+    // Held straight across, it's a run of the person's own: the player goes, not stuck.
+    const away = run({ ...NO_INPUT, mx: 0, mz: -100, sprint: true });
+    expect(away.ball.owner).not.toBe(9);
+    expect(away.players[9].z).toBeLessThan(-3);
   });
 
   it('lets a person take a penalty with a charged, aimed shot', () => {

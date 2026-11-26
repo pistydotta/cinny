@@ -24,9 +24,11 @@ const live = (seed: number, slots: Side[] = [0]): MatchState => {
 const PASSER = 5;
 const ME = 9;
 
-// A pass from (0, 0) to ME at distance d, aimed up to 2.5 m off; the person steers `steer`.
-// True when ME has the ball within seven seconds.
-const receives = (seed: number, kind: 'ground' | 'lob', steer: [number, number]): boolean => {
+type Steer = [number, number] | ((tick: number) => [number, number]);
+
+// A pass from (0, 0) to ME at distance d, aimed up to 2.5 m off; the person steers `steer`
+// (always, or by the tick). The match after `ticks`, or once ME has the ball.
+const pass = (seed: number, kind: 'ground' | 'lob', steer: Steer, ticks = 420): MatchState => {
   const m = live(seed);
   const d = 10 + (seed % 5) * 6;
   Object.assign(m.players[PASSER], { x: 0, z: 0, face: 0 });
@@ -41,21 +43,27 @@ const receives = (seed: number, kind: 'ground' | 'lob', steer: [number, number])
   }
   m.players[PASSER].noTouch = 60;
   m.ball.offside = [];
-  const input: Input = { ...NO_INPUT, mx: steer[0], mz: steer[1] };
-  for (let k = 0; k < 420; k += 1) {
+  for (let k = 0; k < ticks; k += 1) {
+    const [mx, mz] = typeof steer === 'function' ? steer(k) : steer;
+    const input: Input = { ...NO_INPUT, mx, mz };
     step(m, [input]);
-    if (m.ball.owner === ME) return true;
+    if (m.ball.owner === ME) return m;
   }
-  return false;
+  return m;
 };
 
+// True when ME has the ball within seven seconds.
+const receives = (seed: number, kind: 'ground' | 'lob', steer: Steer): boolean =>
+  pass(seed, kind, steer).ball.owner === ME;
+
 describe('receiving a pass', () => {
+  // At rest, with the ball, toward it and a little across it: the help to meet the ball.
   const steers: [number, number][] = [
     [0, 0],
     [100, 0],
-    [0, 100],
     [70, -70],
     [-100, 0],
+    [-70, 70],
   ];
   steers.forEach((steer) => {
     it(`keeps nearly every ground pass and lob while steering ${steer}`, () => {
@@ -66,6 +74,44 @@ describe('receiving a pass', () => {
       }
       expect(got).toBeGreaterThanOrEqual(38);
     });
+  });
+});
+
+describe("the receiver is not stuck on the ball's line", () => {
+  it('runs where the stick points when it points across the pass', () => {
+    // Compared with the same pass and the stick at rest, which meets the ball on its line;
+    // pointed away from the side the pass is aimed at.
+    for (let seed = 1; seed <= 5; seed += 1) {
+      const way = ((seed * 7) % 11) - 5 > 0 ? -1 : 1;
+      const free = pass(seed, 'ground', [0, 100 * way], 45).players[ME].z;
+      const helped = pass(seed, 'ground', [0, 0], 45).players[ME].z;
+      expect((free - helped) * way).toBeGreaterThan(2);
+    }
+  });
+
+  it('still keeps the pass after a quick touch across it', () => {
+    let got = 0;
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const tap = (k: number): [number, number] => (k < 8 ? [0, 100] : [0, 0]);
+      got += receives(seed, 'ground', tap) ? 1 : 0;
+      got += receives(seed, 'lob', tap) ? 1 : 0;
+    }
+    expect(got).toBeGreaterThanOrEqual(38);
+  });
+
+  it('comes to meet the ball when pointed at it', () => {
+    const still = pass(2, 'ground', [0, 0], 30).players[ME].x;
+    const coming = pass(2, 'ground', [-100, 0], 30).players[ME].x;
+    expect(coming).toBeLessThan(still - 1);
+  });
+
+  it('can turn away from a ball that has stopped', () => {
+    const m = live(6);
+    Object.assign(m.players[ME], { x: 10, z: 0 });
+    Object.assign(m.ball, { x: 6, z: 0, vx: 0, vz: 0, owner: -1, target: ME });
+    m.people[0].control = ME;
+    for (let k = 0; k < 40; k += 1) step(m, [{ ...NO_INPUT, mx: 100 }]);
+    expect(m.players[ME].x).toBeGreaterThan(12);
   });
 });
 
