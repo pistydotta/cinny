@@ -1,6 +1,7 @@
+import { weaponsFor } from './classes';
 import { Rng, chance, pick, pickWeighted, rollRange } from './rng';
 import { scaleMods } from './stats';
-import { ClassDef, Item, ModKey, Mods, Rarity, Slot, WeaponBase } from './types';
+import { ClassDef, Hero, Item, ModKey, Mods, Rarity, Slot, SpecId, WeaponBase } from './types';
 
 type ItemBase = {
   id: string;
@@ -139,6 +140,7 @@ export const itemMods = (item: Item): Mods =>
   item.plus > 0 ? scaleMods(item.mods, 1 + PLUS_BONUS[item.plus]) : item.mods;
 
 export type DropOptions = {
+  specId?: SpecId;
   level: number;
   boss?: boolean;
   rarity?: Rarity;
@@ -168,7 +170,11 @@ export const generateItem = (rng: Rng, cls: ClassDef, id: string, opts: DropOpti
   const level = Math.max(1, Math.floor(opts.level));
   const rarity = opts.rarity ?? pickWeighted(rng, opts.boss ? BOSS_WEIGHTS : DROP_WEIGHTS);
   const info = RARITY_INFO[rarity];
-  const base = pickBase(rng, cls, opts.kind);
+  const base = pickBase(
+    rng,
+    { ...cls, weapons: weaponsFor({ classId: cls.id, specId: opts.specId }) },
+    opts.kind
+  );
   const scale = levelScale(level);
   const mods: Mods = {};
 
@@ -180,7 +186,11 @@ export const generateItem = (rng: Rng, cls: ClassDef, id: string, opts: DropOpti
   // The best roll (closest to its max) names the item.
   let title: ModKey | undefined;
   let titleRoll = -1;
-  const pool = AFFIXES.filter((a) => !a.kinds || a.kinds.includes(base.kind));
+  const pool = AFFIXES.filter(
+    (a) =>
+      (!a.kinds || a.kinds.includes(base.kind)) &&
+      (base.kind !== 'weapon' || !['str', 'agi', 'int'].includes(a.key) || a.key === cls.mainStat)
+  );
   for (let i = 0; i < info.affixes && pool.length > 0; i += 1) {
     const idx = Math.floor(rng.next() * pool.length);
     const affix = pool.splice(idx, 1)[0];
@@ -231,3 +241,17 @@ export const starterWeapon = (cls: ClassDef, id: string): Item => {
 
 export const rarityRank = (r: Rarity): number =>
   ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].indexOf(r);
+
+export const canEquip = (hero: Pick<Hero, 'classId' | 'specId'>, item: Item): boolean => {
+  if (item.kind === 'weapon') return weaponsFor(hero).includes(item.baseId as WeaponBase);
+  const users: Record<string, string[]> = {
+    shield: ['warrior', 'cleric'],
+    tome: ['mage', 'cleric', 'occultist'],
+    quiver: ['archer', 'rogue'],
+    plate: ['warrior', 'cleric'],
+    robe: ['mage', 'cleric', 'occultist'],
+  };
+  return !users[item.baseId] || users[item.baseId].includes(hero.classId);
+};
+export const safeToSellIncompatible = (hero: Hero, item: Item): boolean =>
+  !canEquip(hero, item) && !item.locked && item.plus === 0;

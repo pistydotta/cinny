@@ -289,6 +289,12 @@ export function FodinhaTable({
           'Card on your forehead: you see everyone’s card but yours. How many tricks will you win?'
         )
       : tr('table_games.turn_predict', '{{name}} is betting…', { name: turnName });
+  else if (table.phase === 'predict' && myTurn && typeof table.forbiddenBid === 'number')
+    status = tr(
+      'table_games.predict_blocked',
+      'How many tricks will you win? Not {{n}}: the bets can’t add up to the cards dealt.',
+      { n: table.forbiddenBid }
+    );
   else if (table.phase === 'predict')
     status = myTurn
       ? tr('table_games.predict', 'How many tricks will you win?')
@@ -411,7 +417,7 @@ export function FodinhaTable({
                   key={i}
                   type="button"
                   className={css.PredictButton}
-                  disabled={busy}
+                  disabled={busy || i === table.forbiddenBid}
                   onClick={() => onAct({ type: 'predict', value: i })}
                 >
                   {i}

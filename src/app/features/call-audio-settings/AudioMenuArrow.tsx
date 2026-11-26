@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useState } from 'react';
+import React, { MouseEventHandler, useRef, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
 import { Box, Icon, Icons, Menu, PopOut, RectCords, Text, config } from 'folds';
@@ -41,26 +41,33 @@ type AudioMenuArrowProps = {
 export function AudioMenuArrow({ kind, className }: AudioMenuArrowProps) {
   const [cords, setCords] = useState<RectCords>();
   const [dialog, setDialog] = useState(false);
+  const arrowRef = useRef<HTMLButtonElement>(null);
 
   const open: MouseEventHandler<HTMLButtonElement> = (event) =>
     setCords(cords ? undefined : event.currentTarget.getBoundingClientRect());
 
   return (
     <>
+      {/* The PopOut's full-screen layer would swallow the first click on the other arrow (or
+          any control behind it) while a menu is open, so it lets clicks through to the page. */}
       <PopOut
         anchor={cords}
         position="Top"
         align="Start"
+        style={{ pointerEvents: 'none' }}
         content={
           <FocusTrap
             focusTrapOptions={{
               initialFocus: false,
               onDeactivate: () => setCords(undefined),
-              clickOutsideDeactivates: true,
+              // A click on this menu's own arrow is left to its toggle, or it would reopen.
+              clickOutsideDeactivates: (event) =>
+                !(event.target instanceof Node && arrowRef.current?.contains(event.target)),
+              allowOutsideClick: true,
               escapeDeactivates: stopPropagation,
             }}
           >
-            <Menu className={css.Menu}>
+            <Menu className={css.Menu} style={{ pointerEvents: 'auto' }}>
               {kind === 'input' ? <InputSettings withNoise /> : <OutputSettings />}
               <div className={css.Divider} />
               <button
@@ -81,6 +88,7 @@ export function AudioMenuArrow({ kind, className }: AudioMenuArrowProps) {
         }
       >
         <TipIconButton
+          ref={arrowRef}
           className={classNames(css.Arrow, className)}
           label={
             kind === 'input'

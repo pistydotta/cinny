@@ -1,6 +1,6 @@
 import { SPEC_LEVEL, getClass } from './classes';
 import { applyForge, canAfford, forgeCost, ForgeOutcome, maxPlusOf, salvageValue } from './forge';
-import { rarityRank } from './items';
+import { canEquip, safeToSellIncompatible, rarityRank } from './items';
 import { ALTAR, altarCost, ashesFor, rebirthStage, startStage } from './prestige';
 import {
   UPGRADES,
@@ -11,12 +11,13 @@ import {
   upgradeCost,
 } from './progress';
 import { createRng } from './rng';
-import { getTalent, rowOpen } from './talents';
+import { getTalent, rowOpen, talentAllowed } from './talents';
 import { GameState, Item, Rarity, SLOTS, Slot, SpecId } from './types';
 
 // What the player does. Each action takes a state and returns a new one, or says why it
 // can't. The same functions could run on a server later and answer the same way.
 export type ActionError =
+  | 'incompatible'
   | 'not_found'
   | 'bag_full'
   | 'not_enough_gold'
@@ -37,6 +38,7 @@ const findIndex = (s: GameState, itemId: string) => s.inventory.findIndex((i) =>
 export const equip = (s: GameState, itemId: string): ActionResult => {
   const idx = findIndex(s, itemId);
   if (idx < 0) return fail('not_found');
+  if (!canEquip(s.hero, s.inventory[idx])) return fail('incompatible');
   const next = clone(s);
   const [item] = next.inventory.splice(idx, 1);
   const previous = next.equipment[item.kind];
@@ -60,7 +62,7 @@ export const equipBest = (s: GameState): ActionResult => {
   let next = clone(s);
   let changed = false;
   SLOTS.forEach((slot) => {
-    const options = next.inventory.filter((i) => i.kind === slot);
+    const options = next.inventory.filter((i) => i.kind === slot && canEquip(next.hero, i));
     let best: Item | undefined;
     let bestDelta = 0;
     options.forEach((item) => {
@@ -193,6 +195,7 @@ export const forge = (s: GameState, itemId: string): ForgeResult => {
 export const learnTalent = (s: GameState, talentId: string): ActionResult => {
   const def = getTalent(talentId);
   if (!def) return fail('not_found');
+  if (!talentAllowed(s.hero, def)) return fail('incompatible');
   if (availableTalentPoints(s) <= 0) return fail('no_points');
   if (!rowOpen(s.hero.talents, def)) return fail('too_early');
   const rank = s.hero.talents[def.id] ?? 0;
@@ -221,6 +224,13 @@ export const chooseSpec = (s: GameState, specId: SpecId): ActionResult => {
   if (!getClass(s.hero.classId).specs.some((sp) => sp.id === specId)) return fail('not_found');
   const next = clone(s);
   next.hero.specId = specId;
+  SLOTS.forEach((slot) => {
+    const item = next.equipment[slot];
+    if (item && !canEquip(next.hero, item)) {
+      next.inventory.push(item);
+      delete next.equipment[slot];
+    }
+  });
   next.battle = null;
   return ok(next);
 };
@@ -293,5 +303,22 @@ export const goToStage = (s: GameState, stage: number): ActionResult => {
   next.stage = stage;
   next.kills = 0;
   next.battle = null;
+  return ok(next);
+};
+
+export const sellIncompatible = (s: GameState): ActionResult => {
+  const gone = s.inventory.filter((item) => safeToSellIncompatible(s.hero, item));
+  if (!gone.length) return fail('nothing');
+  const next = clone(s);
+  const ids = new Set(gone.map((item) => item.id));
+  next.inventory = next.inventory.filter((item) => !ids.has(item.id));
+  const gold = gone.reduce((sum, item) => sum + item.value, 0);
+  next.gold += gold;
+  next.lifetime.goldEarned += gold;
+  return ok(next);
+};
+export const setAutoSellIncompatible = (s: GameState, on: boolean): ActionResult => {
+  const next = clone(s);
+  next.settings.autoSellIncompatible = on;
   return ok(next);
 };

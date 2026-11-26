@@ -1,3 +1,5 @@
+import { talentsFor } from './talents';
+import { canEquip } from './items';
 import { isClassId } from './classes';
 import { GameState, SAVE_VERSION } from './types';
 
@@ -34,6 +36,16 @@ export const deserialize = (text: string | null | undefined): GameState | undefi
     if (!s.hero || !isClassId(s.hero.classId) || !Array.isArray(s.inventory)) {
       return undefined;
     }
+    const allowed = new Set(talentsFor(s.hero).map((t) => t.id));
+    s.hero.talents = Object.fromEntries(
+      Object.entries(s.hero.talents).filter(([id]) => allowed.has(id))
+    );
+    Object.entries(s.equipment).forEach(([slot, item]) => {
+      if (item && !canEquip(s.hero, item)) {
+        s.inventory.push(item);
+        delete s.equipment[slot as keyof typeof s.equipment];
+      }
+    });
     return { ...s, battle: null, respawnMs: 0 };
   } catch {
     return undefined;

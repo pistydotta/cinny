@@ -60,6 +60,10 @@ export type GameTable = {
   invited?: string[];
   // Only the invited and people with the link may sit.
   inviteOnly?: boolean;
+  // Fodinha: from two cards on, the last bet may not make the total equal the cards dealt.
+  blockExactTotal?: boolean;
+  // Fodinha, while betting: the bet the player on turn may not make (null: any).
+  forbiddenBid?: number | null;
   // Sent to seated players only: the table's join link.
   inviteToken?: string;
   // Seat swaps someone asked for and the other person hasn't answered yet.
@@ -83,6 +87,7 @@ export type TableSummary = Pick<
   inviteOnly?: boolean;
   // Seats in a running Fodinha that someone left and anyone can take over.
   vacant?: number;
+  blockExactTotal?: boolean;
   winners?: number[];
   updatedAt?: number;
   // When a person last moved; unfinished tables only.

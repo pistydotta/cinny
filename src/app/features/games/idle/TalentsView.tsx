@@ -1,10 +1,11 @@
 import React from 'react';
 import { resetTalentsCost } from './engine/actions';
 import { availableTalentPoints } from './engine/progress';
-import { BRANCHES, ROW_NEEDS, TALENTS, rowOpen, spentIn } from './engine/talents';
+import { TalentDef, BRANCHES, ROW_NEEDS, talentsFor, rowOpen, spentIn } from './engine/talents';
+import { getClass } from './engine/classes';
 import { GameState } from './engine/types';
 import { formatBig } from './format';
-import { branchDesc, branchName, modsText, talentName } from './labels';
+import { branchDesc, branchName, modsText, talentName, className, specName } from './labels';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
@@ -18,6 +19,32 @@ type TalentsViewProps = {
 export function TalentsView({ state, error, onLearn, onReset }: TalentsViewProps) {
   const points = availableTalentPoints(state);
   const { talents } = state.hero;
+  const available = talentsFor(state.hero);
+  const heading = (branch: string) => {
+    if (branch === 'fury') return className(state.hero.classId);
+    if (branch === 'bulwark')
+      return state.hero.specId
+        ? specName(state.hero.specId)
+        : tr('games.idle.specialization_path', 'Specialization');
+    return branchName('fortune');
+  };
+  const description = (branch: string) => {
+    if (branch === 'fortune') return branchDesc('fortune');
+    if (branch === 'fury') return tr('games.idle.class_path', 'Exclusive class combat talents');
+    if (state.hero.specId)
+      return tr('games.idle.spec_path', 'Strengthen your specialization passive');
+    return getClass(state.hero.classId)
+      .specs.map((sp) => specName(sp.id))
+      .join(' / ');
+  };
+  const nodeName = (t: TalentDef) => {
+    if (t.specId)
+      return tr('games.idle.spec_talent', '{{spec}} · {{stat}}', {
+        spec: specName(t.specId),
+        stat: modsText(t.perRank),
+      });
+    return t.name ? tr(`games.idle.talent.${t.id}`, t.name) : talentName(t.id);
+  };
 
   return (
     <div className={css.Panel}>
@@ -43,8 +70,8 @@ export function TalentsView({ state, error, onLearn, onReset }: TalentsViewProps
       </div>
       <span className={css.Muted}>
         {tr(
-          'games.idle.talents_hint',
-          'One point per level. Deeper rows open as you put points in their branch. The last row of each branch never runs out: the tree takes several rebirths to fill. Points come back on a rebirth.'
+          'games.idle.class_tree_hint',
+          'One point per level. Your class has its own combat path. Choose a specialization at level 30 for a second path. Fortune is shared. Spend 5 points in a path to open its next row; rebirth refunds points.'
         )}
       </span>
       {error && <p className={css.ErrorText}>{error}</p>}
@@ -55,12 +82,13 @@ export function TalentsView({ state, error, onLearn, onReset }: TalentsViewProps
             <div key={branch} className={css.List} style={{ gap: 6 }}>
               <div>
                 <div className={css.Strong}>
-                  {branchName(branch)} <span className={css.Muted}>· {spent}</span>
+                  {heading(branch)} <span className={css.Muted}>· {spent}</span>
                 </div>
-                <div className={css.Mini}>{branchDesc(branch)}</div>
+                <div className={css.Mini}>{description(branch)}</div>
               </div>
               {ROW_NEEDS.map((need, row) => {
-                const defs = TALENTS.filter((t) => t.branch === branch && t.row === row);
+                const defs = available.filter((t) => t.branch === branch && t.row === row);
+                if (!defs.length) return null;
                 const open = spent >= need;
                 return (
                   <React.Fragment key={`${branch}-${need}`}>
@@ -77,7 +105,7 @@ export function TalentsView({ state, error, onLearn, onReset }: TalentsViewProps
                               {
                                 row: row + 1,
                                 need,
-                                branch: branchName(branch),
+                                branch: heading(branch),
                               }
                             )}
                       </span>
@@ -104,7 +132,7 @@ export function TalentsView({ state, error, onLearn, onReset }: TalentsViewProps
                           <span className={css.TalentIcon}>{t.icon}</span>
                           <span className={css.Grow}>
                             <span className={css.Strong} style={{ fontSize: 14 }}>
-                              {talentName(t.id)}
+                              {nodeName(t)}
                             </span>
                             <span className={css.Mini} style={{ display: 'block' }}>
                               {rank > 0
@@ -113,6 +141,16 @@ export function TalentsView({ state, error, onLearn, onReset }: TalentsViewProps
                                     mods: modsText(t.perRank),
                                   })}
                             </span>
+                            {!maxed && (
+                              <span
+                                className={css.Mini}
+                                style={{ display: 'block', color: '#8be28f' }}
+                              >
+                                {tr('games.idle.next_point', 'Next point: {{mods}}', {
+                                  mods: modsText(t.perRank),
+                                })}
+                              </span>
+                            )}
                           </span>
                           <span
                             className={css.StatValue}

@@ -1,15 +1,15 @@
-import { Mods } from './types';
+import { CLASSES } from './classes';
+import { ClassId, Hero, SpecId, Mods } from './types';
 
-// The talent tree: three branches every class shares, one point per level. Kept simple on
-// purpose: each talent is one bonus with ranks, and deeper rows open as you put points in
-// that branch. The last row of each branch has many ranks, so there is always somewhere to put
-// a point, and a full tree takes several rebirths.
-
+// Class and specialization combat paths, plus a shared economy path.
 export type BranchId = 'fury' | 'bulwark' | 'fortune';
 export const BRANCHES: BranchId[] = ['fury', 'bulwark', 'fortune'];
 
 export type TalentDef = {
   id: string;
+  classId?: ClassId;
+  specId?: SpecId;
+  name?: string;
   branch: BranchId;
   icon: string;
   /** 0..4: the row, which opens at ROW_NEEDS[row] points in the branch. */
@@ -19,104 +19,9 @@ export type TalentDef = {
   perRank: Mods;
 };
 
-export const ROW_NEEDS = [0, 10, 25, 45, 70];
+export const ROW_NEEDS = [0, 5, 10, 15, 20];
 
 export const TALENTS: TalentDef[] = [
-  {
-    id: 'sharpness',
-    branch: 'fury',
-    icon: '🗡️',
-    row: 0,
-    maxRank: 10,
-    perRank: { damagePct: 0.03 },
-  },
-  {
-    id: 'precision',
-    branch: 'fury',
-    icon: '🎯',
-    row: 0,
-    maxRank: 10,
-    perRank: { critChance: 0.006 },
-  },
-  {
-    id: 'frenzy',
-    branch: 'fury',
-    icon: '💨',
-    row: 1,
-    maxRank: 10,
-    perRank: { attackSpeedPct: 0.015 },
-  },
-  {
-    id: 'brutality',
-    branch: 'fury',
-    icon: '💥',
-    row: 1,
-    maxRank: 10,
-    perRank: { critDamage: 0.05 },
-  },
-  { id: 'arcana', branch: 'fury', icon: '🔮', row: 2, maxRank: 10, perRank: { skillPower: 0.04 } },
-  { id: 'reaper', branch: 'fury', icon: '☠️', row: 2, maxRank: 10, perRank: { execute: 0.04 } },
-  { id: 'bloodlust', branch: 'fury', icon: '🩸', row: 3, maxRank: 5, perRank: { lifesteal: 0.01 } },
-  {
-    id: 'carnage',
-    branch: 'fury',
-    icon: '🔥',
-    row: 4,
-    maxRank: 100,
-    perRank: { damagePct: 0.015 },
-  },
-
-  {
-    id: 'toughness',
-    branch: 'bulwark',
-    icon: '❤️',
-    row: 0,
-    maxRank: 10,
-    perRank: { maxHpPct: 0.03 },
-  },
-  {
-    id: 'plating',
-    branch: 'bulwark',
-    icon: '🛡️',
-    row: 0,
-    maxRank: 10,
-    perRank: { armorPct: 0.04 },
-  },
-  { id: 'evasion', branch: 'bulwark', icon: '🌀', row: 1, maxRank: 10, perRank: { dodge: 0.005 } },
-  {
-    id: 'recovery',
-    branch: 'bulwark',
-    icon: '💚',
-    row: 1,
-    maxRank: 10,
-    perRank: { regenPct: 0.0005 },
-  },
-  { id: 'spikes', branch: 'bulwark', icon: '🌵', row: 2, maxRank: 10, perRank: { thorns: 0.02 } },
-  {
-    id: 'focus',
-    branch: 'bulwark',
-    icon: '⏳',
-    row: 2,
-    maxRank: 10,
-    perRank: { cooldownReduction: 0.01 },
-  },
-  {
-    id: 'companion',
-    branch: 'bulwark',
-    icon: '🐾',
-    row: 3,
-    maxRank: 5,
-    perRank: { petPower: 0.04 },
-  },
-  {
-    id: 'endurance',
-    branch: 'bulwark',
-    icon: '🏔️',
-    row: 4,
-    maxRank: 100,
-    perRank: { maxHpPct: 0.015 },
-  },
-
   { id: 'greed', branch: 'fortune', icon: '🪙', row: 0, maxRank: 10, perRank: { goldFind: 0.06 } },
   { id: 'scholar', branch: 'fortune', icon: '📜', row: 0, maxRank: 10, perRank: { xpGain: 0.05 } },
   {
@@ -161,6 +66,86 @@ export const TALENTS: TalentDef[] = [
     perRank: { goldFind: 0.01, xpGain: 0.01, damagePct: 0.005 },
   },
 ];
+
+// Class combat paths and specialization passives replace the shared combat branches.
+const CLASS_NODES: Record<ClassId, [string, Mods][]> = {
+  warrior: [
+    ['Weapon discipline', { str: 2 }],
+    ['Tempered steel', { armorPct: 0.05 }],
+    ['Cleave mastery', { skillPower: 0.05 }],
+    ['Battle fury', { rage: 0.04 }],
+    ['Veteran of steel', { damagePct: 0.02 }],
+  ],
+  archer: [
+    ['Steady aim', { agi: 2 }],
+    ['Quick draw', { attackSpeedPct: 0.025 }],
+    ['Vital shot', { critDamage: 0.08 }],
+    ['Piercing volley', { skillPower: 0.05 }],
+    ['Eagle eye', { critChance: 0.004 }],
+  ],
+  rogue: [
+    ['Dagger training', { agi: 2 }],
+    ['Shadow dance', { dodge: 0.008 }],
+    ['Backstab', { critDamage: 0.08 }],
+    ['Finishing blow', { execute: 0.07 }],
+    ['Lethal rhythm', { attackSpeedPct: 0.015 }],
+  ],
+  mage: [
+    ['Arcane study', { int: 2 }],
+    ['Spell weaving', { skillPower: 0.06 }],
+    ['Spell cadence', { cooldownReduction: 0.012 }],
+    ['Arcane surge', { damagePct: 0.04 }],
+    ['Archmage', { skillPower: 0.025 }],
+  ],
+  cleric: [
+    ['Sacred teachings', { int: 2 }],
+    ['Restoration', { regenPct: 0.001 }],
+    ['Consecrated armor', { armorPct: 0.05 }],
+    ['Divine light', { skillPower: 0.05 }],
+    ['Unbroken faith', { maxHpPct: 0.025 }],
+  ],
+  occultist: [
+    ['Forbidden knowledge', { int: 2 }],
+    ['Soul hunger', { lifesteal: 0.008 }],
+    ['Dark rites', { skillPower: 0.06 }],
+    ['Stolen vitality', { maxHpPct: 0.04 }],
+    ['Endless drain', { damagePct: 0.025 }],
+  ],
+};
+CLASSES.forEach((cls) => {
+  CLASS_NODES[cls.id].forEach(([name, perRank], row) =>
+    TALENTS.push({
+      id: `${cls.id}_${row}`,
+      classId: cls.id,
+      branch: 'fury',
+      icon: cls.icon,
+      name,
+      row,
+      maxRank: row === 4 ? 100 : 5,
+      perRank,
+    })
+  );
+  cls.specs.forEach((spec) => {
+    Object.entries(spec.passive).forEach(([key, value], row) =>
+      TALENTS.push({
+        id: `${spec.id}_${row}`,
+        classId: cls.id,
+        specId: spec.id,
+        branch: 'bulwark',
+        icon: spec.icon,
+        row,
+        maxRank: row === Object.keys(spec.passive).length - 1 ? 100 : 5,
+        perRank: { [key]: value * 0.12 },
+      })
+    );
+  });
+});
+export const talentAllowed = (hero: Hero, def: TalentDef): boolean =>
+  def.classId
+    ? def.classId === hero.classId && (!def.specId || def.specId === hero.specId)
+    : def.branch === 'fortune';
+export const talentsFor = (hero: Hero): TalentDef[] =>
+  TALENTS.filter((t) => talentAllowed(hero, t));
 
 const BY_ID = new Map(TALENTS.map((t) => [t.id, t]));
 export const getTalent = (id: string): TalentDef | undefined => BY_ID.get(id);

@@ -120,7 +120,7 @@ export type ClassDef = {
   dodge: number;
   passive: Mods;
   skill: SkillDef;
-  /** Weapons this class finds more often. */
+  /** Weapons this class can equip and finds more often. */
   weapons: WeaponBase[];
   /** The two ways to grow at SPEC_LEVEL. */
   specs: [SpecDef, SpecDef];
@@ -198,6 +198,8 @@ export type Fighter = {
   stunMs: number;
   buffs: Buff[];
   dots: Dot[];
+  /** Boss-only last stand, consumed or bypassed once per encounter. */
+  bossRecovery?: 'ready' | 'used' | 'bypassed';
 };
 
 export type Battle = {
@@ -217,7 +219,8 @@ export type CombatEvent =
   | { t: 'skill'; from: Side; skillId: string; amount: number }
   | { t: 'pet'; from: Side; amount: number }
   | { t: 'thorns'; from: Side; amount: number }
-  | { t: 'heal'; from: Side; amount: number };
+  | { t: 'heal'; from: Side; amount: number }
+  | { t: 'boss_recovery'; from: 'foe'; amount: number };
 
 export type Materials = {
   /** Ember stones: every forge step. */
@@ -289,6 +292,7 @@ export type Prestige = {
 export type Settings = {
   /** Drops at or below this rarity are salvaged on the spot, unless they're an upgrade. */
   autoSalvage: Rarity | null;
+  autoSellIncompatible?: boolean;
 };
 
 export const SAVE_VERSION = 2;

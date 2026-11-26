@@ -210,6 +210,9 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   kit, and so are Truco, Fodinha and chess (Truco's scene photo and the plaques over it keep
   their warm tones); Crônicas and BrazilianBonk still carry their own styles.
 
+- Idle RPG class/spec talents, weapon requirements, automatic sales and save adaptation
+  are documented in `../docs/idle-rpg.md`. Keep eligibility in the engine as well as the UI.
+
 - An unwatched screen share is a stand-in tile in Element Call's grid (a bundle patch), with
   Cinny's picture and Watch button drawn over it; the floating viewer reuses the same
   iframe. Placement must use viewport coordinates and inactive call rooms must not

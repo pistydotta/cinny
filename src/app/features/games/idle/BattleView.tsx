@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { getClass } from './engine/classes';
-import { liveStats } from './engine/combat';
+import { BOSS_RECOVERY_MIN, BOSS_RECOVERY_MAX, liveStats } from './engine/combat';
 import { rarityRank } from './engine/items';
 import { Fighter, GameState, Side, SpecId } from './engine/types';
 import { KILLS_PER_STAGE, isBossStage, loopOf, zoneOf } from './engine/zones';
@@ -38,11 +38,30 @@ const attackLook = (s: GameState): AttackLook => {
   }
 };
 
-function HpBar({ value, max, color }: { value: number; max: number; color: string }) {
+function HpBar({
+  value,
+  max,
+  color,
+  boss,
+}: {
+  value: number;
+  max: number;
+  color: string;
+  boss?: boolean;
+}) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   return (
-    <div className={css.Bar} style={{ height: 10 }}>
+    <div className={css.Bar} style={{ height: boss ? 16 : 10, position: 'relative' }}>
       <div className={css.BarFill} style={{ width: `${pct}%`, background: color }} />
+      {boss && (
+        <span
+          className={css.BossRecoveryBand}
+          style={{
+            left: `${BOSS_RECOVERY_MIN * 100}%`,
+            width: `${(BOSS_RECOVERY_MAX - BOSS_RECOVERY_MIN) * 100}%`,
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -101,6 +120,7 @@ function FighterView({ fighter, side, boss, respawnMs, pet, iconRef }: FighterVi
         <HpBar
           value={fighter.hp}
           max={fighter.stats.maxHp}
+          boss={boss}
           color={
             side === 'hero'
               ? 'linear-gradient(90deg, #2fbf4f, #7dff8f)'
@@ -112,6 +132,7 @@ function FighterView({ fighter, side, boss, respawnMs, pet, iconRef }: FighterVi
         )}
         <div className={css.HpText}>
           {formatBig(Math.ceil(fighter.hp))} / {formatBig(fighter.stats.maxHp)}
+          {boss && ` · ${Math.ceil((fighter.hp / fighter.stats.maxHp) * 100)}%`}
         </div>
         {skill && (
           <div className={css.Bar} title={tr('games.idle.skill_bar', 'Skill')}>
@@ -234,6 +255,15 @@ export function BattleView({ state, log, runner, onAutoAdvance, onGoToStage }: B
   const showDrop = great && state.lifetime.playMs - great.at < 8000 ? great : undefined;
   const pet = battle?.hero.stats.petPower ? PETS[state.hero.specId as SpecId] ?? '🦅' : undefined;
   const cls = getClass(state.hero.classId);
+  const recoveryStatus = battle?.foe.bossRecovery;
+  let recoveryText = tr('games.idle.boss_recovery_ready', 'Last stand ready · once per fight');
+  if (recoveryStatus === 'used')
+    recoveryText = tr(
+      'games.idle.boss_recovery_used',
+      'Last stand consumed · +50% max HP recovered'
+    );
+  if (recoveryStatus === 'bypassed')
+    recoveryText = tr('games.idle.boss_recovery_bypassed', 'Last stand bypassed by your damage');
 
   return (
     <div className={css.BattleColumns}>
@@ -245,6 +275,21 @@ export function BattleView({ state, log, runner, onAutoAdvance, onGoToStage }: B
         }}
       >
         <canvas className={css.FxCanvas} ref={canvasRef} aria-hidden />
+        {boss && (
+          <div className={`${css.BossEncounter} ${css.ArenaTop}`}>
+            <span className={css.BossTag}>{tr('games.idle.region_boss', 'Region boss')}</span>
+            <strong>{fighterName(battle?.foe.name ?? zone.boss.id)}</strong>
+            <span className={css.Muted}>
+              {tr(
+                'games.idle.boss_recovery_rule',
+                'At 10–15% HP, recovers 50% of maximum life once. A hit below 10% bypasses recovery; lethal hits kill immediately.'
+              )}
+            </span>
+            <span className={css.Mini} aria-live="polite">
+              {recoveryText}
+            </span>
+          </div>
+        )}
         <div className={`${css.StageLine} ${css.ArenaTop}`}>
           <div>
             <div className={css.StageName}>

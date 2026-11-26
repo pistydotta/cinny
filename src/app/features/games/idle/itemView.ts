@@ -1,31 +1,51 @@
-import { itemMods, rarityRank } from './engine/items';
+import { canEquip, itemMods, rarityRank } from './engine/items';
 import { heroStats } from './engine/progress';
 import { powerOf } from './engine/stats';
 import { GameState, Item, ModKey, Slot, StatKey } from './engine/types';
 
 // What the inventory and item screens show, worked out apart from React so it can be tested.
 
-export type Category = 'all' | 'weapons' | 'armor' | 'jewelry' | 'upgrades' | 'new';
-export const CATEGORIES: Category[] = ['all', 'upgrades', 'new', 'weapons', 'armor', 'jewelry'];
+export type Category =
+  | 'all'
+  | 'weapons'
+  | 'armor'
+  | 'jewelry'
+  | 'upgrades'
+  | 'new'
+  | 'incompatible';
+export const CATEGORIES: Category[] = [
+  'all',
+  'upgrades',
+  'incompatible',
+  'new',
+  'weapons',
+  'armor',
+  'jewelry',
+];
 
 const ARMOR: Slot[] = ['offhand', 'head', 'chest', 'hands', 'feet'];
 
 export type SortBy = 'power' | 'rarity' | 'level' | 'recent';
 export const SORTS: SortBy[] = ['power', 'rarity', 'level', 'recent'];
 
-export type ItemRow = { item: Item; delta: number };
+export type ItemRow = { item: Item; delta: number; compatible?: boolean };
 
 /** Every inventory item with how much it would change the hero's power. */
 export const withDeltas = (s: GameState): ItemRow[] => {
   const now = powerOf(heroStats(s));
   return s.inventory.map((item) => ({
     item,
-    delta: powerOf(heroStats(s, { ...s.equipment, [item.kind]: item })) - now,
+    compatible: canEquip(s.hero, item),
+    delta: !canEquip(s.hero, item)
+      ? 0
+      : powerOf(heroStats(s, { ...s.equipment, [item.kind]: item })) - now,
   }));
 };
 
 export const inCategory = (row: ItemRow, c: Category): boolean => {
   switch (c) {
+    case 'incompatible':
+      return row.compatible === false;
     case 'weapons':
       return row.item.kind === 'weapon';
     case 'armor':
@@ -100,7 +120,9 @@ export type HeroDelta = {
 /** What the whole hero gains or loses by equipping `item`, after every bonus is counted. */
 export const heroDelta = (s: GameState, item: Item): HeroDelta => {
   const before = heroStats(s);
-  const after = heroStats(s, { ...s.equipment, [item.kind]: item });
+  const after = canEquip(s.hero, item)
+    ? heroStats(s, { ...s.equipment, [item.kind]: item })
+    : before;
   const p0 = powerOf(before);
   const p1 = powerOf(after);
   return {

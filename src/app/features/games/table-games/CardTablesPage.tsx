@@ -8,6 +8,7 @@ import { ApiError } from '../../../utils/blazeroomApi';
 import { getGamesPath, getGamesTableGamePath } from '../../../pages/pathUtils';
 import { tr } from '../../translation/tr';
 import { InviteOnlyToggle } from '../invite/InviteOnlyToggle';
+import * as pokerCss from '../poker/pokerPage.css';
 import { TopUpButton } from '../credits/TopUpButton';
 import { useCredits } from '../credits/useCredits';
 import { formatChips } from '../poker/types';
@@ -35,10 +36,17 @@ function CreateForm({
   kind: CardKind;
   busy: boolean;
   balance?: number;
-  onCreate: (name: string, stake: number, capacity: number, inviteOnly: boolean) => void;
+  onCreate: (
+    name: string,
+    stake: number,
+    capacity: number,
+    inviteOnly: boolean,
+    blockExactTotal: boolean
+  ) => void;
 }) {
   const [name, setName] = useState('');
   const [inviteOnly, setInviteOnly] = useState(false);
+  const [blockExactTotal, setBlockExactTotal] = useState(false);
   const [stake, setStake] = useState(0);
   const [capacity, setCapacity] = useState(4);
   return (
@@ -46,7 +54,13 @@ function CreateForm({
       className={css.Form}
       onSubmit={(e) => {
         e.preventDefault();
-        onCreate(name, stake, kind === 'truco' ? 4 : capacity, inviteOnly);
+        onCreate(
+          name,
+          stake,
+          kind === 'truco' ? 4 : capacity,
+          inviteOnly,
+          kind === 'fodinha' && blockExactTotal
+        );
       }}
     >
       <label className={css.Field} htmlFor="table-name">
@@ -96,6 +110,26 @@ function CreateForm({
             ))}
           </div>
         </div>
+      )}
+      {kind === 'fodinha' && (
+        <label className={pokerCss.CheckRow} htmlFor="table-block-exact-total">
+          <input
+            id="table-block-exact-total"
+            className={pokerCss.CheckInput}
+            type="checkbox"
+            checked={blockExactTotal}
+            onChange={() => setBlockExactTotal(!blockExactTotal)}
+          />
+          <span style={{ display: 'flex', flexDirection: 'column' }}>
+            <span>{tr('table_games.block_exact_total', 'Last bet can’t close the total')}</span>
+            <span className={pokerCss.Muted}>
+              {tr(
+                'table_games.block_exact_total_hint',
+                'From two cards on, the last to bet can’t make the bets add up to the cards dealt.'
+              )}
+            </span>
+          </span>
+        </label>
       )}
       <InviteOnlyToggle id="table-invite-only" checked={inviteOnly} onChange={setInviteOnly} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -427,8 +461,10 @@ export function CardTablesPage({ kind }: { kind: CardKind }) {
               kind={kind}
               busy={busy}
               balance={balance}
-              onCreate={(name, stake, capacity, inviteOnly) =>
-                run(() => api.create(kind, name, stake, capacity, inviteOnly)).then((created) => {
+              onCreate={(name, stake, capacity, inviteOnly, blockExactTotal) =>
+                run(() =>
+                  api.create(kind, name, stake, capacity, inviteOnly, blockExactTotal)
+                ).then((created) => {
                   if (created) navigate(getGamesTableGamePath(kind, created.id));
                 })
               }

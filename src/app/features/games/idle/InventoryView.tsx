@@ -1,17 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { canEquip, safeToSellIncompatible } from './engine/items';
+import { weaponsFor } from './engine/classes';
 import { salvageValue } from './engine/forge';
 import { capacityOf, totalMods } from './engine/progress';
 import { GameState, Rarity } from './engine/types';
 import { formatBig } from './format';
 import { ItemCard, ItemDetails } from './ItemDetails';
 import { CATEGORIES, Category, SORTS, SortBy, inCategory, sortRows, withDeltas } from './itemView';
-import { rarityName } from './labels';
+import { baseName, rarityName } from './labels';
 import { LootFeed } from './LootFeed';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
 const CATEGORY_EN: Record<Category, string> = {
   all: 'All',
+  incompatible: 'Other classes',
   upgrades: '▲ Upgrades',
   new: 'New',
   weapons: 'Weapons',
@@ -31,6 +34,8 @@ type InventoryViewProps = {
   error?: string;
   onEquip: (id: string) => void;
   onEquipBest: () => void;
+  onSellIncompatible: () => void;
+  onAutoSellIncompatible: (on: boolean) => void;
   onSell: (id: string) => void;
   onSalvage: (id: string) => void;
   onLock: (id: string) => void;
@@ -45,6 +50,8 @@ export function InventoryView({
   error,
   onEquip,
   onEquipBest,
+  onSellIncompatible,
+  onAutoSellIncompatible,
   onSell,
   onSalvage,
   onLock,
@@ -62,11 +69,21 @@ export function InventoryView({
   useEffect(() => () => onSeen(), [onSeen]);
 
   const count = state.inventory.length;
+  const unwanted = state.inventory.filter((item) => safeToSellIncompatible(state.hero, item));
+  const saleGold = unwanted.reduce((sum, item) => sum + item.value, 0);
   // Deltas only change with the gear, not with every tick of the fight.
   const rows = useMemo(
     () => withDeltas(state),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.inventory, state.equipment, state.hero.level, state.hero.talents, state.upgrades]
+    [
+      state.inventory,
+      state.equipment,
+      state.hero.classId,
+      state.hero.specId,
+      state.hero.level,
+      state.hero.talents,
+      state.upgrades,
+    ]
   );
   const shown = sortRows(
     rows.filter((r) => inCategory(r, category)),
@@ -88,6 +105,42 @@ export function InventoryView({
             {count}/{capacityOf(state)}
           </span>
         </div>
+        <p className={css.Muted}>
+          {tr('games.idle.allowed_weapons', 'Your weapons: {{weapons}}', {
+            weapons: weaponsFor(state.hero)
+              .map((id) => baseName(id))
+              .join(', '),
+          })}
+        </p>
+        <div className={css.Row}>
+          <button
+            type="button"
+            className={css.Button}
+            disabled={!unwanted.length}
+            onClick={onSellIncompatible}
+          >
+            {tr(
+              'games.idle.sell_incompatible',
+              'Sell other-class items ({{count}}) · +{{gold}} gold',
+              { count: unwanted.length, gold: formatBig(saleGold) }
+            )}
+          </button>
+          <label className={css.Muted} htmlFor="idle-auto-sell">
+            <input
+              type="checkbox"
+              id="idle-auto-sell"
+              checked={!!state.settings.autoSellIncompatible}
+              onChange={(e) => onAutoSellIncompatible(e.target.checked)}
+            />
+            {tr('games.idle.auto_sell_incompatible', 'Auto-sell future drops for other classes')}
+          </label>
+        </div>
+        <span className={css.Mini}>
+          {tr(
+            'games.idle.sell_protection',
+            'Locked and forged items are protected. Auto-sale happens before salvage and also works while away.'
+          )}
+        </span>
         <div className={css.Chips}>
           {CATEGORIES.map((c) => {
             const n = rows.filter((r) => inCategory(r, c)).length;
@@ -142,6 +195,8 @@ export function InventoryView({
                 key={r.item.id}
                 item={r.item}
                 delta={r.delta}
+                compatible={r.compatible}
+                expanded
                 selected={selected === r.item.id}
                 onClick={() => setSelected(selected === r.item.id ? undefined : r.item.id)}
               />
@@ -220,6 +275,7 @@ export function InventoryView({
               <button
                 type="button"
                 className={css.Button}
+                disabled={!canEquip(state.hero, picked)}
                 onClick={() => {
                   onEquip(picked.id);
                   setSelected(undefined);

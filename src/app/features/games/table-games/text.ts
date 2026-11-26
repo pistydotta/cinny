@@ -35,6 +35,10 @@ export const gameError = (code?: string) =>
       'This table is for invited people only. Ask someone at it for an invite or the link.'
     ),
     invalid_seat: tr('table_games.invalid_seat', 'That seat can’t be swapped.'),
+    forbidden_bid: tr(
+      'table_games.forbidden_bid',
+      'At this table the last bet can’t make the total equal the cards dealt.'
+    ),
     too_many_tables: tr(
       'table_games.too_many',
       'Finish or cancel an existing table before creating another.'

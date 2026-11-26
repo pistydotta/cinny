@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { SPEC_LEVEL, getClass, getSpec, looksOf, skillsOf } from './engine/classes';
+import {
+  SPEC_LEVEL,
+  getClass,
+  getSpec,
+  looksOf,
+  skillsOf,
+  weaponsFor,
+  SPEC_WEAPONS,
+} from './engine/classes';
 import { economy, heroStats, totalMods } from './engine/progress';
 import { attributesAt, powerOf } from './engine/stats';
 import { ATTRIBUTES, GameState, SLOTS, Slot, SpecId, StatKey } from './engine/types';
 import { formatBig, formatMod } from './format';
 import { ItemCard, ItemDetails } from './ItemDetails';
 import {
+  baseName,
   attrName,
   classDesc,
   className,
@@ -95,6 +104,13 @@ export function HeroView({ state, error, onUnequip, onSpec, onForge }: HeroViewP
           </span>
         </h2>
         <span className={css.Muted}>{spec ? specDesc(spec.id) : classDesc(cls.id)}</span>
+        <span className={css.Strong}>
+          {tr('games.idle.allowed_weapons', 'Your weapons: {{weapons}}', {
+            weapons: weaponsFor(state.hero)
+              .map((id) => baseName(id))
+              .join(', '),
+          })}
+        </span>
         {skillsOf(cls, state.hero.specId).map((sk) => (
           <span key={sk.id} style={{ fontSize: 13 }}>
             <b>{skillName(sk.id)}</b>
@@ -126,8 +142,8 @@ export function HeroView({ state, error, onUnequip, onSpec, onForge }: HeroViewP
             </span>
             <span className={css.Muted}>
               {tr(
-                'games.idle.spec_hint',
-                'Each class grows in one of two ways, with a second skill and a new passive. The choice is for good and survives rebirths.'
+                'games.idle.spec_weapon_hint',
+                'Choose a permanent specialization: a second skill, exclusive talents and a focused arsenal. Incompatible equipped weapons return to your backpack. The choice survives rebirths.'
               )}
             </span>
             <div className={css.SpecGrid}>
@@ -146,6 +162,11 @@ export function HeroView({ state, error, onUnequip, onSpec, onForge }: HeroViewP
                     {specName(sp.id)}
                   </span>
                   <span className={css.Mini}>{specDesc(sp.id)}</span>
+                  <span className={css.Strong}>
+                    {tr('games.idle.allowed_weapons', 'Your weapons: {{weapons}}', {
+                      weapons: SPEC_WEAPONS[sp.id].map((id) => baseName(id)).join(', '),
+                    })}
+                  </span>
                   <span style={{ fontSize: 12 }}>
                     <b>{skillName(sp.skill.id)}</b>: {sp.skill.effects.map(effectText).join(' · ')}
                   </span>

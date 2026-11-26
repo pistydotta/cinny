@@ -4,11 +4,18 @@
 import { getClass, getSpec, looksOf, skillsOf } from './classes';
 import { STEP_MS, makeFighter, outcomeOf, stepBattle } from './combat';
 import { salvageValue } from './forge';
-import { generateItem, itemMods, rarityRank, starterWeapon } from './items';
+import {
+  canEquip,
+  safeToSellIncompatible,
+  generateItem,
+  itemMods,
+  rarityRank,
+  starterWeapon,
+} from './items';
 import { altarMods, altarMore, bonusTalentPoints } from './prestige';
 import { createRng, Rng, rollInt } from './rng';
 import { computeStats, powerOf, sumMods } from './stats';
-import { talentMods } from './talents';
+import { talentMods, talentsFor } from './talents';
 import {
   ClassId,
   Equipment,
@@ -105,8 +112,14 @@ export const equipmentMods = (equipment: Equipment): Mods[] =>
 
 /** Everything that adds to the hero besides level: gear, talents, spec, upgrades, the altar. */
 export const heroMods = (s: GameState, equipment: Equipment = s.equipment): Mods[] => [
-  ...equipmentMods(equipment),
-  ...talentMods(s.hero.talents),
+  ...equipmentMods(
+    Object.fromEntries(
+      Object.entries(equipment).filter(([, item]) => item && canEquip(s.hero, item))
+    )
+  ),
+  ...talentMods(
+    Object.fromEntries(talentsFor(s.hero).map((t) => [t.id, s.hero.talents[t.id] ?? 0]))
+  ),
   getSpec(s.hero.specId)?.passive ?? {},
   ...UPGRADES.map((u) => u.mods(s.upgrades[u.id] ?? 0)),
   altarMods(s.prestige),
@@ -126,6 +139,7 @@ export const powerWith = (s: GameState, item: Item): number =>
 
 /** How much `item` would change the hero's power if equipped. */
 export const powerDelta = (s: GameState, item: Item): number => {
+  if (!canEquip(s.hero, item)) return 0;
   const now = powerOf(heroStats(s));
   return powerWith(s, item) - now;
 };
@@ -172,11 +186,17 @@ export const stash = (s: GameState, item: Item, events: GameEvent[]) => {
   const better = powerDelta(s, item) > 0;
   const auto =
     s.settings.autoSalvage !== null &&
+    !item.locked &&
+    item.plus === 0 &&
     !better &&
     rarityRank(item.rarity) <= rarityRank(s.settings.autoSalvage);
   const full = s.inventory.length >= capacityOf(s);
   let fate: LootEntry['fate'] = 'kept';
-  if (auto || full) {
+  if (s.settings.autoSellIncompatible && safeToSellIncompatible(s.hero, item)) {
+    s.gold += item.value;
+    s.lifetime.goldEarned += item.value;
+    fate = 'sold';
+  } else if (auto || full) {
     const got = salvageValue(item, totalMods(s).salvageYield ?? 0);
     s.materials.stones += got.stones;
     s.materials.cores += got.cores;
@@ -221,7 +241,11 @@ const winFight = (s: GameState, rng: Rng, events: GameEvent[]) => {
   if (rng.next() < Math.min(1, r.dropChance * eco.drop)) {
     stash(
       s,
-      generateItem(rng, getClass(s.hero.classId), newItemId(s), { level: s.stage, boss }),
+      generateItem(rng, getClass(s.hero.classId), newItemId(s), {
+        level: s.stage,
+        boss,
+        specId: s.hero.specId,
+      }),
       events
     );
   }

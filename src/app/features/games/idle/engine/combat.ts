@@ -9,6 +9,9 @@ import { Battle, CombatEvent, Fighter, Side, SkillDef, Stats } from './types';
 export const STEP_MS = 100;
 export const PET_MS = 1000;
 export const EXECUTE_BELOW = 0.3;
+export const BOSS_RECOVERY_MIN = 0.1;
+export const BOSS_RECOVERY_MAX = 0.15;
+export const BOSS_RECOVERY_HEAL = 0.5;
 
 export const makeFighter = (
   name: string,
@@ -52,10 +55,22 @@ export const liveStats = (f: Fighter): Stats => {
 export const mitigate = (amount: number, armor: number, attackerLevel: number): number =>
   amount * (1 - armor / (armor + 100 + attackerLevel * 15));
 
-const takeDamage = (target: Fighter, amount: number) => {
+const takeDamage = (target: Fighter, amount: number, events: CombatEvent[]) => {
+  const before = target.hp;
   const absorbed = Math.min(target.shield, amount);
   target.shield -= absorbed;
   target.hp = Math.max(0, target.hp - (amount - absorbed));
+  if (target.bossRecovery !== 'ready' || target.hp >= before) return;
+  const fraction = target.hp / target.stats.maxHp;
+  // Resolve each damage packet, before the next hit in a combo. Never revive a dead boss.
+  if (fraction < BOSS_RECOVERY_MIN) {
+    target.bossRecovery = 'bypassed';
+  } else if (fraction <= BOSS_RECOVERY_MAX) {
+    target.bossRecovery = 'used';
+    const amountHealed = target.stats.maxHp * BOSS_RECOVERY_HEAL;
+    target.hp = Math.min(target.stats.maxHp, target.hp + amountHealed);
+    events.push({ t: 'boss_recovery', from: 'foe', amount: Math.round(amountHealed) });
+  }
 };
 
 const heal = (f: Fighter, amount: number): number => {
@@ -97,7 +112,7 @@ const castSkill = (
   const strike = (multiplier: number, forceCrit?: boolean): number => {
     const hit = rollHit(s, multiplier * s.skillPower * situational(self, other), rng, forceCrit);
     const dealt = mitigate(hit.amount, liveStats(other).armor, self.level);
-    takeDamage(other, dealt);
+    takeDamage(other, dealt, events);
     heal(self, dealt * s.lifesteal);
     total += dealt;
     return dealt;
@@ -151,12 +166,12 @@ const attack = (self: Fighter, other: Fighter, side: Side, rng: Rng, events: Com
   }
   const hit = rollHit(s, situational(self, other), rng);
   const dealt = mitigate(hit.amount, liveStats(other).armor, self.level);
-  takeDamage(other, dealt);
+  takeDamage(other, dealt, events);
   heal(self, dealt * s.lifesteal);
   events.push({ t: 'hit', from: side, amount: Math.round(dealt), crit: hit.crit });
   if (other.stats.thorns > 0 && other.hp > 0) {
     const back = dealt * other.stats.thorns;
-    takeDamage(self, back);
+    takeDamage(self, back, events);
     events.push({ t: 'thorns', from: side === 'hero' ? 'foe' : 'hero', amount: Math.round(back) });
   }
 };
@@ -165,13 +180,13 @@ const petAttack = (self: Fighter, other: Fighter, side: Side, rng: Rng, events: 
   const s = liveStats(self);
   const amount = s.damage * s.petPower * rollRange(rng, 0.9, 1.1);
   const dealt = mitigate(amount, liveStats(other).armor, self.level);
-  takeDamage(other, dealt);
+  takeDamage(other, dealt, events);
   events.push({ t: 'pet', from: side, amount: Math.round(dealt) });
 };
 
-const tickStatus = (f: Fighter, dt: number) => {
+const tickStatus = (f: Fighter, dt: number, events: CombatEvent[]) => {
   const sec = dt / 1000;
-  f.dots.forEach((d) => takeDamage(f, d.dps * Math.min(sec, d.ms / 1000)));
+  f.dots.forEach((d) => takeDamage(f, d.dps * Math.min(sec, d.ms / 1000), events));
   if (f.hp > 0) heal(f, f.stats.regen * sec);
   f.dots = f.dots.filter((d) => {
     d.ms -= dt;
@@ -237,8 +252,9 @@ export const outcomeOf = (b: Battle): Outcome => {
 export const stepBattle = (b: Battle, rng: Rng): CombatEvent[] => {
   const events: CombatEvent[] = [];
   if (outcomeOf(b)) return events;
-  tickStatus(b.hero, STEP_MS);
-  tickStatus(b.foe, STEP_MS);
+  if (b.boss && b.foe.bossRecovery === undefined) b.foe.bossRecovery = 'ready';
+  tickStatus(b.hero, STEP_MS, events);
+  tickStatus(b.foe, STEP_MS, events);
   if (b.hero.hp > 0 && b.foe.hp > 0) act(b.hero, b.foe, 'hero', STEP_MS, rng, events);
   if (b.hero.hp > 0 && b.foe.hp > 0) act(b.foe, b.hero, 'foe', STEP_MS, rng, events);
   b.elapsedMs += STEP_MS;

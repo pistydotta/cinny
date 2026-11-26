@@ -222,6 +222,7 @@ export class BattleFx {
         });
         break;
       }
+      case 'boss_recovery':
       case 'heal': {
         const s = this.sides(e.from);
         fx.text({ x: s.me.x, y: s.me.y - 40 }, `+${fmt(e.amount)}`, { color: '#8be28f', size: 18 });

@@ -54,7 +54,7 @@ export const catchUp = (s: GameState, elapsedMs: number): OfflineReport => {
     const sampleEvents = advance(sample, SAMPLE_MS);
     const ratio = elapsed / SAMPLE_MS;
     const kills = sample.lifetime.kills - s.lifetime.kills;
-    const gold = sample.lifetime.goldEarned - s.lifetime.goldEarned;
+    const gold = sampleEvents.reduce((sum, e) => (e.t === 'kill' ? sum + e.gold : sum), 0);
     const xpSample = sampleEvents.reduce((sum, e) => (e.t === 'kill' ? sum + e.xp : sum), 0);
     const drops = sample.lifetime.itemsFound - s.lifetime.itemsFound;
     const bossStones = sampleEvents.reduce((n, e) => (e.t === 'materials' ? n + e.stones : n), 0);
@@ -74,7 +74,11 @@ export const catchUp = (s: GameState, elapsedMs: number): OfflineReport => {
     const total = Math.round(drops * ratio);
     const count = Math.min(MAX_OFFLINE_ITEMS, total);
     for (let i = 0; i < count; i += 1) {
-      stash(s, generateItem(rng, cls, newItemId(s), { level: s.stage }), events);
+      stash(
+        s,
+        generateItem(rng, cls, newItemId(s), { level: s.stage, specId: s.hero.specId }),
+        events
+      );
     }
     // Past the cap, the rest is broken down into stones, roughly what common drops give.
     s.materials.stones += Math.floor((total - count) * 1.5 * (1 + s.stage / 40));
@@ -89,7 +93,7 @@ export const catchUp = (s: GameState, elapsedMs: number): OfflineReport => {
     kills: s.lifetime.kills - before.kills,
     levels: s.hero.level - before.level,
     items: events.filter((e) => e.t === 'loot' && e.entry.fate === 'kept').length,
-    salvaged: events.filter((e) => e.t === 'loot' && e.entry.fate !== 'kept').length,
+    salvaged: events.filter((e) => e.t === 'loot' && e.entry.fate === 'salvaged').length,
     stones: s.materials.stones - before.stones,
     cores: s.materials.cores - before.cores,
   };

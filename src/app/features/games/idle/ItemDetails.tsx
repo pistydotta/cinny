@@ -1,4 +1,5 @@
 import React from 'react';
+import { canEquip } from './engine/items';
 import { maxPlusOf } from './engine/forge';
 import { GameState, Item, StatKey } from './engine/types';
 import { formatBig, formatDelta, formatMod } from './format';
@@ -33,7 +34,7 @@ type ItemDetailsProps = {
 export function ItemDetails({ item, state, compare, children }: ItemDetailsProps) {
   const color = RARITY_COLOR[item.rarity];
   const rows = compareMods(item, compare);
-  const showDiff = !!state && compare?.id !== item.id;
+  const showDiff = !!state && canEquip(state.hero, item) && compare?.id !== item.id;
   const delta = showDiff && state ? heroDelta(state, item) : undefined;
 
   return (
@@ -52,6 +53,11 @@ export function ItemDetails({ item, state, compare, children }: ItemDetailsProps
         {tr('games.idle.item_level', 'Level {{level}}', { level: item.level })} ·{' '}
         {tr('games.idle.forge_max', 'Forge up to +{{max}}', { max: maxPlusOf(item) })}
       </span>
+      {state && !canEquip(state.hero, item) && (
+        <span className={css.Warning}>
+          {tr('games.idle.incompatible', 'Not usable by your class or specialization.')}
+        </span>
+      )}
       <div className={css.Compare}>
         {rows.map((r) => (
           <React.Fragment key={r.key}>
@@ -68,6 +74,11 @@ export function ItemDetails({ item, state, compare, children }: ItemDetailsProps
       {showDiff && !compare && (
         <span className={css.Muted}>
           {tr('games.idle.empty_slot', 'Nothing equipped in this slot: it’s all gain.')}
+        </span>
+      )}
+      {showDiff && compare && (
+        <span className={css.Muted}>
+          {tr('games.idle.replaces', 'Replaces: {{item}}', { item: itemName(compare) })}
         </span>
       )}
       {delta && (
@@ -111,11 +122,13 @@ export function ItemDetails({ item, state, compare, children }: ItemDetailsProps
 type ItemCardProps = {
   item: Item;
   delta?: number;
+  compatible?: boolean;
+  expanded?: boolean;
   selected?: boolean;
   onClick: () => void;
 };
 
-export function ItemCard({ item, delta, selected, onClick }: ItemCardProps) {
+export function ItemCard({ item, delta, compatible, expanded, selected, onClick }: ItemCardProps) {
   const color = RARITY_COLOR[item.rarity];
   let arrow: React.ReactNode = null;
   if (delta !== undefined && delta > 0)
@@ -125,7 +138,7 @@ export function ItemCard({ item, delta, selected, onClick }: ItemCardProps) {
   return (
     <button
       type="button"
-      className={css.ItemCard}
+      className={expanded ? css.BackpackCard : css.ItemCard}
       aria-pressed={selected}
       title={`${itemName(item)} · ${rarityName(item.rarity)} · ${tr(
         'games.idle.item_level',
@@ -141,7 +154,23 @@ export function ItemCard({ item, delta, selected, onClick }: ItemCardProps) {
       {item.plus > 0 && <span className={css.CardPlus}>+{item.plus}</span>}
       {item.locked && <span className={css.CardLock}>🔒</span>}
       {!item.locked && item.isNew && <span className={css.CardNew} />}
-      {item.icon}
+      <span>{item.icon}</span>
+      {expanded && (
+        <>
+          <span className={css.CardCaption}>{itemName(item)}</span>
+          <span className={css.CardCaption}>
+            {rarityName(item.rarity)} ·{' '}
+            {tr('games.idle.item_level', 'Level {{level}}', { level: item.level })}
+          </span>
+          <span className={css.CardCaption}>
+            {compatible === false && tr('games.idle.category.incompatible', 'Other classes')}
+            {compatible !== false &&
+              (delta && delta > 0
+                ? tr('games.idle.recommended', 'Recommended')
+                : slotName(item.kind))}
+          </span>
+        </>
+      )}
       {arrow}
     </button>
   );

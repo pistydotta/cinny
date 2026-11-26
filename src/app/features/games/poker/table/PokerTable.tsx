@@ -313,14 +313,15 @@ export function PokerTable({
         const fromDealer = offset(seatPos, spec.center);
         const inHand = p.status !== 'sitting-out';
         const folded = p.status === 'folded';
-        // Losers who mucked at showdown come without cards and stay face down.
+        const shown = showResult ? result?.hands[p.id] : undefined;
+        // Whoever mucked or folded comes without cards and stays face down, unless they showed.
         const reveal =
-          revealCards && (p.status === 'active' || p.status === 'allin') && p.holeCards.length > 0;
+          p.holeCards.length > 0 &&
+          (!!shown || (revealCards && (p.status === 'active' || p.status === 'allin')));
         const faceUp = isHero || reveal;
         const myTurn = phase === 'betting' && view.actingSeat === p.seat;
         const timer = myTurn && turnTimer?.seat === p.seat ? turnTimer : undefined;
         const won = showResult ? result?.payouts[p.id] : undefined;
-        const shown = showdown ? result?.hands[p.id] : undefined;
         // A folded hero keeps seeing their own cards, dimmed; the server sends them.
         const showCards = inHand && (p.hasCards || (isHero && p.holeCards.length > 0));
         // Other players' cards stay hidden, but the table still deals them.
@@ -359,7 +360,7 @@ export function PokerTable({
                       ((showdown && winnerIds.has(p.id) && isWinningCard(card)) ||
                         (showMyBest && isHero && isMyBestCard(card)))
                     }
-                    dim={(isHero && folded) || (showdown && !winnerIds.has(p.id))}
+                    dim={folded || (showdown && !winnerIds.has(p.id))}
                     style={
                       {
                         '--from-x': fromDealer.x,

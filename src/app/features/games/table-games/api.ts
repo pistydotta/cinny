@@ -8,8 +8,22 @@ export const createTableGamesApi = (getToken: () => string | null) => {
   return {
     list: (kind: GameKind) => json<TableSummary[]>(`?kind=${kind}`, 'GET'),
     get: (id: string) => json<GameTable>(`/${encodeURIComponent(id)}`, 'GET'),
-    create: (kind: GameKind, name: string, stake: number, capacity: number, inviteOnly = false) =>
-      json<GameTable>('', 'POST', { kind, name, stake, capacity, inviteOnly }),
+    create: (
+      kind: GameKind,
+      name: string,
+      stake: number,
+      capacity: number,
+      inviteOnly = false,
+      blockExactTotal = false
+    ) =>
+      json<GameTable>('', 'POST', {
+        kind,
+        name,
+        stake,
+        capacity,
+        inviteOnly,
+        ...(blockExactTotal ? { blockExactTotal } : {}),
+      }),
     /** The invite token lets me into an invite-only table I wasn't invited to. */
     join: (id: string, token?: string) =>
       json<GameTable>(`/${encodeURIComponent(id)}/join`, 'POST', token ? { token } : undefined),

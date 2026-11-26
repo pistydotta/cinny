@@ -259,6 +259,14 @@ export function FodinhaScreen({
         {rules && (
           <div className={css.Panel}>
             <p className={css.Muted}>{rulesText('fodinha')}</p>
+            {table.blockExactTotal && (
+              <p className={css.Muted}>
+                {tr(
+                  'table_games.block_exact_total_rule',
+                  'At this table, from two cards on, the last to bet can’t make the bets add up to the cards dealt. If their time runs out when 0 would do that, the game bets 1.'
+                )}
+              </p>
+            )}
             <p className={css.Muted}>
               {tr(
                 'table_games.timeout_rules',

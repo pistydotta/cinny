@@ -1,4 +1,4 @@
-import { ClassDef, ClassId, SkillDef, SpecDef, SpecId } from './types';
+import { ClassDef, ClassId, SkillDef, SpecDef, SpecId, Hero, WeaponBase } from './types';
 
 /** The level where a class picks one of its two specializations. */
 export const SPEC_LEVEL = 30;
@@ -328,3 +328,20 @@ export const looksOf = (cls: ClassDef, specId?: SpecId): { icon: string; color: 
   const spec = getSpec(specId);
   return spec ? { icon: spec.icon, color: spec.color } : { icon: cls.icon, color: cls.color };
 };
+
+export const SPEC_WEAPONS: Record<SpecId, WeaponBase[]> = {
+  guardian: ['sword', 'mace'],
+  berserker: ['axe'],
+  sniper: ['bow'],
+  beastmaster: ['bow'],
+  assassin: ['dagger'],
+  venomblade: ['claws', 'dagger'],
+  pyromancer: ['staff'],
+  cryomancer: ['wand'],
+  paladin: ['mace'],
+  druid: ['staff'],
+  necromancer: ['staff'],
+  hexer: ['wand', 'dagger'],
+};
+export const weaponsFor = (hero: Pick<Hero, 'classId' | 'specId'>): WeaponBase[] =>
+  hero.specId ? SPEC_WEAPONS[hero.specId] : getClass(hero.classId).weapons;

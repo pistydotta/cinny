@@ -18,6 +18,8 @@ import {
   resetTalents,
   salvage,
   sell,
+  sellIncompatible,
+  setAutoSellIncompatible,
   setAutoAdvance,
   setAutoSalvage,
   toggleLock,
@@ -56,6 +58,8 @@ type TabId =
 
 const errorText = (e: ActionError): string => {
   switch (e) {
+    case 'incompatible':
+      return tr('games.idle.incompatible', 'Not usable by your class or specialization.');
     case 'bag_full':
       return tr('games.idle.error.bag_full', 'There is no room in the backpack for that.');
     case 'not_enough_gold':
@@ -396,6 +400,8 @@ export function IdleGame({ userId, defaultName, onBack }: IdleGameProps) {
             error={error}
             onEquip={(id) => run((s) => equip(s, id))}
             onEquipBest={() => run(equipBest)}
+            onSellIncompatible={() => run(sellIncompatible)}
+            onAutoSellIncompatible={(on) => run((s) => setAutoSellIncompatible(s, on))}
             onSell={(id) => run((s) => sell(s, id))}
             onSalvage={(id) => run((s) => salvage(s, id))}
             onLock={(id) => run((s) => toggleLock(s, id))}

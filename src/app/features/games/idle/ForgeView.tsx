@@ -9,12 +9,12 @@ import {
   forgeCost,
   maxPlusOf,
 } from './engine/forge';
-import { PLUS_BONUS, rarityRank } from './engine/items';
+import { PLUS_BONUS, canEquip, itemMods, rarityRank } from './engine/items';
 import { totalMods } from './engine/progress';
 import { GameState, Item, SLOTS } from './engine/types';
-import { formatBig } from './format';
+import { formatBig, formatMod } from './format';
 import { ItemCard, ItemDetails } from './ItemDetails';
-import { RARITY_COLOR, itemName } from './labels';
+import { RARITY_COLOR, itemName, statName } from './labels';
 import * as css from './idle.css';
 import { tr } from '../../translation/tr';
 
@@ -43,13 +43,14 @@ export function ForgeView({ state, error, selected, onSelect, onForge }: ForgeVi
   }>();
   const equipped = SLOTS.map((s) => state.equipment[s]).filter((i): i is Item => !!i);
   const bag = [...state.inventory]
-    .filter((i) => rarityRank(i.rarity) >= 1 || i.plus > 0)
+    .filter((i) => canEquip(state.hero, i))
     .sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity) || b.plus - a.plus);
-  const item = [...equipped, ...state.inventory].find((i) => i.id === selected);
+  const item = selected ? [...equipped, ...bag].find((i) => i.id === selected) : equipped[0];
   const bonus = totalMods(state).forgeChance ?? 0;
 
   const forge = () => {
     if (!item) return;
+    onSelect(item.id);
     const r = onForge(item.id);
     if (r) setLast({ id: item.id, ...r, n: (last?.n ?? 0) + 1 });
   };
@@ -124,6 +125,29 @@ export function ForgeView({ state, error, selected, onSelect, onForge }: ForgeVi
           </span>
         ) : (
           <>
+            <div className={css.Compare}>
+              <b>{tr('games.idle.upgrade_preview', 'On success')}</b>
+              <b>{tr('games.idle.now', 'Now')}</b>
+              <b>+{target}</b>
+              {Object.entries(itemMods(item)).map(([key, value]) => (
+                <React.Fragment key={key}>
+                  <span>{statName(key as keyof typeof item.mods)}</span>
+                  <span>{formatMod(key as keyof typeof item.mods, value ?? 0)}</span>
+                  <span className={css.Up}>
+                    {formatMod(
+                      key as keyof typeof item.mods,
+                      itemMods({ ...item, plus: target })[key as keyof typeof item.mods] ?? 0
+                    )}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+            <span className={css.Mini}>
+              {tr(
+                'games.idle.forge_cost_note',
+                'Each attempt consumes the materials and gold shown, even on failure. The item level and rarity stay the same.'
+              )}
+            </span>
             <div className={css.Row} style={{ justifyContent: 'space-between' }}>
               <span className={css.Strong}>{tr('games.idle.forge_chance', 'Chance')}</span>
               <span
@@ -189,7 +213,7 @@ export function ForgeView({ state, error, selected, onSelect, onForge }: ForgeVi
                 className={css.Pill}
                 style={{ color: state.gold < cost.gold ? '#ff8a80' : undefined }}
               >
-                🪙 {formatBig(cost.gold)}
+                🪙 {formatBig(cost.gold)} / {formatBig(state.gold)}
               </span>
             </div>
             <button
@@ -241,7 +265,7 @@ export function ForgeView({ state, error, selected, onSelect, onForge }: ForgeVi
         <h3 className={css.PanelTitle}>{tr('games.idle.backpack', 'Backpack')}</h3>
         {bag.length === 0 ? (
           <span className={css.Muted}>
-            {tr('games.idle.forge_bag_empty', 'No uncommon or better items in the backpack.')}
+            {tr('games.idle.forge_usable_empty', 'No compatible items in the backpack.')}
           </span>
         ) : (
           <div className={css.ItemGrid}>

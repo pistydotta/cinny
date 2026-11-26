@@ -8,6 +8,15 @@ export type LogTone = 'good' | 'bad' | 'gold' | 'loot' | 'great' | undefined;
 /** One line of the battle log, or undefined for events the log doesn't show. */
 export const logText = (e: GameEvent): { text: string; tone: LogTone } | undefined => {
   switch (e.t) {
+    case 'boss_recovery':
+      return {
+        text: tr(
+          'games.idle.boss_recovery_log',
+          'The boss recovers {{hp}} HP (50% of maximum life). Last stand consumed.',
+          { hp: formatBig(e.amount) }
+        ),
+        tone: 'bad',
+      };
     case 'fight':
       return {
         text: e.boss

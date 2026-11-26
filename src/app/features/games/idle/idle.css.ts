@@ -394,6 +394,25 @@ export const BossTag = style({
   color: '#ff8a65',
 });
 
+export const BossEncounter = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+  padding: 14,
+  borderRadius: 12,
+  border: '1px solid #d88458',
+  background: 'linear-gradient(120deg, #64291c88, #1c1528cc)',
+});
+
+export const BossRecoveryBand = style({
+  position: 'absolute',
+  top: 0,
+  bottom: 0,
+  background: '#ffd36b88',
+  borderInline: '1px solid #ffe6ab',
+  pointerEvents: 'none',
+});
+
 export const HpWrap = style({ width: '100%' });
 
 export const HpText = style({
@@ -616,7 +635,7 @@ export const Select = style({
 
 export const ItemGrid = style({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
   gap: 6,
   maxHeight: 420,
   overflowY: 'auto',
@@ -854,4 +873,22 @@ export const SpecGrid = style({
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
   gap: 10,
+});
+
+export const BackpackCard = style([
+  ItemCard,
+  {
+    aspectRatio: 'auto',
+    minHeight: 122,
+    padding: '14px 6px 8px',
+    flexDirection: 'column',
+    gap: 4,
+  },
+]);
+export const CardCaption = style({
+  fontSize: 11,
+  lineHeight: '16px',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 });

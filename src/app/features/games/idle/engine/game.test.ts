@@ -187,11 +187,11 @@ describe('actions', () => {
 
   it('learns talents with points and in order', () => {
     const s = fresh();
-    expect(learnTalent(s, 'sharpness')).toEqual({ ok: false, error: 'no_points' });
+    expect(learnTalent(s, 'archer_0')).toEqual({ ok: false, error: 'no_points' });
     const leveled = { ...structuredClone(s), hero: { ...s.hero, level: 30 } };
-    const one = must(learnTalent(leveled, 'sharpness'));
+    const one = must(learnTalent(leveled, 'archer_0'));
     expect(heroStats(one).damage).toBeGreaterThan(heroStats(leveled).damage);
-    expect(learnTalent(one, 'frenzy')).toEqual({ ok: false, error: 'too_early' });
+    expect(learnTalent(one, 'archer_1')).toEqual({ ok: false, error: 'too_early' });
   });
 
   it('specializes once, at the right level', () => {

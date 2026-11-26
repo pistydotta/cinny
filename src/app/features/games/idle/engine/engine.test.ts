@@ -186,12 +186,12 @@ describe('talents', () => {
     const deep = TALENTS.find((t) => t.branch === 'fury' && t.row === 1);
     if (!deep) throw new Error('no row 1');
     expect(rowOpen({}, deep)).toBe(false);
-    expect(rowOpen({ sharpness: ROW_NEEDS[1] }, deep)).toBe(true);
-    expect(rowOpen({ toughness: ROW_NEEDS[1] }, deep)).toBe(false);
+    expect(rowOpen({ warrior_0: ROW_NEEDS[1] }, deep)).toBe(true);
+    expect(rowOpen({ greed: ROW_NEEDS[1] }, deep)).toBe(false);
   });
 
   it('adds ranks up', () => {
-    expect(talentMods({ sharpness: 4 })[0].damagePct).toBeCloseTo(0.12);
+    expect(talentMods({ warrior_0: 4 })[0].str).toBe(8);
   });
 
   it('takes far more points than one run gives', () => {
