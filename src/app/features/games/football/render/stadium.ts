@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 import {
+  BENCH,
+  BENCH_X,
+  BENCH_Z,
+  SEAT_GAP,
   BOX_DEPTH,
   BOX_HALF_WIDTH,
   CIRCLE_RADIUS,
@@ -227,6 +231,56 @@ export const buildStadium = (scene: THREE.Scene, renderer: THREE.WebGLRenderer):
   stand(v(-gx, gz), v(gx, gz), new THREE.Vector3(0, 0, 1));
   stand(v(-gx, -gz), v(-gx, gz), new THREE.Vector3(-1, 0, 0));
   stand(v(gx, -gz), v(gx, gz), new THREE.Vector3(1, 0, 0));
+
+  // The two dugouts past the far touchline, where the substitutes sit (engine/scenes.ts seats
+  // them along BENCH_Z, facing the pitch): a seat, a back wall and a see-through roof, so the TV
+  // camera still sees who is on the bench.
+  const dark = new THREE.MeshStandardMaterial({ color: '#2b2f38', roughness: 0.8 });
+  const seatMat = new THREE.MeshStandardMaterial({ color: '#b3202a', roughness: 0.6 });
+  const glass = new THREE.MeshStandardMaterial({
+    color: '#cfe8ff',
+    transparent: true,
+    opacity: 0.22,
+    roughness: 0.1,
+    side: THREE.DoubleSide,
+  });
+  [-1, 1].forEach((dir) => {
+    const length = (BENCH.length - 1) * SEAT_GAP + 1.2;
+    const cx = dir * (BENCH_X + ((BENCH.length - 1) * SEAT_GAP) / 2);
+    const add = (
+      geo: THREE.BufferGeometry,
+      mat: THREE.Material,
+      x: number,
+      y: number,
+      z: number
+    ) => {
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    };
+    add(new THREE.BoxGeometry(length, 0.44, 0.5), seatMat, cx, 0.22, BENCH_Z - 0.12);
+    add(new THREE.BoxGeometry(length + 0.3, 1.9, 0.12), dark, cx, 0.95, BENCH_Z - 0.55);
+    [-1, 1].forEach((end) =>
+      add(
+        new THREE.BoxGeometry(0.08, 1.9, 1.3),
+        glass,
+        cx + (end * (length + 0.3)) / 2,
+        0.95,
+        BENCH_Z + 0.08
+      )
+    );
+    const roof = add(
+      new THREE.BoxGeometry(length + 0.3, 0.05, 1.5),
+      glass,
+      cx,
+      1.95,
+      BENCH_Z + 0.15
+    );
+    roof.castShadow = false;
+  });
 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(400, 400),

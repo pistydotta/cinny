@@ -22,7 +22,31 @@ export type Action =
   // Officials: the whistle, a card held up, the linesman's flag.
   | 'whistle'
   | 'card'
-  | 'flag';
+  | 'flag'
+  // Scenes (scenes.ts): what bodies do while play is stopped. They change nothing in the rules;
+  // the renderer has a clip for each, and later features can hang on them.
+  // Lying hurt after a foul, holding the leg.
+  | 'down'
+  // Arms out at the referee: "I never touched him".
+  | 'protest'
+  // Hands on the head: a goal let in, a match lost, a red card.
+  | 'dejected'
+  // Arms up, jumping: teammates of a scorer, a winning team.
+  | 'cheer'
+  // Celebrations a scorer picks: running with arms out like wings, sliding on the knees.
+  | 'airplane'
+  | 'kneeslide'
+  // Clapping: the crowd for a player going off, a team at full time.
+  | 'clap'
+  // A hand up to slap: the two players of a substitution.
+  | 'highfive'
+  // On the bench.
+  | 'sit'
+  // Officials: pointing the way (a free kick, a throw-in, a corner, a goal kick), the arm up
+  // for an indirect free kick, and the fourth official's board.
+  | 'point'
+  | 'indirect'
+  | 'board';
 
 export type Player = {
   side: Side;
@@ -52,8 +76,13 @@ export type Player = {
   look: number;
   // Yellow cards this match; a second one is a red.
   yellow: number;
-  // Sent off: out of the match, standing by the bench.
+  // Not on the pitch, so out of every choice: on the bench, taken off or sent off. `out` says
+  // which (undefined while playing); `off` is kept as a plain flag because every choice reads it.
   off: boolean;
+  out: 'bench' | 'subbed' | 'red' | undefined;
+  // The bench seat (0 nearest the halfway line) of a substitute or a player taken off; -1 on
+  // the pitch or sent off. A player coming on leaves their seat to the one going off.
+  seat: number;
 };
 
 // The referee (0) and the two linesmen (1 runs the near touchline, 2 the far one).
@@ -67,6 +96,11 @@ export type Official = {
   busy: number;
   // The card being shown.
   card: 'yellow' | 'red' | undefined;
+  // Where an action faces (a card at its player, a pointed arm), in radians; while it lasts the
+  // official turns there instead of watching the ball.
+  aim: number | undefined;
+  // For the fourth official's board: the shirt numbers going off and on.
+  board: [number, number] | undefined;
 };
 
 export type Ball = {
@@ -131,6 +165,9 @@ export type Input = {
   shoot: boolean;
   through: boolean;
   lob: boolean;
+  // A substitution the person asks for (or calls off) this tick: `subCode` in scenes.ts, sent
+  // for a few ticks like a button. Left out (or 0) the rest of the time.
+  sub?: number;
 };
 
 export const NO_INPUT: Input = {
@@ -170,6 +207,60 @@ export type Person = {
   preview: number;
 };
 
+// A substitution asked for and waiting for the next stoppage (the coach, scenes.ts).
+export type SubRequest = { side: Side; out: number; on: number };
+
+// A scene: what the bodies act out while play is stopped, run by scenes.ts. `t` counts its
+// ticks. While `hold` is true the restart waits for it.
+export type Scene =
+  | {
+      kind: 'foul';
+      t: number;
+      hold: boolean;
+      offender: number;
+      victim: number;
+      card: 'yellow' | 'red' | undefined;
+      penalty: boolean;
+      // Where it happened.
+      x: number;
+      z: number;
+      // The scene's tick when the referee showed the card or pointed the way; -1 before.
+      shown: number;
+      // Teammates of the victim who come to see to them, and of the offender who argue.
+      helpers: number[];
+      protesters: number[];
+    }
+  | { kind: 'offside'; t: number; hold: boolean; player: number; x: number; z: number }
+  | {
+      kind: 'goal';
+      t: number;
+      hold: boolean;
+      side: Side;
+      scorer: number;
+      own: boolean;
+      // Where the scorer runs to celebrate, and how.
+      x: number;
+      z: number;
+      style: 'airplane' | 'kneeslide' | 'celebrate' | 'cheer';
+      // The scene's tick when the scorer got there; -1 before.
+      at: number;
+    }
+  | {
+      kind: 'sub';
+      t: number;
+      hold: boolean;
+      side: Side;
+      out: number;
+      on: number;
+      // The point on the touchline where they swap.
+      x: number;
+      z: number;
+      // The scene's tick when both reached it; -1 before.
+      met: number;
+    };
+
+export type SceneKind = Scene['kind'];
+
 export type GameEvent =
   | { type: 'kick'; player: number; power: number }
   | { type: 'goal'; side: Side; scorer: number; own: boolean }
@@ -180,7 +271,9 @@ export type GameEvent =
   | { type: 'out'; kind: RestartKind }
   | { type: 'foul'; player: number; victim: number }
   | { type: 'card'; player: number; color: 'yellow' | 'red' }
-  | { type: 'offside'; player: number };
+  | { type: 'offside'; player: number }
+  | { type: 'sub'; side: Side; out: number; on: number }
+  | { type: 'scene'; kind: SceneKind; stage: 'start' | 'end' };
 
 export type MatchState = {
   setup: MatchSetup;
@@ -207,5 +300,10 @@ export type MatchState = {
   scorers: { side: Side; num: number; minute: number; own: boolean }[];
   // Cards by shirt number, for the end screen.
   cards: { side: Side; num: number; minute: number; color: 'yellow' | 'red' }[];
+  // What is being acted out while play is stopped (scenes.ts).
+  scene: Scene | undefined;
+  // Substitutions waiting for a stoppage, and those made (shirt numbers, for the end screen).
+  subQueue: SubRequest[];
+  subs: { side: Side; out: number; on: number; minute: number }[];
   events: GameEvent[];
 };

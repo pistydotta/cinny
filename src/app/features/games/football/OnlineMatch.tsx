@@ -11,6 +11,7 @@ import { Side } from './engine/types';
 import { KeySets } from './controls';
 import { Graphics } from './options';
 import { FinalScore, MatchHud, Shirt } from './MatchHud';
+import { SubsDialog } from './SubsDialog';
 import { TeamPicker } from './TeamPicker';
 import { MatchSource, netSource, watchSource } from './source';
 import { useMatchCanvas } from './useMatchCanvas';
@@ -85,6 +86,7 @@ export function OnlineMatch({
   const [askedRematch, setAskedRematch] = useState(false);
   const [cheers, setCheers] = useState<Cheer[]>([]);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [subsOpen, setSubsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState<0 | 1>();
   const socketRef = useRef<FootballSocket>();
@@ -215,6 +217,11 @@ export function OnlineMatch({
     inCall,
     freeze: false,
   });
+  // The substitutions screen belongs to the menu: closing the menu (Esc) closes it.
+  const menuShown = !!view.hud?.paused;
+  useEffect(() => {
+    if (!menuShown) setSubsOpen(false);
+  }, [menuShown]);
 
   const link = `${window.location.origin}${getGamesFootballMatchPath(matchId)}`;
   const copyLink = () => {
@@ -440,7 +447,8 @@ export function OnlineMatch({
     );
   }
 
-  const menuOpen = playing && !!view.hud?.paused && !optionsOpen && !over;
+  const menuOpen = playing && !!view.hud?.paused && !optionsOpen && !over && !subsOpen;
+  const runner = view.runnerRef.current;
   const away = room?.sides.flat().find((s) => !s.connected);
 
   return (
@@ -565,6 +573,15 @@ export function OnlineMatch({
             >
               {tr('football.resume', 'Resume')}
             </button>
+            {!confirmLeave && (
+              <button
+                type="button"
+                className={gameButton({ variant: 'secondary' })}
+                onClick={() => setSubsOpen(true)}
+              >
+                {tr('football.subs.title', 'Substitutions')}
+              </button>
+            )}
             <button
               type="button"
               className={gameButton({ variant: 'secondary' })}
@@ -574,6 +591,17 @@ export function OnlineMatch({
             </button>
           </div>
         </GameDialog>
+      )}
+
+      {subsOpen && playing && !over && runner && (
+        <SubsDialog
+          runner={runner}
+          teams={teamPair}
+          onClose={() => {
+            setSubsOpen(false);
+            runner.setPaused(false);
+          }}
+        />
       )}
 
       {over && (

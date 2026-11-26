@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMatch, step } from '../engine/match';
 import { PackedInput, hashMatch, packInput, unpackInput } from '../engine/net';
+import { subCode } from '../engine/scenes';
 import { Input, MatchSetup, NO_INPUT, Side } from '../engine/types';
 import { INPUT_DELAY, Netplay } from './netplay';
 import { SpectatorFeed } from './spectate';
@@ -27,6 +28,12 @@ const keysAt = (slot: number, frame: number): Input => {
     shoot: frame % (97 + slot * 11) < 20,
     through: frame % 151 < 2,
     lob: false,
+    // Each person asks for a change of their side's 7 for its 14 for a while (the code of the
+    // other side is refused): it goes through the inputs like a button.
+    sub:
+      frame >= 200 + slot * 5 && frame < 220 + slot * 5
+        ? subCode(5 + (slot % 2) * 11, 24 + (slot % 2) * 7)
+        : undefined,
   };
 };
 
@@ -94,6 +101,10 @@ describe('football netplay', () => {
       expect(server.tick).toBeGreaterThanOrEqual(p.confirmed);
     });
     expect(players[0].resteps + players[1].resteps).toBeGreaterThan(0);
+    // The changes each person asked for are in the server's match, once each.
+    const asked =
+      [...server.subs, ...server.subQueue].length + (server.scene?.kind === 'sub' ? 1 : 0);
+    expect(asked).toBe(2);
   });
 
   it('keeps eight people, four a side, on the same match', () => {

@@ -17,6 +17,21 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-football-scenes',
+    items: () => [
+      {
+        title: tr(
+          'whats_new.football_scenes_title',
+          'FIFUMA: cards, substitutions and celebrations'
+        ),
+        body: tr(
+          'whats_new.football_scenes_body',
+          'When the ball stops, the match goes on: a fouled player stays down while teammates come over, the referee runs in to show the card, and someone sent off walks to the tunnel. Each team has a bench: pause and open Substitutions to choose who goes off and who comes on (online too), and the change is made when the ball stops, with the fourth official raising the board. Scorers run off to celebrate, and full time has winners and losers.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-audio-test',
     items: () => [
       {

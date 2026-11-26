@@ -105,6 +105,9 @@ export class FootballAudio {
       else if (e.type === 'goal') this.roar(1.1, 5);
       else if (e.type === 'post' || e.type === 'save') this.roar(0.55, 2);
       else if (e.type === 'whistle' && e.kind !== 'restart') this.whistle(WHISTLES[e.kind]);
+      // Applause for a player going off, a murmur at a card.
+      else if (e.type === 'sub') this.roar(0.4, 3);
+      else if (e.type === 'card') this.roar(e.color === 'red' ? 0.5 : 0.32, 2);
     });
   }
 

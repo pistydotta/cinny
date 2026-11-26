@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Segmented } from '../../forge-theme/Segmented';
 import { tr } from '../../translation/tr';
 import { GameDialog } from '../ui/GameDialog';
@@ -18,6 +18,7 @@ import { localSource } from './source';
 import { useMatchCanvas } from './useMatchCanvas';
 import { OnlineLobby } from './OnlineLobby';
 import { OnlineMatch } from './OnlineMatch';
+import { SubsDialog } from './SubsDialog';
 import { createFootballApi } from './online/api';
 import * as css from './football.css';
 import { Choices, HALF_OPTIONS, Mode, loadChoices, saveChoices } from './setup';
@@ -136,7 +137,12 @@ function MatchScreen({
     inCall,
   });
 
-  const paused = !!hud?.paused && !ended && !optionsOpen;
+  const [subsOpen, setSubsOpen] = useState(false);
+  // The substitutions screen belongs to the pause: playing on closes it.
+  useEffect(() => {
+    if (!hud?.paused) setSubsOpen(false);
+  }, [hud?.paused]);
+  const paused = !!hud?.paused && !ended && !optionsOpen && !subsOpen;
   // Leaving by the back arrow asks first, through the pause dialog, while a match is on.
   const back = () => {
     if (runnerRef.current && !ended) runnerRef.current.setPaused(true);
@@ -185,6 +191,13 @@ function MatchScreen({
             <button
               type="button"
               className={gameButton({ variant: 'secondary' })}
+              onClick={() => setSubsOpen(true)}
+            >
+              {tr('football.subs.title', 'Substitutions')}
+            </button>
+            <button
+              type="button"
+              className={gameButton({ variant: 'secondary' })}
               onClick={onOptions}
             >
               {tr('football.options_title', 'Options')}
@@ -194,6 +207,10 @@ function MatchScreen({
             </button>
           </div>
         </GameDialog>
+      )}
+
+      {subsOpen && !ended && runnerRef.current && (
+        <SubsDialog runner={runnerRef.current} teams={teams} onClose={() => setSubsOpen(false)} />
       )}
 
       {ended && (

@@ -30,7 +30,8 @@ import { MatchState, Player, Side } from './types';
 // The CPU: where every player without a person runs, what a CPU ball carrier does, how the
 // keepers stand and dive. It sees the same state a person sees on screen, nothing hidden.
 
-export type Move = { x: number; z: number; sprint: boolean };
+// `walk` is a scene's slow walk (scenes.ts), slower than any jog.
+export type Move = { x: number; z: number; sprint: boolean; walk?: boolean };
 
 const STAND: Move = { x: 0, z: 0, sprint: false };
 

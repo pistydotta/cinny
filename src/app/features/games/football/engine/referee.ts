@@ -8,14 +8,17 @@ import {
   HALF_LENGTH,
   HALF_WIDTH,
   LINESMAN_OFFSET,
+  OFFICIAL_HURRY,
   OFFICIAL_SPEED,
   DT,
 } from './data';
+import { FOURTH, knockDown, officialTarget, startFoul, startOffside } from './scenes';
 import { MatchState, Official, Side } from './types';
 
-// The referee and the linesmen: fouls and their cards, offside, and where the three of them
-// stand. Deciding is here; the restart that follows is set by match.ts through `restartFor`,
-// passed in to keep the two files from importing each other.
+// The referee and the linesmen: fouls and their cards, offside, and where the officials stand.
+// Deciding is here; the restart that follows is set by match.ts through `restartFor`, passed
+// in to keep the two files from importing each other, and what the bodies act out after a
+// decision (the referee running in, the card, the player walking off) is scenes.ts.
 
 export type FoulKind = 'slideMiss' | 'slideBehind' | 'stand';
 
@@ -27,27 +30,40 @@ export type RestartFor = (
   z: number
 ) => void;
 
+// The referee (0), the two linesmen (1 runs the near touchline, 2 the far one) and the fourth
+// official (3), between the benches with the substitution board.
 export const newOfficials = (): Official[] =>
   [
     { x: -10, z: -8 },
     { x: 26, z: HALF_WIDTH + LINESMAN_OFFSET },
     { x: -26, z: -(HALF_WIDTH + LINESMAN_OFFSET) },
-  ].map(({ x, z }) => ({ x, z, vx: 0, vz: 0, face: 0, action: 'none', busy: 0, card: undefined }));
+    FOURTH,
+  ].map(
+    ({ x, z }): Official => ({
+      x,
+      z,
+      vx: 0,
+      vz: 0,
+      face: 0,
+      action: 'none',
+      busy: 0,
+      card: undefined,
+      aim: undefined,
+      board: undefined,
+    })
+  );
 
 const act = (o: Official, action: Official['action'], busy: number) => {
   o.action = action;
   o.busy = busy;
 };
 
-// Sent off: out of the match, by the bench. A keeper's role goes to the defender nearest the
-// goal, who keeps that place.
+// Sent off: out of the match at once, though the body stays for the card and then walks to
+// the tunnel (scenes.ts). A keeper's role goes to the defender nearest the goal, who keeps
+// that place until the coach can bring the bench keeper on.
 const sendOff = (m: MatchState, i: number) => {
   const p = m.players[i];
-  p.off = true;
-  p.x = (p.side === 0 ? -1 : 1) * 6;
-  p.z = HALF_WIDTH + 4;
-  p.vx = 0;
-  p.vz = 0;
+  Object.assign(p, { off: true, out: 'red', seat: -1, vx: 0, vz: 0, busy: 0, action: 'none' });
   if (m.ball.owner === i) m.ball.owner = -1;
   if (p.role === 'gk') {
     const gx = ownGoalX(m, p.side);
@@ -113,22 +129,17 @@ export const foul = (
 
   const gx = ownGoalX(m, o.side);
   const inBox = Math.abs(v.x - gx) < BOX_DEPTH && Math.abs(v.z) < BOX_HALF_WIDTH;
-  const ref = m.officials[0];
-  act(ref, card ? 'card' : 'whistle', card ? 150 : 50);
-  ref.card = card;
+  const x = clamp(v.x, -HALF_LENGTH + 1, HALF_LENGTH - 1);
+  const z = clamp(v.z, -HALF_WIDTH + 1, HALF_WIDTH - 1);
+  // Down before the restart is set, so whoever takes it isn't the one lying hurt.
+  knockDown(m, victim);
   m.events.push({ type: 'whistle', kind: 'foul' });
   const { side } = v;
   if (inBox) restartFor(m, 'penalty', side, 0, 0);
-  else
-    restartFor(
-      m,
-      'freekick',
-      side,
-      clamp(v.x, -HALF_LENGTH + 1, HALF_LENGTH - 1),
-      clamp(v.z, -HALF_WIDTH + 1, HALF_WIDTH - 1)
-    );
+  else restartFor(m, 'freekick', side, x, z);
   m.call = { kind: inBox ? 'penalty' : 'foul', player: offender, card, secondYellow };
   if (card === 'red') sendOff(m, offender);
+  startFoul(m, offender, victim, card, inBox, x, z);
 };
 
 // Whether a failed or clumsy challenge is a foul, and of which kind. A slide from behind is
@@ -164,7 +175,6 @@ export const touch = (m: MatchState, i: number, restartFor: RestartFor): boolean
   // The linesman of that half raises the flag.
   const linesman = x > 0 ? m.officials[1] : m.officials[2];
   act(linesman, 'flag', 150);
-  act(m.officials[0], 'whistle', 50);
   restartFor(
     m,
     'freekick',
@@ -173,6 +183,7 @@ export const touch = (m: MatchState, i: number, restartFor: RestartFor): boolean
     clamp(z, -HALF_WIDTH + 1, HALF_WIDTH - 1)
   );
   m.call = { kind: 'offside', player: i };
+  startOffside(m, i, x, z);
   return true;
 };
 
@@ -186,7 +197,13 @@ const offsideLine = (m: MatchState, end: number): number => {
   return (xs[1] ?? 0) * end;
 };
 
-const moveOfficial = (o: Official, tx: number, tz: number, look: { x: number; z: number }) => {
+const moveOfficial = (
+  o: Official,
+  tx: number,
+  tz: number,
+  look: { x: number; z: number },
+  hurry = false
+) => {
   if (o.busy > 0) {
     o.busy -= 1;
     o.vx *= 0.8;
@@ -194,31 +211,37 @@ const moveOfficial = (o: Official, tx: number, tz: number, look: { x: number; z:
     if (o.busy === 0) {
       o.action = 'none';
       o.card = undefined;
+      o.aim = undefined;
+      o.board = undefined;
     }
   } else {
     const dx = tx - o.x;
     const dz = tz - o.z;
     const d = len(dx, dz);
-    const speed = d < 0.5 ? 0 : Math.min(OFFICIAL_SPEED, d * 1.5);
+    const top = OFFICIAL_SPEED * (hurry ? OFFICIAL_HURRY : 1);
+    const speed = d < 0.5 ? 0 : Math.min(top, d * 1.5);
     const k = d > 0 ? speed / d : 0;
     o.vx += (dx * k - o.vx) * 0.12;
     o.vz += (dz * k - o.vz) * 0.12;
   }
   o.x += o.vx * DT;
   o.z += o.vz * DT;
-  // Moving, they face where they go; standing, they watch the ball.
-  o.face = len(o.vx, o.vz) > 1 ? datan2(o.vz, o.vx) : datan2(look.z - o.z, look.x - o.x);
+  // A signal faces its way; moving, they face where they go; standing, they watch the ball.
+  if (o.busy > 0 && o.aim !== undefined) o.face = o.aim;
+  else o.face = len(o.vx, o.vz) > 1 ? datan2(o.vz, o.vx) : datan2(look.z - o.z, look.x - o.x);
 };
 
 // The referee keeps about 12 m off the ball, on its far side; each linesman follows the
 // offside line of the half they run, or the ball when it is past it.
 export const moveOfficials = (m: MatchState): void => {
   const { ball } = m;
-  const [ref, near, far] = m.officials;
+  const [ref, near, far, fourth] = m.officials;
   const rx = clamp(ball.x - 9, -HALF_LENGTH + 4, HALF_LENGTH - 4);
   const rz = clamp(ball.z - 9, -HALF_WIDTH + 3, HALF_WIDTH - 3);
   const awayFromPlayers = m.players.some((p) => !p.off && dist(p, { x: rx, z: rz }) < 2) ? 3 : 0;
-  moveOfficial(ref, rx, rz + awayFromPlayers, ball);
+  const scripted = officialTarget(m, 0);
+  if (scripted) moveOfficial(ref, scripted.x, scripted.z, ball, scripted.hurry);
+  else moveOfficial(ref, rx, rz + awayFromPlayers, ball);
   const lineFor = (end: number) => {
     const line = offsideLine(m, end);
     const x = ball.x * end > line * end ? ball.x : line;
@@ -226,4 +249,5 @@ export const moveOfficials = (m: MatchState): void => {
   };
   moveOfficial(near, lineFor(1), HALF_WIDTH + LINESMAN_OFFSET, ball);
   moveOfficial(far, lineFor(-1), -(HALF_WIDTH + LINESMAN_OFFSET), ball);
+  if (fourth) moveOfficial(fourth, FOURTH.x, FOURTH.z, ball);
 };

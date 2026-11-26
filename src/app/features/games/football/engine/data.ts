@@ -42,7 +42,6 @@ export const KICK_TICKS = 14;
 export const SLIDE_TICKS = 40;
 export const DIVE_TICKS = 55;
 export const FALL_TICKS = 50;
-export const CELEBRATE_TICKS = 170;
 export const THROW_TICKS = 30;
 export const STUMBLE_TICKS = 18;
 
@@ -53,7 +52,8 @@ export const CHARGE_MAX = 60;
 export const SLIDE_SPEED = 8.5;
 
 // Pauses, in ticks.
-export const GOAL_WAIT = 200;
+// Long enough for the scorer's run and the team piling on (the goal scene, scenes.ts).
+export const GOAL_WAIT = 330;
 export const HALFTIME_WAIT = 150;
 export const RESTART_WAIT = {
   kickoff: 70,
@@ -63,8 +63,8 @@ export const RESTART_WAIT = {
   freekick: 110,
   penalty: 160,
 } as const;
-// A card or a flag holds the restart a little longer, so people see it.
-export const CALL_WAIT = 70;
+// After a scene lets the restart go, a decision still waits this long, so people read it.
+export const CALL_WAIT = 40;
 // A person taking a restart has this long before the game takes it for them.
 export const RESTART_PATIENCE = 360;
 export const KEEPER_HOLD = 70;
@@ -139,3 +139,55 @@ export const RECEIVE_SIDE = 0.6;
 export const RECEIVE_RUN = 4;
 // The first touch turns the body this far (radians) toward where the person points.
 export const FIRST_TOUCH_TURN = 1.2;
+
+// The bench: seven substitutes in the frame of FORMATION, and how many may come on.
+export const BENCH: { num: number; role: Role }[] = [
+  { num: 12, role: 'gk' },
+  { num: 13, role: 'def' },
+  { num: 14, role: 'mid' },
+  { num: 15, role: 'mid' },
+  { num: 16, role: 'fwd' },
+  { num: 17, role: 'def' },
+  { num: 18, role: 'fwd' },
+];
+export const MAX_SUBS = 5;
+// The CPU coach makes a change at the first stoppage after each of these minutes.
+export const COACH_MINUTES = [58, 67, 76] as const;
+
+// Off the pitch, past the far touchline (-z, which the TV camera faces): each team's bench by
+// the halfway line (side 0 toward -x), the fourth official between them and the tunnel
+// behind. Seats are SEAT_GAP apart from BENCH_X out.
+export const BENCH_Z = -(HALF_WIDTH + 5);
+export const BENCH_X = 5;
+export const SEAT_GAP = 0.9;
+export const FOURTH_Z = -(HALF_WIDTH + 2.2);
+export const TUNNEL_Z = -(HALF_WIDTH + 7);
+
+// Walking: scenes, the bench, a player going off.
+export const WALK = 1.7;
+// Officials run this much faster to a decision.
+export const OFFICIAL_HURRY = 1.3;
+
+// Scenes (scenes.ts), in ticks.
+export const SCENE = {
+  // A fouled player lies this long.
+  down: 120,
+  // The offender's arms-out protest.
+  protest: 80,
+  // The referee holds a card up this long, or points the way.
+  card: 100,
+  point: 60,
+  // A foul scene holds the restart at least this long, and at most this long while the
+  // referee runs over.
+  foulMin: 90,
+  foulMax: 360,
+  // Offside: the flag and the referee's raised arm.
+  offside: 90,
+  // A substitution: the slap of hands, then the restart waits a little more. A player going
+  // off who hasn't reached the line by `subWalk` is put there.
+  highfive: 36,
+  subAfter: 30,
+  subWalk: 420,
+  // After a goal, the beaten side stands with hands on heads this long.
+  dejected: 140,
+} as const;

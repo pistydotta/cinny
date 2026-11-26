@@ -64,6 +64,19 @@ function CallBanner({ call, teams }: { call: NonNullable<Hud['call']>; teams: [T
   );
 }
 
+// A substitution on its way, while the fourth official holds the board up.
+function SubBanner({ sub, teams }: { sub: NonNullable<Hud['sub']>; teams: [Team, Team] }) {
+  return (
+    <div className={css.CallBox}>
+      <span className={css.CallTitle}>{tr('football.sub.title', 'Substitution')}</span>
+      <span className={css.BannerSub}>
+        {teams[sub.side].short} · <span className={css.SubOut}>▼ {sub.out}</span>{' '}
+        <span className={css.SubIn}>▲ {sub.on}</span>
+      </span>
+    </div>
+  );
+}
+
 export function MatchHud({
   hud,
   loading,
@@ -145,7 +158,21 @@ export function MatchHud({
         </div>
       )}
       {hud?.call && <CallBanner call={hud.call} teams={teams} />}
-      {hud?.restart && <span className={css.Hint}>{restartName(hud.restart)}</span>}
+      {hud?.sub && !hud.call && <SubBanner sub={hud.sub} teams={teams} />}
+      {(hud?.restart || hud?.subsWaiting) && !hud.sub && (
+        <span className={css.Hint}>
+          {[
+            restartName(hud.restart),
+            hud.subsWaiting
+              ? tr('football.subs.hint', '{{n}} change(s) waiting for the ball to stop', {
+                  n: hud.subsWaiting,
+                })
+              : undefined,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
+      )}
       {children}
     </div>
   );
@@ -185,6 +212,15 @@ export function FinalScore({ match, teams }: { match: MatchState; teams: [Team, 
                 (c) =>
                   `${teams[c.side].short} #${c.num} ${c.color === 'red' ? '🟥' : '🟨'} ${c.minute}′`
               )
+              .join(', '),
+          })}
+        </p>
+      )}
+      {match.subs.length > 0 && (
+        <p className={css.Scorers}>
+          {tr('football.end.subs', 'Substitutions: {{list}}', {
+            list: match.subs
+              .map((s) => `${teams[s.side].short} ${s.out}→${s.on} ${s.minute}′`)
               .join(', '),
           })}
         </p>

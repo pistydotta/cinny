@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import playerUrl from '../assets/player.glb?url';
 import { BALL_RADIUS, HALF_LENGTH, HALF_WIDTH } from '../engine/data';
+import { inTunnel, sceneFocus } from '../engine/scenes';
 import { Kit, colorDistance, keeperKit } from '../engine/teams';
 import { Action, MatchState, Official, Player } from '../engine/types';
 import { CAMERA, Graphics, QUALITY, Quality } from '../options';
@@ -11,9 +12,10 @@ import { kitMaterial } from './kit';
 import { makeClips, readRig } from './rig';
 import { buildStadium } from './stadium';
 
-// Draws a match with three.js: the stadium, 22 mannequins in their kits and the ball, from a
-// TV camera on the near touchline that follows play. The only part of the game that imports
-// three.js; it reads the match and never changes it.
+// Draws a match with three.js: the stadium, the mannequins in their kits (the 22, the benches
+// and the officials) and the ball, from a TV camera on the near touchline that follows play, or
+// the scene of the moment (engine/scenes.ts). The only part of the game that imports three.js;
+// it reads the match and never changes it.
 //
 // The mannequin and its pack clips are Quaternius' Universal Animation Library 2 (CC0), cut
 // down to what football uses (see docs/football.md); idle, run and kick are made in rig.ts.
@@ -27,10 +29,18 @@ type Body = {
   actions: Record<string, THREE.AnimationAction>;
   current: string;
   lastAction: Action;
+  // Eased toward the pose's needs: lying down (0 to 1) and how far the body sits lower (m).
+  lie: number;
+  drop: number;
+  // A clock for the body's own bobbing and rolling.
+  t: number;
 };
 
-// Which clip each move plays, and whether it plays once.
-const MOVE_CLIPS: Partial<Record<Action, { clip: string; once: boolean; speed?: number }>> = {
+// Which clip each action plays, and whether it plays once. Actions moving the body (a run
+// with arms out) set `moving`, and their speed follows the feet like the run's.
+const MOVE_CLIPS: Partial<
+  Record<Action, { clip: string; once: boolean; speed?: number; moving?: boolean }>
+> = {
   kick: { clip: 'kick', once: true },
   slide: { clip: 'Slide_Start', once: true, speed: 1.3 },
   dive: { clip: 'NinjaJump_Start', once: true, speed: 1.4 },
@@ -39,7 +49,23 @@ const MOVE_CLIPS: Partial<Record<Action, { clip: string; once: boolean; speed?: 
   throw: { clip: 'OverhandThrow', once: true, speed: 1.5 },
   card: { clip: 'raise', once: true },
   flag: { clip: 'raise', once: true },
+  whistle: { clip: 'whistle', once: true },
+  point: { clip: 'point', once: true },
+  indirect: { clip: 'raise', once: true },
+  board: { clip: 'board', once: false },
+  down: { clip: 'down', once: false },
+  protest: { clip: 'protest', once: false },
+  dejected: { clip: 'dejected', once: false },
+  cheer: { clip: 'cheer', once: false },
+  airplane: { clip: 'airplane', once: false, moving: true },
+  kneeslide: { clip: 'kneeslide', once: false },
+  clap: { clip: 'clap', once: false },
+  highfive: { clip: 'highfive', once: true },
+  sit: { clip: 'sit', once: false },
 };
+
+// How much lower a pose puts the body: seated on the bench, kneeling.
+const DROP: Partial<Record<Action, number>> = { sit: 0.4, kneeslide: 0.46 };
 
 // One colour per person: warm ones for the first side, cool ones for the second.
 const PERSON_COLORS = [
@@ -91,21 +117,75 @@ const playClip = (body: Body, name: string, once: boolean, speed = 1) => {
   body.current = name;
 };
 
-// Picks the clip for what the player is doing: a move's own clip, the run at a pace that
-// matches the feet to the ground, or standing.
+// The run's pace matched to the feet: about 2.2 m per stride cycle at a jog, longer sprinting.
+const runSpeed = (speed: number) => speed / (1.6 + speed * 0.12);
+
+// Picks the clip for what the player is doing: an action's own clip, a walk or a run at a pace
+// that matches the feet to the ground, or standing.
 const animate = (body: Body, p: Pick<Player, 'vx' | 'vz' | 'action' | 'role'>, dt: number) => {
   const speed = Math.hypot(p.vx, p.vz);
   const move = MOVE_CLIPS[p.action];
-  if (move) {
+  if (move?.moving) {
+    playClip(body, move.clip, false, runSpeed(Math.max(speed, 3)));
+  } else if (move) {
     if (body.lastAction !== p.action) playClip(body, move.clip, move.once, move.speed);
-  } else if (speed > 0.5) {
-    // About 2.2 m per stride cycle at a jog, longer when sprinting.
-    playClip(body, 'run', false, speed / (1.6 + speed * 0.12));
+  } else if (speed > (body.current === 'run' ? 2.3 : 2.9)) {
+    playClip(body, 'run', false, runSpeed(speed));
+  } else if (speed > 0.35) {
+    // About 1.45 m per stride cycle.
+    playClip(body, 'walk', false, Math.max(0.5, speed / 1.45));
   } else {
     playClip(body, p.role === 'gk' ? 'ready' : 'idle', false);
   }
   body.lastAction = p.action;
   body.mixer.update(dt);
+  body.t += dt;
+  const ease = 1 - Math.exp(-dt * 9);
+  body.lie += ((p.action === 'down' ? 1 : 0) - body.lie) * ease;
+  body.drop += ((DROP[p.action] ?? 0) - body.drop) * ease;
+};
+
+const LIE_AXIS = new THREE.Vector3(1, 0, 0);
+const ROLL_AXIS = new THREE.Vector3(0, 1, 0);
+const UP = new THREE.Vector3(0, 1, 0);
+
+// Puts a body where the engine has it, facing its way, lowered, lying or springing as its pose
+// asks. The model faces +z; the engine's angle 0 is +x.
+const place = (body: Body, x: number, z: number, face: number, action: Action) => {
+  const { root } = body;
+  root.position.set(x, -body.drop, z);
+  root.quaternion.setFromAxisAngle(UP, Math.PI / 2 - face);
+  if (body.lie > 0.01) {
+    // On the back, feet where they stood, rolling a little side to side.
+    const tilt = new THREE.Quaternion().setFromAxisAngle(LIE_AXIS, (-Math.PI / 2) * body.lie);
+    const roll = new THREE.Quaternion().setFromAxisAngle(
+      ROLL_AXIS,
+      Math.sin(body.t * 3.2) * 0.35 * body.lie
+    );
+    root.quaternion.multiply(tilt).multiply(roll);
+    root.position.y += 0.14 * body.lie;
+  }
+  if (action === 'cheer') root.position.y += Math.max(0, Math.sin(body.t * 9)) * 0.22;
+};
+
+// The fourth official's board: the number coming on in green over the one going off in red.
+const boardTexture = (on: number, off: number): THREE.CanvasTexture => {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 192;
+  const g = c.getContext('2d') as CanvasRenderingContext2D;
+  g.fillStyle = '#101010';
+  g.fillRect(0, 0, 256, 192);
+  g.font = 'bold 78px sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = '#39ff5a';
+  g.fillText(`▲ ${on}`, 128, 50);
+  g.fillStyle = '#ff3030';
+  g.fillText(`▼ ${off}`, 128, 142);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 };
 
 const ballTexture = (): THREE.CanvasTexture => {
@@ -154,6 +234,11 @@ export class FootballScene {
   private ballShadow: THREE.Mesh;
 
   private markers: THREE.Mesh[] = [];
+
+  // The numbers on the fourth official's board, to paint it again only when they change.
+  private boardShown = '';
+
+  private zoom = 1;
 
   // Arrows over whoever a person's pass would go to, or is on its way to.
   private arrows: THREE.Mesh[] = [];
@@ -280,8 +365,19 @@ export class FootballScene {
       actions[first].play();
       // Players don't breathe in step.
       mixer.setTime(delay);
-      return { root, hand, mixer, actions, current: first, lastAction: 'none' };
+      return {
+        root,
+        hand,
+        mixer,
+        actions,
+        current: first,
+        lastAction: 'none',
+        lie: 0,
+        drop: 0,
+        t: delay,
+      };
     };
+    // The kit is painted once: a substitute keeper wears the keeper's colours from the bench.
     m.players.forEach((p, i) => {
       const kit = p.role === 'gk' ? keeperKit(this.kits, p.side) : this.kits[p.side];
       this.bodies.push(body(kit, p.look, p.role === 'gk', i * 0.37));
@@ -308,18 +404,30 @@ export class FootballScene {
     };
     m.officials.forEach((o, k) => {
       const b = body(officialKit, 3 + k * 11, false, k * 0.5);
-      const prop = new THREE.Mesh(
-        k === 0 ? new THREE.PlaneGeometry(0.12, 0.17) : new THREE.PlaneGeometry(0.32, 0.24),
-        new THREE.MeshBasicMaterial({
-          color: k === 0 ? '#ffd400' : '#ff3d00',
-          side: THREE.DoubleSide,
-        })
-      );
-      // The card or flag sits above the hand; hidden until raised.
-      prop.position.set(0, k === 0 ? 0.16 : 0.22, 0);
-      prop.visible = false;
-      (b.hand ?? b.root).add(prop);
-      b.prop = prop;
+      if (k === 3) {
+        // The board, held over the head facing the way the official does.
+        const board = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.8, 0.6),
+          new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide })
+        );
+        board.position.set(0, 2.1, 0.24);
+        board.visible = false;
+        b.root.add(board);
+        b.prop = board;
+      } else {
+        const prop = new THREE.Mesh(
+          k === 0 ? new THREE.PlaneGeometry(0.16, 0.22) : new THREE.PlaneGeometry(0.32, 0.24),
+          new THREE.MeshBasicMaterial({
+            color: k === 0 ? '#ffd400' : '#ff3d00',
+            side: THREE.DoubleSide,
+          })
+        );
+        // The card sits above the hand, hidden until shown; a linesman always has the flag.
+        prop.position.set(0, k === 0 ? 0.16 : 0.22, 0);
+        prop.visible = k !== 0;
+        (b.hand ?? b.root).add(prop);
+        b.prop = prop;
+      }
       this.officials.push(b);
     });
 
@@ -355,15 +463,25 @@ export class FootballScene {
 
   private placeOfficial(o: Official, k: number, dt: number) {
     const b = this.officials[k];
-    b.root.position.set(o.x, 0, o.z);
-    b.root.rotation.set(0, Math.PI / 2 - o.face, 0);
     animate(b, { vx: o.vx, vz: o.vz, action: o.action, role: 'mid' }, dt);
-    if (b.prop) {
-      b.prop.visible = o.action === 'card' || o.action === 'flag';
-      if (k === 0 && o.card)
+    place(b, o.x, o.z, o.face, o.action);
+    if (!b.prop) return;
+    if (k === 0) {
+      b.prop.visible = o.action === 'card';
+      if (o.card)
         (b.prop.material as THREE.MeshBasicMaterial).color.set(
           o.card === 'red' ? '#e0102a' : '#ffd400'
         );
+    } else if (k === 3) {
+      b.prop.visible = o.action === 'board' && !!o.board;
+      const key = o.board ? o.board.join('-') : '';
+      if (o.board && key !== this.boardShown) {
+        this.boardShown = key;
+        const mat = b.prop.material as THREE.MeshBasicMaterial;
+        mat.map?.dispose();
+        mat.map = boardTexture(o.board[1], o.board[0]);
+        mat.needsUpdate = true;
+      }
     }
   }
 
@@ -372,22 +490,19 @@ export class FootballScene {
     if (!this.ready) return;
     m.players.forEach((p, i) => {
       const body = this.bodies[i];
-      // Someone sent off has left the pitch.
-      body.root.visible = !p.off;
-      if (p.off) return;
-      body.root.position.set(p.x, 0, p.z);
-      // The model faces +z; the engine's angle 0 is +x.
-      body.root.rotation.set(0, Math.PI / 2 - p.face, 0);
+      // Someone sent off is drawn until they reach the tunnel; the benches are always there.
+      body.root.visible = !inTunnel(p);
+      if (!body.root.visible) return;
+      animate(body, p, dt);
+      place(body, p.x, p.z, p.face, p.action);
       if (p.action === 'dive') {
         // Thrown sideways toward the dive.
         const right = -Math.sin(p.face) * p.actX + Math.cos(p.face) * p.actZ;
-        body.root.rotation.z = 0;
         body.root.rotateZ(-Math.sign(right || 1) * 1.1);
         body.root.position.y = 0.35;
       } else if (p.action === 'slide') {
         body.root.position.y = 0;
       }
-      animate(body, p, dt);
     });
 
     const { ball } = m;
@@ -430,13 +545,22 @@ export class FootballScene {
       (arrow.material as THREE.MeshBasicMaterial).opacity = inFlight ? 0.95 : 0.55;
     });
 
-    // The TV camera: on the near touchline, high, sliding along with the ball.
-    const tx = Math.max(-HALF_LENGTH + 14, Math.min(HALF_LENGTH - 14, ball.x));
-    const tz = Math.max(-HALF_WIDTH + 6, Math.min(HALF_WIDTH - 6, ball.z)) * 0.55;
+    // The TV camera: on the near touchline, high, sliding along with the ball; during a scene
+    // it closes in on what matters (the card, the scorer, the substitution at the far line).
+    const focus = sceneFocus(m);
+    const tx = Math.max(-HALF_LENGTH + 14, Math.min(HALF_LENGTH - 14, focus?.x ?? ball.x));
+    const tz = focus
+      ? Math.max(-HALF_WIDTH - 2, Math.min(HALF_WIDTH, focus.z)) * 0.8
+      : Math.max(-HALF_WIDTH + 6, Math.min(HALF_WIDTH - 6, ball.z)) * 0.55;
     const k = 1 - Math.exp(-dt * 3);
     this.camX += (tx - this.camX) * k;
     this.camZ += (tz - this.camZ) * k;
-    this.camera.position.set(this.camX, this.view.height, this.camZ + this.view.back);
+    this.zoom += ((focus?.zoom ?? 1) - this.zoom) * (1 - Math.exp(-dt * 1.5));
+    this.camera.position.set(
+      this.camX,
+      this.view.height * this.zoom,
+      this.camZ + this.view.back * this.zoom
+    );
     this.camera.lookAt(this.camX, 0, this.camZ - 1);
 
     this.renderer.render(this.scene, this.camera);

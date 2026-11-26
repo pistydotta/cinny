@@ -1,6 +1,7 @@
 import { KeySets, PAUSE_KEYS, fromGamepad, fromKeys, keysIn, merge, typingIn } from './controls';
 import { AUTO_FPS, AUTO_SECONDS, Graphics, Quality, lower } from './options';
 import { DT, CHARGE_FULL } from './engine/data';
+import { SUB_CANCEL, subCode } from './engine/scenes';
 import { GameEvent, Input, MatchState, NO_INPUT, Phase, RestartKind, Side } from './engine/types';
 import type { FootballScene } from './render/scene';
 import type { MatchSource } from './source';
@@ -34,7 +35,16 @@ export type Hud = {
       }
     | undefined;
   reds: [number, number];
+  // A substitution being made: the side and the shirt numbers going off and coming on.
+  sub: { side: Side; out: number; on: number } | undefined;
+  // Changes the people on this computer asked for, still waiting for the ball to stop.
+  subsWaiting: number;
 };
+
+// A change on its way into the inputs: sent this many steps, so a step the source skips or a
+// guess online doesn't lose it (the engine takes it once).
+type PendingSub = { device: number; side: Side; out: number; on: number; left: number };
+const SUB_SENDS = 20;
 
 export type RunnerOptions = {
   // The keys and pads of the people on this computer, in the order the source takes inputs:
@@ -89,6 +99,8 @@ export class FootballRunner {
 
   // Ticks in a row the source had to wait, for the "waiting" sign.
   private waited = 0;
+
+  private pendingSubs: PendingSub[] = [];
 
   constructor(
     private source: MatchSource,
@@ -171,6 +183,60 @@ export class FootballRunner {
     this.pushHud(true);
   }
 
+  get match(): MatchState {
+    return this.source.match;
+  }
+
+  // The sides the people on this computer play, each with the device that speaks for it.
+  sides(): Side[] {
+    const { slots } = this.source.match.setup;
+    return [...new Set(this.opts.mine.map((s) => slots[s]))];
+  }
+
+  // Asks for a change (or, with `on` undefined, calls off the waiting change of `out`) for a
+  // side someone on this computer plays. It goes through the inputs, so online every copy of
+  // the match takes it on the same tick; paused, it waits for the match to go on.
+  requestSub(side: Side, out: number, on: number | undefined): void {
+    const { slots } = this.source.match.setup;
+    const device = this.opts.mine.findIndex((s) => slots[s] === side);
+    if (device < 0) return;
+    // Calling off one not sent yet just forgets it.
+    const unsent = (p: PendingSub) => p.out === out && p.on !== SUB_CANCEL && p.left === SUB_SENDS;
+    if (on === undefined && this.pendingSubs.some(unsent)) {
+      this.pendingSubs = this.pendingSubs.filter((p) => p.out !== out);
+      return;
+    }
+    this.pendingSubs = this.pendingSubs.filter((p) => p.out !== out);
+    this.pendingSubs.push({ device, side, out, on: on ?? SUB_CANCEL, left: SUB_SENDS });
+  }
+
+  // Changes asked for here that the match hasn't heard of yet.
+  waitingSubs(): { side: Side; out: number; on: number }[] {
+    return this.pendingSubs.flatMap(({ side, out, on }) =>
+      on === SUB_CANCEL ? [] : [{ side, out, on }]
+    );
+  }
+
+  // The first waiting change of each device rides in its input this step.
+  private withSubs(inputs: Input[]): Input[] {
+    const sent = new Set<number>();
+    return inputs.map((input, d) => {
+      const p = this.pendingSubs.find((x) => x.device === d);
+      if (!p || sent.has(d)) return input;
+      sent.add(d);
+      return { ...input, sub: subCode(p.out, p.on) };
+    });
+  }
+
+  private subsSent(inputs: Input[]) {
+    inputs.forEach((input, d) => {
+      if (!input.sub) return;
+      const p = this.pendingSubs.find((x) => x.device === d);
+      if (p) p.left -= 1;
+    });
+    this.pendingSubs = this.pendingSubs.filter((p) => p.left > 0);
+  }
+
   private keysNow(): Set<string> {
     return this.tapped.size ? new Set([...this.held, ...this.tapped]) : this.held;
   }
@@ -199,13 +265,15 @@ export class FootballRunner {
       this.tapped.clear();
       let steps = 0;
       while (this.acc >= DT && steps < MAX_STEPS) {
-        const events = this.source.advance(inputs);
+        const sending = this.withSubs(inputs);
+        const events = this.source.advance(sending);
         if (events === null) {
           this.waited += 1;
           this.acc = 0;
           break;
         }
         this.waited = 0;
+        this.subsSent(sending);
         this.acc -= DT;
         steps += 1;
         const m = this.source.match;
@@ -257,10 +325,21 @@ export class FootballRunner {
               secondYellow: m.call.kind === 'offside' ? false : m.call.secondYellow,
             }
           : undefined,
-      reds: [0, 1].map((side) => m.players.filter((p) => p.side === side && p.off).length) as [
-        number,
-        number
-      ],
+      reds: [0, 1].map(
+        (side) => m.players.filter((p) => p.side === side && p.out === 'red').length
+      ) as [number, number],
+      subsWaiting: new Set([
+        ...this.waitingSubs().map((q) => q.out),
+        ...m.subQueue.filter((q) => this.sides().includes(q.side)).map((q) => q.out),
+      ]).size,
+      sub:
+        m.scene?.kind === 'sub'
+          ? {
+              side: m.scene.side,
+              out: m.players[m.scene.out].num,
+              on: m.players[m.scene.on].num,
+            }
+          : undefined,
       restart: m.phase === 'restart' ? m.restart?.kind : undefined,
       goal: m.phase === 'goal' ? this.goal : undefined,
       // Half a second of waiting before saying so: a tick or two is normal online.

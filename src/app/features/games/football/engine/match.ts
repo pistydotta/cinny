@@ -23,9 +23,8 @@ import {
   AIR_DRAG,
   BALL_RADIUS,
   BOX_DEPTH,
+  BENCH,
   BOX_HALF_WIDTH,
-  CALL_WAIT,
-  CELEBRATE_TICKS,
   CHARGE_FULL,
   CHARGE_MAX,
   CIRCLE_RADIUS,
@@ -75,6 +74,7 @@ import {
   TICK_RATE,
   TURN_RATE,
   TURN_RATE_BALL,
+  WALK,
   WALL_DISTANCE,
   WITH_BALL,
 } from './data';
@@ -88,6 +88,17 @@ import {
   newOfficials,
   touch,
 } from './referee';
+import {
+  fullTime,
+  moveOffPitch,
+  sceneHolds,
+  sceneMove,
+  seatSpot,
+  signalRestart,
+  startGoal,
+  stepScene,
+  subFromInput,
+} from './scenes';
 import { teamById } from './teams';
 import {
   Ball,
@@ -106,14 +117,15 @@ import {
 // same setup and the same inputs always give the same match, which online play relies on.
 //
 // Each person controls one player at a time; the rest of their team, and any side nobody
-// plays, is the CPU. Fouls, cards and offside are judged in referee.ts.
+// plays, is the CPU. Fouls, cards and offside are judged in referee.ts; what everyone acts out
+// while play is stopped (and substitutions) is scenes.ts.
 
 const PITCH_MARGIN = 4;
 
 const newPlayer = (
   m: { rng: number },
   side: Side,
-  slot: typeof FORMATION[number],
+  slot: { num: number; role: Player['role']; x: number; z: number },
   rating: number,
   look: number
 ): Player => {
@@ -141,6 +153,8 @@ const newPlayer = (
     look: (look + m.rng) % 997,
     yellow: 0,
     off: false,
+    out: undefined,
+    seat: -1,
   };
 };
 
@@ -249,9 +263,12 @@ const setRestart = (m: MatchState, kind: RestartKind, side: Side, x: number, z: 
       .filter((i) => m.players[i].role !== 'gk')
       .reduce((a, b) => (m.players[a].skill >= m.players[b].skill ? a : b));
   } else {
-    taker = teammates(m, side)
-      .filter((i) => m.players[i].role !== 'gk')
-      .reduce((a, b) => (dist(m.players[a], ball) <= dist(m.players[b], ball) ? a : b));
+    // Not someone lying hurt (a foul's victim), unless nobody else can.
+    const outfield = teammates(m, side).filter((i) => m.players[i].role !== 'gk');
+    const standing = outfield.filter((i) => m.players[i].action !== 'down');
+    taker = (standing.length ? standing : outfield).reduce((a, b) =>
+      dist(m.players[a], ball) <= dist(m.players[b], ball) ? a : b
+    );
   }
   const t = m.players[taker];
   // The taker stands behind the ball, facing into the pitch (or at goal).
@@ -317,13 +334,11 @@ const setRestart = (m: MatchState, kind: RestartKind, side: Side, x: number, z: 
     person.queued = undefined;
   });
   m.events.push({ type: 'out', kind });
+  signalRestart(m, kind, side, x, z);
 };
 
-// The referee's restarts, with the longer wait a decision needs.
-const restartFor: RestartFor = (m, kind, side, x, z) => {
-  setRestart(m, kind, side, x, z);
-  m.wait += CALL_WAIT;
-};
+// The referee's restarts. The decision's scene (scenes.ts) holds them while it plays.
+const restartFor: RestartFor = (m, kind, side, x, z) => setRestart(m, kind, side, x, z);
 
 // Which players people start on: the forwards first, then midfield.
 const START_ORDER = [9, 10, 8, 7, 11, 5, 6, 2, 3, 4];
@@ -348,6 +363,9 @@ export const createMatch = (setup: MatchSetup): MatchState => {
     aim: [0, Math.PI],
     scorers: [],
     cards: [],
+    scene: undefined,
+    subQueue: [],
+    subs: [],
     events: [],
   };
   ([0, 1] as Side[]).forEach((side) => {
@@ -355,6 +373,23 @@ export const createMatch = (setup: MatchSetup): MatchState => {
     FORMATION.forEach((slot, k) =>
       m.players.push(newPlayer(m, side, slot, team.rating, k * 31 + side * 500))
     );
+  });
+  // The benches come after the 22, so a player's index on the pitch never changes. Each
+  // substitute sits in their seat, a little below the team's level.
+  ([0, 1] as Side[]).forEach((side) => {
+    const team = teamById(setup.teams[side]);
+    BENCH.forEach((slot, k) => {
+      const p = newPlayer(
+        m,
+        side,
+        { ...slot, x: -40, z: 0 },
+        team.rating - 3,
+        k * 37 + side * 700 + 11
+      );
+      Object.assign(p, seatSpot(side, k), { off: true, out: 'bench', seat: k, action: 'sit' });
+      p.face = Math.PI / 2;
+      m.players.push(p);
+    });
   });
   const taken: [number, number] = [0, 0];
   m.people = setup.slots.map((side) => {
@@ -366,6 +401,18 @@ export const createMatch = (setup: MatchSetup): MatchState => {
   m.events = [{ type: 'whistle', kind: 'start' }];
   return m;
 };
+
+// What a person's input holds from one tick to the next (`prev`): the stick and buttons, in one
+// order, without a substitution, so every copy of a match writes it the same.
+const buttons = (i: Input): Input => ({
+  mx: i.mx,
+  mz: i.mz,
+  sprint: i.sprint,
+  pass: i.pass,
+  shoot: i.shoot,
+  through: i.through,
+  lob: i.lob,
+});
 
 const pressed = (now: Input, before: Input, key: 'pass' | 'shoot' | 'through' | 'lob') =>
   now[key] && !before[key];
@@ -561,7 +608,7 @@ const takeRestart = (m: MatchState, inputs: Input[], by: number[]) => {
       if (input.shoot && person.charge < CHARGE_MAX) person.charge += 1;
       else r.queued = 'shot';
     }
-    if (m.wait > 0) return;
+    if (m.wait > 0 || sceneHolds(m)) return;
     go = r.queued;
     if (go === 'shot') {
       power = Math.min(1, person.charge / CHARGE_FULL);
@@ -574,7 +621,7 @@ const takeRestart = (m: MatchState, inputs: Input[], by: number[]) => {
       else go = r.kind === 'corner' ? 'cross' : 'pass';
     }
   } else {
-    if (m.wait > 0) return;
+    if (m.wait > 0 || sceneHolds(m)) return;
     go = 'pass';
     if (r.kind === 'corner') go = 'cross';
     else if (r.kind === 'goalkick') go = 'lob';
@@ -630,7 +677,7 @@ const takeRestart = (m: MatchState, inputs: Input[], by: number[]) => {
 
 // Moves a player toward the velocity it wants, turning its body to where it runs.
 const movePlayer = (p: Player, want: Move, withBall: boolean) => {
-  const speed = speedOf(p, want.sprint, withBall);
+  const speed = want.walk ? WALK : speedOf(p, want.sprint, withBall);
   const tvx = want.x * speed;
   const tvz = want.z * speed;
   const dvx = tvx - p.vx;
@@ -655,6 +702,15 @@ const movePlayer = (p: Player, want: Move, withBall: boolean) => {
   }
 };
 
+// Turns a standing body toward an angle at the usual turning rate.
+const turnTo = (p: Player, face: number) => {
+  let diff = face - p.face;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  const turn = TURN_RATE * DT;
+  p.face += clamp(diff, -turn, turn);
+};
+
 // Bodies busy with a move: slides and dives carry on, the rest slow to a stop.
 const moveBusy = (p: Player) => {
   if (p.action === 'slide') {
@@ -665,6 +721,10 @@ const moveBusy = (p: Player) => {
   } else if (p.action === 'dive') {
     p.vx *= 0.94;
     p.vz *= 0.94;
+  } else if (p.action === 'kneeslide') {
+    // A scorer on the knees glides on.
+    p.vx *= 0.965;
+    p.vz *= 0.965;
   } else {
     p.vx *= 0.85;
     p.vz *= 0.85;
@@ -694,10 +754,7 @@ const goalScored = (m: MatchState, scoringSide: Side) => {
   ball.owner = -1;
   ball.shot = false;
   ball.offside = [];
-  if (lastP && !own) {
-    lastP.action = 'celebrate';
-    lastP.busy = CELEBRATE_TICKS;
-  }
+  startGoal(m, scoringSide, scorer, own);
 };
 
 // The ball flies, bounces and rolls; at the edges it scores, hits a post or goes out.
@@ -1126,17 +1183,22 @@ export const step = (m: MatchState, inputs: Input[]): void => {
         setRestart(m, 'kickoff', last ? ((1 - last.side) as Side) : 0, 0, 0);
       }
     }
-  } else if (m.phase === 'restart') {
+  } else if (m.phase === 'restart' && !sceneHolds(m)) {
     m.wait -= 1;
   }
   if (m.phase === 'over') {
     m.players.forEach((p) => moveBusy(p));
     m.people.forEach((person, s) => {
-      person.prev = inputs[s] ?? NO_INPUT;
+      person.prev = buttons(inputs[s] ?? NO_INPUT);
     });
     return;
   }
 
+  m.people.forEach((_, s) => {
+    const code = inputs[s]?.sub;
+    if (code) subFromInput(m, m.setup.slots[s], code);
+  });
+  stepScene(m);
   updateControl(m);
   const by = controllers(m);
 
@@ -1161,6 +1223,15 @@ export const step = (m: MatchState, inputs: Input[]): void => {
       if (p.busy === 0) p.action = 'none';
       return;
     }
+    const scripted = sceneMove(m, i);
+    if (scripted) {
+      movePlayer(p, scripted.move, false);
+      p.action = scripted.action;
+      if (scripted.face !== undefined && len(p.vx, p.vz) < 0.6) turnTo(p, scripted.face);
+      return;
+    }
+    // A pose a scene left (cheering, arguing) ends with it.
+    if (p.action !== 'none') p.action = 'none';
     const { side } = p;
     const s = by[i];
     const hasBall = ball.owner === i;
@@ -1223,6 +1294,7 @@ export const step = (m: MatchState, inputs: Input[]): void => {
   if (m.phase === 'restart') takeRestart(m, inputs, controllers(m));
   if (m.phase !== 'restart') moveBall(m);
   contacts(m, inputs);
+  moveOffPitch(m);
   moveOfficials(m);
 
   if (m.phase === 'play' || m.phase === 'restart') {
@@ -1236,12 +1308,15 @@ export const step = (m: MatchState, inputs: Input[]): void => {
       if (m.half === 1) {
         m.phase = 'halftime';
         m.wait = HALFTIME_WAIT;
-      } else m.phase = 'over';
+      } else {
+        m.phase = 'over';
+        fullTime(m);
+      }
       ball.owner = -1;
     }
   }
   m.people.forEach((person, s) => {
-    person.prev = inputs[s] ?? NO_INPUT;
+    person.prev = buttons(inputs[s] ?? NO_INPUT);
   });
 };
 

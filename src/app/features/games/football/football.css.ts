@@ -399,4 +399,33 @@ export const CardYellow = style({ ...card, background: game.Money });
 
 export const CardRed = style({ ...card, background: game.Critical });
 
+// A substitution: the number going off, the number coming on.
+export const SubOut = style({ color: game.Critical, fontWeight: 700 });
+
+export const SubIn = style({ color: game.Accent, fontWeight: 700 });
+
+// The substitutions screen: who goes off on the left, who comes on on the right.
+export const SubsGrid = style({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: forgeSpace.S400,
+  maxHeight: '50vh',
+  overflowY: 'auto',
+});
+
+export const SubsColumn = style({ display: 'flex', flexDirection: 'column', gap: forgeSpace.S100 });
+
+export const SubsSides = style({ display: 'flex', gap: forgeSpace.S200, flexWrap: 'wrap' });
+
+export const SubsRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: forgeSpace.S300,
+});
+
+export const SubPick = style({ justifyContent: 'flex-start' });
+
+export const SubNum = style({ minWidth: toRem(32), textAlign: 'left' });
+
 export const SeatName = style({ ...forgeType.body });

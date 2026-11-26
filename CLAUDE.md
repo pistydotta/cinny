@@ -168,7 +168,14 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   `/games/football/match/<id>/` (the link people share).
   People are slots (`setup.slots`, one input each, up to four a side online); each controls
   one player in `m.people`, the rest of the team is the CPU. Fouls, cards, offside and the
-  officials' movement are `engine/referee.ts`, all in the match state.
+  officials' movement are `engine/referee.ts`, all in the match state. What bodies act out while
+  the ball is dead (the fouled player down, the card, the walk to the tunnel, goal celebrations,
+  substitutions with the fourth official's board, full time) is `engine/scenes.ts`, a `Scene` in
+  the state whose `hold` keeps the restart waiting. Substitutes are `m.players` after the 22
+  (`out: 'bench'`), so check `off` (not on the pitch) in any choice; `requestSub` is the entry
+  point for anything that changes players. People choose their side's changes (`SubsDialog`,
+  pause menu); the choice rides in `Input.sub` so it reaches every copy online on the same
+  tick. The CPU coach only changes a side nobody plays. The poses are clips made in `render/rig.ts`.
 - `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
   free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but

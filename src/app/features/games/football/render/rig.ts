@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
-// Clips the animation pack doesn't have (idle, run, kick), made here from rotations of the
-// mannequin's bones. A rotation is given in the model's own axes (+x its left, +y up, +z
+// Clips the animation pack doesn't have (idle, walk, run, kick, and the poses of the scenes in
+// engine/scenes.ts: arguing, lying hurt, cheering, sitting on the bench...), made here from
+// rotations of the mannequin's bones. A rotation is given in the model's own axes (+x its left, +y up, +z
 // forward) and turned into each bone's local rotation, so the numbers read like a pose:
 // a negative angle about x swings a leg forward, a positive one bends the knee back.
 //
@@ -169,5 +170,231 @@ export const makeClips = (rig: RigInfo): Record<string, THREE.AnimationClip> => 
     };
   });
 
-  return { idle, run, kick, ready, raise };
+  // Strolling: a run with short steps, straight knees and loose arms.
+  const walk = clipOf(rig, 'walk', 1, 24, (t) => {
+    const a = t * TAU;
+    const s = Math.sin(a);
+    const kneeL = 6 + 38 * Math.max(0, Math.sin(a + 2.0));
+    const kneeR = 6 + 38 * Math.max(0, Math.sin(a + 2.0 + Math.PI));
+    return {
+      ...arms(18 * s, -18 * s, 18),
+      spine_01: rx(2).multiply(ry(4 * s)),
+      thigh_l: rx(-24 * s - 2),
+      thigh_r: rx(24 * s - 2),
+      calf_l: rx(kneeL),
+      calf_r: rx(kneeR),
+      foot_l: rx(-6 * s),
+      foot_r: rx(6 * s),
+    };
+  });
+
+  // The run, with the arms held out like wings: a scorer off to celebrate.
+  const airplane = clipOf(rig, 'airplane', 1, 24, (t) => {
+    const a = t * TAU;
+    const s = Math.sin(a);
+    const kneeL = 25 + 60 * Math.max(0, Math.sin(a + 2.2));
+    const kneeR = 25 + 60 * Math.max(0, Math.sin(a + 2.2 + Math.PI));
+    const tilt = 12 * Math.sin(a * 0.5);
+    return {
+      upperarm_l: rx(10).multiply(rz(-4 + tilt)),
+      upperarm_r: rx(10).multiply(rz(4 + tilt)),
+      lowerarm_l: ry(-8),
+      lowerarm_r: ry(8),
+      spine_01: rx(6).multiply(rz(tilt * 0.6)),
+      Head: rx(-10),
+      thigh_l: rx(-38 * s - 8),
+      thigh_r: rx(38 * s - 8),
+      calf_l: rx(kneeL),
+      calf_r: rx(kneeR),
+    };
+  });
+
+  // The referee's whistle: right hand to the mouth.
+  const whistle = clipOf(rig, 'whistle', 0.5, 10, (t) => {
+    const up = Math.min(1, t * 3);
+    return {
+      upperarm_l: rx(3).multiply(rz(-72)),
+      lowerarm_l: ry(-14),
+      upperarm_r: rx(-55 * up).multiply(rz(78 - 10 * up)),
+      lowerarm_r: ry(4 + 135 * up),
+      Head: rx(-4 * up),
+    };
+  });
+
+  // An arm straight out the way play goes (the body is turned to face it).
+  const point = clipOf(rig, 'point', 0.5, 10, (t) => {
+    const up = Math.min(1, t * 3);
+    return {
+      upperarm_l: rx(3).multiply(rz(-72)),
+      lowerarm_l: ry(-14),
+      upperarm_r: ry(85 * up).multiply(rz(72 * (1 - up))),
+      lowerarm_r: ry(4 * (1 - up)),
+      spine_01: ry(-12 * up),
+    };
+  });
+
+  // "I never touched him": arms low and forward, forearms out, a shrug that comes and goes.
+  // (For an arm held out, ry swings it forward and rz lowers it; rz first, as in `arms`.)
+  const protest = clipOf(rig, 'protest', 1.4, 28, (t) => {
+    const w = Math.sin(t * TAU);
+    const out = 0.75 + 0.25 * w;
+    return {
+      upperarm_l: ry(-28).multiply(rz(-58 + 10 * out)),
+      upperarm_r: ry(28).multiply(rz(58 - 10 * out)),
+      lowerarm_l: ry(-55 - 10 * out),
+      lowerarm_r: ry(55 + 10 * out),
+      clavicle_l: rz(6 * out),
+      clavicle_r: rz(-6 * out),
+      spine_01: rx(-4 * out),
+      Head: ry(10 * w).multiply(rx(-6)),
+      thigh_l: rz(-4),
+      thigh_r: rz(4),
+    };
+  });
+
+  // Hands on the head, looking down.
+  const dejected = clipOf(rig, 'dejected', 3, 24, (t) => {
+    const b = Math.sin(t * TAU);
+    return {
+      upperarm_l: rx(-55).multiply(rz(20)),
+      upperarm_r: rx(-55).multiply(rz(-20)),
+      lowerarm_l: ry(-150),
+      lowerarm_r: ry(150),
+      spine_01: rx(8 + b * 2),
+      spine_03: rx(6),
+      Head: rx(28 + b * 4),
+      thigh_l: rz(-3),
+      thigh_r: rz(3),
+    };
+  });
+
+  // Both arms up, punching the air, knees springing (the renderer lifts the body).
+  const cheer = clipOf(rig, 'cheer', 0.7, 14, (t) => {
+    const a = Math.sin(t * TAU);
+    const k = Math.max(0, -a);
+    return {
+      upperarm_l: rx(-10).multiply(rz(80 + 14 * a)),
+      upperarm_r: rx(-10).multiply(rz(-80 - 14 * a)),
+      lowerarm_l: ry(-25 - 20 * k),
+      lowerarm_r: ry(25 + 20 * k),
+      spine_01: rx(-6),
+      Head: rx(-14),
+      thigh_l: rx(-20 * k),
+      thigh_r: rx(-20 * k),
+      calf_l: rx(40 * k),
+      calf_r: rx(40 * k),
+      foot_l: rx(-20 * k),
+      foot_r: rx(-20 * k),
+    };
+  });
+
+  // On the knees, chest out, arms spread back: the knee slide (the renderer lowers the body).
+  const kneeslide = clipOf(rig, 'kneeslide', 1, 8, () => ({
+    upperarm_l: rx(25).multiply(rz(18)),
+    upperarm_r: rx(25).multiply(rz(-18)),
+    lowerarm_l: ry(-10),
+    lowerarm_r: ry(10),
+    spine_01: rx(-18),
+    spine_03: rx(-8),
+    Head: rx(-22),
+    thigh_l: rz(-8),
+    thigh_r: rz(8),
+    calf_l: rx(92),
+    calf_r: rx(92),
+    foot_l: rx(40),
+    foot_r: rx(40),
+  }));
+
+  // Applause: the forearms fold in so the hands meet in front of the chest.
+  const clap = clipOf(rig, 'clap', 0.42, 8, (t) => {
+    const c = 0.5 + 0.5 * Math.cos(t * TAU);
+    return {
+      upperarm_l: rx(-18).multiply(rz(-74)),
+      upperarm_r: rx(-18).multiply(rz(74)),
+      lowerarm_l: ry(-122 - 16 * c),
+      lowerarm_r: ry(122 + 16 * c),
+      Head: rx(4),
+    };
+  });
+
+  // A hand up and forward to slap the other's.
+  const highfive = clipOf(rig, 'highfive', 0.6, 12, (t) => {
+    const up = Math.min(1, t * 2.2);
+    return {
+      upperarm_l: rx(3).multiply(rz(-72)),
+      lowerarm_l: ry(-14),
+      upperarm_r: ry(55 * up).multiply(rz(72 - 120 * up)),
+      lowerarm_r: ry(4 + 25 * up),
+      spine_01: rx(-4 * up),
+    };
+  });
+
+  // Seated on the bench, hands on the knees (the renderer lowers the body onto the seat).
+  const sit = clipOf(rig, 'sit', 4, 16, (t) => {
+    const b = Math.sin(t * TAU);
+    return {
+      upperarm_l: rx(-30).multiply(rz(-66)),
+      upperarm_r: rx(-30).multiply(rz(66)),
+      lowerarm_l: ry(-45),
+      lowerarm_r: ry(45),
+      spine_01: rx(10 + b),
+      Head: ry(6 * b),
+      thigh_l: rx(-88).multiply(rz(-6)),
+      thigh_r: rx(-88).multiply(rz(6)),
+      calf_l: rx(88),
+      calf_r: rx(88),
+    };
+  });
+
+  // Lying on the back holding the right shin, knees up; the renderer lays the body down and
+  // rolls it. In the standing frame the hands reach forward and down to the knee.
+  const down = clipOf(rig, 'down', 1.6, 16, (t) => {
+    const b = Math.sin(t * TAU);
+    return {
+      upperarm_l: rx(40 + 6 * b).multiply(ry(-100)),
+      upperarm_r: rx(40 + 6 * b).multiply(ry(80)),
+      lowerarm_l: ry(-25),
+      lowerarm_r: ry(25),
+      spine_01: rx(22 + 4 * b),
+      spine_03: rx(10),
+      Head: rx(18).multiply(ry(15 * b)),
+      thigh_l: rx(-30).multiply(rz(-8)),
+      thigh_r: rx(-75 - 8 * b),
+      calf_l: rx(45),
+      calf_r: rx(105),
+    };
+  });
+
+  // The fourth official: the board held up in both hands.
+  const board = clipOf(rig, 'board', 2, 8, (t) => {
+    const b = Math.sin(t * TAU);
+    return {
+      upperarm_l: rx(-30).multiply(rz(55)),
+      upperarm_r: rx(-30).multiply(rz(-55)),
+      lowerarm_l: ry(-55),
+      lowerarm_r: ry(55),
+      spine_01: rx(-3 + b),
+    };
+  });
+
+  return {
+    idle,
+    run,
+    kick,
+    ready,
+    raise,
+    walk,
+    airplane,
+    whistle,
+    point,
+    protest,
+    dejected,
+    cheer,
+    kneeslide,
+    clap,
+    highfive,
+    sit,
+    down,
+    board,
+  };
 };
