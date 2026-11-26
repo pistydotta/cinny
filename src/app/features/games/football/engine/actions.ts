@@ -89,9 +89,11 @@ export const angleBetween = (ax: number, az: number, bx: number, bz: number): nu
 };
 
 // The speed a ground pass needs to cover `d` meters and still arrive with some pace.
-export const groundPassSpeed = (d: number): number => {
+// A short pass keeps a little pace on arrival, not so much the receiver can't hold it; a
+// through ball (`firm`) more, to beat the defenders it runs past.
+export const groundPassSpeed = (d: number, firm = false): number => {
   const decel = ROLL_FIXED + ROLL_PER_SPEED * 8;
-  return Math.min(26, dsqrt(2 * decel * d) + 2.5);
+  return Math.min(26, dsqrt(2 * decel * d) + (firm ? 2.5 : 1.5));
 };
 
 // Puts the ball in flight from player `i`. Every kick goes through here.
@@ -131,13 +133,13 @@ export const passTo = (m: MatchState, i: number, j: number, lead = 0): void => {
   let tx = q.x + dir * lead;
   let tz = q.z;
   let d = len(tx - p.x, tz - p.z);
-  let speed = groundPassSpeed(d);
+  let speed = groundPassSpeed(d, lead > 0);
   // One correction for where the receiver runs meanwhile.
   const t = d / speed;
   tx += q.vx * t * 0.8;
   tz += q.vz * t * 0.8;
   d = len(tx - p.x, tz - p.z);
-  speed = groundPassSpeed(d);
+  speed = groundPassSpeed(d, lead > 0);
   const err = (1 - p.skill) * 0.05 * (rand(m) - 0.5);
   const a = datan2(tz - p.z, tx - p.x) + err;
   release(m, i, dcos(a) * speed, 0.3, dsin(a) * speed, { target: j });
@@ -198,7 +200,11 @@ export const pickReceiver = (
     if (ang > 1.1) return;
     // A back pass to the keeper only when asked for clearly.
     if (q.role === 'gk' && ang > 0.35) return;
-    const score = ang * 14 + d * 0.12;
+    let score = ang * 14 + d * 0.12;
+    // Another person's player is the better target when roughly that way; the one who just
+    // passed to us only when aimed at clearly.
+    if (ang < 0.8 && m.people.some((person) => person.control === j)) score -= 5;
+    if (j === m.ball.from && ang > 0.25) score += 5;
     if (score < bestScore) {
       bestScore = score;
       best = j;

@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { datan2, dcos, dsin } from '../../horde/engine/dmath';
+import { datan2, dcos, dsin, dsqrt } from '../../horde/engine/dmath';
 import {
   attackDir,
   clamp,
@@ -17,17 +17,7 @@ import {
   shoot,
   teammates,
 } from './actions';
-import {
-  Move,
-  ballAhead,
-  chaserOf,
-  cpuCarrier,
-  cpuTackle,
-  keeper,
-  offBall,
-  press,
-  toward,
-} from './ai';
+import { Move, chaserOf, cpuCarrier, cpuTackle, keeper, offBall, press, toward } from './ai';
 import {
   ACCEL,
   AIR_DRAG,
@@ -68,7 +58,8 @@ import {
   POST_RADIUS,
   QUEUE_TICKS,
   REACH,
-  RECEIVE_ASSIST,
+  RECEIVE_RUN,
+  RECEIVE_SIDE,
   RECEIVE_HARD,
   RECEIVE_REACH,
   RESTART_PATIENCE,
@@ -167,6 +158,7 @@ const newBall = (): Ball => ({
   target: -1,
   held: 0,
   credit: -1,
+  from: -1,
   offside: [],
 });
 
@@ -821,6 +813,7 @@ const gainBall = (m: MatchState, i: number, inputs: Input[]) => {
   const { ball } = m;
   const p = m.players[i];
   const passer = ball.credit;
+  ball.from = passer >= 0 && m.players[passer].side === p.side && passer !== i ? passer : -1;
   ball.owner = i;
   ball.lastSide = p.side;
   ball.lastPlayer = i;
@@ -833,8 +826,7 @@ const gainBall = (m: MatchState, i: number, inputs: Input[]) => {
   if (!sideHasPeople(m, p.side)) return;
   let s = m.people.findIndex((person) => person.control === i);
   if (s < 0) {
-    s = m.people.findIndex((person, k) => person.control === passer && m.setup.slots[k] === p.side);
-    if (s < 0) s = nearestSlot(m, p.side, p.x, p.z);
+    s = nearestSlot(m, p.side, p.x, p.z);
     if (s >= 0) giveControl(m, s, i);
   }
   const dir = s >= 0 ? stick(inputs[s] ?? NO_INPUT) : undefined;
@@ -957,7 +949,9 @@ const contacts = (m: MatchState, inputs: Input[]) => {
 
   if (touch(m, best, restartFor)) return;
 
-  if (ball.y > HEAD_MIN) {
+  // A lofted pass meant for this player is brought down on the chest; other high balls are
+  // headed.
+  if (ball.y > HEAD_MIN && ball.target !== best) {
     // A header: at goal when near it, otherwise cleared forward.
     const f = attackDir(m, p.side);
     const gx = goalX(m, p.side);
@@ -977,7 +971,7 @@ const contacts = (m: MatchState, inputs: Input[]) => {
   // A hard ball can bounce off the feet instead of being taken.
   const meant = ball.target === best;
   const hard = meant ? RECEIVE_HARD : 15;
-  const keep = (meant ? 0.5 : 0.35) + p.skill * 0.4;
+  const keep = (meant ? 0.65 : 0.35) + p.skill * (meant ? 0.3 : 0.4);
   if (rel > hard && rand(m) > keep) {
     ball.vx = -ball.vx * 0.25 + p.vx;
     ball.vz = -ball.vz * 0.25 + p.vz;
@@ -1041,8 +1035,12 @@ const updateControl = (m: MatchState) => {
       return;
     }
     if (ball.owner >= 0 && m.players[ball.owner].side === side) return;
+    // A pass on its way to a teammate nobody plays: the person whose player is nearest takes
+    // the receiver (as in co-op football games), so with several people a side the ball goes
+    // round them instead of staying with whoever passed.
     if (ball.target >= 0 && m.players[ball.target].side === side) {
-      if (by[ball.target] < 0 && person.control === ball.credit) {
+      const q = m.players[ball.target];
+      if (by[ball.target] < 0 && nearestSlot(m, side, q.x, q.z) === s) {
         giveControl(m, s, ball.target);
         by[ball.target] = s;
       }
@@ -1058,8 +1056,11 @@ const updateControl = (m: MatchState) => {
   });
 };
 
-// A person steering toward a pass meant for them keeps the stick; when they aren't steering,
-// or steering roughly the right way, the player drifts to meet the ball.
+// A pass on its way to a person's player: the player goes to meet it, and the stick says how.
+// Across the ball's path it picks a step to either side (up to RECEIVE_SIDE); along the path,
+// with the ball, it lets the ball run to take it further on (up to RECEIVE_RUN); sprint attacks
+// it. The first touch then follows the stick too (gainBall). Without this the stick alone made
+// people run past their passes.
 const receiveMove = (
   m: MatchState,
   i: number,
@@ -1069,14 +1070,43 @@ const receiveMove = (
   const { ball } = m;
   if (ball.owner >= 0 || ball.target !== i) return undefined;
   const p = m.players[i];
-  const [bx, bz] = ballAhead(m, 0.25);
-  if (dist(p, { x: bx, z: bz }) > 12) return undefined;
-  const meet = toward(p, bx, bz);
-  if (!dir) return { x: meet.x * 0.75, z: meet.z * 0.75, sprint: false };
-  const x = dir[0] * (1 - RECEIVE_ASSIST) + meet.x * RECEIVE_ASSIST;
-  const z = dir[1] * (1 - RECEIVE_ASSIST) + meet.z * RECEIVE_ASSIST;
-  const l = len(x, z) || 1;
-  return { x: x / l, z: z / l, sprint };
+  const speed = len(ball.vx, ball.vz);
+  if (speed < 0.8) {
+    // A ball that has stopped (or nearly): go and get it.
+    if (dist(p, ball) > 14) return undefined;
+    return toward(p, ball.x, ball.z, sprint || dist(p, ball) > 5);
+  }
+  const ux = ball.vx / speed;
+  const uz = ball.vz / speed;
+  // How far along its path the ball can still go: in the air to where it lands, then rolling
+  // to a stop on the grass. The meeting point stays short of that.
+  // On the ground, as far as it still arrives with some pace (3 m/s), so nobody waits for a
+  // ball crawling up to them.
+  const arrive = 3;
+  let reachable =
+    Math.max(0, speed * speed - arrive * arrive) /
+    (2 * (ROLL_FIXED + (ROLL_PER_SPEED * (speed + arrive)) / 2));
+  if (ball.y > BALL_RADIUS + 0.05 || ball.vy > 0) {
+    const air =
+      (ball.vy + dsqrt(ball.vy * ball.vy + 2 * GRAVITY * (ball.y - BALL_RADIUS))) / GRAVITY;
+    // A ball in the air is best met where it comes down.
+    reachable = speed * air + 2;
+  }
+  // Where the player is along the path, moved on by the stick when it points with the ball.
+  let s = (p.x - ball.x) * ux + (p.z - ball.z) * uz;
+  let side = 0;
+  if (dir) {
+    const along = dir[0] * ux + dir[1] * uz;
+    side = (-dir[0] * uz + dir[1] * ux) * RECEIVE_SIDE;
+    // Letting a slow ball run would only mean waiting for it: the run grows with its pace.
+    s += Math.max(0, along) * Math.min(RECEIVE_RUN, speed * 0.3);
+  }
+  s = clamp(s, 0.5, Math.max(0.5, reachable));
+  const tx = ball.x + ux * s - uz * side;
+  const tz = ball.z + uz * s + ux * side;
+  if (dist(p, { x: tx, z: tz }) > 14) return undefined;
+  const far = dist(p, { x: tx, z: tz });
+  return toward(p, tx, tz, sprint || far > 5);
 };
 
 export const step = (m: MatchState, inputs: Input[]): void => {

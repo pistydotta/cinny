@@ -12,12 +12,16 @@ import type { MatchSource } from './source';
 // stay out of the main bundle), and tears them down when the source changes or the screen goes.
 // Keys, graphics and the call volume reach the running match as they change.
 
+// Why a match couldn't start: the device can't draw it, or this tab runs an older build than
+// the server has (a deploy renamed the files it would load) and only a reload fixes it.
+export type MatchFailure = 'device' | 'update';
+
 export type MatchCanvas = {
   canvasRef: RefObject<HTMLCanvasElement>;
   runnerRef: RefObject<FootballRunner | undefined>;
   hud: Hud | undefined;
   loading: boolean;
-  failed: boolean;
+  failed: MatchFailure | undefined;
   ended: MatchState | undefined;
 };
 
@@ -50,7 +54,7 @@ export const useMatchCanvas = ({
   const audioRef = useRef<FootballAudio>();
   const [hud, setHud] = useState<Hud>();
   const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<MatchFailure>();
   const [ended, setEnded] = useState<MatchState>();
   // Read when the match starts; later changes go to the runner below.
   const latest = useRef({ keys, graphics, inCall, kits, devices, mine, labels, freeze, onEvents });
@@ -77,6 +81,10 @@ export const useMatchCanvas = ({
     setHud(undefined);
     const opts = latest.current;
     Promise.all([import('./render/scene'), import('./runner'), import('./audio')])
+      .catch((err) => {
+        if (!cancelled) setFailed('update');
+        throw err;
+      })
       .then(async ([{ FootballScene }, { FootballRunner }, { FootballAudio }]) => {
         const canvas = canvasRef.current;
         if (cancelled || !canvas) return;
@@ -127,7 +135,7 @@ export const useMatchCanvas = ({
         };
       })
       .catch(() => {
-        if (!cancelled) setFailed(true);
+        if (!cancelled) setFailed((f) => f ?? 'device');
       });
     return () => {
       cancelled = true;

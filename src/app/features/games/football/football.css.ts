@@ -249,6 +249,14 @@ export const Hint = style({
 
 export const Loading = style({ ...forgeType.heading, color: game.Muted });
 
+export const Updated = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: forgeSpace.S300,
+  pointerEvents: 'auto',
+});
+
 export const DialogBody = style({
   display: 'flex',
   flexDirection: 'column',

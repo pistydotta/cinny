@@ -4,6 +4,8 @@ import { Kit, Team } from './engine/teams';
 import { MatchState, Side } from './engine/types';
 import type { Hud } from './runner';
 import { shirtBackground } from './setup';
+import type { MatchFailure } from './useMatchCanvas';
+import { gameButton } from '../ui/gameUi.css';
 import * as css from './football.css';
 
 // What every match screen draws over the canvas (local, online, watching), and the full-time
@@ -73,7 +75,7 @@ export function MatchHud({
 }: {
   hud: Hud | undefined;
   loading: boolean;
-  failed: boolean;
+  failed: MatchFailure | undefined;
   teams: [Team, Team];
   kits: [Kit, Kit];
   // What to say while the match waits on the network.
@@ -86,10 +88,24 @@ export function MatchHud({
       {loading && !failed && (
         <span className={css.Loading}>{tr('football.loading', 'Opening the stadium…')}</span>
       )}
-      {failed && (
+      {failed === 'device' && (
         <span className={css.Loading}>
           {tr('football.failed', 'The game could not start on this device (WebGL).')}
         </span>
+      )}
+      {failed === 'update' && (
+        <div className={css.Updated}>
+          <span className={css.Loading}>
+            {tr('football.updated', 'The app was updated. Reload to play.')}
+          </span>
+          <button
+            type="button"
+            className={gameButton({ variant: 'primary' })}
+            onClick={() => window.location.reload()}
+          >
+            {tr('football.reload', 'Reload')}
+          </button>
+        </div>
       )}
       {hud && (
         <div className={css.Scoreboard}>

@@ -3185,6 +3185,8 @@
   "football.end.goal": "#{{num}} {{minute}}′",
   "football.end.own_goal": "{{minute}}′ (contra)",
   "football.failed": "O jogo não abriu neste aparelho (WebGL).",
+  "football.updated": "O app foi atualizado. Recarregue para jogar.",
+  "football.reload": "Recarregar",
   "football.full_time": "Fim de jogo",
   "football.goal": "GOOOL!",
   "football.half_length": "Cada tempo",

@@ -93,7 +93,7 @@ describe('football controls', () => {
     expect(m.people[0].preview).toBe(5);
   });
 
-  it('meets a pass a step off target without steering, but steering still wins', () => {
+  it('meets a pass a step off target, steered or not', () => {
     const run = (input: Input) => {
       const m = live();
       const me = 9;
@@ -105,9 +105,9 @@ describe('football controls', () => {
       return m;
     };
     expect(run(NO_INPUT).ball.owner).toBe(9);
-    // Running the other way, the person leaves the ball behind.
-    const away = run({ ...NO_INPUT, mx: 0, mz: -100, sprint: true });
-    expect(away.ball.owner).not.toBe(9);
+    // Pointing across the pass picks the side of the touch; it doesn't lose the ball.
+    const across = run({ ...NO_INPUT, mx: 0, mz: -100, sprint: true });
+    expect(across.ball.owner).toBe(9);
   });
 
   it('lets a person take a penalty with a charged, aimed shot', () => {

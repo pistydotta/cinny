@@ -131,9 +131,11 @@ export const OFFICIAL_SPEED = 6.5;
 export const LINESMAN_OFFSET = 1.5;
 
 // Receiving a pass: the player it's meant for reaches a little further, keeps harder balls more
-// often, and when the person isn't steering drifts to meet it. Steering always wins.
-export const RECEIVE_REACH = 1.0;
-export const RECEIVE_HARD = 18;
-export const RECEIVE_ASSIST = 0.35;
+// often and goes to meet it; the stick picks a step to the side (meters) or lets the ball run
+// on (meters further along its path). See receiveMove in match.ts.
+export const RECEIVE_REACH = 1.3;
+export const RECEIVE_HARD = 22;
+export const RECEIVE_SIDE = 0.6;
+export const RECEIVE_RUN = 4;
 // The first touch turns the body this far (radians) toward where the person points.
 export const FIRST_TOUCH_TURN = 1.2;

@@ -89,6 +89,9 @@ export type Ball = {
   held: number;
   // Who kicked it last on purpose: a goal after a save or a deflection is theirs.
   credit: number;
+  // The teammate who passed it to the player who has it now (-1 when none): passing straight
+  // back takes a clear aim, so the ball moves around.
+  from: number;
   // Attackers in an offside position when a teammate last played the ball, with where they
   // stood: the first of them to touch it next is caught.
   offside: [number, number, number][];
