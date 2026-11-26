@@ -1,4 +1,4 @@
-import { ConditionKind, IPushRules, PushRuleKind } from 'matrix-js-sdk';
+import { ConditionKind, IPushRules, PushRuleCondition, PushRuleKind } from 'matrix-js-sdk';
 
 // Element Call sends one of these when someone starts a call, mentioning @room so other
 // clients can ring. Under the default push rules that counts as a mention for everyone in
@@ -10,19 +10,35 @@ export const SILENT_CALL_EVENT_TYPES = [
   'm.rtc.notification',
 ];
 
+// The call member state behind "joined/ended the call" matches a room's "All messages" rule,
+// which then notifies like a message. Two-person rooms are left to the ring rule (ringRule.ts).
+const CALL_MEMBER_TYPE = 'org.matrix.msc3401.call.member';
+
 export type SilentCallRule = {
   ruleId: string;
-  type: string;
+  conditions: PushRuleCondition[];
 };
 
-export const SILENT_CALL_RULES: SilentCallRule[] = SILENT_CALL_EVENT_TYPES.map((type) => ({
-  ruleId: `blazeroom.silent_call.${type}`,
-  type,
-}));
+const typeIs = (type: string): PushRuleCondition => ({
+  kind: ConditionKind.EventMatch,
+  key: 'type',
+  pattern: type,
+});
 
-export const silentCallRuleBody = (type: string) => ({
+export const SILENT_CALL_RULES: SilentCallRule[] = [
+  ...SILENT_CALL_EVENT_TYPES.map((type) => ({
+    ruleId: `blazeroom.silent_call.${type}`,
+    conditions: [typeIs(type)],
+  })),
+  {
+    ruleId: `blazeroom.silent_call.${CALL_MEMBER_TYPE}`,
+    conditions: [typeIs(CALL_MEMBER_TYPE), { kind: ConditionKind.RoomMemberCount, is: '>2' }],
+  },
+];
+
+export const silentCallRuleBody = (rule: SilentCallRule) => ({
   actions: [],
-  conditions: [{ kind: ConditionKind.EventMatch, key: 'type', pattern: type }],
+  conditions: rule.conditions,
 });
 
 // The rules the account doesn't have yet. A rule the user turned off stays off.

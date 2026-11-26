@@ -1,6 +1,6 @@
 // Loaded by Element Call's index.html before its own script (see vite.config.js): publishes the
 // share state on window, where the patched bundle and Cinny find it.
-import { createShareStore, wrapGetDisplayMedia } from './shareState.js';
+import { canRetryWithoutSound, createShareStore, wrapGetDisplayMedia } from './shareState.js';
 import { createVoiceStore } from './voiceVolume.js';
 import { forgeCallCss, keepCallDark } from './forgeCallTheme.js';
 
@@ -18,7 +18,11 @@ store.layoutShares = (vms) => {
   }
 };
 
-if (navigator.mediaDevices?.getDisplayMedia) wrapGetDisplayMedia(navigator.mediaDevices, store);
+if (navigator.mediaDevices?.getDisplayMedia) {
+  wrapGetDisplayMedia(navigator.mediaDevices, store, {
+    retryWithoutSound: canRetryWithoutSound(navigator.userAgent),
+  });
+}
 
 // Element Call's spotlight tile has its own share volume menu, which changes the volume behind the
 // store's back. Cinny's WatchControls are the only volume control, so hide it. Its trigger is the

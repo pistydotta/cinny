@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // rxjs is only a transitive dependency here; it proves `changes` interoperates with the real thing.
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { combineLatest, of } from 'rxjs';
-import { createShareStore, wrapGetDisplayMedia } from './shareState';
+import { canRetryWithoutSound, createShareStore, wrapGetDisplayMedia } from './shareState';
 
 // Same shape as the BehaviorSubjects in the Element Call bundle: subscribe(fn) emits the
 // current value at once and returns { unsubscribe }.
@@ -695,9 +695,66 @@ describe('wrapGetDisplayMedia', () => {
     await expect(mediaDevices.getDisplayMedia()).rejects.toBe(error);
     expect(store.getSnapshot()).toBe(before);
   });
+
+  it('asks again without sound when the PC sound fails, in the Windows app', async () => {
+    const store = newStore();
+    const stream = fakeStream([fakeTrack('video', 'Screen 1')]);
+    const failed = new DOMException('Could not start audio source', 'NotReadableError');
+    const original = vi.fn().mockRejectedValueOnce(failed).mockResolvedValueOnce(stream);
+    const mediaDevices = { getDisplayMedia: original };
+    wrapGetDisplayMedia(mediaDevices as never, store, { retryWithoutSound: true });
+    await expect(mediaDevices.getDisplayMedia({ video: true, audio: true })).resolves.toBe(stream);
+    expect(original).toHaveBeenLastCalledWith({ video: true, audio: false });
+    expect(store.getSnapshot().local?.hasSound).toBe(false);
+  });
+
+  it('does not ask again after a refusal, without sound requested, or outside the app', async () => {
+    const refused = new DOMException('Permission denied', 'NotAllowedError');
+    const aborted = new DOMException('Invalid capture constraints', 'AbortError');
+    const cases: [DOMException, MediaStreamConstraints, boolean][] = [
+      [refused, { video: true, audio: true }, true],
+      [aborted, { video: true }, true],
+      [aborted, { video: true, audio: true }, false],
+    ];
+    await Promise.all(
+      cases.map(async ([error, constraints, retryWithoutSound]) => {
+        const original = vi.fn().mockRejectedValue(error);
+        const mediaDevices = { getDisplayMedia: original };
+        wrapGetDisplayMedia(mediaDevices as never, newStore(), { retryWithoutSound });
+        await expect(mediaDevices.getDisplayMedia(constraints)).rejects.toBe(error);
+        expect(original).toHaveBeenCalledTimes(1);
+      })
+    );
+  });
+
+  it('retries only in Windows apps that answer the second request themselves', () => {
+    const app = (version: string) =>
+      `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Blazeroom/${version} Chrome/140.0.0.0 Electron/45.1.0 Safari/537.36`;
+    expect(canRetryWithoutSound(app('0.2.3'))).toBe(true);
+    expect(canRetryWithoutSound(app('0.10.0'))).toBe(true);
+    expect(canRetryWithoutSound(app('1.0.0'))).toBe(true);
+    expect(canRetryWithoutSound(app('0.2.2'))).toBe(false);
+    expect(canRetryWithoutSound(app('0.1.9'))).toBe(false);
+    expect(
+      canRetryWithoutSound(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+      )
+    ).toBe(false);
+    expect(canRetryWithoutSound(undefined)).toBe(false);
+  });
 });
 
 describe('hiding the people beside a share', () => {
+  it('hides them by default when a share is watched', () => {
+    const store = newStore();
+    store.layoutShares(asVms([fakeVm('a')]));
+    expect(store.peopleHidden()).toBe(false);
+    store.watch('a', 1);
+    expect(store.peopleHidden()).toBe(true);
+    store.setPeopleHidden(false);
+    expect(store.peopleHidden()).toBe(false);
+  });
+
   it('only hides them, and the small picture, while a share is watched', () => {
     const store = newStore();
     const a = fakeVm('a');
@@ -722,10 +779,10 @@ describe('hiding the people beside a share', () => {
     store.layoutShares(asVms([fakeVm('a')]));
     store.watch('a', 1);
     const before = seen.length;
-    store.setPeopleHidden(true);
+    store.setPeopleHidden(false);
     expect(seen.length).toBe(before + 1);
     expect(listener).toHaveBeenCalled();
-    store.setPeopleHidden(true);
+    store.setPeopleHidden(false);
     expect(seen.length).toBe(before + 1);
   });
 });

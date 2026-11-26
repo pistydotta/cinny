@@ -54,7 +54,13 @@ function CallRow({ room, here }: { room: Room; here: boolean }) {
             .join(' · ')}
         </Text>
       </Box>
-      <MemberGlance room={room} members={members} speakers={NO_SPEAKERS} max={4} />
+      <MemberGlance
+        room={room}
+        members={members}
+        speakers={NO_SPEAKERS}
+        max={4}
+        ring="SurfaceVariant"
+      />
     </Box>
   );
 }

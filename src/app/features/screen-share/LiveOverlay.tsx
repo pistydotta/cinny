@@ -124,9 +124,9 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
   // With the people column hidden, who is in the call shows at the share's right edge.
   const rail = active && (peopleHidden || fullscreen);
 
-  // Unwatching everything brings the people back for the next share.
+  // Unwatching everything resets the column, so the next share opens alone again.
   useEffect(() => {
-    if (!active) store?.setPeopleHidden(false);
+    if (!active) store?.setPeopleHidden(true);
   }, [active, store]);
 
   // Pointer movement over the share wakes the chips; they sleep again after IDLE_MS.

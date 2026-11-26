@@ -17,16 +17,20 @@ export const ControlDivider = style({
   height: toRem(16),
 });
 
-// The call bar's faces: true circles (the Forge radii square off folds' Pill) standing apart,
-// not stacked, so each one reads on its own.
+// The call bar's faces: true circles (the Forge radii square off folds' Pill), overlapping
+// like a stack. StackedAvatar's outline, in the row's background colour, cuts each from the one
+// before it.
 export const GlanceAvatar = style({
   selectors: {
-    '&&': { borderRadius: '50%', overflow: 'hidden', outline: 'none', marginLeft: 0 },
+    '&&': { borderRadius: '50%', overflow: 'hidden', marginLeft: 0 },
+    '&& + &&': { marginLeft: toRem(-8) },
   },
 });
 globalStyle(`${GlanceAvatar} > *`, { borderRadius: '50%' });
 
 export const SpeakerAvatarOutline = style({
+  position: 'relative',
+  zIndex: 1,
   boxShadow: `0 0 0 ${config.borderWidth.B600} ${color.Success.Main}`,
 });
 

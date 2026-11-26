@@ -17,8 +17,16 @@ type MemberGlanceProps = {
   members: CallMembership[];
   speakers: Set<string>;
   max?: number;
+  // The colour behind the row, for the ring that separates the stacked faces.
+  ring?: 'Background' | 'SurfaceVariant';
 };
-export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceProps) {
+export function MemberGlance({
+  room,
+  members,
+  speakers,
+  max = 6,
+  ring = 'Background',
+}: MemberGlanceProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const openUserProfile = useOpenUserRoomProfile();
@@ -27,7 +35,7 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
   const remainingCount = max && members.length > max ? members.length - max : 0;
 
   return (
-    <Box alignItems="Center" gap="200">
+    <Box alignItems="Center">
       {visibleMembers.map((callMember) => {
         const { userId } = callMember;
         if (!userId) return null;
@@ -46,7 +54,7 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
             )}
             title={name}
             as="button"
-            variant="Background"
+            variant={ring}
             size="200"
             radii="Pill"
             onClick={(evt) =>

@@ -26,7 +26,7 @@ export const useSilentCallRules = (): void => {
           'global',
           PushRuleKind.Override,
           rule.ruleId,
-          silentCallRuleBody(rule.type)
+          silentCallRuleBody(rule)
         ).catch((e: unknown) => {
           // eslint-disable-next-line no-console
           console.warn(`Couldn't add push rule ${rule.ruleId}`, e);

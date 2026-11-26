@@ -1,32 +1,20 @@
-import React, { MouseEventHandler, useRef, useState } from 'react';
+import React, { MouseEventHandler, useEffect, useRef, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
-import { Box, Icon, Icons, Menu, PopOut, RectCords, Text, config } from 'folds';
+import { Icon, Icons, Menu, PopOut, RectCords, Text } from 'folds';
 import { TipIconButton } from '../tooltips/TipIconButton';
 import { tr } from '../translation/tr';
 import { stopPropagation } from '../../utils/keyboard';
 import { Modal500 } from '../../components/Modal500';
 import { InputSettings, OutputSettings } from './AudioSettingsParts';
-import { CallAudioSettings } from './CallAudioSettings';
+import { Settings, SettingsPages } from '../settings/Settings';
 import * as css from './callAudio.css';
 
+// The full settings, opened on the voice page: the menu only has the quick controls.
 export function VoiceSettingsDialog({ onClose }: { onClose: () => void }) {
   return (
     <Modal500 requestClose={onClose}>
-      <Box direction="Column" gap="300" style={{ padding: config.space.S400 }}>
-        <Box alignItems="Center" justifyContent="SpaceBetween">
-          <Text size="H4">{tr('call_audio.voice_settings', 'Voice settings')}</Text>
-          <TipIconButton
-            size="300"
-            radii="300"
-            label={tr('voice_member.close', 'Close')}
-            onClick={onClose}
-          >
-            <Icon size="100" src={Icons.Cross} />
-          </TipIconButton>
-        </Box>
-        <CallAudioSettings />
-      </Box>
+      <Settings initialPage={SettingsPages.VoicePage} requestClose={onClose} />
     </Modal500>
   );
 }
@@ -45,6 +33,16 @@ export function AudioMenuArrow({ kind, className }: AudioMenuArrowProps) {
 
   const open: MouseEventHandler<HTMLButtonElement> = (event) =>
     setCords(cords ? undefined : event.currentTarget.getBoundingClientRect());
+
+  // In a call most of the screen is the call's iframe, whose clicks never reach this page, so
+  // the focus trap's outside click can't see them. A click there takes focus from the window.
+  const menuOpen = !!cords;
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const close = () => setCords(undefined);
+    window.addEventListener('blur', close);
+    return () => window.removeEventListener('blur', close);
+  }, [menuOpen]);
 
   return (
     <>
@@ -69,19 +67,19 @@ export function AudioMenuArrow({ kind, className }: AudioMenuArrowProps) {
           >
             <Menu className={css.Menu} style={{ pointerEvents: 'auto' }}>
               {kind === 'input' ? <InputSettings withNoise /> : <OutputSettings />}
-              <div className={css.Divider} />
               <button
                 type="button"
-                className={css.Row}
+                className={classNames(css.Row, css.Link)}
                 onClick={() => {
                   setCords(undefined);
                   setDialog(true);
                 }}
               >
-                <Icon size="100" src={Icons.Setting} />
-                <Text className={css.RowText} size="T300">
+                <Icon size="50" src={Icons.Setting} />
+                <Text className={css.RowText} size="T200">
                   {tr('call_audio.voice_settings', 'Voice settings')}
                 </Text>
+                <Icon size="50" src={Icons.ChevronRight} />
               </button>
             </Menu>
           </FocusTrap>
@@ -100,7 +98,8 @@ export function AudioMenuArrow({ kind, className }: AudioMenuArrowProps) {
           radii="300"
           size="300"
           onClick={open}
-          aria-pressed={!!cords}
+          hideTip={menuOpen}
+          aria-pressed={menuOpen}
           aria-haspopup="menu"
         >
           <Icon size="50" src={Icons.ChevronTop} />

@@ -118,8 +118,9 @@ export const createShareStore = ({ grab = grabFrame, peekEveryMs = PEEK_EVERY_MS
 
   // Set while the call shows in Cinny's floating viewer, which only has room for the share.
   let pipHidden = false;
-  // Set while someone watching a share chose to hide the people column beside it.
-  let peopleHidden = false;
+  // Whether the people column beside a watched share is hidden. A share opens without it;
+  // the viewer can bring it back.
+  let peopleHidden = true;
   const hidingPeople = () => peopleHidden && [...entries.values()].some((e) => e.vm && e.watching);
 
   let localStream = null;
@@ -533,14 +534,37 @@ export async function createCaptureVolume(stream, Context = globalThis.AudioCont
   }
 }
 
+// The Windows app answers a request without sound, right after a failed one, with the source
+// already picked (desktop/main.js) from this version on. Older apps would open the picker again.
+const RETRY_APP_VERSION = [0, 2, 3];
+
+export const canRetryWithoutSound = (userAgent) => {
+  const match = / Blazeroom\/(\d+)\.(\d+)\.(\d+)/.exec(userAgent ?? '');
+  if (!match || !userAgent.includes('Electron/')) return false;
+  const version = match.slice(1).map(Number);
+  const at = version.findIndex((n, i) => n !== RETRY_APP_VERSION[i]);
+  return at === -1 || version[at] > RETRY_APP_VERSION[at];
+};
+
 // Replaces mediaDevices.getDisplayMedia so the store learns about the person's own share. The
 // Video stays untouched; optional audio gain is applied before publication. Picker errors propagate.
-export const wrapGetDisplayMedia = (mediaDevices, store) => {
+// With retryWithoutSound, a share whose PC sound can't start is asked for again without it, so it
+// goes live with "No sound" instead of failing. A cancel fails both times, because the Windows app
+// refuses the second request too; NotAllowedError is a refusal everywhere, so it isn't retried.
+export const wrapGetDisplayMedia = (mediaDevices, store, { retryWithoutSound = false } = {}) => {
   const getDisplayMedia = mediaDevices.getDisplayMedia.bind(mediaDevices);
+  const capture = async (constraints) => {
+    try {
+      return await getDisplayMedia(constraints);
+    } catch (e) {
+      if (!retryWithoutSound || !constraints?.audio || e?.name === 'NotAllowedError') throw e;
+      return getDisplayMedia({ ...constraints, audio: false });
+    }
+  };
 
   // eslint-disable-next-line no-param-reassign
   mediaDevices.getDisplayMedia = async (constraints) => {
-    const stream = await getDisplayMedia(constraints);
+    const stream = await capture(constraints);
     const mixer = await createCaptureVolume(stream);
     store.setLocalStream(stream, mixer);
     return stream;

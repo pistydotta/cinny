@@ -1,6 +1,6 @@
-import React, { CSSProperties, useId } from 'react';
+import React, { CSSProperties, ReactNode, useId, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { Box, Icon, Icons, Switch, Text } from 'folds';
+import { Icon, Icons, Switch, Text } from 'folds';
 import { callEmbedAtom } from '../../state/callEmbed';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -14,50 +14,92 @@ import {
   useCallAudio,
 } from './callAudio';
 import { useMicTest, useSoundTest } from './audioTest';
+import { LEVEL_BARS, SYSTEM_KEY, useDeviceLevels } from './deviceLevels';
 import { tr } from '../translation/tr';
+import { deviceNames, shownDevices } from './deviceNames';
+import { SlidingName } from './SlidingName';
 import * as css from './callAudio.css';
+
+type IconSrc = typeof Icons[keyof typeof Icons];
+
+function LevelBars({ lit }: { lit: number }) {
+  return (
+    <span className={css.Bars} aria-hidden>
+      {Array.from({ length: LEVEL_BARS }, (_, i) => (
+        <span key={i} className={css.Bar} data-lit={i < lit} />
+      ))}
+    </span>
+  );
+}
 
 type DeviceListProps = {
   label: string;
+  icon: IconSrc;
   devices: MediaDeviceInfo[];
   selected: string | undefined;
   onSelect: (deviceId: string | undefined) => void;
   named: boolean;
   askPermission: () => Promise<void>;
+  // Mics show what each one hears; speakers have nothing to show.
+  live?: boolean;
 };
 
 // Every device in view, one click to choose: no list to open first.
-function DeviceList({ label, devices, selected, onSelect, named, askPermission }: DeviceListProps) {
-  const headingId = useId();
+function DeviceList({
+  label,
+  icon,
+  devices,
+  selected,
+  onSelect,
+  named,
+  askPermission,
+  live,
+}: DeviceListProps) {
   const systemLabel = tr('call_audio.system_default', 'System default');
   // A saved device that is unplugged now: the call falls back to the system's.
   const current = devices.find((d) => d.deviceId === selected);
+  const names = deviceNames(devices.map((d) => d.label));
+  const [all, setAll] = useState(false);
+  const shown = all ? devices : shownDevices(devices, (d) => d === current);
+  const hidden = devices.length - shown.length;
+  const rows = [undefined, ...shown];
+  // Opening the mics needs the permission the names come with, or the menu would ask for it.
+  const levels = useDeviceLevels(
+    rows.map((d) => d?.deviceId),
+    !!live && named
+  );
 
   return (
     <div className={css.Section}>
-      <Text id={headingId} className={css.Heading} size="L400">
-        {label}
-      </Text>
-      <div className={css.Options} role="radiogroup" aria-labelledby={headingId}>
-        {[undefined, ...devices].map((device) => {
+      <div className={css.Options} role="radiogroup" aria-label={label}>
+        {rows.map((device) => {
           const id = device?.deviceId;
           const checked = device ? current?.deviceId === id : !current;
+          const name = device ? names[devices.indexOf(device)] || label : systemLabel;
           return (
             <button
-              key={id ?? 'system'}
+              key={id ?? SYSTEM_KEY}
               type="button"
               role="radio"
               aria-checked={checked}
-              className={`${css.Row} ${css.Option}`}
+              className={css.Device}
+              title={device?.label && device.label !== name ? device.label : undefined}
               onClick={() => onSelect(id)}
             >
-              <span className={css.Radio} aria-hidden />
-              <Text className={css.RowText} size="T300" truncate>
-                {device ? device.label || label : systemLabel}
-              </Text>
+              <Icon className={css.DeviceIcon} size="100" src={icon} />
+              <SlidingName name={name} />
+              {live && named && <LevelBars lit={levels.get(id ?? SYSTEM_KEY) ?? 0} />}
             </button>
           );
         })}
+        {hidden > 0 && (
+          <button type="button" className={`${css.Row} ${css.More}`} onClick={() => setAll(true)}>
+            <Icon size="50" src={Icons.ChevronBottom} />
+            <Text className={css.RowText} size="T200">
+              {tr('call_audio.show_all', 'Show all ({{count}})', { count: devices.length })}
+            </Text>
+          </button>
+        )}
       </div>
       {!named && (
         <button type="button" className={css.Row} onClick={() => askPermission()}>
@@ -83,14 +125,14 @@ function Level({ label, value, max, onChange }: LevelProps) {
   const percent = Math.round(value * 100);
   return (
     <div className={css.Level}>
-      <Box justifyContent="SpaceBetween" alignItems="Center">
+      <div className={css.LevelHead}>
         <Text as="label" htmlFor={id} size="T300">
           {label}
         </Text>
         <Text as="output" htmlFor={id} size="T200" priority="300" className={css.LevelValue}>
           {percent}%
         </Text>
-      </Box>
+      </div>
       <input
         id={id}
         className={css.Slider}
@@ -107,24 +149,28 @@ function Level({ label, value, max, onChange }: LevelProps) {
   );
 }
 
-const BARS = 16;
-// The top quarter is loud enough to clip in a call.
-const HOT_FROM = 12;
+type OptionRowProps = {
+  icon: IconSrc;
+  label: string;
+  description: ReactNode;
+  value: boolean;
+  onChange: (value: boolean) => void;
+};
 
-function Meter({ level, label }: { level: number; label: string }) {
-  const lit = Math.round(level * BARS);
+// An on/off choice with what it does underneath, and the app's switch.
+function OptionRow({ icon, label, description, value, onChange }: OptionRowProps) {
   return (
-    <div
-      className={css.Meter}
-      role="meter"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(level * 100)}
-    >
-      {Array.from({ length: BARS }, (_, i) => (
-        <span key={i} className={css.MeterBar} data-lit={i < lit} data-hot={i >= HOT_FROM} />
-      ))}
+    <div className={css.OptionRow}>
+      <span className={css.OptionIcon} data-on={value}>
+        <Icon size="100" src={icon} />
+      </span>
+      <span className={css.RowText}>
+        <Text size="T300">{label}</Text>
+        <Text size="T200" priority="300" truncate>
+          {description}
+        </Text>
+      </span>
+      <Switch variant="Primary" value={value} onChange={onChange} aria-label={label} />
     </div>
   );
 }
@@ -134,68 +180,55 @@ export function InputSettings({ withNoise }: { withNoise?: boolean }) {
   const audio = useCallAudio();
   const devices = useAudioDevices();
   const [noise, setNoise] = useSetting(settingsAtom, 'callNoiseSuppression');
-  const test = useMicTest({
+  // The list already shows each mic's level, so the test is only hearing yourself back.
+  const listen = useMicTest({
     inputDevice: audio.inputDevice,
     outputDevice: audio.outputDevice,
     inputGain: audio.inputGain,
     outputVolume: audio.outputVolume,
     onAllowed: devices.named ? undefined : devices.refresh,
   });
-  const levelLabel = tr('call_audio.mic_level', 'Microphone level');
 
   return (
-    <div className={css.Section}>
+    <div className={css.Stack}>
       <DeviceList
         label={tr('call_audio.input_device', 'Input device')}
+        icon={Icons.Mic}
         devices={devices.inputs}
         selected={audio.inputDevice}
         onSelect={(id) => setInputDevice(id, embed)}
         named={devices.named}
         askPermission={devices.askPermission}
+        live
       />
-      <Level
-        label={tr('call_audio.input_volume', 'Input volume')}
-        value={audio.inputGain}
-        max={MAX_INPUT_GAIN}
-        onChange={setInputGain}
-      />
-      <div className={css.Test}>
-        <button
-          type="button"
-          className={css.TestButton}
-          aria-pressed={test.testing}
-          onClick={test.toggle}
-        >
-          <Icon size="50" src={test.testing ? Icons.Pause : Icons.Mic} />
-          <Text as="span" size="T200">
-            {test.testing
-              ? tr('call_audio.mic_test_stop', 'Stop test')
-              : tr('call_audio.mic_test', 'Test mic')}
-          </Text>
-        </button>
-        <Meter level={test.level} label={levelLabel} />
-      </div>
-      <Text className={css.Hint} size="T200" priority="300">
-        {test.failed
-          ? tr('call_audio.mic_test_failed', "Couldn't open this microphone.")
-          : tr('call_audio.mic_test_hint', 'You hear yourself while testing. Use headphones.')}
-      </Text>
-      {withNoise && (
-        <Box className={css.Row} as="div" alignItems="Center" style={{ cursor: 'default' }}>
-          <span className={css.RowText}>
-            <Text size="T300">{tr('call_audio.noise', 'Noise suppression')}</Text>
-            <Text size="T200" priority="300">
-              {tr('call_audio.noise_next_call', 'Applies from the next call you join.')}
-            </Text>
-          </span>
-          <Switch
-            variant="Primary"
+      <div className={css.Controls}>
+        <Level
+          label={tr('call_audio.input_volume', 'Input volume')}
+          value={audio.inputGain}
+          max={MAX_INPUT_GAIN}
+          onChange={setInputGain}
+        />
+        <OptionRow
+          icon={Icons.Headphone}
+          label={tr('call_audio.listen', 'Hear myself')}
+          description={
+            listen.failed
+              ? tr('call_audio.mic_test_failed', "Couldn't open this microphone.")
+              : tr('call_audio.listen_hint', 'Hear your voice in your headphones')
+          }
+          value={listen.testing}
+          onChange={listen.toggle}
+        />
+        {withNoise && (
+          <OptionRow
+            icon={Icons.Filter}
+            label={tr('call_audio.noise', 'Noise suppression')}
+            description={tr('call_audio.noise_next_call', 'Applies from the next call you join.')}
             value={noise}
             onChange={setNoise}
-            aria-label={tr('call_audio.noise', 'Noise suppression')}
           />
-        </Box>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -208,22 +241,18 @@ export function OutputSettings() {
   const unsupported = devices.named && devices.outputs.length === 0;
 
   return (
-    <div className={css.Section}>
+    <div className={css.Stack}>
       {unsupported ? (
-        <div className={css.Section}>
-          <Text className={css.Heading} size="L400">
-            {tr('call_audio.output_device', 'Output device')}
-          </Text>
-          <Text className={css.Hint} size="T200" priority="300">
-            {tr(
-              'call_audio.output_unsupported',
-              "This browser plays calls on the system's device. Change it in the system settings."
-            )}
-          </Text>
-        </div>
+        <Text className={css.Hint} size="T200" priority="300">
+          {tr(
+            'call_audio.output_unsupported',
+            "This browser plays calls on the system's device. Change it in the system settings."
+          )}
+        </Text>
       ) : (
         <DeviceList
           label={tr('call_audio.output_device', 'Output device')}
+          icon={Icons.VolumeHigh}
           devices={devices.outputs}
           selected={audio.outputDevice}
           onSelect={(id) => setOutputDevice(id, embed)}
@@ -231,21 +260,21 @@ export function OutputSettings() {
           askPermission={devices.askPermission}
         />
       )}
-      <Level
-        label={tr('call_audio.output_volume', 'Output volume')}
-        value={audio.outputVolume}
-        max={MAX_OUTPUT_VOLUME}
-        onChange={(volume) => setOutputVolume(volume, embed)}
-      />
-      <div className={css.Test}>
+      <div className={css.Controls}>
+        <Level
+          label={tr('call_audio.output_volume', 'Output volume')}
+          value={audio.outputVolume}
+          max={MAX_OUTPUT_VOLUME}
+          onChange={(volume) => setOutputVolume(volume, embed)}
+        />
         <button
           type="button"
           className={css.TestButton}
           aria-pressed={sound.playing}
           onClick={sound.play}
         >
-          <Icon size="50" src={Icons.VolumeHigh} />
-          <Text as="span" size="T200">
+          <Icon size="100" src={Icons.VolumeHigh} />
+          <Text as="span" size="T300">
             {tr('call_audio.sound_test', 'Play test sound')}
           </Text>
         </button>

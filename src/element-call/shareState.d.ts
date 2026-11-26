@@ -104,7 +104,10 @@ export function createCaptureVolume(
   Context?: typeof AudioContext
 ): Promise<{ setVolume: (value: number) => void; dispose: () => void } | undefined>;
 
+export function canRetryWithoutSound(userAgent: string | undefined): boolean;
+
 export function wrapGetDisplayMedia(
   mediaDevices: Pick<MediaDevices, 'getDisplayMedia'>,
-  store: ShareStore
+  store: ShareStore,
+  options?: { retryWithoutSound?: boolean }
 ): void;
