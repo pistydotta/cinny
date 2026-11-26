@@ -1,14 +1,15 @@
-import React, { CSSProperties, useEffect } from 'react';
+import React, { CSSProperties, ReactNode, useEffect } from 'react';
 import { Icon, Icons } from 'folds';
 import { Card, formatChips } from './poker/types';
 import { PlayingCard } from './poker/table/PlayingCard';
-import { ChipStack } from './poker/table/Chips';
 import { TopUpButton } from './credits/TopUpButton';
 import { useCredits } from './credits/useCredits';
 import * as css from './gamesHub.css';
 import { tr } from '../translation/tr';
 import { GameKind } from './table-games/types';
-import { gameName } from './table-games/text';
+import { gameName, phaseText } from './table-games/text';
+import { LiveTable, useLiveTables } from './useLiveTables';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 import trucoArt from './art/truco.webp';
 import fodinhaArt from './art/fodinha.webp';
 import chessArt from './art/chess.webp';
@@ -28,8 +29,66 @@ type GamesHubProps = {
   onOpenHorde: () => void;
   onOpenFootball: () => void;
   onOpenTableGame: (kind: GameKind) => void;
+  onOpenPokerTable: (tableId: string) => void;
+  onOpenGameTable: (kind: GameKind, tableId: string) => void;
   onBack?: () => void;
 };
+
+type TileProps = {
+  art: ReactNode;
+  name: string;
+  meta: string;
+  stakes?: boolean;
+  onOpen: () => void;
+};
+
+// The whole tile is the button: a row of identical "Play" buttons said nothing.
+function Tile({ art, name, meta, stakes, onOpen }: TileProps) {
+  return (
+    <button type="button" className={css.Tile} onClick={onOpen}>
+      <div className={css.TileArt}>{art}</div>
+      <span className={css.TileName}>
+        {name}
+        {stakes && (
+          <span
+            className={css.StakeMark}
+            title={tr('games.hub.uses_wallet', 'Uses the card-game wallet')}
+          >
+            $
+          </span>
+        )}
+      </span>
+      <span className={css.TileMeta}>{meta}</span>
+    </button>
+  );
+}
+
+const gameLabel = (game: LiveTable['game']) => (game === 'poker' ? 'Poker' : gameName(game));
+
+const LIVE_ART: Partial<Record<LiveTable['game'], string>> = {
+  truco: trucoArt,
+  fodinha: fodinhaArt,
+  chess: chessArt,
+};
+
+// The same art as the game's tile, small, so a row reads as "a poker table" at a glance.
+function LiveThumb({ game }: { game: LiveTable['game'] }) {
+  const art = LIVE_ART[game];
+  if (art) return <img className={css.LiveThumb} src={art} alt="" loading="lazy" />;
+  return (
+    <span className={`${css.LiveThumb} ${css.LivePokerThumb}`} aria-hidden="true">
+      {ROYAL.slice(3).map((card, i) => (
+        <PlayingCard
+          key={`${card.rank}${card.suit}`}
+          className={css.LiveThumbCard}
+          card={card}
+          faceUp
+          style={{ transform: `rotate(${i ? 8 : -8}deg)` } as CSSProperties}
+        />
+      ))}
+    </span>
+  );
+}
 
 export function GamesHub({
   onOpenPoker,
@@ -37,18 +96,53 @@ export function GamesHub({
   onOpenHorde,
   onOpenFootball,
   onOpenTableGame,
+  onOpenPokerTable,
+  onOpenGameTable,
   onBack,
 }: GamesHubProps) {
+  const mx = useMatrixClient();
   const { balance, atTables, refresh, topUp } = useCredits();
+  const { tables, loaded } = useLiveTables();
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
+  const nameOf = (id: string) => mx.getUser(id)?.displayName ?? id.replace(/^@|:.*$/g, '');
+  const open = (t: LiveTable) =>
+    t.game === 'poker' ? onOpenPokerTable(t.tableId) : onOpenGameTable(t.game, t.tableId);
+  // The same words as the home page's "Happening now", which lists these tables too.
+  const actionText = (t: LiveTable) =>
+    ({
+      seated: tr('home.table_back', 'Go back'),
+      open: tr('home.table_join', 'Join'),
+      watch: tr('home.table_watch', 'Watch'),
+    }[t.role]);
+  const whyText = (t: LiveTable) =>
+    ({
+      seated: '',
+      invited: tr('home.table_invited', 'Invited you'),
+      call: tr('home.table_call', 'In your call'),
+      friend: tr('home.table_friends', 'Friends'),
+    }[t.relevance]);
+  const detail = (t: LiveTable) => {
+    const parts: string[] = [];
+    if (t.players.length) parts.push(t.players.map(nameOf).join(', '));
+    if (t.seats) parts.push(`${t.players.length}/${t.seats}`);
+    if (t.idle && t.activeAt !== undefined)
+      parts.push(
+        tr('table_games.idle_for', 'Stopped for {{n}} min', {
+          n: Math.floor((Date.now() - t.activeAt) / 60_000),
+        })
+      );
+    else if (t.phase) parts.push(phaseText(t.phase));
+    return parts.join(' · ');
+  };
+
   return (
     <div className={css.Hub}>
       <div className={css.HubInner}>
-        <div className={css.HubHeader}>
+        <header className={css.HubHeader}>
           {onBack && (
             <button
               type="button"
@@ -59,222 +153,165 @@ export function GamesHub({
               <Icon size="200" src={Icons.ArrowLeft} />
             </button>
           )}
-          <div>
-            <h1 className={css.Title}>{tr('games.nav.games', 'Games')}</h1>
-            <p className={css.Subtitle}>
-              {tr('games.hub.subtitle', 'Pick a game and start playing.')}
-            </p>
-          </div>
-        </div>
-
-        <section className={css.GameSection} aria-labelledby="card-games-heading">
-          <div>
-            <h2 id="card-games-heading" className={css.SectionTitle}>
-              {tr('games.hub.card_games', 'Card games')}
-            </h2>
-            <p className={css.Subtitle}>
-              {tr('games.hub.card_credits', 'Credits are shared only between card games.')}
-            </p>
-          </div>
-          <div className={css.WalletCard}>
-            <div className={css.BigCoin}>$</div>
-            <div className={css.WalletInfo}>
-              <span className={css.WalletLabel}>
-                {tr('games.wallet.card_games', 'Card-game wallet')}
-              </span>
-              <span className={css.WalletBalance}>
-                {tr('games.wallet.coins', '{{coins}} coins', {
+          <h1 className={css.Title}>{tr('games.nav.games', 'Games')}</h1>
+          <div className={css.WalletChip}>
+            <span className={css.ChipCoin} aria-hidden="true">
+              $
+            </span>
+            <span className={css.ChipText}>
+              {/* The coin already says what the number is; the word stays for screen readers. */}
+              <span
+                className={css.ChipBalance}
+                title={tr('games.wallet.hint', 'Coins in your wallet')}
+                aria-label={tr('games.wallet.coins', '{{coins}} coins', {
                   coins: balance === undefined ? '—' : formatChips(balance),
                 })}
+              >
+                {balance === undefined ? '—' : formatChips(balance)}
               </span>
               {atTables > 0 && (
-                <span className={css.WalletHint}>
-                  {tr(
-                    'games.wallet.at_tables_hint',
-                    '{{coins}} coins are reserved at card-game tables. Stakes are settled when the game ends.',
-                    { coins: formatChips(atTables) }
-                  )}
+                <span className={css.ChipHint}>
+                  {tr('games.wallet.reserved', '{{coins}} at tables', {
+                    coins: formatChips(atTables),
+                  })}
                 </span>
               )}
-            </div>
-            <TopUpButton atTables={atTables} topUp={topUp} className={css.WalletTopUp} />
+            </span>
+            <TopUpButton atTables={atTables} topUp={topUp} className={css.ChipTopUp} compact />
           </div>
+        </header>
 
-          <div className={css.Grid}>
-            <div className={css.GameCard} data-playable="true">
-              <div className={css.PokerArt}>
-                {ROYAL.map((card, i) => (
-                  <PlayingCard
-                    key={`${card.rank}${card.suit}`}
-                    className={css.ArtCard}
-                    card={card}
-                    faceUp
-                    style={
-                      {
-                        transform: `rotate(${(i - 2) * 9}deg) translateY(${Math.abs(i - 2) * 6}px)`,
-                      } as CSSProperties
-                    }
-                  />
-                ))}
-                <div className={css.ArtChips}>
-                  <ChipStack amount={1625} />
-                  <ChipStack amount={525} />
-                </div>
-              </div>
-              <div className={css.CardBody}>
-                <span className={css.GameName}>Poker</span>
-                <span className={css.GameMeta}>
-                  {tr('games.hub.poker_meta', 'No-limit Texas Hold’em · 2 to 6 players')}
-                </span>
-                <button type="button" className={css.PlayButton} onClick={onOpenPoker}>
-                  {tr('games.hub.play', 'Play')}
-                </button>
-              </div>
-            </div>
-
-            {(['truco', 'fodinha'] as const).map((kind) => (
-              <div key={kind} className={css.GameCard} data-playable="true">
-                <img
-                  className={css.GameArtwork}
-                  src={kind === 'truco' ? trucoArt : fodinhaArt}
-                  alt=""
-                  loading="lazy"
-                />
-                <div className={css.CardBody}>
-                  <span className={css.GameName}>{gameName(kind)}</span>
-                  <span className={css.GameMeta}>
-                    {kind === 'truco'
-                      ? tr(
-                          'table_games.truco_meta',
-                          'Paulista · 4 players in pairs · fixed table stake'
-                        )
-                      : tr(
-                          'table_games.fodinha_meta',
-                          'Predictions and elimination · 3–6 players · fixed table stake'
-                        )}
+        <section className={css.Live} aria-labelledby="live-heading">
+          <h2 id="live-heading" className={css.SectionTitle}>
+            {tr('games.hub.live', 'Happening now')}
+          </h2>
+          {loaded && !tables.length && (
+            <p className={css.LiveEmpty}>
+              {tr(
+                'games.hub.live_empty',
+                'None of your friends is at a table. Pick a game below and open one.'
+              )}
+            </p>
+          )}
+          {tables.length > 0 && (
+            <ul className={css.LiveList}>
+              {tables.slice(0, 6).map((t) => (
+                <li key={t.key} className={css.LiveRow} data-role={t.role} data-idle={!!t.idle}>
+                  <LiveThumb game={t.game} />
+                  <span className={css.LiveInfo}>
+                    <span className={css.LiveGame}>
+                      {gameLabel(t.game)}
+                      {t.relevance !== 'seated' && (
+                        <span className={css.LiveWhy}>{whyText(t)}</span>
+                      )}
+                    </span>
+                    <span className={css.LiveName}>{t.name}</span>
+                    <span className={css.LiveDetail}>{detail(t)}</span>
                   </span>
                   <button
                     type="button"
-                    className={css.PlayButton}
-                    onClick={() => onOpenTableGame(kind)}
+                    className={t.role === 'watch' ? css.LiveWatch : css.LiveJoin}
+                    onClick={() => open(t)}
                   >
-                    {tr('games.hub.play', 'Play')}
+                    {actionText(t)}
                   </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
-        <section className={css.GameSection} aria-labelledby="more-games-heading">
-          <div>
-            <h2 id="more-games-heading" className={css.SectionTitle}>
-              {tr('games.hub.more_games', 'More games')}
-            </h2>
-            <p className={css.Subtitle}>
-              {tr(
-                'games.hub.more_games_currency',
-                'These don’t use card-game credits: each one keeps its own progress.'
-              )}
-            </p>
+        <section className={css.GameSection} aria-labelledby="all-games-heading">
+          <h2 id="all-games-heading" className={css.SectionTitle}>
+            {tr('games.hub.all_games', 'All games')}
+          </h2>
+          <div className={css.TileGrid}>
+            <Tile
+              name="Poker"
+              meta={tr('games.hub.poker_short', 'Hold’em · 2–6')}
+              stakes
+              onOpen={onOpenPoker}
+              art={
+                <div className={css.PokerArt}>
+                  {ROYAL.map((card, i) => (
+                    <PlayingCard
+                      key={`${card.rank}${card.suit}`}
+                      className={css.ArtCard}
+                      card={card}
+                      faceUp
+                      style={
+                        {
+                          transform: `rotate(${(i - 2) * 9}deg) translateY(${
+                            Math.abs(i - 2) * 4
+                          }px)`,
+                        } as CSSProperties
+                      }
+                    />
+                  ))}
+                </div>
+              }
+            />
+            <Tile
+              name="Truco"
+              meta={tr('games.hub.truco_short', 'Paulista · 4 in pairs')}
+              stakes
+              onOpen={() => onOpenTableGame('truco')}
+              art={<img className={css.TileImg} src={trucoArt} alt="" loading="lazy" />}
+            />
+            <Tile
+              name="Fodinha"
+              meta={tr('games.hub.fodinha_short', 'Predictions · 3–6')}
+              stakes
+              onOpen={() => onOpenTableGame('fodinha')}
+              art={<img className={css.TileImg} src={fodinhaArt} alt="" loading="lazy" />}
+            />
+            <Tile
+              name={gameName('chess')}
+              meta={tr('games.hub.chess_short', 'Free · 2 players')}
+              onOpen={() => onOpenTableGame('chess')}
+              art={<img className={css.TileImg} src={chessArt} alt="" loading="lazy" />}
+            />
+            <Tile
+              name={tr('football.title', 'FIFUMA')}
+              meta={tr('games.hub.football_short', '3D football')}
+              onOpen={onOpenFootball}
+              art={
+                <div className={`${css.IdleArt} ${css.FootballArt}`}>
+                  {['⚽', '🥅', '🏆'].map((icon) => (
+                    <span key={icon} className={css.IdleArtIcon}>
+                      {icon}
+                    </span>
+                  ))}
+                </div>
+              }
+            />
+            <Tile
+              name="BrazilianBonk"
+              meta={tr('games.hub.horde_short', '3D roguelike')}
+              onOpen={onOpenHorde}
+              art={<img className={css.TileImg} src={hordeArt} alt="" loading="lazy" />}
+            />
+            <Tile
+              name={tr('games.idle.title', 'Ember Chronicles')}
+              meta={tr('games.hub.idle_genre', 'Idle RPG')}
+              onOpen={onOpenIdle}
+              art={
+                <div className={css.IdleArt}>
+                  {['⚔️', '🔮', '🏹', '🐉'].map((icon) => (
+                    <span key={icon} className={css.IdleArtIcon}>
+                      {icon}
+                    </span>
+                  ))}
+                </div>
+              }
+            />
           </div>
-          <div className={css.Grid}>
-            <div className={css.GameCard} data-playable="true">
-              <div className={css.IdleArt}>
-                {['🥅', '⚽', '🏆', '👟', '🧤'].map((icon, i) => (
-                  <span
-                    key={icon}
-                    className={css.IdleArtIcon}
-                    style={{ transform: `translateY(${Math.abs(i - 2) * 8}px)` }}
-                  >
-                    {icon}
-                  </span>
-                ))}
-              </div>
-              <div className={css.CardBody}>
-                <span className={css.GameGenre}>
-                  {tr('games.hub.football_genre', 'Sports · Football')}
-                </span>
-                <span className={css.GameName}>{tr('football.title', 'FIFUMA')}</span>
-                <span className={css.GameMeta}>
-                  {tr(
-                    'games.hub.football_meta',
-                    '3D · Brasileirão clubs and national teams, against the CPU or a friend'
-                  )}
-                </span>
-                <button type="button" className={css.PlayButton} onClick={onOpenFootball}>
-                  {tr('games.hub.play', 'Play')}
-                </button>
-              </div>
-            </div>
-
-            <div className={css.GameCard} data-playable="true">
-              <img className={css.GameArtwork} src={hordeArt} alt="" loading="lazy" />
-              <div className={css.CardBody}>
-                <span className={css.GameGenre}>
-                  {tr('games.hub.horde_genre', 'Action · Megabonk-style')}
-                </span>
-                <span className={css.GameName}>BrazilianBonk</span>
-                <span className={css.GameMeta}>
-                  {tr(
-                    'games.hub.horde_meta',
-                    '3D roguelike · survive the horde, stack weapons and beat the boss'
-                  )}
-                </span>
-                <button type="button" className={css.PlayButton} onClick={onOpenHorde}>
-                  {tr('games.hub.play', 'Play')}
-                </button>
-              </div>
-            </div>
-
-            <div className={css.GameCard} data-playable="true">
-              <div className={css.IdleArt}>
-                {['⚔️', '🔮', '🏹', '🐉', '🗡️'].map((icon, i) => (
-                  <span
-                    key={icon}
-                    className={css.IdleArtIcon}
-                    style={{ transform: `translateY(${Math.abs(i - 2) * 8}px)` }}
-                  >
-                    {icon}
-                  </span>
-                ))}
-              </div>
-              <div className={css.CardBody}>
-                <span className={css.GameGenre}>{tr('games.hub.idle_genre', 'Idle RPG')}</span>
-                <span className={css.GameName}>{tr('games.idle.title', 'Ember Chronicles')}</span>
-                <span className={css.GameMeta}>
-                  {tr(
-                    'games.hub.idle_meta',
-                    '6 classes and 12 specializations, forge, rebirth and arena'
-                  )}
-                </span>
-                <button type="button" className={css.PlayButton} onClick={onOpenIdle}>
-                  {tr('games.hub.play', 'Play')}
-                </button>
-              </div>
-            </div>
-
-            <div className={css.GameCard} data-playable="true">
-              <img className={css.GameArtwork} src={chessArt} alt="" loading="lazy" />
-              <div className={css.CardBody}>
-                <span className={css.GameGenre}>{tr('games.hub.chess_genre', 'Board game')}</span>
-                <span className={css.GameName}>{gameName('chess')}</span>
-                <span className={css.GameMeta}>
-                  {tr(
-                    'table_games.chess_meta',
-                    'Free · 2 players · watch and comment on live tables'
-                  )}
-                </span>
-                <button
-                  type="button"
-                  className={css.PlayButton}
-                  onClick={() => onOpenTableGame('chess')}
-                >
-                  {tr('games.hub.play', 'Play')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <p className={css.Footnote}>
+            {tr(
+              'games.hub.wallet_note',
+              'Games marked $ share the card-game wallet. The others keep their own progress.'
+            )}
+          </p>
         </section>
       </div>
     </div>

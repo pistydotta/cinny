@@ -44,6 +44,8 @@ export function GamesHubPage() {
       onOpenHorde={() => navigate(getGamesHordePath())}
       onOpenFootball={() => navigate(getGamesFootballPath())}
       onOpenTableGame={(kind) => navigate(getGamesTableGamePath(kind))}
+      onOpenPokerTable={(id) => navigate(getGamesPokerTablePath(id))}
+      onOpenGameTable={(kind, id) => navigate(getGamesTableGamePath(kind, id))}
       onBack={screenSize === ScreenSize.Mobile ? () => navigate(getHomePath()) : undefined}
     />
   );

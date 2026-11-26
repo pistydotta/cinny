@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Icon, Icons } from 'folds';
 import { ApiError } from '../../../utils/blazeroomApi';
 import { errorText } from '../poker/errorText';
 import * as css from '../poker/pokerPage.css';
@@ -8,11 +9,13 @@ type TopUpButtonProps = {
   atTables: number;
   topUp: () => Promise<void>;
   className: string;
+  // A bare "+" where space is tight; the full label stays as its name and tooltip.
+  compact?: boolean;
 };
 
 // The server refuses a top-up while credits sit at a table. The button stays visible then,
 // disabled with the reason: hiding it left players with no idea where it went.
-export function TopUpButton({ atTables, topUp, className }: TopUpButtonProps) {
+export function TopUpButton({ atTables, topUp, className, compact }: TopUpButtonProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -27,6 +30,7 @@ export function TopUpButton({ atTables, topUp, className }: TopUpButtonProps) {
     setBusy(false);
   };
 
+  const label = tr('games.wallet.top_up', 'Get more coins');
   return (
     <>
       <button
@@ -34,8 +38,10 @@ export function TopUpButton({ atTables, topUp, className }: TopUpButtonProps) {
         className={className}
         disabled={busy || atTables > 0}
         onClick={handleClick}
+        aria-label={compact ? label : undefined}
+        title={compact ? label : undefined}
       >
-        {tr('games.wallet.top_up', 'Get more coins')}
+        {compact ? <Icon size="100" src={Icons.Plus} /> : label}
       </button>
       {atTables > 0 && (
         <p className={css.Note}>
