@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon, Icons, Text } from 'folds';
+import { Button, Icon, Icons, Text } from 'folds';
 import classNames from 'classnames';
 import { CallEmbed } from '../../plugins/call/CallEmbed';
 import { TipIconButton } from '../tooltips/TipIconButton';
@@ -75,9 +75,10 @@ const typing = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 
-// The watched share's controls, as one video-player bar along its bottom edge: who is live,
-// the sound, the people column, fullscreen and stop watching. It fades out while the pointer
-// rests and comes back when it moves. Rendered inside the call embed's own box, so fullscreen
+// The watched share's controls, as one video-player bar along its bottom edge: who is live and
+// the sound on the left, the call in the middle, the people column, fullscreen and stop watching
+// on the right. The top edge stays clear, where games draw their own HUD. Over the picture the
+// bar fades while the pointer rests and comes back when it moves. Rendered inside the call embed's own box, so fullscreen
 // of that box keeps the bar.
 export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
   const { store, remotes } = useShares(callEmbed.control);
@@ -235,13 +236,151 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
 
   if (!store || !active || !rect || !host) return null;
 
-  // Outside the picture, above or below it, the controls cover nothing, so they stay; over it
-  // they fade while the pointer rests.
-  const topAbove = !fullscreen && rect.above >= 48;
-  const topAsleep = !awake && !topAbove;
+  // Under the picture, in the letterbox space, the bar covers nothing, so it stays; over the
+  // picture it fades while the pointer rests.
   const below = !fullscreen && rect.below >= 52 ? rect.below : null;
   const names = watched.map((share) => share.name).join(', ');
   const several = watched.length > 1;
+  // The bar's sides are equal columns around the call's buttons, so a share narrower than these
+  // keeps only the dot and the sound: the tag goes first, then the name.
+  // The same width spells out "Stop watching"; narrower, it says "Stop".
+  const showName = rect.width >= 760;
+  const showTag = rect.width >= 900 && !several;
+
+  const who = (
+    <div className={css.LiveWho} title={names}>
+      <span className={css.LiveDot} />
+      {showName && (
+        <Text size="T300" truncate>
+          {names}
+        </Text>
+      )}
+      {showTag && (
+        <Text size="T200" className={css.LiveTag}>
+          {tr('screen_share.badge', 'Live')}
+        </Text>
+      )}
+    </div>
+  );
+
+  // Every watched share keeps a speaker, even a silent one: a missing control read as a bug.
+  const sound = watched.map((share) =>
+    share.hasSound ? (
+      <div key={share.id} className={css.LiveVolume}>
+        <TipIconButton
+          label={`${
+            share.muted
+              ? tr('screen_share.unmute', 'Unmute share')
+              : tr('screen_share.mute', 'Mute share')
+          } (M)`}
+          className={classNames(css.LiveChipButton, share.muted && css.LiveOff)}
+          variant="Secondary"
+          fill="None"
+          size="400"
+          radii="300"
+          onClick={() => store.setMuted(share.id, !share.muted)}
+        >
+          <Icon size="200" src={share.muted ? Icons.VolumeMute : Icons.VolumeHigh} />
+        </TipIconButton>
+        <input
+          className={classNames(css.Slider, css.LiveVolumeSlider)}
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={share.muted ? 0 : share.volume}
+          aria-label={
+            several
+              ? `${tr('screen_share.volume', 'Share volume')}: ${share.name}`
+              : tr('screen_share.volume', 'Share volume')
+          }
+          onChange={(evt) => {
+            const volume = Number(evt.currentTarget.value);
+            if (share.muted && volume > 0) store.setMuted(share.id, false);
+            store.setVolume(share.id, volume);
+          }}
+          onPointerUp={(evt) => saveVolume(() => localStorage, Number(evt.currentTarget.value))}
+          onKeyUp={(evt) => saveVolume(() => localStorage, Number(evt.currentTarget.value))}
+        />
+      </div>
+    ) : (
+      <TipIconButton
+        key={share.id}
+        label={tr('screen_share.silent', '{{name}} is sharing no sound', { name: share.name })}
+        className={classNames(css.LiveChipButton, css.LiveSilent)}
+        aria-disabled
+        variant="Secondary"
+        fill="None"
+        size="400"
+        radii="300"
+      >
+        <Icon size="200" src={Icons.VolumeMute} />
+      </TipIconButton>
+    )
+  );
+
+  const view = (
+    <>
+      {!fullscreen && (
+        <TipIconButton
+          label={
+            peopleHidden
+              ? tr('screen_share.show_people', 'Show people')
+              : tr('screen_share.hide_people', 'Hide people')
+          }
+          className={classNames(css.LiveChipButton, peopleHidden && css.LiveOff)}
+          variant="Secondary"
+          fill="None"
+          size="400"
+          radii="300"
+          onClick={() => store.setPeopleHidden(!peopleHidden)}
+        >
+          <Glyph d={PEOPLE} />
+        </TipIconButton>
+      )}
+      <TipIconButton
+        label={`${
+          fullscreen
+            ? tr('screen_share.exit_fullscreen', 'Exit fullscreen')
+            : tr('screen_share.fullscreen', 'Fullscreen')
+        } (F)`}
+        className={css.LiveChipButton}
+        variant="Secondary"
+        fill="None"
+        size="400"
+        radii="300"
+        onClick={toggleFullscreen}
+      >
+        <Glyph d={fullscreen ? EXIT_FULL : ENTER_FULL} />
+      </TipIconButton>
+      <span className={css.LiveCallDivider} />
+      {watched.map((share) => {
+        const stopLabel = several
+          ? `${tr('screen_share.stop_watching', 'Stop watching')}: ${share.name}`
+          : tr('screen_share.stop_watching', 'Stop watching');
+        return (
+          <Button
+            key={share.id}
+            className={css.LiveExit}
+            variant="Secondary"
+            fill="None"
+            size="400"
+            radii="300"
+            aria-label={stopLabel}
+            title={several || !showName ? stopLabel : undefined}
+            onClick={() => store.unwatch(share.id)}
+            before={<Icon size="200" src={Icons.EyeBlind} />}
+          >
+            <Text size="B400">
+              {showName
+                ? tr('screen_share.stop_watching', 'Stop watching')
+                : tr('screen_share.stop', 'Stop')}
+            </Text>
+          </Button>
+        );
+      })}
+    </>
+  );
 
   return createPortal(
     <div
@@ -249,76 +388,6 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
       style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
     >
       <div className={css.LiveCorners} onPointerMove={wake}>
-        <div
-          className={classNames(
-            css.LiveTop,
-            // A bar of its own above the picture when there's room, so the share stays uncovered.
-            topAbove && css.LiveTopBar,
-            topAsleep && css.LiveAsleep
-          )}
-        >
-          <div className={classNames(css.LiveChip, css.LiveWho)}>
-            <span className={css.LiveDot} />
-            <Text size="T300" truncate>
-              {names}
-            </Text>
-            <Text size="T200" className={css.LiveTag}>
-              {tr('screen_share.badge', 'Live')}
-            </Text>
-          </div>
-          <div className={css.LiveButtons}>
-            {!fullscreen && (
-              <TipIconButton
-                label={
-                  peopleHidden
-                    ? tr('screen_share.show_people', 'Show people')
-                    : tr('screen_share.hide_people', 'Hide people')
-                }
-                className={classNames(css.LiveChipButton, peopleHidden && css.LiveOff)}
-                variant="Secondary"
-                fill="None"
-                size="400"
-                radii="300"
-                onClick={() => store.setPeopleHidden(!peopleHidden)}
-              >
-                <Glyph d={PEOPLE} />
-              </TipIconButton>
-            )}
-            <TipIconButton
-              label={`${
-                fullscreen
-                  ? tr('screen_share.exit_fullscreen', 'Exit fullscreen')
-                  : tr('screen_share.fullscreen', 'Fullscreen')
-              } (F)`}
-              className={css.LiveChipButton}
-              variant="Secondary"
-              fill="None"
-              size="400"
-              radii="300"
-              onClick={toggleFullscreen}
-            >
-              <Glyph d={fullscreen ? EXIT_FULL : ENTER_FULL} />
-            </TipIconButton>
-            {watched.map((share) => (
-              <TipIconButton
-                key={share.id}
-                label={
-                  several
-                    ? `${tr('screen_share.stop_watching', 'Stop watching')}: ${share.name}`
-                    : tr('screen_share.stop_watching', 'Stop watching')
-                }
-                className={css.LiveChipButton}
-                variant="Secondary"
-                fill="None"
-                size="400"
-                radii="300"
-                onClick={() => store.unwatch(share.id)}
-              >
-                <Icon size="200" src={Icons.Cross} />
-              </TipIconButton>
-            ))}
-          </div>
-        </div>
         {/* With the people column showing, the list would only repeat it. */}
         {rail && (
           <LivePeople
@@ -344,56 +413,14 @@ export function LiveOverlay({ callEmbed }: { callEmbed: CallEmbed }) {
           fullscreen={fullscreen}
           below={below}
           asleep={!awake && below === null}
-          onStopWatching={() => watched.forEach((share) => store.unwatch(share.id))}
-        >
-          <div className={css.LiveSound}>
-            {watched
-              .filter((share) => share.hasSound)
-              .map((share) => (
-                <div key={share.id} className={css.LiveVolume}>
-                  <TipIconButton
-                    label={`${
-                      share.muted
-                        ? tr('screen_share.unmute', 'Unmute share')
-                        : tr('screen_share.mute', 'Mute share')
-                    } (M)`}
-                    className={classNames(css.LiveChipButton, share.muted && css.LiveOff)}
-                    variant="Secondary"
-                    fill="None"
-                    size="400"
-                    radii="300"
-                    onClick={() => store.setMuted(share.id, !share.muted)}
-                  >
-                    <Icon size="200" src={share.muted ? Icons.VolumeMute : Icons.VolumeHigh} />
-                  </TipIconButton>
-                  <input
-                    className={classNames(css.Slider, css.LiveVolumeSlider)}
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={share.muted ? 0 : share.volume}
-                    aria-label={
-                      several
-                        ? `${tr('screen_share.volume', 'Share volume')}: ${share.name}`
-                        : tr('screen_share.volume', 'Share volume')
-                    }
-                    onChange={(evt) => {
-                      const volume = Number(evt.currentTarget.value);
-                      if (share.muted && volume > 0) store.setMuted(share.id, false);
-                      store.setVolume(share.id, volume);
-                    }}
-                    onPointerUp={(evt) =>
-                      saveVolume(() => localStorage, Number(evt.currentTarget.value))
-                    }
-                    onKeyUp={(evt) =>
-                      saveVolume(() => localStorage, Number(evt.currentTarget.value))
-                    }
-                  />
-                </div>
-              ))}
-          </div>
-        </LiveCallButtons>
+          left={
+            <>
+              {who}
+              {sound}
+            </>
+          }
+          right={view}
+        />
       </div>
     </div>,
     host

@@ -23,11 +23,12 @@ type LiveCallButtonsProps = {
   docked?: boolean;
   // Faded out while the pointer rests over the picture it covers.
   asleep?: boolean;
-  // The watched share's own sound, kept at the right end of the row.
-  children?: ReactNode;
-  // Closes the watched share from the row, and leaving the call shrinks to the bare hang-up
-  // icon: a red "Leave" under a share read as closing the share.
-  onStopWatching?: () => void;
+  // The watched share's own controls, as a video player's: who is live and its sound at the
+  // left end of the row, the view (people, fullscreen, stop watching) at the right end. While
+  // they're there leaving the call shrinks to the bare hang-up icon: a red "Leave" in a player's
+  // bar read as closing the share.
+  left?: ReactNode;
+  right?: ReactNode;
 };
 
 // The call's own buttons while a share is watched: bare icons centred on the share's bottom edge,
@@ -39,8 +40,8 @@ export function LiveCallButtons({
   below,
   docked,
   asleep,
-  children,
-  onStopWatching,
+  left,
+  right,
 }: LiveCallButtonsProps) {
   const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
   const [chat, setChat] = useAtom(callChatAtom);
@@ -58,7 +59,7 @@ export function LiveCallButtons({
 
   const menus = !fullscreen && width >= 520;
   const leaveText = tr('screen_share.leave_call', 'Leave call');
-  const stopText = tr('screen_share.stop_watching', 'Stop watching');
+  const watching = !!right;
 
   return (
     <div
@@ -73,6 +74,7 @@ export function LiveCallButtons({
         !docked && below !== null ? { top: `calc(100% + ${Math.max(8, below - 56)}px)` } : undefined
       }
     >
+      {left && <div className={css.LiveCallLeft}>{left}</div>}
       <div className={css.LiveCallCenter}>
         <div className={css.LiveCallGroup}>
           <TipIconButton
@@ -157,23 +159,7 @@ export function LiveCallButtons({
             </TipIconButton>
           )}
         </div>
-        {onStopWatching && width >= 440 && <span className={css.LiveCallDivider} />}
-        {onStopWatching && (
-          <Button
-            className={classNames(css.LiveChipButton, css.LiveStop)}
-            variant="Secondary"
-            fill="None"
-            size="400"
-            radii="300"
-            onClick={onStopWatching}
-            aria-label={stopText}
-            title={stopText}
-            before={<Icon size="400" src={Icons.EyeBlind} />}
-          >
-            <Text size="B400">{tr('screen_share.stop', 'Stop')}</Text>
-          </Button>
-        )}
-        {onStopWatching ? (
+        {watching ? (
           <TipIconButton
             label={leaveText}
             className={classNames(css.LiveLeave, css.LiveLeaveIcon)}
@@ -212,7 +198,7 @@ export function LiveCallButtons({
           </Button>
         )}
       </div>
-      {children}
+      {right && <div className={css.LiveCallRight}>{right}</div>}
     </div>
   );
 }

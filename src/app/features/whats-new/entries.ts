@@ -17,6 +17,18 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-live-player-bar',
+    items: () => [
+      {
+        title: tr('whats_new.live_player_bar_title', 'Live controls in one bar'),
+        body: tr(
+          'whats_new.live_player_bar_body',
+          "Watching someone's screen, every control is now in one bar along the bottom, like a video player: who is live and the sound on the left, the call in the middle, people, fullscreen and Stop watching on the right. The top of the screen stays clear. When a share has no sound, the speaker stays and says so."
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-football-scenes',
     items: () => [
       {

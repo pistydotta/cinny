@@ -86,7 +86,7 @@ export const LiveTileName = style({
   zIndex: 1,
   left: config.space.S300,
   // Centred on the Watch button beside it.
-  bottom: `calc(${config.space.S300} + ${toRem(6)})`,
+  bottom: `calc(${config.space.S300} + ${toRem(8)})`,
   // Leaves room for the Watch button on the right.
   maxWidth: `calc(100% - ${toRem(140)})`,
   display: 'flex',
@@ -96,8 +96,8 @@ export const LiveTileName = style({
   textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
 });
 
-// The tile's call to action, in Forge's oxblood (the primary colour, the same in both themes),
-// flat, with warm off-white text so it stays as quiet as the rest of the app. Lighter under the
+// The tile's call to action, and the only thing on it to click, so the brightest: off-white with
+// dark text and the play mark in a dark disc, readable over any screen. Pure white under the
 // pointer.
 export const LiveTileWatch = style({
   position: 'absolute',
@@ -107,19 +107,30 @@ export const LiveTileWatch = style({
   display: 'flex',
   alignItems: 'center',
   gap: config.space.S200,
-  padding: `${toRem(7)} ${config.space.S400} ${toRem(7)} ${toRem(13)}`,
-  borderRadius: forgeRadius.control,
-  backgroundColor: color.Primary.Main,
-  color: INK,
+  padding: `${toRem(5)} ${toRem(14)} ${toRem(5)} ${toRem(5)}`,
+  borderRadius: forgeRadius.pill,
+  backgroundColor: INK,
+  color: forgeStage.Base,
   fontWeight: 600,
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
-  transition: 'background-color 120ms ease-out',
+  transition: 'background-color 120ms ease-out, transform 120ms ease-out',
   selectors: {
     [`${LiveTile}:hover &, ${LiveTile}:focus-visible &`]: {
-      backgroundColor: color.Primary.MainHover,
+      backgroundColor: 'white',
+      transform: 'translateY(-1px)',
     },
   },
-  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none' } },
+  '@media': { '(prefers-reduced-motion: reduce)': { transition: 'none', transform: 'none' } },
+});
+
+export const LiveTileWatchIcon = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: toRem(24),
+  height: toRem(24),
+  borderRadius: '50%',
+  backgroundColor: forgeStage.Base,
+  color: INK,
 });
 
 export const CompactCards = style({ padding: config.space.S200, minWidth: 0 });
@@ -133,18 +144,38 @@ export const CompactCard = style({
 
 export const LiveName = style({ minWidth: 0, maxWidth: '100%' });
 
-// Same oxblood and off-white as the Watch button, so the tile's two marks read as one set.
+// A small dark glass chip with a red dot that breathes, like a stream's live mark.
 export const LiveBadge = style({
   position: 'absolute',
   zIndex: 1,
   top: config.space.S300,
   left: config.space.S300,
-  padding: `${toRem(4)} ${toRem(12)}`,
+  display: 'flex',
+  alignItems: 'center',
+  gap: toRem(6),
+  padding: `${toRem(3)} ${toRem(9)} ${toRem(3)} ${toRem(8)}`,
   borderRadius: forgeRadius.pill,
-  backgroundColor: color.Primary.Main,
+  backgroundColor: 'rgba(10, 12, 16, 0.55)',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  backdropFilter: 'blur(8px)',
   color: INK,
-  fontWeight: 600,
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+});
+
+const breathe = keyframes({
+  '0%': { boxShadow: `0 0 0 0 ${CRITICAL}` },
+  '70%, 100%': { boxShadow: '0 0 0 5px rgba(229, 83, 75, 0)' },
+});
+
+export const LiveBadgeDot = style({
+  width: toRem(7),
+  height: toRem(7),
+  borderRadius: '50%',
+  backgroundColor: CRITICAL,
+  animation: `${breathe} 1.8s ease-out infinite`,
+  '@media': { '(prefers-reduced-motion: reduce)': { animation: 'none' } },
 });
 
 export const Controls = style({
@@ -471,9 +502,8 @@ export const GoToRoom = style({
   },
 });
 
-// The watched share's controls, as small chips in its corners instead of a bar: who is live at
-// the top left, people/fullscreen/stop at the top right, the sound at the bottom right. The box
-// matches the share; only the chips take clicks. Above the call iframe.
+// The watched share's controls, as one player bar along its bottom edge (LiveOverlay). The box
+// matches the share; only the bar takes clicks. Above the call iframe.
 export const LiveOverlay = style({
   position: 'fixed',
   zIndex: 2,
@@ -522,13 +552,15 @@ const chip = {
   borderRadius: config.radii.R300,
 } as const;
 
-export const LiveChip = style(chip);
-
+// Who is live, at the bar's left end before the sound.
 export const LiveWho = style({
+  ...chip,
   backgroundColor: 'transparent',
   minWidth: 0,
+  overflow: 'hidden',
   gap: config.space.S200,
-  padding: `${config.space.S100} ${config.space.S300}`,
+  padding: `0 ${config.space.S100} 0 ${config.space.S200}`,
+  filter: shadow,
 });
 
 const pulse = keyframes({
@@ -553,43 +585,6 @@ export const LiveTag = style({
   letterSpacing: '0.06em',
 });
 
-export const LiveButtons = style({
-  display: 'flex',
-  flexShrink: 0,
-  gap: config.space.S200,
-});
-
-// Who is live and the share's own buttons, in one row. Over the picture's top edge when there's
-// no room above it: bare, with a shadow, fading while the pointer rests.
-export const LiveTop = style({
-  position: 'absolute',
-  top: config.space.S100,
-  left: config.space.S100,
-  right: config.space.S100,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: config.space.S300,
-  pointerEvents: 'none',
-});
-globalStyle(`${LiveTop} > ${LiveWho}`, { filter: shadow, maxWidth: '60%' });
-
-// With room above the picture it is a bar of its own, joined to the picture's top edge like a
-// window's title bar, with the buttons as soft square keys. It never fades: it covers nothing.
-export const LiveTopBar = style({
-  top: 'auto',
-  left: 0,
-  right: 0,
-  bottom: '100%',
-  height: toRem(44),
-  padding: `0 ${config.space.S200} 0 ${config.space.S100}`,
-  backgroundColor: '#1C1F25',
-  borderRadius: `${toRem(12)} ${toRem(12)} 0 0`,
-  boxShadow: `inset 0 -1px 0 ${forgeTint(INK, 8)}`,
-});
-globalStyle(`${LiveTopBar} > ${LiveWho}`, { filter: 'none' });
-globalStyle(`${LiveTopBar} ${LiveButtons}`, { gap: config.space.S100 });
-
 // Bare icons over the share: warm off-white with a shadow so they read on any picture, no chip behind.
 export const LiveChipButton = style({
   justifyContent: 'center',
@@ -611,7 +606,8 @@ export const LiveOff = style({ selectors: { '&&&': { color: ASH.off } } });
 // Something of yours that's on and shows to others (your share, the chat): ember.
 export const LiveOn = style({ selectors: { '&&&': { color: ASH.on } } });
 
-// The call's buttons along the share's bottom edge: centred, with the share's sound on the right.
+// The share's player bar: who is live and the sound on the left, the call's buttons centred, the
+// view (people, fullscreen, stop watching) on the right.
 export const LiveCall = style({
   position: 'absolute',
   left: config.space.S300,
@@ -655,6 +651,26 @@ globalStyle(
     transform: 'translateY(-2px)',
   }
 );
+
+export const LiveCallLeft = style({
+  gridColumn: 1,
+  justifySelf: 'start',
+  minWidth: 0,
+  maxWidth: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+  pointerEvents: 'auto',
+});
+
+export const LiveCallRight = style({
+  gridColumn: 3,
+  justifySelf: 'end',
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S100,
+  pointerEvents: 'auto',
+});
 
 export const LiveCallCenter = style({
   gridColumn: 2,
@@ -706,28 +722,35 @@ export const LiveLeaveIcon = style({
   marginLeft: config.space.S100,
 });
 
-// Eye and a short "Stop", in the row's own bare style: easy to read without a box of its own.
-export const LiveStop = style({
-  paddingLeft: config.space.S200,
-  paddingRight: config.space.S300,
-  gap: config.space.S100,
-});
-
-export const LiveSound = style({
-  gridColumn: 3,
-  justifySelf: 'end',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  gap: config.space.S100,
-});
-
 export const LiveVolume = style({
   pointerEvents: 'auto',
+  flexShrink: 0,
   display: 'flex',
   alignItems: 'center',
   gap: config.space.S100,
   filter: shadow,
+});
+
+// Stop watching: an eye and a word in the group's own bare style, after a divider, so it reads
+// apart from fullscreen without a frame of its own inside the group's.
+export const LiveExit = style({
+  pointerEvents: 'auto',
+  whiteSpace: 'nowrap',
+  gap: config.space.S100,
+  paddingLeft: config.space.S200,
+  paddingRight: config.space.S300,
+  selectors: {
+    '&&': { color: ASH.icon, backgroundColor: 'transparent' },
+    '&&:hover': { color: INK, backgroundColor: forgeTint(EMBER, 18) },
+  },
+});
+
+// A share sent without sound keeps a dim speaker, so the missing slider has a reason on hover.
+export const LiveSilent = style({
+  cursor: 'default',
+  selectors: {
+    '&&&, &&&:hover': { color: ASH.muted, backgroundColor: 'transparent' },
+  },
 });
 
 export const LiveVolumeSlider = style({
@@ -745,71 +768,33 @@ const glass = {
   boxShadow: '0 4px 18px rgba(0, 0, 0, 0.45)',
 } as const;
 
-const overTop = `${LiveTop}:not(${LiveTopBar})`;
 const KEY = {
   icon: INK,
-  fill: forgeTint(INK, 14),
   edge: forgeTint(INK, 28),
-  hover: forgeTint(EMBER, 26),
   edgeHover: forgeTint(EMBER, 60),
   fillOver: 'rgba(12, 13, 16, 0.82)',
   hoverOver: `color-mix(in srgb, ${EMBER} 18%, rgba(12, 13, 16, 0.92))`,
 };
-globalStyle(`${overTop} > ${LiveWho}`, {
-  ...glass,
-  filter: 'none',
-  pointerEvents: 'auto',
-  borderRadius: forgeRadius.control,
-  padding: `${toRem(6)} ${config.space.S300}`,
-});
-// The share's own buttons (people, fullscreen, stop) sit straight on the bar with no key behind
-// them: a bright icon is the whole button, with a soft glow under the pointer. Over the picture a
-// shadow keeps the icon readable on any colour.
-const keySelector = (state = '') => `${LiveTop} ${LiveButtons} ${LiveChipButton}${state}`;
-globalStyle(keySelector(), {
-  filter: 'none',
-  width: toRem(32),
-  height: toRem(32),
-  minWidth: 0,
-  padding: 0,
-  color: `${INK} !important`,
-  backgroundColor: 'transparent !important',
-  border: 'none',
-  borderRadius: config.radii.R300,
-  boxShadow: 'none',
-  transition: 'background-color 120ms ease-out, color 120ms ease-out',
-});
-globalStyle(keySelector(':hover'), {
-  color: '#FFFFFF !important',
-  backgroundColor: `${forgeTint(INK, 12)} !important`,
-});
-globalStyle(keySelector(`${LiveOff}`), { color: `${ASH.off} !important` });
-globalStyle(`${overTop} ${LiveButtons} ${LiveChipButton}`, {
-  filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8))',
-});
 
 const overBottom = `${LiveCall}:not(${LiveCallBelow}):not(${LiveCallDocked})`;
-globalStyle(`${overBottom} ${LiveCallCenter}`, {
-  ...glass,
-  pointerEvents: 'auto',
-  padding: `${toRem(4)} ${toRem(6)}`,
-  borderRadius: toRem(14),
-});
-globalStyle(`${overBottom} ${LiveVolume}`, {
-  ...glass,
-  filter: 'none',
-  padding: `${toRem(3)} ${config.space.S200} ${toRem(3)} ${toRem(3)}`,
-  borderRadius: config.radii.R400,
-});
 globalStyle(
-  `${overBottom} ${LiveChipButton}, ${overBottom} ${LiveArrow}, ${overBottom} ${LiveCallDivider}`,
+  `${overBottom} ${LiveCallCenter}, ${overBottom} ${LiveCallLeft}, ${overBottom} ${LiveCallRight}`,
+  {
+    ...glass,
+    pointerEvents: 'auto',
+    padding: `${toRem(4)} ${toRem(6)}`,
+    borderRadius: toRem(14),
+  }
+);
+globalStyle(
+  `${overBottom} ${LiveChipButton}, ${overBottom} ${LiveArrow}, ${overBottom} ${LiveCallDivider}, ${overBottom} ${LiveWho}, ${overBottom} ${LiveVolume}`,
   { filter: 'none' }
 );
 
 // Who is in the call, over the share's right edge, above the other controls (LivePeople).
 export const LivePeople = style({
   position: 'absolute',
-  top: toRem(56),
+  top: config.space.S300,
   bottom: toRem(72),
   right: config.space.S200,
   zIndex: 1,
@@ -848,7 +833,7 @@ export const LivePeopleMore = style({
   textShadow: '0 1px 3px rgba(0, 0, 0, 0.9)',
 });
 
-// The rail's round key, dark like the top keys over the picture.
+// The rail's round key, dark glass like the bar over the picture.
 const roundKey = {
   '&&': {
     width: toRem(28),
@@ -864,7 +849,7 @@ const roundKey = {
   },
 } as const;
 
-// Brings the people column back: a small round key under the faces, styled like the top keys.
+// Brings the people column back: a small round key under the faces.
 export const LivePeopleAll = style({
   selectors: roundKey,
 });

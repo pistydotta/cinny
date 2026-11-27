@@ -19,7 +19,7 @@ const boxOf = (rect: DOMRect, dx = 0, dy = 0): Box => ({
 // A play triangle with rounded corners, nudged right so its weight looks centred.
 function WatchPlay() {
   return (
-    <svg width="10" height="11" viewBox="0 0 10 11" aria-hidden="true" style={{ marginLeft: 2 }}>
+    <svg width="9" height="10" viewBox="0 0 10 11" aria-hidden="true" style={{ marginLeft: 1 }}>
       <path
         d="M1.5 1.6v7.8c0 .8.9 1.3 1.6.9l6-3.9c.6-.4.6-1.3 0-1.7l-6-3.9C2.4.3 1.5.8 1.5 1.6z"
         fill="currentColor"
@@ -124,7 +124,8 @@ export function LiveTiles({ callEmbed }: { callEmbed: CallEmbed }) {
               <Icon className={css.LiveTileIcon} size="600" src={Icons.ScreenShare} />
             )}
             <span className={css.LiveBadge}>
-              <Text as="span" size="B300">
+              <span className={css.LiveBadgeDot} />
+              <Text as="span" size="L400">
                 {tr('screen_share.badge', 'Live')}
               </Text>
             </span>
@@ -136,7 +137,9 @@ export function LiveTiles({ callEmbed }: { callEmbed: CallEmbed }) {
               </Text>
             </span>
             <span className={css.LiveTileWatch}>
-              <WatchPlay />
+              <span className={css.LiveTileWatchIcon}>
+                <WatchPlay />
+              </span>
               <Text as="span" size="B400">
                 {tr('screen_share.watch', 'Watch')}
               </Text>
