@@ -197,6 +197,10 @@ describe('football scenes', () => {
         expect(Math.hypot(scorer.x - s.x, scorer.z - s.z)).toBeLessThan(Math.max(3, d0));
         expect(spread()).toBeLessThan(before);
         run(m, 400);
+        // The goal plays again before the kick-off (replay.ts).
+        expect(m.replay?.kind).toBe('goal');
+        while (m.replay) step(m, []);
+        run(m, 60);
         expect(m.scene?.kind).not.toBe('goal');
         return;
       }

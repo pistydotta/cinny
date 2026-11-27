@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { tr } from '../../translation/tr';
 import { Kit, Team } from './engine/teams';
-import { MatchState, Side } from './engine/types';
+import { MatchState, ReplayKind, Side, VarChoice } from './engine/types';
 import type { Hud } from './runner';
 import { shirtBackground } from './setup';
 import type { MatchFailure } from './useMatchCanvas';
@@ -77,6 +77,179 @@ function SubBanner({ sub, teams }: { sub: NonNullable<Hud['sub']>; teams: [Team,
   );
 }
 
+const replayName = (kind: ReplayKind): string =>
+  ({
+    goal: tr('football.replay.goal', 'Goal'),
+    penalty: tr('football.replay.penalty', 'Penalty'),
+    foul: tr('football.replay.foul', 'Foul'),
+    offside: tr('football.replay.offside', 'Offside'),
+    save: tr('football.replay.save', 'Save'),
+    chance: tr('football.replay.chance', 'So close'),
+  }[kind]);
+
+// A replay on screen, as TV marks one: bars top and bottom, a sweep as it starts, the tag with
+// what it shows and how far it has played, and how to skip it.
+function ReplayTag({ replay, teams }: { replay: NonNullable<Hud['replay']>; teams: [Team, Team] }) {
+  const who =
+    replay.side !== undefined && replay.num !== undefined
+      ? `${teams[replay.side].short} #${replay.num}`
+      : undefined;
+  let hint: string | undefined;
+  if (replay.skipped) hint = tr('football.replay.waiting', 'Waiting for the other side to skip');
+  else if (replay.canSkip) hint = tr('football.replay.skip', 'Pass or shoot to skip');
+  return (
+    <>
+      <span className={css.ReplayBarTop} />
+      <span className={css.ReplayBarBottom} />
+      <span key={replay.at} className={css.ReplayWipe} aria-hidden>
+        {tr('football.replay.title', 'Replay')}
+      </span>
+      <div className={css.ReplayTag} role="status">
+        <span className={css.ReplayTitle}>
+          <span className={css.ReplayDot} aria-hidden />
+          {tr('football.replay.title', 'Replay')} · {replayName(replay.kind)}
+        </span>
+        {(who || replay.slow) && (
+          <span className={css.ReplaySub}>
+            {[who, replay.slow ? tr('football.replay.slow', 'Slow motion') : undefined]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
+        <div className={css.ReplayProgress}>
+          <div
+            className={css.ReplayFill}
+            style={{ width: `${Math.round(replay.progress * 100)}%` }}
+          />
+        </div>
+      </div>
+      {hint && <span className={css.Hint}>{hint}</span>}
+    </>
+  );
+}
+
+export const varChoiceName = (c: VarChoice): string =>
+  ({
+    goal: tr('football.var.goal', 'Goal stands'),
+    nogoal_offside: tr('football.var.nogoal_offside', 'No goal: offside'),
+    nogoal_foul: tr('football.var.nogoal_foul', 'No goal: foul in the build-up'),
+    nofoul: tr('football.var.nofoul', 'No foul'),
+    foul: tr('football.var.foul', 'Foul, no card'),
+    yellow: tr('football.var.yellow', 'Foul and a yellow card'),
+    red: tr('football.var.red', 'Foul and a red card'),
+    offside: tr('football.var.offside', 'Offside'),
+    onside: tr('football.var.onside', 'Onside'),
+  }[c]);
+
+// The video referee's review: the moment loops under the tag while the people watching vote
+// (here, as buttons; players see the count), then the decision.
+function VarReview({
+  review,
+  teams,
+  onVote,
+  myVote,
+}: {
+  review: NonNullable<Hud['var']>;
+  teams: [Team, Team];
+  onVote?: (choice: number) => void;
+  myVote?: number;
+}) {
+  const who =
+    review.side !== undefined && review.num !== undefined
+      ? `${teams[review.side].short} #${review.num}`
+      : undefined;
+  if (review.verdict >= 0) {
+    const changed = review.verdict !== review.called;
+    return (
+      <div className={css.CallBox} role="status">
+        <span className={css.CallTitle}>{tr('football.var.decision', 'VAR decision')}</span>
+        <span className={css.BannerSub}>
+          {varChoiceName(review.options[review.verdict].choice)}
+        </span>
+        <span className={css.ReplaySub}>
+          {changed
+            ? tr('football.var.changed', "The referee's call is changed")
+            : tr('football.var.stands', "The referee's call stands")}
+        </span>
+      </div>
+    );
+  }
+  const total = review.options.reduce((sum, o) => sum + o.votes, 0);
+  const voting = !!onVote && myVote === undefined;
+  return (
+    <>
+      <span className={css.ReplayBarTop} />
+      <span className={css.ReplayBarBottom} />
+      <div className={css.ReplayTag} role="status">
+        <span className={css.ReplayTitle}>
+          <span className={css.ReplayDot} aria-hidden />
+          {tr('football.var.title', 'VAR')} · {replayName(review.kind)}
+        </span>
+        {who && <span className={css.ReplaySub}>{who}</span>}
+        <div className={css.ReplayProgress}>
+          <div
+            className={css.ReplayFill}
+            style={{ width: `${Math.round((1 - review.left) * 100)}%` }}
+          />
+        </div>
+      </div>
+      <div className={css.VarPanel}>
+        <span className={css.VarHead}>
+          {onVote
+            ? tr('football.var.vote_help', 'Your vote: what should the referee decide?')
+            : tr('football.var.watchers_decide', 'The people watching are deciding')}
+        </span>
+        {review.options.map((o, k) => {
+          const body = (
+            <>
+              <span className={css.VarRow}>
+                <span>
+                  {varChoiceName(o.choice)}
+                  {k === review.called && (
+                    <span className={css.VarCalled}>{tr('football.var.called', 'referee')}</span>
+                  )}
+                </span>
+                <span>{o.votes}</span>
+              </span>
+              <span className={css.VarBar}>
+                <span
+                  className={css.VarFill}
+                  style={{
+                    display: 'block',
+                    width: `${total ? Math.round((o.votes / total) * 100) : 0}%`,
+                  }}
+                />
+              </span>
+            </>
+          );
+          return onVote ? (
+            <button
+              key={o.choice}
+              type="button"
+              className={`${gameButton({ size: 'sm', variant: 'secondary' })} ${css.VarOption}`}
+              aria-pressed={myVote === k}
+              disabled={!voting}
+              onClick={() => onVote(k)}
+            >
+              {body}
+            </button>
+          ) : (
+            <div key={o.choice} className={css.VarOption}>
+              {body}
+            </div>
+          );
+        })}
+        <span className={css.VarHead}>
+          {tr('football.var.count', '{{votes}} of {{voters}} voted · a tie keeps the call', {
+            votes: total,
+            voters: review.voters,
+          })}
+        </span>
+      </div>
+    </>
+  );
+}
+
 export function MatchHud({
   hud,
   loading,
@@ -84,6 +257,9 @@ export function MatchHud({
   teams,
   kits,
   waitingText,
+  onCallVar,
+  onVote,
+  myVote,
   children,
 }: {
   hud: Hud | undefined;
@@ -93,9 +269,29 @@ export function MatchHud({
   kits: [Kit, Kit];
   // What to say while the match waits on the network.
   waitingText?: string;
+  // Online, for the people watching: ask the video referee for a review, and vote (`myVote` is
+  // the option they picked in the review on screen).
+  onCallVar?: () => void;
+  onVote?: (choice: number) => void;
+  myVote?: number;
   children?: ReactNode;
 }) {
   const [home, away] = teams;
+  // The restart's name and changes waiting, under the pitch (a free kick has no name: the
+  // referee's call says it).
+  const hint =
+    hud && !hud.sub && !hud.replay && !hud.var
+      ? [
+          restartName(hud.restart),
+          hud.subsWaiting
+            ? tr('football.subs.hint', '{{n}} change(s) waiting for the ball to stop', {
+                n: hud.subsWaiting,
+              })
+            : undefined,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : '';
   return (
     <div className={css.Overlay}>
       {loading && !failed && (
@@ -119,6 +315,17 @@ export function MatchHud({
             {tr('football.reload', 'Reload')}
           </button>
         </div>
+      )}
+      {hud?.replay && <ReplayTag replay={hud.replay} teams={teams} />}
+      {hud?.var && <VarReview review={hud.var} teams={teams} onVote={onVote} myVote={myVote} />}
+      {hud?.canCallVar && onCallVar && (
+        <button
+          type="button"
+          className={`${gameButton({ variant: 'primary' })} ${css.VarCall}`}
+          onClick={onCallVar}
+        >
+          {tr('football.var.call', 'Call the VAR')}
+        </button>
       )}
       {hud && (
         <div className={css.Scoreboard}>
@@ -159,20 +366,7 @@ export function MatchHud({
       )}
       {hud?.call && <CallBanner call={hud.call} teams={teams} />}
       {hud?.sub && !hud.call && <SubBanner sub={hud.sub} teams={teams} />}
-      {(hud?.restart || hud?.subsWaiting) && !hud.sub && (
-        <span className={css.Hint}>
-          {[
-            restartName(hud.restart),
-            hud.subsWaiting
-              ? tr('football.subs.hint', '{{n}} change(s) waiting for the ball to stop', {
-                  n: hud.subsWaiting,
-                })
-              : undefined,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-        </span>
-      )}
+      {hint && <span className={css.Hint}>{hint}</span>}
       {children}
     </div>
   );
@@ -221,6 +415,20 @@ export function FinalScore({ match, teams }: { match: MatchState; teams: [Team, 
           {tr('football.end.subs', 'Substitutions: {{list}}', {
             list: match.subs
               .map((s) => `${teams[s.side].short} ${s.out}→${s.on} ${s.minute}′`)
+              .join(', '),
+          })}
+        </p>
+      )}
+      {match.varLog?.length > 0 && (
+        <p className={css.Scorers}>
+          {tr('football.end.var', 'VAR: {{list}}', {
+            list: match.varLog
+              .map(
+                (v) =>
+                  `${v.minute}′ ${varChoiceName(v.choice)}${
+                    v.changed ? ` (${tr('football.end.var_changed', 'changed')})` : ''
+                  }`
+              )
               .join(', '),
           })}
         </p>

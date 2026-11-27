@@ -108,6 +108,12 @@ export class FootballAudio {
       // Applause for a player going off, a murmur at a card.
       else if (e.type === 'sub') this.roar(0.4, 3);
       else if (e.type === 'card') this.roar(e.color === 'red' ? 0.5 : 0.32, 2);
+      // The referee stops for the video, then the stadium hears the decision.
+      else if (e.type === 'var' && e.stage === 'review') this.whistle(WHISTLES.foul);
+      else if (e.type === 'var') {
+        this.whistle(WHISTLES.foul);
+        this.roar(e.changed ? 0.8 : 0.45, 3);
+      }
     });
   }
 

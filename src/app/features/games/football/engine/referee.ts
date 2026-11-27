@@ -12,8 +12,9 @@ import {
   OFFICIAL_SPEED,
   DT,
 } from './data';
+import { noteHighlight, noteIncident } from './replay';
 import { FOURTH, knockDown, officialTarget, startFoul, startOffside } from './scenes';
-import { MatchState, Official, Side } from './types';
+import { MatchState, Official, Role, Side } from './types';
 
 // The referee and the linesmen: fouls and their cards, offside, and where the officials stand.
 // Deciding is here; the restart that follows is set by match.ts through `restartFor`, passed
@@ -24,7 +25,7 @@ export type FoulKind = 'slideMiss' | 'slideBehind' | 'stand';
 
 export type RestartFor = (
   m: MatchState,
-  kind: 'freekick' | 'penalty',
+  kind: 'freekick' | 'penalty' | 'goalkick',
   side: Side,
   x: number,
   z: number
@@ -61,7 +62,7 @@ const act = (o: Official, action: Official['action'], busy: number) => {
 // Sent off: out of the match at once, though the body stays for the card and then walks to
 // the tunnel (scenes.ts). A keeper's role goes to the defender nearest the goal, who keeps
 // that place until the coach can bring the bench keeper on.
-const sendOff = (m: MatchState, i: number) => {
+export const sendOff = (m: MatchState, i: number): void => {
   const p = m.players[i];
   Object.assign(p, { off: true, out: 'red', seat: -1, vx: 0, vz: 0, busy: 0, action: 'none' });
   if (m.ball.owner === i) m.ball.owner = -1;
@@ -138,7 +139,28 @@ export const foul = (
   if (inBox) restartFor(m, 'penalty', side, 0, 0);
   else restartFor(m, 'freekick', side, x, z);
   m.call = { kind: inBox ? 'penalty' : 'foul', player: offender, card, secondYellow };
+  // Noted before a red takes the offender off, so the video referee can give them back.
+  noteIncident(m, {
+    kind: 'foul',
+    penalty: inBox,
+    offender,
+    victim,
+    card,
+    secondYellow,
+    x,
+    z,
+    roles: m.players.flatMap((p, i) =>
+      p.side === o.side && !p.off
+        ? [[i, p.role, p.homeX, p.homeZ] as [number, Role, number, number]]
+        : []
+    ),
+    ox: o.x,
+    oz: o.z,
+    subs: m.subs.length,
+  });
   if (card === 'red') sendOff(m, offender);
+  // A booking or a penalty is shown again; a plain foul isn't worth stopping for.
+  if (card || inBox) noteHighlight(m, inBox ? 'penalty' : 'foul', offender, x, z);
   startFoul(m, offender, victim, card, inBox, x, z);
 };
 
@@ -183,12 +205,15 @@ export const touch = (m: MatchState, i: number, restartFor: RestartFor): boolean
     clamp(z, -HALF_WIDTH + 1, HALF_WIDTH - 1)
   );
   m.call = { kind: 'offside', player: i };
+  noteHighlight(m, 'offside', i, x, z);
+  noteIncident(m, { kind: 'offside', player: i, x, z });
   startOffside(m, i, x, z);
   return true;
 };
 
-// The second-last defender of the side defending the end at `end` (+1 or -1), as an x.
-const offsideLine = (m: MatchState, end: number): number => {
+// The second-last defender of the side defending the end at `end` (+1 or -1), as an x. The
+// replay of an offside draws it too.
+export const offsideLine = (m: MatchState, end: number): number => {
   const defending: Side = attackDir(m, 0) === end ? 1 : 0;
   const xs = m.players
     .filter((p) => p.side === defending && !p.off)

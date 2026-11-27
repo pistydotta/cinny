@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import playerUrl from '../assets/player.glb?url';
-import { BALL_RADIUS, HALF_LENGTH, HALF_WIDTH } from '../engine/data';
+import { BALL_RADIUS, HALF_LENGTH, HALF_WIDTH, ReplayCam } from '../engine/data';
 import { inTunnel, sceneFocus } from '../engine/scenes';
 import { Kit, colorDistance, keeperKit } from '../engine/teams';
 import { Action, MatchState, Official, Player } from '../engine/types';
@@ -14,7 +14,8 @@ import { buildStadium } from './stadium';
 
 // Draws a match with three.js: the stadium, the mannequins in their kits (the 22, the benches
 // and the officials) and the ball, from a TV camera on the near touchline that follows play, or
-// the scene of the moment (engine/scenes.ts). The only part of the game that imports three.js;
+// the scene of the moment (engine/scenes.ts). A replay hands in a moment from the tape
+// (replayTape.ts) and the camera of its take. The only part of the game that imports three.js;
 // it reads the match and never changes it.
 //
 // The mannequin and its pack clips are Quaternius' Universal Animation Library 2 (CC0), cut
@@ -63,6 +64,10 @@ const MOVE_CLIPS: Partial<
   highfive: { clip: 'highfive', once: true },
   sit: { clip: 'sit', once: false },
 };
+
+// A replay's take on screen: its camera, which take (a new one cuts), the end of the pitch the
+// moment was at (+1 or -1, for the camera behind the goal), and an offside's line.
+export type ReplayView = { cam: ReplayCam; take: number; end: number; line: number | undefined };
 
 // How much lower a pose puts the body: seated on the bench, kneeling.
 const DROP: Partial<Record<Action, number>> = { sit: 0.4, kneeslide: 0.46 };
@@ -253,6 +258,17 @@ export class FootballScene {
 
   private camZ = 0;
 
+  // The take on screen ('' live): a change cuts instead of panning, as TV does.
+  private shot = '';
+
+  // Where a replay camera looks (the ball, eased), and an offside line's x, eased.
+  private aim = new THREE.Vector3();
+
+  private lineX = 0;
+
+  // The offside line on the grass, in replays.
+  private line: THREE.Mesh;
+
   private ready = false;
 
   constructor(
@@ -302,6 +318,20 @@ export class FootballScene {
     );
     this.ballShadow.rotation.x = -Math.PI / 2;
     this.scene.add(this.ballShadow);
+
+    this.line = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.16, HALF_WIDTH * 2),
+      new THREE.MeshBasicMaterial({
+        color: '#ffd400',
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false,
+      })
+    );
+    this.line.rotation.x = -Math.PI / 2;
+    this.line.position.y = 0.025;
+    this.line.visible = false;
+    this.scene.add(this.line);
 
     this.setQuality(start);
     this.setCamera(graphics.camera);
@@ -463,6 +493,8 @@ export class FootballScene {
 
   private placeOfficial(o: Official, k: number, dt: number) {
     const b = this.officials[k];
+    // A replay camera may have hidden them last frame.
+    b.root.visible = true;
     animate(b, { vx: o.vx, vz: o.vz, action: o.action, role: 'mid' }, dt);
     place(b, o.x, o.z, o.face, o.action);
     if (!b.prop) return;
@@ -485,8 +517,9 @@ export class FootballScene {
     }
   }
 
-  // Draws the match as it is now; `dt` is the real time since the last frame, for the clips.
-  render(m: MatchState, dt: number): void {
+  // Draws the match as it is now, or a replay's moment; `dt` is the time since the last frame
+  // for the clips (slowed down in a slow-motion take).
+  render(m: MatchState, dt: number, replay?: ReplayView): void {
     if (!this.ready) return;
     m.players.forEach((p, i) => {
       const body = this.bodies[i];
@@ -517,10 +550,11 @@ export class FootballScene {
 
     m.officials.forEach((o, k) => this.placeOfficial(o, k, dt));
 
+    // A replay shows the match as TV does: no rings, names or arrows.
     this.markers.forEach((ring, s) => {
       const person = m.people[s];
       const p = person && m.players[person.control];
-      ring.visible = !!p && !p.off && m.phase !== 'over';
+      ring.visible = !!p && !p.off && m.phase !== 'over' && !replay;
       if (p) ring.position.set(p.x, 0.03, p.z);
       const label = this.labels[s];
       label.visible = !!this.who.labels?.[s] && ring.visible;
@@ -537,7 +571,7 @@ export class FootballScene {
       const inFlight =
         ball.owner < 0 && ball.target >= 0 && m.players[ball.target].side === side && passer;
       const who = inFlight ? ball.target : person?.preview ?? -1;
-      arrow.visible = this.who.mine.includes(s) && who >= 0 && m.phase === 'play';
+      arrow.visible = this.who.mine.includes(s) && who >= 0 && m.phase === 'play' && !replay;
       if (!arrow.visible) return;
       const p = m.players[who];
       const bob = Math.sin(this.time * (inFlight ? 12 : 6)) * 0.08;
@@ -545,25 +579,73 @@ export class FootballScene {
       (arrow.material as THREE.MeshBasicMaterial).opacity = inFlight ? 0.95 : 0.55;
     });
 
-    // The TV camera: on the near touchline, high, sliding along with the ball; during a scene
-    // it closes in on what matters (the card, the scorer, the substitution at the far line).
+    const key = replay ? `${replay.take}:${replay.cam}` : '';
+    const cut = key !== this.shot;
+    this.shot = key;
+    this.line.visible = replay?.line !== undefined;
+    if (replay) this.replayCamera(m, replay, dt, cut);
+    else this.tvCamera(m, dt, cut);
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  // The TV camera: on the near touchline, high, sliding along with the ball; during a scene it
+  // closes in on what matters (the card, the scorer, the substitution at the far line). Back
+  // from a replay it cuts straight to where it should be.
+  private tvCamera(m: MatchState, dt: number, cut: boolean) {
+    const { ball } = m;
     const focus = sceneFocus(m);
     const tx = Math.max(-HALF_LENGTH + 14, Math.min(HALF_LENGTH - 14, focus?.x ?? ball.x));
     const tz = focus
       ? Math.max(-HALF_WIDTH - 2, Math.min(HALF_WIDTH, focus.z)) * 0.8
       : Math.max(-HALF_WIDTH + 6, Math.min(HALF_WIDTH - 6, ball.z)) * 0.55;
-    const k = 1 - Math.exp(-dt * 3);
+    const k = cut ? 1 : 1 - Math.exp(-dt * 3);
     this.camX += (tx - this.camX) * k;
     this.camZ += (tz - this.camZ) * k;
-    this.zoom += ((focus?.zoom ?? 1) - this.zoom) * (1 - Math.exp(-dt * 1.5));
+    this.zoom += ((focus?.zoom ?? 1) - this.zoom) * (cut ? 1 : 1 - Math.exp(-dt * 1.5));
     this.camera.position.set(
       this.camX,
       this.view.height * this.zoom,
       this.camZ + this.view.back * this.zoom
     );
     this.camera.lookAt(this.camX, 0, this.camZ - 1);
+  }
 
-    this.renderer.render(this.scene, this.camera);
+  // A replay's cameras, all following the ball: the TV camera closer in; high behind the goal
+  // the moment was at; low at the side of the play; level with the offside line, which slides
+  // with the second-last defender.
+  private replayCamera(m: MatchState, r: ReplayView, dt: number, cut: boolean) {
+    const { ball } = m;
+    const k = cut ? 1 : 1 - Math.exp(-dt * 4);
+    const bx = Math.max(-HALF_LENGTH - 1, Math.min(HALF_LENGTH + 1, ball.x));
+    const bz = Math.max(-HALF_WIDTH, Math.min(HALF_WIDTH, ball.z));
+    this.aim.x += (bx - this.aim.x) * k;
+    this.aim.y += (Math.min(ball.y, 3) * 0.5 - this.aim.y) * k;
+    this.aim.z += (bz - this.aim.z) * k;
+    const { aim } = this;
+    if (r.cam === 'goal') {
+      this.camera.position.set(r.end * (HALF_LENGTH + 15), 7.5, aim.z * 0.35);
+      this.camera.lookAt(aim.x, aim.y + 0.6, aim.z);
+    } else if (r.cam === 'low') {
+      const z = Math.min(aim.z + 14, HALF_WIDTH + 4);
+      this.camera.position.set(aim.x - r.end * 5, 3.2, z);
+      this.camera.lookAt(aim.x, aim.y + 0.7, aim.z);
+    } else if (r.cam === 'line' && r.line !== undefined) {
+      this.lineX += (r.line - this.lineX) * (cut ? 1 : 1 - Math.exp(-dt * 6));
+      this.line.position.x = this.lineX;
+      this.camera.position.set(this.lineX, 12, HALF_WIDTH + 22);
+      this.camera.lookAt(this.lineX, 0, -2);
+    } else {
+      const zoom = 0.6;
+      const x = Math.max(-HALF_LENGTH + 8, Math.min(HALF_LENGTH - 8, aim.x));
+      const z = Math.max(-HALF_WIDTH + 6, Math.min(HALF_WIDTH - 6, aim.z)) * 0.55;
+      this.camera.position.set(x, this.view.height * zoom, z + this.view.back * zoom);
+      this.camera.lookAt(x, 0, z - 1);
+    }
+    // Nobody right in front of the lens: a body that close would fill the screen.
+    const cam = this.camera.position;
+    [...this.bodies, ...this.officials].forEach(({ root }) => {
+      if (Math.hypot(root.position.x - cam.x, root.position.z - cam.z) < 4) root.visible = false;
+    });
   }
 
   resize(width: number, height: number): void {

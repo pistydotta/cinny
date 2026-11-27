@@ -1,8 +1,21 @@
 import { KeySets, PAUSE_KEYS, fromGamepad, fromKeys, keysIn, merge, typingIn } from './controls';
 import { AUTO_FPS, AUTO_SECONDS, Graphics, Quality, lower } from './options';
-import { DT, CHARGE_FULL } from './engine/data';
+import { DT, CHARGE_FULL, VAR } from './engine/data';
+import { replayShot } from './engine/replay';
+import { canCallVar, incidentWho, replayKindOf, varReplay } from './engine/var';
 import { SUB_CANCEL, subCode } from './engine/scenes';
-import { GameEvent, Input, MatchState, NO_INPUT, Phase, RestartKind, Side } from './engine/types';
+import {
+  GameEvent,
+  Input,
+  MatchState,
+  NO_INPUT,
+  Phase,
+  ReplayKind,
+  RestartKind,
+  Side,
+  VarChoice,
+} from './engine/types';
+import { replayMarks } from './replayTape';
 import type { FootballScene } from './render/scene';
 import type { MatchSource } from './source';
 
@@ -39,6 +52,40 @@ export type Hud = {
   sub: { side: Side; out: number; on: number } | undefined;
   // Changes the people on this computer asked for, still waiting for the ball to stop.
   subsWaiting: number;
+  // A replay on screen: what it shows (whose moment, by shirt number and side), how far it has
+  // played (0 to 1), whether people here can skip it and whether they have, waiting for the
+  // other side.
+  replay:
+    | {
+        kind: ReplayKind;
+        // Which one, so the screen can tell a new replay from the last.
+        at: number;
+        num: number | undefined;
+        side: Side | undefined;
+        progress: number;
+        slow: boolean;
+        canSkip: boolean;
+        skipped: boolean;
+      }
+    | undefined;
+  // The video referee (engine/var.ts): whether a review can be asked for now (online, by the
+  // people watching), and the one under way: what is reviewed and whose, the options with their
+  // votes, the referee's call, how long the vote has left (1 to 0), then the verdict.
+  canCallVar: boolean;
+  var:
+    | {
+        // Which review, so the screen can tell a new one from the last.
+        at: number;
+        kind: ReplayKind;
+        num: number | undefined;
+        side: Side | undefined;
+        options: { choice: VarChoice; votes: number }[];
+        called: number;
+        voters: number;
+        left: number;
+        verdict: number;
+      }
+    | undefined;
 };
 
 // A change on its way into the inputs: sent this many steps, so a step the source skips or a
@@ -237,6 +284,19 @@ export class FootballRunner {
     this.pendingSubs = this.pendingSubs.filter((p) => p.left > 0);
   }
 
+  // Whether this computer wants to see a replay of this kind (Options); the others it skips.
+  private wants(kind: ReplayKind): boolean {
+    const { replays } = this.graphics;
+    return replays === 'all' || (replays === 'goals' && kind === 'goal');
+  }
+
+  // Skipping a replay is a press of pass: sent every other tick, so it is a press, not a hold.
+  private skipping(m: MatchState): Input[] | undefined {
+    if (!m.replay || this.wants(m.replay.kind)) return undefined;
+    const tap = { ...NO_INPUT, pass: m.tick % 2 === 0 };
+    return this.opts.devices.map(() => tap);
+  }
+
   private keysNow(): Set<string> {
     return this.tapped.size ? new Set([...this.held, ...this.tapped]) : this.held;
   }
@@ -259,9 +319,9 @@ export class FootballRunner {
     if (!frozen && !this.ended) {
       this.acc += dt;
       const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
-      const inputs: Input[] = this.opts.devices.map((d) =>
-        this.paused ? NO_INPUT : this.inputFor(d, pads)
-      );
+      const inputs: Input[] =
+        this.skipping(this.source.match) ??
+        this.opts.devices.map((d) => (this.paused ? NO_INPUT : this.inputFor(d, pads)));
       this.tapped.clear();
       let steps = 0;
       while (this.acc >= DT && steps < MAX_STEPS) {
@@ -283,6 +343,7 @@ export class FootballRunner {
           this.goal = { side: goal.side, num: p?.num ?? 0, own: goal.own };
           this.pushHud(true);
         }
+        if (events.some((e) => e.type === 'replay' || e.type === 'var')) this.pushHud(true);
         if (events.length) this.opts.onEvents?.(events, m);
         if (this.source.ended()) {
           this.ended = true;
@@ -295,16 +356,40 @@ export class FootballRunner {
       if (this.source.match.phase === 'play' && this.goal) this.goal = undefined;
     }
     const m = this.source.match;
-    this.scene.render(m, frozen ? 0 : dt);
+    this.draw(m, frozen ? 0 : dt);
     this.watchFrames(now);
     if (now - this.hudAt > 100) this.pushHud(false);
   };
+
+  // The match, or during a replay the moment it shows, from the tape: between two ticks by the
+  // time since the last step, so slow motion stays smooth, and the clips slowed down with it.
+  private draw(m: MatchState, dt: number) {
+    // A replay, or the moment the video referee is reviewing, on a loop.
+    const r = m.replay ?? varReplay(m);
+    if (r) {
+      const shot = replayShot(r, r.t + Math.min(1, this.acc / DT));
+      const view = this.source.tape.view(m, shot.tick);
+      if (view) {
+        const { end, line } = replayMarks(r, view);
+        this.scene.render(view, dt / shot.slow, { cam: shot.cam, take: shot.take, end, line });
+        return;
+      }
+    }
+    this.scene.render(m, dt);
+  }
 
   private pushHud(force: boolean) {
     const now = performance.now();
     if (!force && now - this.hudAt < 100) return;
     this.hudAt = now;
     const m = this.source.match;
+    const r = m.replay;
+    const who = r && r.who >= 0 ? m.players[r.who] : undefined;
+    const mySides = this.sides();
+    const review = m.varReview;
+    const reviewed = review && m.players[incidentWho(review.incident)];
+    // While the screen shows a replay or a review, what it covers waits.
+    const away = !!r || !!review;
     this.opts.onHud({
       score: [m.score[0], m.score[1]],
       minute: Math.floor(m.clock / 60),
@@ -316,7 +401,7 @@ export class FootballRunner {
         ...this.opts.mine.map((s) => Math.min(1, (m.people[s]?.charge ?? 0) / CHARGE_FULL))
       ),
       call:
-        m.phase === 'restart' && m.call
+        m.phase === 'restart' && m.call && !away
           ? {
               kind: m.call.kind,
               num: m.players[m.call.player].num,
@@ -333,15 +418,37 @@ export class FootballRunner {
         ...m.subQueue.filter((q) => this.sides().includes(q.side)).map((q) => q.out),
       ]).size,
       sub:
-        m.scene?.kind === 'sub'
+        m.scene?.kind === 'sub' && !away
           ? {
               side: m.scene.side,
               out: m.players[m.scene.out].num,
               on: m.players[m.scene.on].num,
             }
           : undefined,
-      restart: m.phase === 'restart' ? m.restart?.kind : undefined,
-      goal: m.phase === 'goal' ? this.goal : undefined,
+      restart: m.phase === 'restart' && !away ? m.restart?.kind : undefined,
+      goal: m.phase === 'goal' && !away ? this.goal : undefined,
+      replay: r && {
+        kind: r.kind,
+        at: r.at,
+        num: who?.num,
+        side: who?.side,
+        progress: Math.min(1, r.t / r.length),
+        slow: replayShot(r, r.t).slow > 1,
+        canSkip: mySides.length > 0,
+        skipped: mySides.length > 0 && mySides.every((side) => r.skip[side]),
+      },
+      canCallVar: canCallVar(m),
+      var: review && {
+        at: review.incident.at,
+        kind: replayKindOf(review.incident),
+        num: reviewed?.num,
+        side: reviewed?.side,
+        options: review.options.map((choice, k) => ({ choice, votes: review.votes[k] })),
+        called: review.called,
+        voters: review.voters,
+        left: review.verdict >= 0 ? 0 : Math.max(0, 1 - review.t / VAR.review),
+        verdict: review.verdict,
+      },
       // Half a second of waiting before saying so: a tick or two is normal online.
       waiting: this.waited > 30,
     });

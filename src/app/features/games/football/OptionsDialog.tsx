@@ -178,6 +178,23 @@ function GraphicsTab({
           { value: 'far', name: tr('football.options.far', 'Far') },
         ]}
       />
+      <span className={css.Label}>{tr('football.options.replays', 'Replays')}</span>
+      <Segmented<Graphics['replays']>
+        label={tr('football.options.replays', 'Replays')}
+        value={graphics.replays}
+        onChange={(replays) => onGraphics({ ...graphics, replays })}
+        options={[
+          { value: 'all', name: tr('football.options.replays_all', 'All') },
+          { value: 'goals', name: tr('football.options.replays_goals', 'Goals only') },
+          { value: 'off', name: tr('football.options.replays_off', 'None') },
+        ]}
+      />
+      <p className={css.Note}>
+        {tr(
+          'football.options.replays_help',
+          'Goals, bookings, penalties, offsides, saves and near misses play again once the ball is dead. Pass or shoot skips one; online it ends once each side has skipped.'
+        )}
+      </p>
     </div>
   );
 }

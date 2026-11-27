@@ -261,6 +261,94 @@ export type Scene =
 
 export type SceneKind = Scene['kind'];
 
+// Moments worth showing again, as football on TV does once the ball is dead (replay.ts): a
+// goal, a booking or a penalty, an offside, a save the ball went out from, a shot off the post
+// or just wide.
+export type ReplayKind = 'goal' | 'penalty' | 'foul' | 'offside' | 'save' | 'chance';
+
+// A moment noted as it happens, waiting for the ball to be dead.
+export type Highlight = {
+  kind: ReplayKind;
+  // The tick it happened, and the first tick the ball was dead after it (-1 while in play).
+  at: number;
+  dead: number;
+  // Whose moment it is (the scorer, the offender, the player caught offside, the keeper, the
+  // shooter; -1 when nobody's), and where (the ball, or the foul's spot).
+  who: number;
+  x: number;
+  z: number;
+  // The earliest tick a replay may show: the ticks of an earlier replay were the match
+  // standing still.
+  floor: number;
+};
+
+// A replay on screen. The match stands still while it plays, and every computer shows the same
+// one: `t` counts its ticks up to `length`; it ends sooner once every side with people has
+// pressed to skip it.
+export type Replay = Highlight & { t: number; length: number; skip: [boolean, boolean] };
+
+// The video referee (var.ts): online, the people watching can ask for a decision to be
+// reviewed and vote on it while everyone watches it again.
+//
+// A decision that can still be reviewed, until play goes on: a goal, a foul (a free kick or a
+// penalty, with its card) or an offside. `floor` is a replay's, for the same reason.
+export type VarIncident =
+  | { kind: 'goal'; at: number; floor: number; side: Side; scorer: number; x: number; z: number }
+  | {
+      kind: 'foul';
+      at: number;
+      floor: number;
+      penalty: boolean;
+      offender: number;
+      victim: number;
+      card: 'yellow' | 'red' | undefined;
+      secondYellow: boolean;
+      x: number;
+      z: number;
+      // The offender's side before a red, to give a rescinded one back: each player's role and
+      // place in the formation (a keeper sent off hands the gloves on), where the offender
+      // stood, and the substitutions made by then (after one, a red can't be undone).
+      roles: [number, Role, number, number][];
+      ox: number;
+      oz: number;
+      subs: number;
+    }
+  | { kind: 'offside'; at: number; floor: number; player: number; x: number; z: number };
+
+// What the vote can decide. A goal stands or is ruled out (offside, or a foul in the build-up);
+// a foul is no foul, a foul without a card, a yellow or a red; an offside stands or was onside.
+export type VarChoice =
+  | 'goal'
+  | 'nogoal_offside'
+  | 'nogoal_foul'
+  | 'nofoul'
+  | 'foul'
+  | 'yellow'
+  | 'red'
+  | 'offside'
+  | 'onside';
+
+export type VarReview = {
+  incident: VarIncident;
+  options: VarChoice[];
+  // The referee's own call among the options: it stands on a tie or with no votes.
+  called: number;
+  votes: number[];
+  // How many people were watching when it was asked for: once they have all voted (and the
+  // moment has played once), the vote closes early.
+  voters: number;
+  t: number;
+  // The replay's length in ticks, shown on a loop while the vote is open.
+  watch: number;
+  // The option chosen (-1 while the vote is open), and how long it has been on screen.
+  verdict: number;
+  shown: number;
+};
+
+// What reaches the match from outside the people's inputs, stamped by the API on a tick every
+// copy steps with it: a review asked for (with the number of people watching), and a vote.
+export type Order = { kind: 'var'; voters: number } | { kind: 'vote'; choice: number };
+
 export type GameEvent =
   | { type: 'kick'; player: number; power: number }
   | { type: 'goal'; side: Side; scorer: number; own: boolean }
@@ -273,7 +361,10 @@ export type GameEvent =
   | { type: 'card'; player: number; color: 'yellow' | 'red' }
   | { type: 'offside'; player: number }
   | { type: 'sub'; side: Side; out: number; on: number }
-  | { type: 'scene'; kind: SceneKind; stage: 'start' | 'end' };
+  | { type: 'scene'; kind: SceneKind; stage: 'start' | 'end' }
+  | { type: 'replay'; kind: ReplayKind; stage: 'start' | 'end' }
+  | { type: 'var'; stage: 'review' }
+  | { type: 'var'; stage: 'verdict'; choice: VarChoice; changed: boolean };
 
 export type MatchState = {
   setup: MatchSetup;
@@ -305,5 +396,15 @@ export type MatchState = {
   // Substitutions waiting for a stoppage, and those made (shirt numbers, for the end screen).
   subQueue: SubRequest[];
   subs: { side: Side; out: number; on: number; minute: number }[];
+  // The moment the next replay will show, the replay playing, and the tick the last one ended
+  // (replay.ts).
+  highlight: Highlight | undefined;
+  replay: Replay | undefined;
+  replayEnd: number;
+  // The decision the video referee may still review, the review under way, and the decisions
+  // reviewed (for the end screen).
+  varIncident: VarIncident | undefined;
+  varReview: VarReview | undefined;
+  varLog: { minute: number; choice: VarChoice; changed: boolean }[];
   events: GameEvent[];
 };

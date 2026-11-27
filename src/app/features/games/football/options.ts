@@ -1,14 +1,16 @@
 // Graphics options, kept per browser. `auto` starts at high and steps down while frames run
-// under 40 a second (the runner watches; the scene applies).
+// under 40 a second (the runner watches; the scene applies). `replays` says which replays this
+// computer watches: the others it skips by itself (online that is its side's vote to skip).
 
 export type Quality = 'low' | 'medium' | 'high';
 
 export type Graphics = {
   quality: Quality | 'auto';
   camera: 'near' | 'normal' | 'far';
+  replays: 'all' | 'goals' | 'off';
 };
 
-export const DEFAULT_GRAPHICS: Graphics = { quality: 'auto', camera: 'normal' };
+export const DEFAULT_GRAPHICS: Graphics = { quality: 'auto', camera: 'normal', replays: 'all' };
 
 const KEY = 'blazeroom.football.graphics';
 
@@ -22,6 +24,9 @@ export const parseGraphics = (text: string | null): Graphics => {
       camera: ['near', 'normal', 'far'].includes(raw.camera as string)
         ? (raw.camera as Graphics['camera'])
         : DEFAULT_GRAPHICS.camera,
+      replays: ['all', 'goals', 'off'].includes(raw.replays as string)
+        ? (raw.replays as Graphics['replays'])
+        : DEFAULT_GRAPHICS.replays,
     };
   } catch {
     return DEFAULT_GRAPHICS;

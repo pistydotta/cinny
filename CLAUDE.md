@@ -176,6 +176,14 @@ Do not restore the old release/deploy-PR workflow or local git hooks. See
   point for anything that changes players. People choose their side's changes (`SubsDialog`,
   pause menu); the choice rides in `Input.sub` so it reaches every copy online on the same
   tick. The CPU coach only changes a side nobody plays. The poses are clips made in `render/rig.ts`.
+  Replays (`engine/replay.ts`) are match state too: `m.replay` freezes `step` while it plays, so
+  every copy shows it on the same tick; each computer draws it from its own `ReplayTape`
+  (`replayTape.ts`), fed only ticks stepped for good (online, the confirmed ones). Takes, cameras
+  and slow motion are `REPLAY_TAKES` in `engine/data.ts`; skipping is pass or shoot, per side.
+  The video referee (`engine/var.ts`): online, people watching ask for a review of a goal, foul
+  or offside and vote; it reaches the match as `Order`s (`step(m, inputs, orders)`) that the API
+  stamps on the tick after every input it has, so players take them with at most a rollback.
+  A changed decision is put right in the state (score, cards, a red given back, the restart).
 - `games/table-games` renders server-authoritative Truco Paulista, elimination Fodinha and
   free chess. Keep the hand visible during prediction/raise/eleven-point decisions; the API
   alone hides opponents' cards and all hands at 11–11. Chess spectators may comment but

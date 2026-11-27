@@ -1,4 +1,4 @@
-import { Difficulty, Role } from './types';
+import { Difficulty, ReplayKind, Role } from './types';
 
 export const TICK_RATE = 60;
 export const DT = 1 / TICK_RATE;
@@ -196,3 +196,36 @@ export const SCENE = {
   // After a goal, the beaten side stands with hands on heads this long.
   dejected: 140,
 } as const;
+
+// Replays (replay.ts). Each kind is shown in takes: a stretch of the match from `before` ticks
+// before the moment to `after` ticks past it, played at 1/`slow` speed (a whole number, so a
+// replay's length in ticks is the same everywhere), from one of the renderer's cameras: the TV
+// camera closer in, behind the goal, low on the touchline, or level with the offside line.
+export type ReplayCam = 'tv' | 'goal' | 'low' | 'line';
+export type ReplayTake = { before: number; after: number; slow: number; cam: ReplayCam };
+export const REPLAY_TAKES: Record<ReplayKind, ReplayTake[]> = {
+  goal: [
+    { before: 240, after: 45, slow: 1, cam: 'tv' },
+    { before: 60, after: 30, slow: 2, cam: 'goal' },
+  ],
+  penalty: [
+    { before: 120, after: 30, slow: 1, cam: 'tv' },
+    { before: 40, after: 25, slow: 3, cam: 'low' },
+  ],
+  foul: [
+    { before: 120, after: 30, slow: 1, cam: 'tv' },
+    { before: 40, after: 25, slow: 3, cam: 'low' },
+  ],
+  offside: [{ before: 150, after: 20, slow: 1, cam: 'line' }],
+  save: [{ before: 90, after: 35, slow: 2, cam: 'goal' }],
+  chance: [{ before: 90, after: 30, slow: 2, cam: 'goal' }],
+};
+// A replay starts this long into a stoppage (after any scene lets the restart go), or as the
+// goal celebration ends. No take's `after` may be longer, so the whole stretch has happened.
+export const REPLAY_AFTER = 45;
+// A moment that play ran on from for this long without a stoppage is forgotten.
+export const REPLAY_STALE = 150;
+
+// The video referee (var.ts), in ticks: the longest a vote stays open, and how long the verdict
+// shows before play goes on. Votes are counted from at most MAX_VOTERS people.
+export const VAR = { review: 1200, verdict: 180, maxVoters: 1000 } as const;

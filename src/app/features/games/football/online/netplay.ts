@@ -1,6 +1,6 @@
 import { step } from '../engine/match';
 import { PackedInput, hashMatch, packInput, sameInput, unpackInput } from '../engine/net';
-import { GameEvent, Input, MatchState, NO_INPUT } from '../engine/types';
+import { GameEvent, Input, MatchState, NO_INPUT, Order } from '../engine/types';
 
 // One person's copy of an online match, with rollback (the GGPO way): every tick all the
 // people's inputs go into the engine, ours read a few ticks ahead and the others' guessed (the
@@ -28,12 +28,19 @@ export type NetOut = {
 // Inputs the API holds past a state: [slot, tick, input].
 export type Pending = [number, number, PackedInput][];
 
+// Orders from the API (the video referee's, engine/var.ts), each for a tick: [tick, order].
+// The API stamps one past every input it has, so nobody has confirmed that tick yet: a copy
+// that stepped past it without the order steps again, like after a wrong guess.
+export type Orders = [number, Order][];
+
 export class Netplay {
   match: MatchState;
 
   confirmed: number;
 
   private inputs: Map<number, Input>[] = [];
+
+  private orders = new Map<number, Order[]>();
 
   // Each tick's inputs as played, guessed or real.
   private used = new Map<number, Input[]>();
@@ -51,16 +58,21 @@ export class Netplay {
   // For the netcode tests: how many ticks were stepped again.
   resteps = 0;
 
+  // Each state once everyone's inputs for it are in, so nothing will change it (the replays'
+  // tape keeps those, never a guess).
+  onConfirmed?: (state: MatchState) => void;
+
   constructor(
     // Our slot in setup.slots.
     readonly slot: number,
     state: MatchState,
     private out: NetOut,
-    pending: Pending = []
+    pending: Pending = [],
+    orders: Orders = []
   ) {
     this.match = structuredClone(state);
     this.confirmed = state.tick;
-    this.reset(state, pending);
+    this.reset(state, pending, orders);
   }
 
   private get slots(): number {
@@ -69,7 +81,7 @@ export class Netplay {
 
   // Starts again from a state the API sent (joining late, back from a reconnection, or after a
   // copy drifted), with the inputs the API holds past it.
-  reset(state: MatchState, pending: Pending): void {
+  reset(state: MatchState, pending: Pending, orders: Orders = []): void {
     // Inputs of ours already sent past that state stay ours: some may still be on their way to
     // the API, which will play them.
     const sent = [...(this.inputs[this.slot]?.entries() ?? [])].filter(([t]) => t > state.tick);
@@ -82,6 +94,10 @@ export class Netplay {
       input: state.people[s]?.prev ?? NO_INPUT,
     }));
     this.used.clear();
+    this.orders.clear();
+    orders.forEach(([t, o]) => {
+      if (t > state.tick) this.orders.set(t, [...(this.orders.get(t) ?? []), o]);
+    });
     this.states.clear();
     this.states.set(state.tick, structuredClone(state));
     this.rollbackFrom = undefined;
@@ -115,6 +131,13 @@ export class Netplay {
       this.rollbackFrom = Math.min(this.rollbackFrom ?? t, t);
   }
 
+  // An order for tick t, stamped by the API.
+  remoteOrder(t: number, order: Order): void {
+    if (!Number.isInteger(t) || t <= this.confirmed) return;
+    this.orders.set(t, [...(this.orders.get(t) ?? []), order]);
+    if (t <= this.match.tick) this.rollbackFrom = Math.min(this.rollbackFrom ?? t, t);
+  }
+
   private inputsFor(t: number): Input[] {
     return this.inputs.map(
       (known, s) => known.get(t) ?? (s === this.slot ? NO_INPUT : this.latest[s].input)
@@ -125,7 +148,7 @@ export class Netplay {
     const t = this.match.tick + 1;
     const inputs = this.inputsFor(t);
     this.used.set(t, inputs);
-    step(this.match, inputs);
+    step(this.match, inputs, this.orders.get(t));
     this.states.set(t, structuredClone(this.match));
     return this.match.events;
   }
@@ -152,11 +175,12 @@ export class Netplay {
       this.states.delete(this.confirmed);
       this.inputs.forEach((known) => known.delete(this.confirmed));
       this.used.delete(this.confirmed);
+      this.orders.delete(this.confirmed);
       this.confirmed += 1;
-      if (this.confirmed % HASH_EVERY === 0) {
-        const state = this.states.get(this.confirmed);
-        if (state) this.out.sendHash(this.confirmed, hashMatch(state));
-      }
+      const state = this.states.get(this.confirmed);
+      if (state) this.onConfirmed?.(state);
+      if (state && this.confirmed % HASH_EVERY === 0)
+        this.out.sendHash(this.confirmed, hashMatch(state));
     }
   }
 

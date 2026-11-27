@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { createMatch, step } from '../engine/match';
 import { PackedInput, hashMatch, packInput, unpackInput } from '../engine/net';
 import { subCode } from '../engine/scenes';
-import { Input, MatchSetup, NO_INPUT, Side } from '../engine/types';
-import { INPUT_DELAY, Netplay } from './netplay';
+import { Input, MatchSetup, MatchState, NO_INPUT, Order, Side } from '../engine/types';
+import { canCallVar } from '../engine/var';
+import { INPUT_DELAY, Netplay, Orders } from './netplay';
 import { SpectatorFeed } from './spectate';
 
 const setup = (slots: Side[]): MatchSetup => ({
@@ -38,15 +39,29 @@ const keysAt = (slot: number, frame: number): Input => {
 };
 
 // People and a server between them: every message takes some frames to arrive (a different
-// lag per person, plus jitter), as over a real connection.
-const playOnline = (frames: number, slots: Side[], lags: number[]) => {
+// lag per person, plus jitter), as over a real connection. With `votes`, someone watching asks
+// the video referee for a review at the first decision it can review, and those votes follow
+// (option indices), each stamped the way the API does (api/src/football/rooms.js).
+const playOnline = (
+  frames: number,
+  slots: Side[],
+  lags: number[],
+  votes?: number[],
+  // Where everyone starts (all at the same state, as after a resume): kick-off by default.
+  start?: MatchState
+) => {
   const s = setup(slots);
-  const server = createMatch(s);
+  const server = start ? structuredClone(start) : createMatch(s);
   const n = slots.length;
   const pending: Map<number, PackedInput>[] = slots.map(() => new Map());
   const queue: { at: number; deliver: () => void }[] = [];
   const frameLog: PackedInput[][] = [];
   const hashes = new Map<number, number>();
+  const lastInput = slots.map(() => 0);
+  const orders = new Map<number, Order[]>();
+  const orderLog: Orders = [];
+  let asked = false;
+  let voted = false;
   const mismatches: number[] = [];
   let now = 0;
   const players: Netplay[] = [];
@@ -54,6 +69,7 @@ const playOnline = (frames: number, slots: Side[], lags: number[]) => {
     queue.push({ at: now + lags[slot] + ((now * 7 + slot) % 3), deliver });
 
   const serverInput = (slot: number, t: number, packed: PackedInput) => {
+    lastInput[slot] = t;
     pending[slot].set(t, packed);
     players.forEach((p, k) => {
       if (k !== slot) later(k, () => p.remoteInput(slot, t, packed));
@@ -61,14 +77,16 @@ const playOnline = (frames: number, slots: Side[], lags: number[]) => {
     while (pending.every((m) => m.has(server.tick + 1))) {
       const t1 = server.tick + 1;
       const frame = pending.map((m) => m.get(t1) as PackedInput);
-      step(server, frame.map(unpackInput));
+      const due = orders.get(t1) ?? [];
+      step(server, frame.map(unpackInput), due);
+      due.forEach((o) => orderLog.push([t1, o]));
       frameLog.push(frame);
       if (server.tick % 60 === 0) hashes.set(server.tick, hashMatch(server));
     }
   };
 
   for (let k = 0; k < n; k += 1) {
-    players[k] = new Netplay(k, createMatch(s), {
+    players[k] = new Netplay(k, start ? structuredClone(start) : createMatch(s), {
       sendInput: (t, packed) => later(k, () => serverInput(k, t, packed)),
       sendHash: (t, hash) =>
         later(k, () => {
@@ -77,8 +95,25 @@ const playOnline = (frames: number, slots: Side[], lags: number[]) => {
     });
   }
 
+  // The tick after every input the server has: no player has stepped it for good.
+  const stamp = (o: Order) => {
+    const t = Math.max(server.tick, ...lastInput) + 1;
+    orders.set(t, [...(orders.get(t) ?? []), o]);
+    players.forEach((p, k) => later(k, () => p.remoteOrder(t, o)));
+  };
+
   let stalls = 0;
   for (now = 0; now < frames; now += 1) {
+    if (votes && !asked && canCallVar(server)) {
+      asked = true;
+      stamp({ kind: 'var', voters: votes.length });
+    }
+    if (votes && !voted && server.varReview?.verdict === -1) {
+      voted = true;
+      // -1: the last option.
+      const last = server.varReview.options.length - 1;
+      votes.forEach((choice) => stamp({ kind: 'vote', choice: choice < 0 ? last : choice }));
+    }
     queue
       .filter((q) => q.at <= now)
       .forEach((q) => {
@@ -89,7 +124,7 @@ const playOnline = (frames: number, slots: Side[], lags: number[]) => {
       if (p.advance(keysAt(k, now)) === null) stalls += 1;
     });
   }
-  return { server, players, frameLog, mismatches, stalls, setup: s };
+  return { server, players, frameLog, orderLog, mismatches, stalls, setup: s };
 };
 
 describe('football netplay', () => {
@@ -154,6 +189,44 @@ describe('football netplay', () => {
     while (feed.advance() !== null);
     expect(feed.match.tick).toBe(server.tick);
     expect(hashMatch(feed.match)).toBe(hashMatch(server));
+  });
+
+  it('takes the video referee’s orders on the same tick everywhere, watchers too', () => {
+    // A goal about to go in, scored by the engine itself: the decision to review.
+    const start = createMatch(setup([0, 1]));
+    Object.assign(start, { phase: 'play', restart: undefined, wait: 0 });
+    Object.assign(start.ball, {
+      x: 52.3,
+      y: 0.5,
+      z: 2,
+      vx: 25,
+      vy: 0,
+      vz: 0,
+      owner: -1,
+      shot: true,
+    });
+    step(start, [NO_INPUT, NO_INPUT]);
+    expect(start.varIncident?.kind).toBe('goal');
+    // Everyone votes for the last option: a changed decision (a goal ruled out, a red, onside).
+    const { server, players, frameLog, orderLog, mismatches } = playOnline(
+      1500,
+      [0, 1],
+      [2, 6],
+      [-1, -1, -1],
+      start
+    );
+    expect(orderLog.map(([, o]) => o.kind)).toEqual(['var', 'vote', 'vote', 'vote']);
+    expect(mismatches).toEqual([]);
+    players.forEach((p) => expect(p.confirmed).toBeGreaterThan(start.tick + 1350));
+    // A player behind took the call after stepping past its tick, and rolled back.
+    expect(players[1].resteps).toBeGreaterThan(0);
+    // Replayed from the confirmed inputs and the orders, the match is the server's.
+    const watcher = new SpectatorFeed(start);
+    watcher.push(start.tick + 1, frameLog, orderLog);
+    while (watcher.advance() !== null);
+    expect(hashMatch(watcher.match)).toBe(hashMatch(server));
+    expect(server.varLog).toEqual([expect.objectContaining({ changed: true })]);
+    players.forEach((p) => expect(p.match.varLog).toEqual(server.varLog));
   });
 
   it('packs inputs both ways', () => {

@@ -56,7 +56,7 @@ export const startScene = (m: MatchState, scene: Scene): void => {
   m.events.push({ type: 'scene', kind: scene.kind, stage: 'start' });
 };
 
-const endScene = (m: MatchState) => {
+export const endScene = (m: MatchState): void => {
   const s = m.scene;
   if (!s) return;
   m.scene = undefined;

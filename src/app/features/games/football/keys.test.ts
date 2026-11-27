@@ -41,10 +41,13 @@ describe('football keys', () => {
   });
 
   it('reads saved graphics options', () => {
+    // Saved before replays existed: they're all on.
     expect(parseGraphics(JSON.stringify({ quality: 'low', camera: 'far' }))).toEqual({
       quality: 'low',
       camera: 'far',
+      replays: 'all',
     });
+    expect(parseGraphics('{"replays":"goals"}').replays).toBe('goals');
     expect(parseGraphics('{"quality":"ultra"}')).toEqual(DEFAULT_GRAPHICS);
   });
 });

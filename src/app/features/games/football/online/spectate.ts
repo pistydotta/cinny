@@ -1,6 +1,7 @@
 import { step } from '../engine/match';
 import { PackedInput, unpackInput } from '../engine/net';
-import { GameEvent, MatchState } from '../engine/types';
+import { GameEvent, MatchState, Order } from '../engine/types';
+import type { Orders } from './netplay';
 
 // Watching from the stands: the API sends the match once (or its setup at kick-off) and then
 // all the people's confirmed inputs in small batches; we step the same engine with them. A small
@@ -17,7 +18,13 @@ export class SpectatorFeed {
   // One list per tick, an input per person.
   private frames: PackedInput[][] = [];
 
+  // Orders by tick (the video referee's), sent with the frames of their tick.
+  private orders = new Map<number, Order[]>();
+
   private waiting = true;
+
+  // Each tick once stepped (for the replays' tape).
+  onStep?: (state: MatchState) => void;
 
   constructor(state: MatchState) {
     this.match = structuredClone(state);
@@ -26,11 +33,15 @@ export class SpectatorFeed {
   reset(state: MatchState): void {
     this.match = structuredClone(state);
     this.frames = [];
+    this.orders.clear();
     this.waiting = true;
   }
 
   // Inputs for ticks `from`, from + 1, ...; ticks we already have are skipped.
-  push(from: number, frames: PackedInput[][]): void {
+  push(from: number, frames: PackedInput[][], orders: Orders = []): void {
+    orders.forEach(([t, o]) => {
+      if (t > this.match.tick) this.orders.set(t, [...(this.orders.get(t) ?? []), o]);
+    });
     const next = this.match.tick + this.frames.length + 1;
     const skip = next - from;
     if (skip < 0) return;
@@ -55,7 +66,10 @@ export class SpectatorFeed {
     const events: GameEvent[] = [];
     for (let k = 0; k < steps && this.frames.length > 0; k += 1) {
       const frame = this.frames.shift() as PackedInput[];
-      step(this.match, frame.map(unpackInput));
+      const t = this.match.tick + 1;
+      step(this.match, frame.map(unpackInput), this.orders.get(t));
+      this.orders.delete(t);
+      this.onStep?.(this.match);
       events.push(...this.match.events);
     }
     return events;

@@ -17,6 +17,30 @@ export type WhatsNewEntry = {
 // the Novidades card on Visão geral, and Visão geral gets a dot in the Home nav until opened.
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: '2026-11-football-var',
+    items: () => [
+      {
+        title: tr('whats_new.football_var_title', 'FIFUMA: the VAR is in the hands of the stands'),
+        body: tr(
+          'whats_new.football_var_body',
+          "Watching an online match, call the VAR when the referee gives a goal, a foul or an offside. Everyone in the match watches the moment again while the people watching vote: goal or no goal, foul or not, which card, offside or onside. The most voted decision wins (a tie keeps the referee's), and the match changes with it: the score, the cards, even a red taken back."
+        ),
+      },
+    ],
+  },
+  {
+    id: '2026-11-football-replays',
+    items: () => [
+      {
+        title: tr('whats_new.football_replays_title', 'FIFUMA: replays'),
+        body: tr(
+          'whats_new.football_replays_body',
+          'Like on TV, the big moments play again once the ball stops: goals (the build-up, then in slow motion from behind the goal), bookings and penalties, offsides with the line on the grass, saves and shots off the post. Online everyone sees the same replay at the same time. Pass or shoot skips it, and Options choose all replays, goals only or none.'
+        ),
+      },
+    ],
+  },
+  {
     id: '2026-11-live-player-bar',
     items: () => [
       {

@@ -88,6 +88,8 @@ export function OnlineMatch({
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [subsOpen, setSubsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  // The vote this person cast in a video referee's review, by the review (its moment's tick).
+  const [vote, setVote] = useState<{ at: number; choice: number }>();
   const [editing, setEditing] = useState<0 | 1>();
   const socketRef = useRef<FootballSocket>();
   const netRef = useRef<Netplay>();
@@ -136,8 +138,8 @@ export function OnlineMatch({
         return;
       case 'resume': {
         const net = netRef.current;
-        if (net && net.slot === msg.slot) net.reset(msg.state, msg.pending);
-        else play(new Netplay(msg.slot, msg.state, out, msg.pending));
+        if (net && net.slot === msg.slot) net.reset(msg.state, msg.pending, msg.orders);
+        else play(new Netplay(msg.slot, msg.state, out, msg.pending, msg.orders));
         return;
       }
       case 'watch': {
@@ -154,10 +156,13 @@ export function OnlineMatch({
         return;
       }
       case 'frames':
-        feedRef.current?.push(msg.from, msg.frames);
+        feedRef.current?.push(msg.from, msg.frames, msg.orders);
         return;
       case 'input':
         netRef.current?.remoteInput(msg.s, msg.t, msg.i);
+        return;
+      case 'order':
+        netRef.current?.remoteOrder(msg.t, msg.o);
         return;
       case 'over':
         sourceRef.current?.finish?.();
@@ -235,6 +240,20 @@ export function OnlineMatch({
   };
   const send = (msg: object) => socketRef.current?.send(msg);
   const live = room?.state === 'playing' && !over;
+  // Only the people watching ask the video referee and vote; the API checks it too.
+  const reviewAt = view.hud?.var?.at;
+  const varProps =
+    role === 'watch' && !playing && live
+      ? {
+          onCallVar: () => send({ type: 'var' }),
+          onVote: (choice: number) => {
+            if (reviewAt === undefined) return;
+            setVote({ at: reviewAt, choice });
+            send({ type: 'vote', c: choice });
+          },
+          myVote: vote && vote.at === reviewAt ? vote.choice : undefined,
+        }
+      : {};
   const back = () => {
     if (playing && live) setConfirmLeave(true);
     else onLeave();
@@ -491,6 +510,7 @@ export function OnlineMatch({
           failed={view.failed}
           teams={teamPair}
           kits={kits}
+          {...varProps}
           waitingText={
             playing
               ? tr('football.online.waiting_player', 'Waiting for the other players…')

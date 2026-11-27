@@ -91,6 +91,8 @@ import {
   newOfficials,
   touch,
 } from './referee';
+import { noteHighlight, noteIncident, replayDue, stepReplay } from './replay';
+import { applyOrders, stepVar, varWindow } from './var';
 import {
   fullTime,
   moveOffPitch,
@@ -109,6 +111,7 @@ import {
   MatchSetup,
   MatchState,
   NO_INPUT,
+  Order,
   Person,
   Player,
   RestartKind,
@@ -369,6 +372,12 @@ export const createMatch = (setup: MatchSetup): MatchState => {
     scene: undefined,
     subQueue: [],
     subs: [],
+    highlight: undefined,
+    replay: undefined,
+    replayEnd: 0,
+    varIncident: undefined,
+    varReview: undefined,
+    varLog: [],
     events: [],
   };
   ([0, 1] as Side[]).forEach((side) => {
@@ -752,6 +761,8 @@ const goalScored = (m: MatchState, scoringSide: Side) => {
     own,
   });
   m.events.push({ type: 'goal', side: scoringSide, scorer, own });
+  noteHighlight(m, 'goal', scorer, ball.x, ball.z);
+  noteIncident(m, { kind: 'goal', side: scoringSide, scorer, x: ball.x, z: ball.z });
   m.phase = 'goal';
   m.wait = GOAL_WAIT;
   ball.owner = -1;
@@ -830,6 +841,7 @@ const moveBall = (m: MatchState) => {
     const barHit = az < GOAL_HALF_WIDTH && Math.abs(ball.y - GOAL_HEIGHT) < BALL_RADIUS + 0.06;
     if (postHit || barHit) {
       m.events.push({ type: 'post' });
+      noteHighlight(m, 'chance', ball.credit, ball.x, ball.z);
       ball.x = end * (HALF_LENGTH - 0.05);
       ball.vx = -ball.vx * 0.55;
       if (postHit) ball.vz = -Math.sign(ball.z) * Math.abs(ball.vz * 0.4) + (rand(m) - 0.5) * 3;
@@ -843,6 +855,9 @@ const moveBall = (m: MatchState) => {
       goalScored(m, scorer);
       return;
     }
+    // A shot just wide or just over.
+    if (ball.shot && az < GOAL_HALF_WIDTH + 2.5 && ball.y < GOAL_HEIGHT + 1.5)
+      noteHighlight(m, 'chance', ball.credit, ball.x, ball.z);
   }
   if (Math.abs(ball.x) > HALF_LENGTH + BALL_RADIUS) {
     const end = Math.sign(ball.x);
@@ -987,6 +1002,8 @@ const contacts = (m: MatchState, inputs: Input[]) => {
       }
       const caught = rel < 20 && rand(m) < 0.55 + p.skill * 0.3;
       m.events.push({ type: 'save', player: best, caught });
+      // Shown once the ball goes out from it (a catch plays on, and is forgotten).
+      if (ball.shot) noteHighlight(m, 'save', best, ball.x, ball.z);
       if (!caught) {
         // Parried out wide.
         const away = -Math.sign(ball.vx);
@@ -1187,10 +1204,31 @@ const receiveMove = (
   return toward(p, tx, tz, sprint || far > 5);
 };
 
-export const step = (m: MatchState, inputs: Input[]): void => {
+// `orders` come from outside the people's inputs (online, the video referee's: var.ts).
+export const step = (m: MatchState, inputs: Input[], orders: readonly Order[] = []): void => {
   m.events = [];
   m.tick += 1;
   const { ball } = m;
+
+  // A review by the video referee: the match stands still while it plays (var.ts).
+  varWindow(m);
+  applyOrders(m, orders);
+  if (m.varReview) {
+    stepVar(m, restartFor);
+    m.people.forEach((person, s) => {
+      person.prev = buttons(inputs[s] ?? NO_INPUT);
+    });
+    return;
+  }
+
+  // A replay: the match stands still while it plays (replay.ts).
+  if (m.replay || replayDue(m)) {
+    stepReplay(m, inputs);
+    m.people.forEach((person, s) => {
+      person.prev = buttons(inputs[s] ?? NO_INPUT);
+    });
+    return;
+  }
 
   if (m.phase === 'goal' || m.phase === 'halftime') {
     m.wait -= 1;

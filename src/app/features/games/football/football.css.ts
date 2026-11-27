@@ -429,3 +429,168 @@ export const SubPick = style({ justifyContent: 'flex-start' });
 export const SubNum = style({ minWidth: toRem(32), textAlign: 'left' });
 
 export const SeatName = style({ ...forgeType.body });
+
+// Replays: cinema bars, a sweep across the screen as one starts, and the TV's replay tag.
+const barIn = keyframes({
+  from: { transform: 'scaleY(0)' },
+  to: { transform: 'scaleY(1)' },
+});
+
+const bar = {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  height: '7%',
+  background: tint(game.Bg, 92),
+  animation: `${barIn} 0.3s ease-out`,
+} as const;
+
+export const ReplayBarTop = style({ ...bar, top: 0, transformOrigin: 'top' });
+
+export const ReplayBarBottom = style({ ...bar, bottom: 0, transformOrigin: 'bottom' });
+
+const sweep = keyframes({
+  '0%': { transform: 'translateX(-120%) skewX(-18deg)', opacity: 1 },
+  '60%': { opacity: 1 },
+  '100%': { transform: 'translateX(120%) skewX(-18deg)', opacity: 0 },
+});
+
+export const ReplayWipe = style({
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: `linear-gradient(90deg, transparent, ${tint(game.Accent, 85)} 30%, ${tint(
+    game.Accent,
+    85
+  )} 70%, transparent)`,
+  ...forgeType.display,
+  fontSize: toRem(64),
+  letterSpacing: '0.12em',
+  color: game.OnAccent,
+  textTransform: 'uppercase',
+  animation: `${sweep} 0.7s ease-in-out forwards`,
+  '@media': { '(prefers-reduced-motion: reduce)': { display: 'none' } },
+});
+
+export const ReplayTag = style({
+  position: 'absolute',
+  top: toRem(64),
+  left: '50%',
+  transform: 'translateX(-50%)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'stretch',
+  gap: forgeSpace.S100,
+  minWidth: toRem(220),
+  padding: `${forgeSpace.S200} ${forgeSpace.S400}`,
+  borderRadius: forgeRadius.card,
+  background: tint(game.Bg, 85),
+  boxShadow: forgeInset(game.Line),
+  '@media': { [PHONE]: { top: toRem(52) } },
+});
+
+export const ReplayTitle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: forgeSpace.S200,
+  ...forgeType.heading,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+});
+
+const blink = keyframes({ '50%': { opacity: 0.25 } });
+
+export const ReplayDot = style({
+  width: toRem(10),
+  height: toRem(10),
+  borderRadius: forgeRadius.pill,
+  background: game.Accent,
+  animation: `${blink} 1.2s steps(1) infinite`,
+});
+
+export const ReplaySub = style({ ...forgeType.bodySm, color: game.Muted, textAlign: 'center' });
+
+export const ReplayProgress = style({
+  height: toRem(3),
+  borderRadius: forgeRadius.pill,
+  background: tint(game.Ink, 15),
+  overflow: 'hidden',
+});
+
+export const ReplayFill = style({ height: '100%', background: game.Accent });
+
+// The video referee: the options and their votes at the side of the pitch, and the button the
+// people watching ask for a review with.
+export const VarPanel = style({
+  position: 'absolute',
+  left: forgeSpace.S300,
+  top: '50%',
+  transform: 'translateY(-50%)',
+  width: toRem(280),
+  display: 'flex',
+  flexDirection: 'column',
+  gap: forgeSpace.S200,
+  padding: forgeSpace.S300,
+  borderRadius: forgeRadius.card,
+  background: tint(game.Bg, 88),
+  boxShadow: forgeInset(game.Line),
+  pointerEvents: 'auto',
+  '@media': {
+    [PHONE]: {
+      top: 'auto',
+      bottom: toRem(56),
+      transform: 'none',
+      right: forgeSpace.S300,
+      width: 'auto',
+    },
+  },
+});
+
+export const VarHead = style({ ...forgeType.bodySm, color: game.Muted });
+
+export const VarOption = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'stretch',
+  gap: toRem(4),
+  width: '100%',
+  height: 'auto',
+  padding: `${forgeSpace.S200} ${forgeSpace.S300}`,
+  textAlign: 'left',
+  selectors: { '&&': { alignItems: 'stretch', flexDirection: 'column' } },
+});
+
+export const VarRow = style({
+  display: 'flex',
+  width: '100%',
+  justifyContent: 'space-between',
+  gap: forgeSpace.S200,
+  ...forgeType.bodySm,
+});
+
+export const VarCalled = style({
+  ...forgeType.caption,
+  color: game.Muted,
+  marginLeft: forgeSpace.S100,
+});
+
+export const VarBar = style({
+  display: 'block',
+  width: '100%',
+  height: toRem(4),
+  borderRadius: forgeRadius.pill,
+  background: tint(game.Ink, 12),
+  overflow: 'hidden',
+});
+
+export const VarFill = style({ height: '100%', background: game.Accent, transition: 'width 0.2s' });
+
+export const VarCall = style({
+  position: 'absolute',
+  left: forgeSpace.S300,
+  bottom: forgeSpace.S300,
+  pointerEvents: 'auto',
+});

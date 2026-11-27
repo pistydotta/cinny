@@ -1,7 +1,7 @@
 import { createApiRequest } from '../../../../utils/blazeroomApi';
-import { MatchState, MatchSetup } from '../engine/types';
+import { MatchState, MatchSetup, Order } from '../engine/types';
 import { PackedInput } from '../engine/net';
-import { Pending } from './netplay';
+import { Orders, Pending } from './netplay';
 
 // The online lobby (/api/football) and what the WebSocket says (api/src/football/rooms.js).
 
@@ -26,10 +26,11 @@ export type ServerMessage =
   | { type: 'hello'; userId: string }
   | { type: 'room'; room: Room }
   | { type: 'start'; slot: number; setup: MatchSetup }
-  | { type: 'resume'; slot: number; state: MatchState; pending: Pending }
+  | { type: 'resume'; slot: number; state: MatchState; pending: Pending; orders?: Orders }
   | { type: 'watch'; state: MatchState }
-  | { type: 'frames'; from: number; frames: PackedInput[][] }
+  | { type: 'frames'; from: number; frames: PackedInput[][]; orders?: Orders }
   | { type: 'input'; s: number; t: number; i: PackedInput }
+  | { type: 'order'; t: number; o: Order }
   | { type: 'over'; state: 'over' | 'abandoned' | 'cancelled'; score: [number, number] }
   | { type: 'cheer'; userId: string; e: number }
   | { type: 'pong'; at: number }
