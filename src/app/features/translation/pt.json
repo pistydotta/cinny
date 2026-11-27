@@ -2639,6 +2639,20 @@
       "poker_public": "pública",
       "poker_mine": "sua mesa",
       "poker_members": "{{count}} na mesa"
+    },
+    "live": {
+      "live": "Ao vivo",
+      "resume": "Continuar",
+      "you": "Você",
+      "nobody": "Ninguém sentado",
+      "just_now": "agora mesmo",
+      "min_ago": "há {{n}} min",
+      "h_ago": "há {{n}} h",
+      "d_ago": "há {{n}} d",
+      "no_hand": "Nenhuma mão ainda",
+      "last_hand": "Última mão {{ago}}",
+      "last_move": "Última jogada {{ago}}",
+      "created": "Aberta {{ago}}"
     }
   },
   "music_bot": {

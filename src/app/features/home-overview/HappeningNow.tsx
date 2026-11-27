@@ -11,8 +11,12 @@ import { MemberGlance } from '../call-status/MemberGlance';
 import { tr } from '../translation/tr';
 import { GamesIcon } from '../games/GamesIcon';
 import { LiveTable, useLiveTables } from '../games/useLiveTables';
-import { gameName, phaseText } from '../games/table-games/text';
-import { getGamesPokerTablePath, getGamesTableGamePath } from '../../pages/pathUtils';
+import { liveGameName, liveStatus } from '../games/liveText';
+import {
+  getGamesFootballMatchPath,
+  getGamesPokerTablePath,
+  getGamesTableGamePath,
+} from '../../pages/pathUtils';
 import { CardList } from './CardList';
 import * as css from './homeOverview.css';
 
@@ -73,12 +77,11 @@ function TableRow({ table }: { table: LiveTable }) {
   const mx = useMatrixClient();
   const navigate = useNavigate();
   const nameOf = (id: string) => mx.getUser(id)?.displayName ?? id.replace(/^@|:.*$/g, '');
-  const open = () =>
-    navigate(
-      table.game === 'poker'
-        ? getGamesPokerTablePath(table.tableId)
-        : getGamesTableGamePath(table.game, table.tableId)
-    );
+  const open = () => {
+    if (table.game === 'poker') navigate(getGamesPokerTablePath(table.tableId));
+    else if (table.game === 'football') navigate(getGamesFootballMatchPath(table.tableId));
+    else navigate(getGamesTableGamePath(table.game, table.tableId));
+  };
   const why = {
     seated: tr('home.table_yours', 'Your table'),
     invited: tr('home.table_invited', 'Invited you'),
@@ -86,20 +89,16 @@ function TableRow({ table }: { table: LiveTable }) {
     friend: tr('home.table_friends', 'Friends'),
   }[table.relevance];
   const action = {
-    seated: tr('home.table_back', 'Go back'),
+    seated: tr('games.live.resume', 'Resume'),
     open: tr('home.table_join', 'Join'),
     watch: tr('home.table_watch', 'Watch'),
   }[table.role];
   const detail = [
-    table.game === 'poker' ? 'Poker' : gameName(table.game),
+    liveGameName(table.game),
     why,
     table.players.length ? table.players.map(nameOf).join(', ') : undefined,
     table.seats ? `${table.players.length}/${table.seats}` : undefined,
-    table.idle && table.activeAt !== undefined
-      ? tr('table_games.idle_for', 'Stopped for {{n}} min', {
-          n: Math.floor((Date.now() - table.activeAt) / 60_000),
-        })
-      : table.phase && phaseText(table.phase),
+    liveStatus(table, Date.now()),
   ]
     .filter(Boolean)
     .join(' · ');

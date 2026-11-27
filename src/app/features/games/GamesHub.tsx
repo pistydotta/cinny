@@ -7,8 +7,10 @@ import { useCredits } from './credits/useCredits';
 import * as css from './gamesHub.css';
 import { tr } from '../translation/tr';
 import { GameKind } from './table-games/types';
-import { gameName, phaseText } from './table-games/text';
+import { gameName } from './table-games/text';
 import { LiveTable, useLiveTables } from './useLiveTables';
+import { liveGameName, liveStatus } from './liveText';
+import { PeopleStack } from './ui/PeopleStack';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import trucoArt from './art/truco.webp';
 import fodinhaArt from './art/fodinha.webp';
@@ -31,6 +33,7 @@ type GamesHubProps = {
   onOpenTableGame: (kind: GameKind) => void;
   onOpenPokerTable: (tableId: string) => void;
   onOpenGameTable: (kind: GameKind, tableId: string) => void;
+  onOpenFootballMatch: (matchId: string) => void;
   onBack?: () => void;
 };
 
@@ -63,18 +66,31 @@ function Tile({ art, name, meta, stakes, onOpen }: TileProps) {
   );
 }
 
-const gameLabel = (game: LiveTable['game']) => (game === 'poker' ? 'Poker' : gameName(game));
-
 const LIVE_ART: Partial<Record<LiveTable['game'], string>> = {
   truco: trucoArt,
   fodinha: fodinhaArt,
   chess: chessArt,
 };
 
+// A game under way that someone moved in lately; one still waiting for players isn't live yet.
+const isPlayingNow = (t: LiveTable) =>
+  !t.idle &&
+  t.players.length > 0 &&
+  t.activeAt !== undefined &&
+  t.phase !== 'waiting' &&
+  (t.game !== 'football' || t.score !== undefined);
+
 // The same art as the game's tile, small, so a row reads as "a poker table" at a glance.
 function LiveThumb({ game }: { game: LiveTable['game'] }) {
   const art = LIVE_ART[game];
   if (art) return <img className={css.LiveThumb} src={art} alt="" loading="lazy" />;
+  if (game === 'football') {
+    return (
+      <span className={`${css.LiveThumb} ${css.LiveFootballThumb}`} aria-hidden="true">
+        ⚽
+      </span>
+    );
+  }
   return (
     <span className={`${css.LiveThumb} ${css.LivePokerThumb}`} aria-hidden="true">
       {ROYAL.slice(3).map((card, i) => (
@@ -98,6 +114,7 @@ export function GamesHub({
   onOpenTableGame,
   onOpenPokerTable,
   onOpenGameTable,
+  onOpenFootballMatch,
   onBack,
 }: GamesHubProps) {
   const mx = useMatrixClient();
@@ -108,13 +125,20 @@ export function GamesHub({
     refresh();
   }, [refresh]);
 
-  const nameOf = (id: string) => mx.getUser(id)?.displayName ?? id.replace(/^@|:.*$/g, '');
-  const open = (t: LiveTable) =>
-    t.game === 'poker' ? onOpenPokerTable(t.tableId) : onOpenGameTable(t.game, t.tableId);
-  // The same words as the home page's "Happening now", which lists these tables too.
+  const me = mx.getUserId();
+  const nameOf = (id: string) =>
+    id === me
+      ? tr('games.live.you', 'You')
+      : mx.getUser(id)?.displayName ?? id.replace(/^@|:.*$/g, '');
+  const open = (t: LiveTable) => {
+    if (t.game === 'poker') onOpenPokerTable(t.tableId);
+    else if (t.game === 'football') onOpenFootballMatch(t.tableId);
+    else onOpenGameTable(t.game, t.tableId);
+  };
+  // "Go back" read like leaving the page; these say what happens at the table.
   const actionText = (t: LiveTable) =>
     ({
-      seated: tr('home.table_back', 'Go back'),
+      seated: tr('games.live.resume', 'Resume'),
       open: tr('home.table_join', 'Join'),
       watch: tr('home.table_watch', 'Watch'),
     }[t.role]);
@@ -125,18 +149,12 @@ export function GamesHub({
       call: tr('home.table_call', 'In your call'),
       friend: tr('home.table_friends', 'Friends'),
     }[t.relevance]);
-  const detail = (t: LiveTable) => {
-    const parts: string[] = [];
-    if (t.players.length) parts.push(t.players.map(nameOf).join(', '));
-    if (t.seats) parts.push(`${t.players.length}/${t.seats}`);
-    if (t.idle && t.activeAt !== undefined)
-      parts.push(
-        tr('table_games.idle_for', 'Stopped for {{n}} min', {
-          n: Math.floor((Date.now() - t.activeAt) / 60_000),
-        })
-      );
-    else if (t.phase) parts.push(phaseText(t.phase));
-    return parts.join(' · ');
+  const now = Date.now();
+  const playing = (t: LiveTable) => {
+    if (!t.players.length) return tr('games.live.nobody', 'Nobody seated');
+    const names = t.players.slice(0, 3).map(nameOf).join(', ');
+    const more = t.players.length > 3 ? ` +${t.players.length - 3}` : '';
+    return t.seats ? `${names}${more} (${t.players.length}/${t.seats})` : `${names}${more}`;
   };
 
   return (
@@ -200,13 +218,21 @@ export function GamesHub({
                   <LiveThumb game={t.game} />
                   <span className={css.LiveInfo}>
                     <span className={css.LiveGame}>
-                      {gameLabel(t.game)}
+                      {liveGameName(t.game)}
                       {t.relevance !== 'seated' && (
                         <span className={css.LiveWhy}>{whyText(t)}</span>
                       )}
+                      {isPlayingNow(t) && (
+                        <span className={css.LiveBadge}>{tr('games.live.live', 'Live')}</span>
+                      )}
                     </span>
                     <span className={css.LiveName}>{t.name}</span>
-                    <span className={css.LiveDetail}>{detail(t)}</span>
+                    <span className={css.LivePeople}>
+                      {t.players.length > 0 && <PeopleStack userIds={t.players} />}
+                      <span className={css.LiveDetail}>
+                        {[playing(t), liveStatus(t, now)].filter(Boolean).join(' · ')}
+                      </span>
+                    </span>
                   </span>
                   <button
                     type="button"

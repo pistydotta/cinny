@@ -322,6 +322,10 @@ export type LobbyTable = {
   ownerId: string;
   memberCount: number;
   myChips: number;
+  /** When the table last dealt a hand (epoch ms); null before the first. Older APIs omit it. */
+  lastHandAt?: number | null;
+  /** Who sits at the table now. */
+  seated?: string[];
 };
 
 export type TableMember = { userId: string; status: 'member' | 'invited' };

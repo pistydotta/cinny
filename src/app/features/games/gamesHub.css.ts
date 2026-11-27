@@ -147,6 +147,8 @@ export const LiveRow = style({
     // Still listed so you can go back or watch, but not as something happening now.
     '&[data-idle="true"]': { opacity: 0.6 },
   },
+  // On a phone the players and the time need the whole width: the button goes under them.
+  '@media': { 'screen and (max-width: 560px)': { flexWrap: 'wrap' } },
 });
 
 export const LiveThumb = style({
@@ -168,6 +170,44 @@ export const LivePokerThumb = style({
 
 export const LiveThumbCard = style({ margin: '0 -3px' });
 
+export const LiveFootballThumb = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 26,
+  background: 'radial-gradient(ellipse at 50% 60%, #3fa34d 0%, #26803a 50%, #165a26 100%)',
+});
+
+// Someone moved recently: the game is going on right now.
+export const LiveBadge = style({
+  display: 'inline-flex',
+  whiteSpace: 'nowrap',
+  alignItems: 'center',
+  gap: 5,
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  color: color.Success.Main,
+  selectors: {
+    '&::before': {
+      content: '""',
+      width: 7,
+      height: 7,
+      borderRadius: '50%',
+      background: color.Success.Main,
+    },
+  },
+});
+
+export const LivePeople = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  minWidth: 0,
+  marginTop: 4,
+});
+
 // The game names the row; the table's own name comes second.
 export const LiveGame = style({
   display: 'flex',
@@ -182,6 +222,7 @@ export const LiveInfo = style({
   flexDirection: 'column',
   minWidth: 0,
   flexGrow: 1,
+  flexBasis: 0,
 });
 
 export const LiveName = style({
@@ -207,6 +248,7 @@ export const LiveDetail = style({
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
+  '@media': { 'screen and (max-width: 560px)': { whiteSpace: 'normal' } },
 });
 
 export const LiveJoin = style({
@@ -221,6 +263,7 @@ export const LiveJoin = style({
   cursor: 'pointer',
   flexShrink: 0,
   selectors: { '&:hover': { background: color.Primary.MainHover } },
+  '@media': { 'screen and (max-width: 560px)': { flexBasis: '100%' } },
 });
 
 export const LiveWatch = style([
